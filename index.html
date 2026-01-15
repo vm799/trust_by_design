@@ -44,6 +44,38 @@
     /* Mobile-first fixes */
     input, select, textarea { font-size: 16px !important; }
     canvas { touch-action: none; }
+
+    /* Print Optimization - Hide Hub Controls */
+    @media print {
+      .no-print,
+      aside,
+      nav,
+      button:not(.print-allow),
+      .material-symbols-outlined.close,
+      header > *:not(.report-header) {
+        display: none !important;
+      }
+
+      body {
+        background: white !important;
+      }
+
+      .main-content-area {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      /* Ensure report content fills page */
+      .print-optimized {
+        page-break-inside: avoid;
+      }
+
+      /* High contrast for printed photos */
+      img {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
   </style>
   <script type="importmap">
   {

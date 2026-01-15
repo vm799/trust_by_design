@@ -13,7 +13,7 @@ export interface SafetyCheck {
 
 export interface Photo {
   id: string;
-  url: string;
+  url: string; // IndexedDB key reference (e.g., "media_abc123") for offline, or full URL when synced
   timestamp: string;
   lat?: number;
   lng?: number;
@@ -21,6 +21,7 @@ export interface Photo {
   verified: boolean;
   syncStatus: SyncStatus;
   type: PhotoType;
+  isIndexedDBRef?: boolean; // Indicates if url is a reference key to IndexedDB
 }
 
 export interface JobTemplate {
@@ -46,7 +47,8 @@ export interface Job {
   notes: string;
   workSummary?: string;
   photos: Photo[];
-  signature: string | null;
+  signature: string | null; // IndexedDB key reference (e.g., "sig_jobId") when offline
+  signatureIsIndexedDBRef?: boolean; // Indicates if signature is a reference key
   signerName?: string;
   signerRole?: string;
   safetyChecklist: SafetyCheck[];
