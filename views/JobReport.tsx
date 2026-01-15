@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice } from '../types';
+import { getMedia } from '../db';
 
 interface JobReportProps {
   jobs: Job[];
@@ -16,6 +17,42 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
   const navigate = useNavigate();
   const job = jobs.find(j => j.id === jobId);
   const existingInvoice = invoices.find(inv => inv.jobId === jobId);
+
+  // State for loading media from IndexedDB
+  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(true);
+
+  // Load photos and signature from IndexedDB
+  useEffect(() => {
+    const loadMediaFromIndexedDB = async () => {
+      if (!job) return;
+
+      setIsLoadingMedia(true);
+      const loadedUrls = new Map<string, string>();
+
+      // Load photos
+      for (const photo of job.photos) {
+        if (photo.isIndexedDBRef) {
+          const dataUrl = await getMedia(photo.url);
+          if (dataUrl) loadedUrls.set(photo.id, dataUrl);
+        }
+      }
+
+      // Load signature
+      if (job.signature && job.signatureIsIndexedDBRef) {
+        const sigData = await getMedia(job.signature);
+        if (sigData) setSignatureDataUrl(sigData);
+      } else if (job.signature) {
+        setSignatureDataUrl(job.signature);
+      }
+
+      setPhotoDataUrls(loadedUrls);
+      setIsLoadingMedia(false);
+    };
+
+    loadMediaFromIndexedDB();
+  }, [job]);
 
   if (!job) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
@@ -143,10 +180,16 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                        <span className="text-[10px] font-bold text-slate-400 uppercase">{group.items.length} Captures</span>
                     </div>
                     <div className="grid grid-cols-2 gap-8">
-                       {group.items.map(p => (
+                       {group.items.map(p => {
+                          const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
+                          return (
                           <div key={p.id} className="space-y-3 group">
                              <div className="aspect-video bg-slate-100 rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm group-hover:border-primary/40 transition-all">
-                                <img src={p.url} className="w-full h-full object-cover" alt="Evidence" />
+                                {displayUrl ? (
+                                  <img src={displayUrl} className="w-full h-full object-cover" alt="Evidence" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">Loading...</div>
+                                )}
                              </div>
                              <div className="space-y-1.5 px-2">
                                 <div className="flex justify-between items-center">
@@ -169,7 +212,8 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                                 </div>
                              </div>
                           </div>
-                       ))}
+                          );
+                       })}
                     </div>
                  </div>
               ))}
@@ -185,13 +229,18 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
            <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-end gap-12 relative z-10">
               <div className="flex-1 w-full space-y-4">
                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attestation & Binding</h3>
-                 {job.signature ? (
+                 {signatureDataUrl ? (
                     <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
-                       <img src={job.signature} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
+                       <img src={signatureDataUrl} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
                        <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
                           <span className="size-2 bg-success rounded-full animate-pulse"></span>
                           <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
                        </div>
+                    </div>
+                 ) : isLoadingMedia ? (
+                    <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col items-center justify-center text-slate-300">
+                       <div className="size-8 border-4 border-slate-300 border-t-primary rounded-full animate-spin"></div>
+                       <p className="text-[10px] font-black uppercase tracking-widest mt-3">Loading Signature</p>
                     </div>
                  ) : (
                     <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">

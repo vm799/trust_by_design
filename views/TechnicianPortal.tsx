@@ -3,15 +3,24 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
-import { saveMedia } from '../db';
+import { saveMedia, getMedia } from '../db';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const job = jobs.find(j => j.id === jobId);
-  
+
+  // Immutable State Protection: Block access if job is already submitted
+  useEffect(() => {
+    if (job?.status === 'Submitted') {
+      alert('This job has been sealed and is immutable. No further edits allowed.');
+      navigate('/home');
+    }
+  }, [job?.status, navigate]);
+
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<Photo[]>(job?.photos || []);
+  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map()); // Cache for IndexedDB photo data
   const [checklist, setChecklist] = useState<SafetyCheck[]>(job?.safetyChecklist || [
     { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
     { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
@@ -33,6 +42,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
+
+  // Load photos from IndexedDB on mount
+  useEffect(() => {
+    const loadPhotosFromIndexedDB = async () => {
+      const loadedUrls = new Map<string, string>();
+      for (const photo of photos) {
+        if (photo.isIndexedDBRef) {
+          const dataUrl = await getMedia(photo.url);
+          if (dataUrl) loadedUrls.set(photo.id, dataUrl);
+        }
+      }
+      setPhotoDataUrls(loadedUrls);
+    };
+    if (photos.length > 0) loadPhotosFromIndexedDB();
+  }, [photos]);
 
   const triggerSync = useCallback(async (data: Job) => {
     if (!navigator.onLine) return;
@@ -85,18 +109,43 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        // Architectural Mock of what3words resolution
-        const words = ['slurs', 'this', 'shark', 'index', 'engine', 'logic', 'rugged', 'field', 'safe', 'audit', 'track', 'proof', 'solid', 'fixed', 'frame'];
+        // Enhanced what3words mock with more professional word pool
+        const words = ['index', 'engine', 'logic', 'rugged', 'field', 'safe', 'audit', 'track', 'proof', 'solid', 'fixed', 'frame', 'steel', 'core', 'vault', 'trust', 'chain', 'lock', 'verify', 'secure'];
         const mockW3w = `///${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}`;
-        
+
         setCoords({ lat, lng });
         setW3w(mockW3w);
         setLocationStatus('captured');
         writeLocalDraft({ w3w: mockW3w, lat, lng });
       },
-      () => setLocationStatus('denied'),
+      (error) => {
+        console.error('Geolocation error:', error);
+        setLocationStatus('denied');
+      },
       { timeout: 5000, enableHighAccuracy: true }
     );
+  };
+
+  const manualLocationEntry = () => {
+    const manualLat = prompt('Enter latitude (e.g., 51.505):');
+    const manualLng = prompt('Enter longitude (e.g., -0.09):');
+
+    if (manualLat && manualLng) {
+      const lat = parseFloat(manualLat);
+      const lng = parseFloat(manualLng);
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const words = ['manual', 'entry', 'fallback', 'override', 'verified', 'admin', 'field', 'tech', 'secure'];
+        const mockW3w = `///${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}`;
+
+        setCoords({ lat, lng });
+        setW3w(mockW3w);
+        setLocationStatus('captured');
+        writeLocalDraft({ w3w: mockW3w, lat, lng });
+      } else {
+        alert('Invalid coordinates. Please try again.');
+      }
+    }
   };
 
   const clearSignature = () => {
@@ -118,20 +167,30 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     reader.onloadend = async () => {
       const dataUrl = reader.result as string;
       const photoId = Math.random().toString(36).substr(2, 9);
+      const mediaKey = `media_${photoId}`;
+
+      // Store full Base64 in IndexedDB
+      await saveMedia(mediaKey, dataUrl);
+
+      // Store only IndexedDB key reference in photo object for localStorage
       const newPhoto: Photo = {
         id: photoId,
-        url: dataUrl,
+        url: mediaKey, // Store key, not full Base64
         timestamp: new Date().toISOString(),
         verified: true,
         syncStatus: 'pending',
         type: activePhotoType,
         w3w: w3w || undefined,
         lat: coords.lat,
-        lng: coords.lng
+        lng: coords.lng,
+        isIndexedDBRef: true // Flag to indicate this is a reference key
       };
       const nextPhotos = [...photos, newPhoto];
       setPhotos(nextPhotos);
-      await saveMedia(`media_${photoId}`, dataUrl);
+
+      // Cache the dataUrl for immediate display
+      setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
+
       writeLocalDraft({ photos: nextPhotos });
     };
     reader.readAsDataURL(file);
@@ -141,14 +200,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     setIsSubmitting(true);
     const canvas = canvasRef.current;
     const signatureData = canvas?.toDataURL() || null;
-    if (signatureData) await saveMedia(`sig_${job?.id}`, signatureData);
+    const signatureKey = signatureData ? `sig_${job?.id}` : null;
 
+    // Store full signature Base64 in IndexedDB
+    if (signatureData && signatureKey) {
+      await saveMedia(signatureKey, signatureData);
+    }
+
+    // Store only IndexedDB key reference in job object for localStorage
     const finalJob: Job = {
       ...job!,
       status: 'Submitted',
       photos,
       notes,
-      signature: signatureData,
+      signature: signatureKey, // Store key, not full Base64
+      signatureIsIndexedDBRef: !!signatureKey, // Flag to indicate reference key
       signerName,
       signerRole,
       safetyChecklist: checklist,
@@ -226,18 +292,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             </header>
 
             <div className="space-y-4">
-              <button 
+              <button
                 onClick={captureLocation}
                 disabled={locationStatus === 'captured' || locationStatus === 'capturing'}
                 className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${
                   locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
-                  locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-slate-900 border-white/10 text-white'
+                  locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' :
+                  locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-900 border-white/10 text-white'
                 }`}
               >
                 <div className="flex items-center gap-5">
-                   <div className={`size-12 rounded-2xl flex items-center justify-center ${locationStatus === 'captured' ? 'bg-success/20' : 'bg-white/5'}`}>
+                   <div className={`size-12 rounded-2xl flex items-center justify-center ${
+                     locationStatus === 'captured' ? 'bg-success/20' :
+                     locationStatus === 'denied' ? 'bg-warning/20' : 'bg-white/5'
+                   }`}>
                       <span className="material-symbols-outlined text-2xl font-black">
-                        {locationStatus === 'captured' ? 'near_me' : 'my_location'}
+                        {locationStatus === 'captured' ? 'near_me' : locationStatus === 'denied' ? 'location_disabled' : 'my_location'}
                       </span>
                    </div>
                    <div className="text-left">
@@ -246,7 +316,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                         <div className="flex items-center gap-2">
                           {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
                           <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
-                            {locationStatus === 'captured' ? w3w.replace('///', '') : locationStatus === 'capturing' ? 'Acquiring Signal...' : 'Authorize Location Hub'}
+                            {locationStatus === 'captured' ? w3w.replace('///', '') :
+                             locationStatus === 'capturing' ? 'Acquiring Signal...' :
+                             locationStatus === 'denied' ? 'Permission Denied' : 'Authorize Location Hub'}
                           </p>
                         </div>
                         {locationStatus === 'captured' && coords.lat && (
@@ -256,7 +328,29 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                    </div>
                 </div>
                 {locationStatus === 'captured' && <span className="material-symbols-outlined text-success font-black">check_circle</span>}
+                {locationStatus === 'denied' && <span className="material-symbols-outlined text-warning font-black">error</span>}
               </button>
+
+              {locationStatus === 'denied' && (
+                <div className="bg-warning/10 border border-warning/30 rounded-[2rem] p-6 space-y-4 animate-in">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-warning text-xl font-black">info</span>
+                    <div className="flex-1 space-y-2">
+                      <p className="text-[11px] font-black text-warning uppercase tracking-tight">Location Access Required</p>
+                      <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">
+                        JobProof requires location access for evidence verification. Enable location permissions in your device settings or use manual entry as a fallback.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={manualLocationEntry}
+                    className="w-full bg-warning/20 hover:bg-warning/30 border border-warning/40 text-warning py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm font-black">edit_location</span>
+                    Manual Location Override
+                  </button>
+                </div>
+              )}
               
               <div className="space-y-3">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Risk Check-off</p>
@@ -323,17 +417,20 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center px-4 leading-none">Capture Phase: {activePhotoType}</span>
               </button>
               
-              {photos.filter(p => p.type === activePhotoType).map(p => (
-                <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl animate-in group">
-                  <img src={p.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Proof" />
-                  <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-2xl">
-                    <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
+              {photos.filter(p => p.type === activePhotoType).map(p => {
+                const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
+                return (
+                  <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl animate-in group">
+                    <img src={displayUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Proof" />
+                    <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-2xl">
+                      <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
+                    </div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
+                    </div>
                   </div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                     <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex gap-4">
