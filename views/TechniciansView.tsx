@@ -32,31 +32,31 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ techs, onAdd, onDelet
       <div className="space-y-6">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-             <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Workforce</h2>
-             <p className="text-slate-400">Operational field agents authorized for JobProof dispatch.</p>
+             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Workforce</h2>
+             <p className="text-slate-400">Authorized field operators linked to the verification hub.</p>
           </div>
           <button 
             onClick={() => setShowAdd(!showAdd)}
-            className="bg-primary text-white px-6 py-2 rounded-xl text-sm font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+            className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-widest"
           >
-            <span className="material-symbols-outlined text-lg">{showAdd ? 'close' : 'add'}</span>
-            {showAdd ? 'Cancel' : 'Authorize Technician'}
+            <span className="material-symbols-outlined text-lg font-black">{showAdd ? 'close' : 'add'}</span>
+            {showAdd ? 'Cancel' : 'Authorize Tech'}
           </button>
         </div>
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
-             <input required placeholder="Full Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white" value={newTech.name} onChange={e => setNewTech({...newTech, name: e.target.value})} />
-             <input required type="email" placeholder="Contact Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white" value={newTech.email} onChange={e => setNewTech({...newTech, email: e.target.value})} />
-             <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl">Onboard Field Operator</button>
+             <input required placeholder="Operator Full Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({...newTech, name: e.target.value})} />
+             <input required type="email" placeholder="Operator Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({...newTech, email: e.target.value})} />
+             <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Commit Authorization</button>
           </form>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {techs.length === 0 ? (
             <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/5 rounded-3xl text-center opacity-40">
-               <span className="material-symbols-outlined text-5xl mb-2">engineering</span>
-               <p className="font-bold uppercase tracking-widest text-[10px]">No authorized technicians found.</p>
+               <span className="material-symbols-outlined text-5xl mb-2 font-black">engineering</span>
+               <p className="font-black uppercase tracking-widest text-[10px]">No field workforce registered.</p>
             </div>
           ) : (
             techs.map(tech => (
@@ -68,18 +68,17 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ techs, onAdd, onDelet
                   <span className="material-symbols-outlined text-lg">close</span>
                  </button>
                  <div className="flex justify-between items-start">
-                    <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl">{tech.name[0]}</div>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-success/10 text-success border-success/20">{tech.status}</span>
+                    <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl uppercase">{tech.name[0]}</div>
+                    <span className="text-[8px] font-black px-2 py-0.5 rounded-full border bg-success/10 text-success border-success/20 uppercase tracking-widest">{tech.status}</span>
                  </div>
                  <div>
-                    <h3 className="font-bold text-white group-hover:text-primary transition-colors">{tech.name}</h3>
-                    <p className="text-[10px] text-slate-500 font-mono mb-2">{tech.email}</p>
+                    <h3 className="font-black text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{tech.name}</h3>
+                    <p className="text-[10px] text-slate-500 font-mono mb-2 uppercase">{tech.email}</p>
                     <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                       <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500">star</span>
-                       {tech.rating} Score • {tech.jobsCompleted} Logs
+                       <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500 font-black">star</span>
+                       {tech.rating} Verified Score
                     </div>
                  </div>
-                 <button className="w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all">Performance Data</button>
               </div>
             ))
           )}

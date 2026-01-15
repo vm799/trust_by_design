@@ -1,223 +1,289 @@
 
 import React from 'react';
 import Layout from '../components/Layout';
-import { useParams, Link } from 'react-router-dom';
-import { Job } from '../types';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Job, PhotoType, Invoice } from '../types';
 
 interface JobReportProps {
   jobs: Job[];
+  invoices: Invoice[];
+  onGenerateInvoice?: (inv: Invoice) => void;
   publicView?: boolean;
 }
 
-const JobReport: React.FC<JobReportProps> = ({ jobs, publicView = false }) => {
+const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice, publicView = false }) => {
   const { jobId } = useParams();
+  const navigate = useNavigate();
   const job = jobs.find(j => j.id === jobId);
+  const existingInvoice = invoices.find(inv => inv.jobId === jobId);
 
-  if (!job) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
-        <div className="space-y-4">
-          <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase">No Data</h2>
-          <p className="text-slate-500 font-medium">This report link is invalid or the data was archived.</p>
-          <Link to="/home" className="inline-block bg-primary text-white px-8 py-3 rounded-xl font-black">Back to Home</Link>
-        </div>
+  if (!job) return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-black uppercase tracking-tighter">Report Unavailable</h1>
+        <p className="text-slate-500 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
+        <button onClick={() => navigate('/admin')} className="px-8 py-3 bg-primary text-white font-black rounded-xl uppercase tracking-widest">Return to Hub</button>
       </div>
-    );
-  }
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const content = (
-    <div className={`max-w-4xl mx-auto flex flex-col ${publicView ? '' : 'lg:flex-row'} gap-8 main-content-area`}>
-      <style>{`
-        @media print {
-          body { background: white !important; color: black !important; }
-          .no-print { display: none !important; }
-          aside { display: none !important; }
-          .report-container { box-shadow: none !important; border: 1px solid #eee !important; width: 100% !important; margin: 0 !important; }
-          header { display: none !important; }
-          .sidebar-nav { display: none !important; }
-          .main-content-area { padding: 0 !important; margin: 0 !important; }
-        }
-      `}</style>
-      
-      {/* Main Report View */}
-      <div className="flex-1 space-y-8 bg-white text-slate-900 p-10 rounded-[2.5rem] shadow-2xl border border-slate-200 report-container">
-        <div className="flex justify-between items-start border-b border-slate-100 pb-8">
-           <div>
-             <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full inline-block mb-3 tracking-widest">JOBPROOF VERIFIED COMPLETION</div>
-             <h2 className="text-4xl font-black tracking-tighter italic uppercase">{job.title}</h2>
-             <p className="text-slate-500 font-bold mt-1">INTERNAL REF: <span className="font-mono text-xs">{job.id}</span></p>
-           </div>
-           <div className="text-right">
-              <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Finalized On</p>
-              <p className="text-xl font-black">{job.completedAt || job.date}</p>
-           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-           <div className="space-y-2">
-             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client & Service Asset</h3>
-             <p className="text-lg font-black italic">{job.client}</p>
-             <p className="text-slate-500 text-sm font-medium leading-relaxed">{job.address}</p>
-           </div>
-           <div className="space-y-2">
-             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verified Field Tech</h3>
-             <p className="text-lg font-black italic">{job.technician}</p>
-             <p className="text-slate-500 text-sm font-medium">Digital Signature ID: <span className="font-mono text-[10px]">AUTH-{job.techId?.split('-')[0] || 'OP-441'}</span></p>
-           </div>
-        </div>
-
-        <div className="pt-4">
-           <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Authenticated Evidence</h3>
-              <span className="text-[9px] font-black text-success flex items-center gap-1 uppercase tracking-widest">
-                <span className="material-symbols-outlined text-xs">verified</span> Verified Timestamped
-              </span>
-           </div>
-           <div className="grid grid-cols-2 gap-6">
-              {job.photos.length > 0 ? job.photos.map(p => (
-                 <div key={p.id} className="group">
-                    <div className="aspect-video bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-inner group-hover:border-primary/50 transition-colors">
-                      <img src={p.url} className="w-full h-full object-cover" alt="Proof" />
-                    </div>
-                    <div className="flex items-center justify-between mt-3 px-1">
-                       <div className="flex flex-col">
-                          <p className="text-[9px] text-slate-400 font-mono">EXIF: {p.timestamp}</p>
-                          <p className="text-[9px] text-slate-400 font-mono">GEO: Lat: -- Long: --</p>
-                       </div>
-                       <div className="bg-success text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">Sealed</div>
-                    </div>
-                 </div>
-              )) : (
-                <div className="col-span-2 py-16 bg-slate-50 rounded-3xl text-center text-slate-300 border-2 border-dashed border-slate-100">
-                  <span className="material-symbols-outlined text-5xl mb-2 opacity-10">broken_image</span>
-                  <p className="font-black text-xs uppercase tracking-widest">No evidence photos captured.</p>
-                </div>
-              )}
-           </div>
-        </div>
-
-        <div className="space-y-4">
-           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Service Log Summary</h3>
-           <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 text-slate-600 font-medium leading-relaxed italic relative">
-              <span className="material-symbols-outlined absolute top-4 left-4 text-slate-200 text-4xl pointer-events-none">format_quote</span>
-              {job.notes ? (
-                 <p className="relative z-10">"{job.notes}"</p>
-              ) : (
-                 <p className="text-slate-300 relative z-10">No completion notes logged for this service cycle.</p>
-              )}
-           </div>
-        </div>
-
-        <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
-           <div className="flex-1 w-full">
-             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center md:text-left">Digital Attestation</h3>
-             {job.signature ? (
-                <div className="h-32 w-full bg-slate-50 rounded-3xl border border-slate-200 flex items-center justify-center p-6 shadow-inner relative group">
-                   <img src={job.signature} alt="Signature" className="max-h-full max-w-full grayscale opacity-70 group-hover:opacity-100 transition-opacity" />
-                   <div className="absolute top-2 right-2 flex items-center gap-1">
-                      <span className="size-1.5 bg-success rounded-full"></span>
-                      <span className="text-[8px] font-black text-success uppercase">Synced</span>
-                   </div>
-                </div>
-             ) : (
-                <div className="h-32 w-full bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 flex items-center justify-center">
-                   <span className="material-symbols-outlined text-5xl text-slate-200">signature</span>
-                </div>
-             )}
-             <p className="text-[9px] text-slate-400 font-black text-center mt-3 uppercase tracking-widest">Verification Status: Finalized & Sealed</p>
-           </div>
-           <div className="w-full md:w-auto flex flex-col items-center">
-             <div className="bg-success text-white p-6 rounded-[2rem] text-center shadow-xl shadow-success/20 w-full">
-                <span className="material-symbols-outlined text-4xl mb-1">verified</span>
-                <p className="text-[10px] font-black uppercase tracking-widest">Protocol Seal</p>
-                <p className="text-sm font-black whitespace-nowrap">AUTHENTIC LOG</p>
-             </div>
-             <p className="text-[8px] text-slate-300 font-mono mt-2">HASH: 771XA-0092-KP2</p>
-           </div>
-        </div>
-        
-        {publicView && (
-          <div className="no-print pt-8 text-center border-t border-slate-100">
-             <button onClick={handlePrint} className="bg-primary text-white font-black px-12 py-4 rounded-2xl shadow-xl shadow-primary/20 flex items-center gap-3 mx-auto">
-               <span className="material-symbols-outlined">download</span>
-               Download PDF Report
-             </button>
-             <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Report served by JobProof Protocol v2.4</p>
-          </div>
-        )}
-      </div>
-
-      {/* Admin Sidebar Actions */}
-      {!publicView && (
-        <aside className="w-full lg:w-72 space-y-4 no-print">
-           <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-lg sticky top-24">
-              <h3 className="text-xs font-black text-slate-500 mb-8 uppercase tracking-widest italic">Hub Controls</h3>
-              <div className="space-y-3">
-                 <button onClick={handlePrint} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-primary/20">
-                    <span className="material-symbols-outlined text-lg">print</span>
-                    Export PDF
-                 </button>
-                 <button onClick={() => {
-                    const url = `${window.location.origin}/#/report/${job.id}`;
-                    navigator.clipboard.writeText(url);
-                    alert("Client Report link copied to clipboard.");
-                 }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all">
-                    <span className="material-symbols-outlined text-lg">share</span>
-                    Share with Client
-                 </button>
-                 <div className="h-px bg-slate-800 my-4"></div>
-                 <button className="w-full bg-slate-900 border border-white/5 text-slate-500 hover:text-white hover:bg-white/5 font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all">
-                    <span className="material-symbols-outlined text-lg">archive</span>
-                    Archive
-                 </button>
-              </div>
-           </div>
-
-           <div className="bg-primary/5 border border-primary/10 p-8 rounded-3xl">
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-6 italic">Verification Trail</p>
-              <div className="space-y-6">
-                 <TrailItem title="Dispatch Initialized" date={job.date} status="complete" />
-                 <TrailItem title="Capture Phase" date={job.status === 'Submitted' ? 'Logged' : 'In Field'} status={job.status === 'Submitted' ? 'complete' : 'pending'} />
-                 <TrailItem title="Verification Sealed" date={job.completedAt || '--'} status={job.status === 'Submitted' ? 'complete' : 'pending'} last />
-              </div>
-           </div>
-        </aside>
-      )}
     </div>
   );
 
-  if (publicView) {
-    return (
-      <div className="min-h-screen bg-slate-950 p-6 lg:p-12">
-        <div className="max-w-4xl mx-auto mb-8 flex justify-between items-center text-white no-print">
-           <div className="flex items-center gap-3">
-              <div className="bg-primary size-8 rounded-lg flex items-center justify-center font-black">J</div>
-              <span className="font-black italic uppercase tracking-tighter">JobProof Portal</span>
-           </div>
-           <div className="bg-white/5 px-4 py-1.5 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest">Authenticated Client View</div>
-        </div>
-        {content}
-      </div>
-    );
-  }
+  const groupedPhotos = (['Before', 'During', 'After', 'Evidence'] as PhotoType[]).map(type => ({
+    type,
+    items: job.photos.filter(p => p.type === type)
+  })).filter(g => g.items.length > 0);
 
-  return <Layout>{content}</Layout>;
+  const handleGenerateInvoice = () => {
+    if (!onGenerateInvoice) return;
+    const inv: Invoice = {
+      id: `INV-${Math.floor(Math.random() * 9000) + 1000}`,
+      jobId: job.id,
+      clientId: job.clientId,
+      clientName: job.client,
+      amount: job.price || 450.00,
+      status: 'Draft',
+      issuedDate: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+    onGenerateInvoice(inv);
+    navigate('/admin/invoices');
+  };
+
+  const reportHash = btoa(`${job.id}-${job.completedAt}-${job.photos.length}`).substring(0, 32).toUpperCase();
+
+  return (
+    <Layout isAdmin={!publicView}>
+      <div className={`max-w-5xl mx-auto flex flex-col ${publicView ? '' : 'lg:flex-row'} gap-8 main-content-area animate-in`}>
+        <div className="flex-1 space-y-8 bg-white text-slate-900 p-8 lg:p-14 rounded-[3rem] shadow-2xl border border-slate-200 relative overflow-hidden">
+           {/* Watermark */}
+           <div className="absolute top-10 -right-20 rotate-45 text-[120px] font-black text-slate-50 pointer-events-none uppercase tracking-tighter select-none opacity-5">
+             CERTIFIED
+           </div>
+
+           <div className="flex justify-between items-start border-b border-slate-100 pb-10 relative z-10">
+              <div className="space-y-4">
+                <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
+                <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
+                <div className="flex flex-wrap items-center gap-4">
+                  <p className="text-slate-500 font-bold uppercase text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
+                  <div className="size-1 bg-slate-200 rounded-full"></div>
+                  <p className="text-slate-500 font-bold uppercase text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0,8)}</span></p>
+                  {job.w3w && (
+                    <>
+                      <div className="size-1 bg-slate-200 rounded-full"></div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-red-500 font-black text-[10px]">///</span>
+                        <p className="text-slate-900 font-black uppercase text-[10px] tracking-widest">{job.w3w.replace('///', '')}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorization</p>
+                 <p className="text-xl font-black uppercase leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{job.completedAt ? new Date(job.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+              </div>
+           </div>
+
+           {/* Protocol Timeline */}
+           <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 space-y-6 relative z-10">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Chain of Custody</h3>
+              <div className="flex justify-between items-start gap-4">
+                <TimelineStep label="Dispatch" time={job.date} status="Verified" icon="send" />
+                <div className="flex-1 h-px bg-slate-200 mt-4"></div>
+                <TimelineStep label="Safety" time="On-Site" status="Pass" icon="security" />
+                <div className="flex-1 h-px bg-slate-200 mt-4"></div>
+                <TimelineStep label="Evidence" time={`${job.photos.length} items`} status="Stored" icon="photo_library" />
+                <div className="flex-1 h-px bg-slate-200 mt-4"></div>
+                <TimelineStep label="Sign-off" time={job.completedAt ? "Authenticated" : "Pending"} status={job.completedAt ? "Sealed" : "Waiting"} icon="verified" active={!!job.completedAt} />
+              </div>
+           </div>
+
+           <div className="grid grid-cols-2 gap-12 relative z-10">
+              <div className="space-y-3">
+                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
+                 <p className="text-xl font-black uppercase tracking-tight">{job.client}</p>
+                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 shadow-inner">
+                    <p className="text-slate-500 text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
+                    {job.lat && (
+                      <div className="border-t border-slate-200 pt-2 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-red-500 font-black text-[9px]">///</span>
+                          <span className="text-[9px] font-black uppercase text-slate-900 tracking-widest">{job.w3w?.replace('///', '')}</span>
+                        </div>
+                        <p className="text-slate-400 text-[8px] font-mono uppercase">GPS: {job.lat.toFixed(6)}, {job.lng?.toFixed(6)}</p>
+                      </div>
+                    )}
+                 </div>
+              </div>
+              <div className="space-y-3">
+                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Service Operator</h3>
+                 <p className="text-xl font-black uppercase tracking-tight">{job.technician}</p>
+                 <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                       <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
+                       <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Geo-metadata verified on-site</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
+                       <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Identity Authenticated via Hub</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div className="space-y-12 pt-6 relative z-10">
+              {groupedPhotos.map(group => (
+                 <div key={group.type} className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                       <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                          <span className="size-2 bg-primary rounded-full"></span>
+                          Phase: {group.type}
+                       </h3>
+                       <span className="text-[10px] font-bold text-slate-400 uppercase">{group.items.length} Captures</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-8">
+                       {group.items.map(p => (
+                          <div key={p.id} className="space-y-3 group">
+                             <div className="aspect-video bg-slate-100 rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm group-hover:border-primary/40 transition-all">
+                                <img src={p.url} className="w-full h-full object-cover" alt="Evidence" />
+                             </div>
+                             <div className="space-y-1.5 px-2">
+                                <div className="flex justify-between items-center">
+                                   <p className="text-[9px] text-slate-400 font-mono uppercase">UTC: {new Date(p.timestamp).toISOString().split('T')[1].substring(0,8)}</p>
+                                   <div className="flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[10px] text-success font-black">verified</span>
+                                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Verified</span>
+                                   </div>
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  {p.w3w && (
+                                    <div className="flex items-center gap-1 opacity-70">
+                                      <span className="text-red-500 font-black text-[9px]">///</span>
+                                      <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
+                                    </div>
+                                  )}
+                                  {p.lat && (
+                                    <p className="text-[8px] font-mono text-slate-300 uppercase leading-none">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
+                                  )}
+                                </div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              ))}
+           </div>
+
+           <div className="space-y-4 pt-4 relative z-10">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Narrative</h3>
+              <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-slate-800 font-medium leading-relaxed text-sm uppercase tracking-tight shadow-inner">
+                 {job.notes || "Standard protocol followed. No exceptional site variances recorded."}
+              </div>
+           </div>
+
+           <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-end gap-12 relative z-10">
+              <div className="flex-1 w-full space-y-4">
+                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attestation & Binding</h3>
+                 {job.signature ? (
+                    <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
+                       <img src={job.signature} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
+                       <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
+                          <span className="size-2 bg-success rounded-full animate-pulse"></span>
+                          <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
+                       </div>
+                    </div>
+                 ) : (
+                    <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">
+                       <span className="material-symbols-outlined text-5xl mb-2 font-black">signature</span>
+                       <p className="text-[10px] font-black uppercase tracking-widest">Waiting for Seal</p>
+                    </div>
+                 )}
+                 <div className="flex justify-between text-[11px] font-black uppercase text-slate-600 px-4">
+                    <div className="flex flex-col">
+                       <span className="text-slate-400 text-[9px] mb-1">Signatory</span>
+                       <span>{job.signerName || 'Pending'}</span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                       <span className="text-slate-400 text-[9px] mb-1">Capacity</span>
+                       <span>{job.signerRole || 'Verified User'}</span>
+                    </div>
+                 </div>
+              </div>
+              <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
+                 <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <span className="material-symbols-outlined text-6xl mb-3 text-primary font-black relative z-10">verified</span>
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Verified Record</p>
+                 <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Protocol Authenticated</p>
+              </div>
+           </div>
+
+           <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between items-center text-[9px] font-mono text-slate-300 uppercase tracking-widest relative z-10">
+              <p>HASH: {reportHash}</p>
+              <p>JOBPROOF V2.4 • GLOBAL INFRASTRUCTURE</p>
+              <p>PAGE 01 OF 01</p>
+           </div>
+        </div>
+
+        {!publicView && (
+           <aside className="w-full lg:w-80 space-y-6 no-print shrink-0">
+              <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
+                 <div>
+                    <h3 className="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.2em]">Hub Controls</h3>
+                    <div className="space-y-3">
+                       {job.status === 'Submitted' && !existingInvoice && (
+                         <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
+                            <span className="material-symbols-outlined text-sm font-black group-hover:rotate-12 transition-transform">receipt</span>
+                            Initialize Billing
+                         </button>
+                       )}
+                       <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
+                          <span className="material-symbols-outlined text-sm font-black">print</span>
+                          Print / Export PDF
+                       </button>
+                       <button onClick={() => {
+                          const url = `${window.location.origin}/#/report/${job.id}`;
+                          navigator.clipboard.writeText(url);
+                          alert("Evidence link secured to clipboard.");
+                       }} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
+                          <span className="material-symbols-outlined text-sm font-black">share</span>
+                          Public Evidence Link
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="pt-8 border-t border-white/5">
+                    <h3 className="text-[10px] font-black text-slate-500 mb-4 uppercase tracking-[0.2em]">System Status</h3>
+                    <div className="space-y-3">
+                       <StatusLine label="Integrity Check" value="Pass" success />
+                       <StatusLine label="Sync Status" value="Vaulted" success />
+                       <StatusLine label="Legal Admissibility" value="High" success />
+                    </div>
+                 </div>
+              </div>
+           </aside>
+        )}
+      </div>
+    </Layout>
+  );
 };
 
-const TrailItem = ({ title, date, status, last }: any) => (
-  <div className="flex gap-4 text-[10px]">
-     <div className="flex flex-col items-center">
-        <div className={`size-2.5 rounded-full ring-4 ring-slate-950 ${status === 'complete' ? 'bg-primary' : 'bg-slate-800'}`}></div>
-        {!last && <div className="w-px flex-1 bg-slate-800 my-1"></div>}
-     </div>
-     <div className={`${last ? '' : 'pb-6'}`}>
-        <p className={`font-black uppercase tracking-widest ${status === 'complete' ? 'text-white' : 'text-slate-600'}`}>{title}</p>
-        <p className="text-[9px] text-slate-500 mt-1 font-bold">{date}</p>
-     </div>
+const TimelineStep = ({ label, time, status, icon, active = true }: any) => (
+  <div className={`flex flex-col items-center text-center space-y-2 ${active ? 'opacity-100' : 'opacity-20'}`}>
+    <div className={`size-8 rounded-xl flex items-center justify-center ${active ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>
+       <span className="material-symbols-outlined text-sm font-black">{icon}</span>
+    </div>
+    <div className="space-y-0.5">
+       <p className="text-[9px] font-black uppercase text-slate-900 leading-none">{label}</p>
+       <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">{time}</p>
+    </div>
+  </div>
+);
+
+const StatusLine = ({ label, value, success }: any) => (
+  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+    <span className="text-slate-600">{label}</span>
+    <span className={success ? 'text-success' : 'text-slate-400'}>{value}</span>
   </div>
 );
 

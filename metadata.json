@@ -2,6 +2,7 @@
   "name": "JobProof v2 - Professional Field Evidence",
   "description": "A high-performance field service proof-of-work application for capturing photos, signatures, and instant job reports.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "geolocation"
   ]
 }

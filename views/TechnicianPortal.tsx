@@ -1,8 +1,9 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Job, Photo } from '../types';
+import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
+import { saveMedia } from '../db';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { jobId } = useParams();
@@ -11,99 +12,172 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<Photo[]>(job?.photos || []);
+  const [checklist, setChecklist] = useState<SafetyCheck[]>(job?.safetyChecklist || [
+    { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
+    { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
+    { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
+    { id: 'sc4', label: 'Area Clear of Bystanders', checked: false, required: true }
+  ]);
   const [notes, setNotes] = useState(job?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [localSyncStatus, setLocalSyncStatus] = useState<SyncStatus>(job?.syncStatus || 'synced');
+  const [signerName, setSignerName] = useState(job?.signerName || '');
+  const [signerRole, setSignerRole] = useState(job?.signerRole || 'Client');
+  const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
+  const [w3w, setW3w] = useState(job?.w3w || '');
+  const [coords, setCoords] = useState<{lat?: number, lng?: number}>({ lat: job?.lat, lng: job?.lng });
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
 
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (step === 2 && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.strokeStyle = '#020617';
-        ctx.lineWidth = 3;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-      }
-      const resize = () => {
-        canvas.width = canvas.parentElement?.clientWidth || 300;
-        canvas.height = 200;
-      };
-      resize();
+  const triggerSync = useCallback(async (data: Job) => {
+    if (!navigator.onLine) return;
+    setIsSyncing(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      onUpdateJob({ 
+        ...data, 
+        syncStatus: 'synced', 
+        lastUpdated: Date.now(),
+        photos: data.photos.map(p => ({ ...p, syncStatus: 'synced' }))
+      });
+      setLocalSyncStatus('synced');
+    } catch (error) {
+      setLocalSyncStatus('failed');
+    } finally {
+      setIsSyncing(false);
     }
-  }, [step]);
+  }, [onUpdateJob]);
 
-  if (!job) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950 p-6 text-center">
-      <div className="space-y-4">
-        <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Invalid Link</h2>
-        <p className="text-slate-500 font-medium">This job link has expired or the evidence session was terminated. Contact dispatch.</p>
-        <button onClick={() => navigate('/home')} className="px-8 py-3 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20">Return to Safety</button>
-      </div>
-    </div>
-  );
-
-  const addPhoto = () => {
-    const placeholderImages = [
-      'https://images.unsplash.com/photo-1581094288338-2314dddb7ecb?q=80&w=800',
-      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=800',
-      'https://images.unsplash.com/photo-1621905252507-b354bcadcabc?q=80&w=800'
-    ];
-    const randomIndex = Math.floor(Math.random() * placeholderImages.length);
-    
-    const newPhoto: Photo = {
-      id: Math.random().toString(36).substr(2, 9),
-      url: placeholderImages[randomIndex],
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      verified: true
+  useEffect(() => {
+    const handleConnectivity = () => {
+      setIsOnline(navigator.onLine);
+      if (navigator.onLine && localSyncStatus === 'pending' && job) triggerSync(job);
     };
-    setPhotos([...photos, newPhoto]);
+    window.addEventListener('online', handleConnectivity);
+    window.addEventListener('offline', handleConnectivity);
+    return () => {
+      window.removeEventListener('online', handleConnectivity);
+      window.removeEventListener('offline', handleConnectivity);
+    };
+  }, [localSyncStatus, job, triggerSync]);
+
+  const writeLocalDraft = useCallback(async (fields: Partial<Job>) => {
+    if (!job) return;
+    const updatedJob: Job = {
+      ...job,
+      ...fields,
+      syncStatus: 'pending',
+      lastUpdated: Date.now()
+    };
+    onUpdateJob(updatedJob);
+    setLocalSyncStatus('pending');
+    if (navigator.onLine) triggerSync(updatedJob);
+  }, [job, onUpdateJob, triggerSync]);
+
+  const captureLocation = () => {
+    setLocationStatus('capturing');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        // Architectural Mock of what3words resolution
+        const words = ['slurs', 'this', 'shark', 'index', 'engine', 'logic', 'rugged', 'field', 'safe', 'audit', 'track', 'proof', 'solid', 'fixed', 'frame'];
+        const mockW3w = `///${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}`;
+        
+        setCoords({ lat, lng });
+        setW3w(mockW3w);
+        setLocationStatus('captured');
+        writeLocalDraft({ w3w: mockW3w, lat, lng });
+      },
+      () => setLocationStatus('denied'),
+      { timeout: 5000, enableHighAccuracy: true }
+    );
   };
 
-  const handleFinalSubmit = () => {
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+      }
+    }
+  };
+
+  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      const photoId = Math.random().toString(36).substr(2, 9);
+      const newPhoto: Photo = {
+        id: photoId,
+        url: dataUrl,
+        timestamp: new Date().toISOString(),
+        verified: true,
+        syncStatus: 'pending',
+        type: activePhotoType,
+        w3w: w3w || undefined,
+        lat: coords.lat,
+        lng: coords.lng
+      };
+      const nextPhotos = [...photos, newPhoto];
+      setPhotos(nextPhotos);
+      await saveMedia(`media_${photoId}`, dataUrl);
+      writeLocalDraft({ photos: nextPhotos });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFinalSeal = async () => {
     setIsSubmitting(true);
-    const updated: Job = {
-      ...job,
+    const canvas = canvasRef.current;
+    const signatureData = canvas?.toDataURL() || null;
+    if (signatureData) await saveMedia(`sig_${job?.id}`, signatureData);
+
+    const finalJob: Job = {
+      ...job!,
       status: 'Submitted',
       photos,
       notes,
-      signature: canvasRef.current?.toDataURL() || null,
-      completedAt: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+      signature: signatureData,
+      signerName,
+      signerRole,
+      safetyChecklist: checklist,
+      completedAt: new Date().toISOString(),
+      syncStatus: 'pending',
+      lastUpdated: Date.now()
     };
-    
-    // In a real app, if offline, we'd store in IndexedDB and sync later
+    onUpdateJob(finalJob);
+    if (navigator.onLine) await triggerSync(finalJob);
     setTimeout(() => {
-      onUpdateJob(updated);
       setIsSubmitting(false);
-      setStep(4);
-    }, 2000);
+      setStep(5);
+    }, 1500);
   };
 
-  if (step === 4) {
+  if (!job) return null;
+
+  if (step === 5) {
     return (
       <Layout isAdmin={false}>
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 animate-in">
-          <div className="size-24 rounded-full bg-success/10 flex items-center justify-center text-success border border-success/20 shadow-2xl shadow-success/10">
-            <span className="material-symbols-outlined text-6xl">verified</span>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
+          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/5 shadow-2xl relative">
+            <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
-          <div className="space-y-2">
-            <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">Evidence <br/> Sealed</h2>
-            <p className="text-slate-400 text-sm max-w-[240px] mx-auto font-medium">Authenticated logs for <span className="text-white">{job.client}</span> have been successfully transmitted.</p>
+          <div className="space-y-3">
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
+            <p className="text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
           </div>
-          <button onClick={() => navigate('/home')} className="w-full py-4 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] border border-white/5 hover:bg-white/10 transition-all mt-8">Exit Capture Hub</button>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
       </Layout>
     );
@@ -111,183 +185,324 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   return (
     <Layout isAdmin={false}>
-      <div className="space-y-8 pb-40">
-        {/* Offline Alert */}
-        {isOffline && (
-          <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
-            <span className="material-symbols-outlined text-amber-500">wifi_off</span>
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Offline Mode Active • Evidence Queueing</p>
-          </div>
-        )}
+      <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-900">
+        <div 
+          className={`h-full transition-all duration-1000 ${isOnline ? (isSyncing ? 'bg-primary animate-pulse' : 'bg-success') : 'bg-warning'}`} 
+          style={{ width: `${(step / 4) * 100}%` }}
+        ></div>
+      </div>
 
-        {/* Info Header */}
-        <div className="space-y-1">
-           <div className="flex justify-between items-start">
-              <h2 className="text-[10px] font-black text-primary uppercase tracking-widest">Job Reference: {job.id}</h2>
-              <span className="text-[8px] font-black text-slate-500 uppercase px-2 py-0.5 border border-white/5 rounded-full">Step {step} of 3</span>
-           </div>
-           <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{job.title}</h3>
-           <p className="text-slate-500 text-xs font-medium">{job.address}</p>
+      <div className="space-y-8 pb-32 max-w-2xl mx-auto">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
+              PROTOCOL REF: {job.id}
+            </h2>
+            <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{job.title}</h3>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
+          </div>
+          <div className="text-right">
+             <div className="flex items-center gap-2 justify-end">
+                <span className={`size-2 rounded-full ${isOnline ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${isOnline ? 'text-success' : 'text-warning'}`}>{isOnline ? 'Online' : 'Offline'}</p>
+             </div>
+          </div>
         </div>
 
-        {/* Progress Stepper */}
         <div className="flex gap-2">
-          {[1, 2, 3].map(s => (
-            <div key={s} className={`h-1 flex-1 rounded-full transition-all ${step >= s ? 'bg-primary' : 'bg-slate-800'}`} />
+          {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
+            <div key={label} className="flex-1 space-y-2">
+               <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
+               <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
+            </div>
           ))}
         </div>
 
-        {/* Step 1: Capture */}
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Operational <br/> Evidence</h2>
-               <p className="text-slate-400 text-sm font-medium">Capture high-resolution evidence of work completed.</p>
+               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Baseline Security</h2>
+               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verified pre-work assessment and location telemetry capture.</p>
             </header>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <button onClick={addPhoto} className="aspect-square rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-3 text-primary group active:scale-95 transition-all shadow-inner">
-                <span className="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform">add_a_photo</span>
-                <span className="text-[10px] font-black uppercase tracking-widest">Snap Proof</span>
+
+            <div className="space-y-4">
+              <button 
+                onClick={captureLocation}
+                disabled={locationStatus === 'captured' || locationStatus === 'capturing'}
+                className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${
+                  locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
+                  locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-slate-900 border-white/10 text-white'
+                }`}
+              >
+                <div className="flex items-center gap-5">
+                   <div className={`size-12 rounded-2xl flex items-center justify-center ${locationStatus === 'captured' ? 'bg-success/20' : 'bg-white/5'}`}>
+                      <span className="material-symbols-outlined text-2xl font-black">
+                        {locationStatus === 'captured' ? 'near_me' : 'my_location'}
+                      </span>
+                   </div>
+                   <div className="text-left">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em]">Geo-Verification</p>
+                      <div className="flex flex-col mt-0.5">
+                        <div className="flex items-center gap-2">
+                          {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
+                            {locationStatus === 'captured' ? w3w.replace('///', '') : locationStatus === 'capturing' ? 'Acquiring Signal...' : 'Authorize Location Hub'}
+                          </p>
+                        </div>
+                        {locationStatus === 'captured' && coords.lat && (
+                          <p className="text-[8px] font-mono text-slate-500 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                        )}
+                      </div>
+                   </div>
+                </div>
+                {locationStatus === 'captured' && <span className="material-symbols-outlined text-success font-black">check_circle</span>}
               </button>
-              {photos.map(p => (
-                <div key={p.id} className="aspect-square rounded-3xl bg-slate-900 border border-white/5 overflow-hidden relative shadow-2xl group animate-in">
-                  <img src={p.url} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all" alt="Proof" />
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/90 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
-                    <span className="text-[8px] text-white font-black uppercase flex items-center gap-1"><span className="size-1.5 bg-success rounded-full"></span> SEALED</span>
-                    <button onClick={() => setPhotos(photos.filter(ph => ph.id !== p.id))} className="text-white/40 hover:text-red-400 transition-colors"><span className="material-symbols-outlined text-xs">delete</span></button>
+              
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Risk Check-off</p>
+                {checklist.map((item, idx) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => {
+                      const next = [...checklist];
+                      next[idx].checked = !next[idx].checked;
+                      setChecklist(next);
+                      writeLocalDraft({ safetyChecklist: next });
+                    }}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-500'}`}
+                  >
+                    <span className="material-symbols-outlined text-2xl font-black">
+                      {item.checked ? 'check_box' : 'check_box_outline_blank'}
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-tight">{item.label}</span>
+                    {item.required && !item.checked && <span className="ml-auto text-[8px] font-black text-warning uppercase border border-warning/20 px-2 py-0.5 rounded-full">Required</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button 
+              disabled={locationStatus !== 'captured' || checklist.some(i => i.required && !i.checked)}
+              onClick={() => setStep(2)}
+              className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
+            >
+              Start Protocol
+              <span className="material-symbols-outlined font-black">arrow_forward</span>
+            </button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-8 animate-in">
+            <header className="space-y-2">
+               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Evidence Collection</h2>
+               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Categorized evidence for dispute-free verification.</p>
+            </header>
+
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+              {(['Before', 'During', 'After', 'Evidence'] as PhotoType[]).map(type => (
+                <button 
+                  key={type}
+                  onClick={() => setActivePhotoType(type)}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-600 hover:text-white'}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-5">
+              <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={onFileSelect} />
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 transition-all"
+              >
+                <div className="size-14 bg-primary/10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
+                   <span className="material-symbols-outlined text-4xl font-black">add_a_photo</span>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center px-4 leading-none">Capture Phase: {activePhotoType}</span>
+              </button>
+              
+              {photos.filter(p => p.type === activePhotoType).map(p => (
+                <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl animate-in group">
+                  <img src={p.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Proof" />
+                  <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-2xl">
+                    <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                     <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <button 
-              disabled={photos.length === 0}
-              onClick={() => setStep(2)}
-              className="w-full py-5 bg-primary rounded-[2rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-30 flex items-center justify-center gap-3 transition-all active:scale-95 text-lg"
-            >
-              Final Sign-off
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
+            <div className="flex gap-4">
+               <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+               <button 
+                 disabled={photos.length === 0}
+                 onClick={() => setStep(3)} 
+                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30"
+               >
+                 Authorize Seal
+               </button>
+            </div>
           </div>
         )}
 
-        {/* Step 2: Signature */}
-        {step === 2 && (
+        {step === 3 && (
           <div className="space-y-8 animate-in">
-            <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Identity <br/> Verification</h2>
-               <p className="text-slate-400 text-sm font-medium">Client digital attestation for service completion.</p>
+             <header className="space-y-2">
+               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Job Summary</h2>
+               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Review operational notes and evidence before sign-off.</p>
             </header>
 
-            <div className="bg-slate-50 rounded-[2.5rem] p-6 overflow-hidden border-4 border-slate-900 shadow-2xl relative">
-               <p className="text-[8px] font-black text-slate-300 absolute top-4 left-0 right-0 text-center uppercase tracking-widest pointer-events-none">JobProof Secure Signing Terminal</p>
-               <div className="h-48 relative border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden bg-white/50">
-                  <canvas 
-                    ref={canvasRef} 
-                    className="absolute inset-0 touch-none cursor-crosshair"
-                    onMouseDown={(e) => {
-                       isDrawing.current = true;
-                       const ctx = canvasRef.current?.getContext('2d');
-                       if (ctx) {
-                          ctx.beginPath();
-                          ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                       }
-                    }}
-                    onMouseMove={(e) => {
-                       if (!isDrawing.current) return;
-                       const ctx = canvasRef.current?.getContext('2d');
-                       if (ctx) {
-                          ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                          ctx.stroke();
-                       }
-                    }}
-                    onMouseUp={() => (isDrawing.current = false)}
-                    onTouchStart={(e) => {
-                       isDrawing.current = true;
-                       const rect = canvasRef.current?.getBoundingClientRect();
-                       if (rect) {
-                          const touch = e.touches[0];
-                          const ctx = canvasRef.current?.getContext('2d');
-                          if (ctx) {
-                             ctx.beginPath();
-                             ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-                          }
-                       }
-                    }}
-                    onTouchMove={(e) => {
-                       if (!isDrawing.current) return;
-                       const rect = canvasRef.current?.getBoundingClientRect();
-                       if (rect) {
-                          const touch = e.touches[0];
-                          const ctx = canvasRef.current?.getContext('2d');
-                          if (ctx) {
-                             ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-                             ctx.stroke();
-                          }
-                       }
-                       e.preventDefault();
-                    }}
-                    onTouchEnd={() => (isDrawing.current = false)}
-                  ></canvas>
-                  <button onClick={() => {
-                     const ctx = canvasRef.current?.getContext('2d');
-                     ctx?.clearRect(0, 0, canvasRef.current?.width || 0, canvasRef.current?.height || 0);
-                  }} className="absolute bottom-4 right-4 text-[9px] font-black text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100 hover:text-red-500 shadow-sm transition-all uppercase">Reset</button>
-               </div>
+            <div className="space-y-6">
+              <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] space-y-4 shadow-2xl">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Narrative</p>
+                <textarea 
+                  value={notes}
+                  onChange={(e) => { setNotes(e.target.value); writeLocalDraft({ notes: e.target.value }); }}
+                  placeholder="Summarize the work completed for the client's review..."
+                  className="w-full bg-slate-800 border-slate-700 rounded-[1.5rem] p-6 text-white text-sm min-h-[160px] focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600"
+                />
+              </div>
+
+              <div className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] space-y-4">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evidence Distribution</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {['Before', 'During', 'After', 'Evidence'].map(type => (
+                    <div key={type} className="flex justify-between items-center text-[10px] font-black uppercase tracking-tight text-slate-400">
+                      <span>{type} Phase</span>
+                      <span className="text-white">{photos.filter(p => p.type === type).length} Captures</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4">
-              <button onClick={() => setStep(1)} className="flex-1 py-4 bg-slate-900 border border-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white">Back</button>
-              <button onClick={() => setStep(3)} className="flex-[2] py-4 bg-primary rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl shadow-primary/20">Review Seal</button>
+               <button onClick={() => setStep(2)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+               <button 
+                 onClick={() => setStep(4)} 
+                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30"
+               >
+                 Capture Sign-Off
+               </button>
             </div>
           </div>
         )}
 
-        {/* Step 3: Review */}
-        {step === 3 && (
+        {step === 4 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Review & <br/> Final Seal</h2>
-               <p className="text-slate-400 text-sm font-medium">Verify data integrity before immutable upload.</p>
+               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Authentication</h2>
+               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Client attestation to verify service satisfaction.</p>
             </header>
 
-            <div className="bg-slate-900 border border-white/5 p-6 rounded-[2rem] space-y-4">
-               <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evidence Counts</p>
-                  <span className="text-[10px] font-black text-white">{photos.length} Photos Captured</span>
-               </div>
-               <div className="h-px bg-white/5"></div>
+            <div className="space-y-4">
                <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operator Notes</p>
-                  <textarea 
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Briefly describe site conditions or repair actions..."
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl p-4 text-white text-sm min-h-[100px] focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600"
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Signatory Identification</label>
+                  <input 
+                    type="text"
+                    placeholder="Full Legal Name"
+                    value={signerName}
+                    onChange={e => setSignerName(e.target.value)}
+                    className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary transition-all uppercase font-bold text-xs"
                   />
+               </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Authorization Role</label>
+                  <select 
+                    value={signerRole}
+                    onChange={e => setSignerRole(e.target.value)}
+                    className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary uppercase font-black text-[10px] appearance-none cursor-pointer"
+                  >
+                    <option value="Client">Client / Property Owner</option>
+                    <option value="Manager">On-Site Manager</option>
+                    <option value="Agent">Authorized Third-Party Agent</option>
+                  </select>
                </div>
             </div>
 
+            <div className="space-y-4">
+              <div className="bg-slate-50 rounded-[3rem] p-8 border-4 border-slate-900 shadow-2xl relative">
+                 <p className="text-[9px] font-black text-slate-300 absolute top-4 inset-x-0 text-center uppercase tracking-[0.3em] pointer-events-none">JobProof Secure Sign-Off</p>
+                 <div className="h-60 relative border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden bg-white/60 shadow-inner">
+                    <canvas 
+                      ref={canvasRef} 
+                      width={600}
+                      height={240}
+                      className="absolute inset-0 w-full h-full cursor-crosshair"
+                      onMouseDown={(e) => {
+                         isDrawing.current = true;
+                         const ctx = canvasRef.current?.getContext('2d');
+                         if (ctx) {
+                            ctx.beginPath();
+                            ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                         }
+                      }}
+                      onMouseMove={(e) => {
+                         if (!isDrawing.current) return;
+                         const ctx = canvasRef.current?.getContext('2d');
+                         if (ctx) {
+                            ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                            ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); ctx.stroke();
+                         }
+                      }}
+                      onMouseUp={() => (isDrawing.current = false)}
+                      onMouseLeave={() => (isDrawing.current = false)}
+                      onTouchStart={(e) => {
+                         isDrawing.current = true;
+                         const rect = canvasRef.current?.getBoundingClientRect();
+                         const touch = e.touches[0];
+                         const ctx = canvasRef.current?.getContext('2d');
+                         if (ctx && rect) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                            ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                         }
+                         e.preventDefault();
+                      }}
+                      onTouchMove={(e) => {
+                         if (!isDrawing.current) return;
+                         const rect = canvasRef.current?.getBoundingClientRect();
+                         const touch = e.touches[0];
+                         const ctx = canvasRef.current?.getContext('2d');
+                         if (ctx && rect) {
+                            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                            ctx.stroke();
+                         }
+                         e.preventDefault();
+                      }}
+                      onTouchEnd={() => (isDrawing.current = false)}
+                    ></canvas>
+                 </div>
+              </div>
+              
+              <button 
+                onClick={clearSignature} 
+                className="w-full py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm font-black">backspace</span>
+                Clear Signature & Re-Sign
+              </button>
+            </div>
+
             <button 
-              onClick={handleFinalSubmit}
-              disabled={isSubmitting}
-              className="w-full py-6 bg-success rounded-[2rem] font-black text-xl tracking-tighter text-white shadow-2xl shadow-success/30 flex items-center justify-center gap-3 transition-all active:scale-95"
+              onClick={handleFinalSeal}
+              disabled={isSubmitting || !signerName}
+              className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase"
             >
               {isSubmitting ? (
-                 <>
-                    <div className="size-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="uppercase text-sm tracking-widest italic">Syncing to Hub...</span>
-                 </>
+                 <div className="size-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-3xl">verified</span>
-                  AUTHENTICATE & SEAL
+                  <span className="material-symbols-outlined text-3xl font-black">lock</span>
+                  Seal & Complete Job
                 </>
               )}
             </button>
-            <p className="text-center text-[8px] text-slate-500 font-black uppercase tracking-[0.3em]">Encrypted Transmission Active</p>
+            <button onClick={() => setStep(3)} className="w-full py-4 text-slate-600 font-black uppercase text-[10px] tracking-widest">Back to Summary</button>
           </div>
         )}
       </div>

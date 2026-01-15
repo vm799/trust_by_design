@@ -14,47 +14,33 @@ const LegalPage: React.FC = () => {
         <header className="border-b border-slate-100 pb-12 flex justify-between items-start">
            <div>
              <Link to="/home" className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-widest mb-8">
-               <span className="material-symbols-outlined text-lg">arrow_back</span>
-               Back to Home
+               <span className="material-symbols-outlined text-lg font-black">arrow_back</span>
+               Home
              </Link>
-             <h1 className="text-5xl font-black tracking-tighter italic uppercase">{title}</h1>
-             <p className="text-slate-400 font-bold mt-2">Effective Date: Jan 2024</p>
+             <h1 className="text-5xl font-black tracking-tighter uppercase">{title}</h1>
+             <p className="text-slate-400 font-bold mt-2 uppercase text-xs">Revised: Jan 2024</p>
            </div>
            <div className="bg-primary size-12 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-primary/20">J</div>
         </header>
 
         <article className="space-y-8 prose prose-slate">
            <section className="space-y-4">
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter border-l-4 border-primary pl-4">1. General Terms</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tighter border-l-4 border-primary pl-4">1. General Protocols</h2>
               <p className="text-slate-600 font-medium leading-relaxed">
-                 By accessing JobProof, you agree to be bound by these terms. JobProof provides a verifiable proof-of-work protocol for businesses. We are not responsible for the accuracy of data captured by independent technicians.
+                 By accessing the JobProof hub, you agree to adhere to these operational protocols. JobProof provides a verifiable infrastructure for field service documentation.
               </p>
            </section>
 
            <section className="space-y-4">
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter border-l-4 border-primary pl-4">2. Data & Verification</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tighter border-l-4 border-primary pl-4">2. Data Sovereignty</h2>
               <p className="text-slate-600 font-medium leading-relaxed">
-                 All evidence captured (photos, GPS, timestamps) is processed to provide a verifiable record. We implement security best practices to protect the integrity of the "Seal", but users acknowledge that digital data is subject to system availability.
-              </p>
-           </section>
-
-           <section className="space-y-4">
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter border-l-4 border-primary pl-4">3. Subscriptions</h2>
-              <p className="text-slate-600 font-medium leading-relaxed">
-                 Subscription fees are non-refundable except where required by law. Users may cancel their plans at any time via the Billing dashboard.
-              </p>
-           </section>
-
-           <section className="space-y-4">
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter border-l-4 border-primary pl-4">4. Compliance</h2>
-              <p className="text-slate-600 font-medium leading-relaxed">
-                 Users are responsible for ensuring that their capture of field evidence (including photos of private property) complies with local privacy and data protection laws.
+                 All field evidence (photos, metadata, signatures) is processed as a verifiable record. We implement security best practices to protect the integrity of every sealed report.
               </p>
            </section>
         </article>
 
         <footer className="pt-12 border-t border-slate-100 text-center">
-           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">© 2024 JobProof Technologies Ltd. All Rights Reserved.</p>
+           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">© 2024 JobProof Technologies. System Verified.</p>
         </footer>
       </div>
     </div>

@@ -29,13 +29,21 @@
     }
   </script>
   <style>
-    body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      overflow-x: hidden; 
+      font-style: normal !important; /* Global italic suppression */
+    }
     .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
     .animate-in { animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Strict No-Italics Rule */
+    * { font-style: normal !important; }
+    
     /* Mobile-first fixes */
-    input, select, textarea { font-size: 16px !important; } /* Prevents iOS zoom */
+    input, select, textarea { font-size: 16px !important; }
+    canvas { touch-action: none; }
   </style>
   <script type="importmap">
   {

@@ -17,7 +17,8 @@ import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
-import { Job, Client, Technician, JobTemplate, UserProfile } from './types';
+import InvoicesView from './views/InvoicesView';
+import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -43,6 +44,11 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [invoices, setInvoices] = useState<Invoice[]>(() => {
+    const saved = localStorage.getItem('jobproof_invoices_v2');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [clients, setClients] = useState<Client[]>(() => {
     const saved = localStorage.getItem('jobproof_clients_v2');
     return saved ? JSON.parse(saved) : [];
@@ -63,17 +69,22 @@ const App: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
+    localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
     localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
     localStorage.setItem('jobproof_techs_v2', JSON.stringify(technicians));
     localStorage.setItem('jobproof_templates_v2', JSON.stringify(templates));
     localStorage.setItem('jobproof_user_v2', JSON.stringify(user));
     localStorage.setItem('jobproof_auth', isAuthenticated.toString());
     localStorage.setItem('jobproof_onboarding_v4', hasSeenOnboarding.toString());
-  }, [jobs, clients, technicians, templates, user, isAuthenticated, hasSeenOnboarding]);
+  }, [jobs, invoices, clients, technicians, templates, user, isAuthenticated, hasSeenOnboarding]);
 
   const addJob = (newJob: Job) => setJobs(prev => [newJob, ...prev]);
   const updateJob = (updatedJob: Job) => setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
   
+  const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
+  const updateInvoiceStatus = (id: string, status: Invoice['status']) => 
+    setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status } : inv));
+
   const addClient = (c: Client) => setClients(prev => [...prev, c]);
   const deleteClient = (id: string) => setClients(prev => prev.filter(c => c.id !== id));
   
@@ -109,17 +120,18 @@ const App: React.FC = () => {
         <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView templates={templates} /> : <Navigate to="/auth/login" replace />} />
+        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user} setUser={setUser} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/billing" element={isAuthenticated ? <BillingView /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} /> : <Navigate to="/auth/login" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth/login" replace />} />
         
         {/* Technician Entry - Public */}
         <Route path="/track/:jobId" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />
         
         {/* Public Client Entry - Public */}
-        <Route path="/report/:jobId" element={<JobReport jobs={jobs} publicView />} />
+        <Route path="/report/:jobId" element={<JobReport jobs={jobs} invoices={invoices} publicView />} />
         
         {/* System & Docs */}
         <Route path="/docs/audit" element={<AuditReport />} />

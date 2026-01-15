@@ -13,119 +13,96 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
-
-  const activeJobsCount = jobs.filter(j => j.status !== 'Submitted' && j.status !== 'Archived').length;
-  const submittedJobsCount = jobs.filter(j => j.status === 'Submitted').length;
+  const activeJobs = jobs.filter(j => j.status !== 'Submitted');
+  const sealedJobs = jobs.filter(j => j.status === 'Submitted');
+  const syncIssues = jobs.filter(j => j.syncStatus === 'failed').length;
+  const pendingSignatures = activeJobs.filter(j => !j.signature).length;
 
   return (
     <Layout>
       {showOnboarding && <OnboardingTour onComplete={onCloseOnboarding} />}
-
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard label="Live Dispatches" value={activeJobsCount.toString()} trend="Active proof cycles" icon="send" />
-          <MetricCard label="Verified Logs" value={submittedJobsCount.toString()} trend="Sealed completions" icon="verified" />
-          <MetricCard label="Proof Integrity" value="100%" trend="GPS & Time synced" icon="security" />
-          <MetricCard label="Team Capacity" value="--" trend="Tracking metrics..." icon="engineering" />
+      <div className="space-y-8 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Live Field Work" />
+          <MetricCard label="Awaiting Seal" value={pendingSignatures.toString()} icon="signature" trend="Pending Signatures" color="text-warning" />
+          <MetricCard label="Sealed Proofs" value={sealedJobs.length.toString()} icon="verified" trend="Validated Reports" color="text-success" />
+          <MetricCard label="Sync Issues" value={syncIssues.toString()} icon="sync_problem" trend="Require Attention" color={syncIssues > 0 ? "text-danger" : "text-slate-500"} />
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:max-w-md group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-            <input 
-              type="text" 
-              placeholder="Filter by Job ID, Client or Tech..." 
-              className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-white/5 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none transition-all shadow-inner"
-            />
-          </div>
-          <button onClick={() => navigate('/admin/create')} className="w-full md:w-auto px-8 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-black shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all">
-            <span className="material-symbols-outlined text-lg">add</span>
-            New Service Dispatch
-          </button>
-        </div>
-
-        <div id="ops-feed" className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-          <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 italic">Operations Feed</h3>
-            <span className="text-[10px] text-slate-500 font-bold uppercase">{jobs.length} Entries</span>
+        <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+          <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Operations Hub Log</h3>
+            <button className="text-[8px] font-black uppercase tracking-widest text-primary border border-primary/20 px-3 py-1 rounded-full hover:bg-primary/5 transition-all">Filter Activity</button>
           </div>
           <div className="overflow-x-auto">
-            {jobs.length === 0 ? (
-              <div className="py-20 text-center flex flex-col items-center justify-center space-y-4 opacity-50">
-                <div className="size-20 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 mb-2">
-                  <span className="material-symbols-outlined text-4xl">inbox</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="font-black text-white text-lg">Empty Workspace</p>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto">Start by adding a Client in the Registry, then dispatch your first verifiable job.</p>
-                </div>
-                <button 
-                  onClick={() => navigate('/admin/clients')}
-                  className="px-6 py-2 bg-white/5 border border-white/10 text-white rounded-lg text-xs font-black hover:bg-white/10 transition-all uppercase tracking-widest"
-                >
-                  Go to Client Registry
-                </button>
-              </div>
-            ) : (
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-slate-950/50">
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Job Details</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Asset / Client</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Field Operator</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Live Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Verification</th>
+            <table className="w-full text-left">
+              <thead className="bg-slate-950/50">
+                <tr>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Service Details</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Field Agent</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Evidence</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Hub Sync</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {jobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-24 text-center opacity-30">
+                      <div className="flex flex-col items-center gap-3">
+                        <span className="material-symbols-outlined text-4xl">inbox</span>
+                        <p className="text-[10px] font-black uppercase tracking-widest">Registry is Empty</p>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {jobs.map((job) => (
-                    <tr 
-                      key={job.id} 
-                      className="hover:bg-white/5 cursor-pointer transition-colors group"
-                      onClick={() => navigate(`/admin/report/${job.id}`)}
-                    >
-                      <td className="px-6 py-5">
-                        <div className="font-bold text-white group-hover:text-primary transition-colors italic uppercase tracking-tighter">{job.title}</div>
-                        <div className="text-[10px] font-mono text-slate-500 mt-1">{job.id} • {job.date}</div>
+                ) : (
+                  jobs.map(job => (
+                    <tr key={job.id} className="hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/report/${job.id}`)}>
+                      <td className="px-8 py-6">
+                        <div className="font-bold text-white tracking-tighter uppercase group-hover:text-primary transition-colors">{job.title}</div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-1">{job.id} • {job.client}</div>
                       </td>
-                      <td className="px-6 py-5">
-                        <div className="text-sm text-slate-300 font-bold">{job.client}</div>
-                        <div className="text-[10px] text-slate-500 truncate max-w-[180px]">{job.address}</div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <div className="size-6 rounded-md bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">{job.technician[0]}</div>
-                          <span className="text-sm text-slate-300 font-medium">{job.technician}</span>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-3">
+                           <div className="size-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">{job.technician[0]}</div>
+                           <span className="text-xs text-slate-300 font-bold uppercase">{job.technician}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-5">
-                        <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tighter ${
+                      <td className="px-8 py-6">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${
                           job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' : 
-                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' :
-                          'bg-slate-800 text-slate-400 border-slate-700'
+                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-500 border-slate-700'
                         }`}>
-                          <span className={`size-1.5 rounded-full ${
-                            job.status === 'Submitted' ? 'bg-success' : 
-                            job.status === 'In Progress' ? 'bg-primary animate-pulse' : 'bg-slate-500'
-                          }`}></span>
                           {job.status}
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-right">
-                        {job.status === 'Submitted' ? (
-                          <div className="flex items-center justify-end gap-1 text-success">
-                             <span className="material-symbols-outlined text-lg">verified</span>
-                             <span className="text-[10px] font-black">SEALED</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-600 text-[10px] font-bold uppercase">Pending Proof</span>
-                        )}
+                      <td className="px-8 py-6">
+                         <div className="flex -space-x-2">
+                           {job.photos.slice(0, 3).map((p, i) => (
+                             <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
+                               <img src={p.url} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
+                             </div>
+                           ))}
+                           {job.photos.length > 3 && (
+                             <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">
+                               +{job.photos.length - 3}
+                             </div>
+                           )}
+                         </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className={`inline-flex items-center gap-1.5 ${job.syncStatus === 'synced' ? 'text-success' : job.syncStatus === 'failed' ? 'text-danger' : 'text-primary'}`}>
+                          <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === 'pending' ? 'animate-spin' : ''}`}>
+                            {job.syncStatus === 'synced' ? 'cloud_done' : job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-widest">{job.syncStatus}</span>
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -133,18 +110,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, o
   );
 };
 
-const MetricCard: React.FC<{ label: string, value: string, trend: string, icon: string }> = ({ label, value, trend, icon }) => (
-  <div className="bg-slate-900 border border-white/5 p-6 rounded-3xl relative overflow-hidden group shadow-lg">
-    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-       <span className="material-symbols-outlined text-5xl">{icon}</span>
-    </div>
-    <div className="space-y-1">
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
-      <p className="text-3xl font-black text-white">{value}</p>
-      <p className="text-[10px] font-bold text-primary flex items-center gap-1">
-         {trend}
-      </p>
-    </div>
+const MetricCard = ({ label, value, icon, trend, color = "text-white" }: any) => (
+  <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-2 relative overflow-hidden group shadow-lg">
+    <span className="material-symbols-outlined absolute -top-2 -right-2 text-primary/5 text-7xl transition-transform group-hover:scale-110 font-black">{icon}</span>
+    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+    <p className={`text-4xl font-black tracking-tighter ${color}`}>{value}</p>
+    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{trend}</p>
   </div>
 );
 

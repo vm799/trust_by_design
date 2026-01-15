@@ -14,7 +14,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
 
   const handleSave = () => {
     setUser(formData);
-    alert('Profile identity synchronized.');
+    alert('Identity updated.');
   };
 
   return (
@@ -22,8 +22,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="flex justify-between items-end border-b border-white/5 pb-8">
           <div className="space-y-1">
-             <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Operator Profile</h2>
-             <p className="text-slate-400">Manage your credentials and identity.</p>
+             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Operator Identity</h2>
+             <p className="text-slate-400">Manage your administrative credentials.</p>
           </div>
           <div className="bg-gradient-to-br from-primary to-blue-600 size-20 rounded-[2rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-primary/20">
             {user.name[0]}
@@ -43,17 +43,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                     />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorization</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Role</label>
                     <input 
                       type="text" 
                       readOnly
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-500 outline-none cursor-not-allowed" 
+                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-500 outline-none cursor-not-allowed uppercase font-black text-xs" 
                       value={formData.role} 
                     />
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Work Email</label>
+                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorized Email</label>
                  <input 
                    type="email" 
                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 
@@ -64,9 +64,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
               <div className="pt-4">
                  <button 
                   onClick={handleSave}
-                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95"
+                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95"
                  >
-                    Update Identity
+                    Commit Identity
                  </button>
               </div>
            </section>
@@ -76,10 +76,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                 onClick={onLogout}
                 className="w-full py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl font-black text-sm uppercase tracking-widest border border-red-500/20 transition-all flex items-center justify-center gap-3"
               >
-                <span className="material-symbols-outlined">logout</span>
-                Sign Out of Hub
+                <span className="material-symbols-outlined font-black">logout</span>
+                Terminate Session
               </button>
-              <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest italic">Authorized Session ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
            </div>
         </div>
       </div>
