@@ -22,6 +22,7 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isLoadingMedia, setIsLoadingMedia] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Load photos and signature from IndexedDB
   useEffect(() => {
@@ -290,13 +291,9 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                           <span className="material-symbols-outlined text-sm font-black">print</span>
                           Print / Export PDF
                        </button>
-                       <button onClick={() => {
-                          const url = `${window.location.origin}/#/report/${job.id}`;
-                          navigator.clipboard.writeText(url);
-                          alert("Evidence link secured to clipboard.");
-                       }} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
+                       <button onClick={() => setShowShareModal(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
                           <span className="material-symbols-outlined text-sm font-black">share</span>
-                          Public Evidence Link
+                          Share Evidence Link
                        </button>
                     </div>
                  </div>
@@ -313,6 +310,43 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
            </aside>
         )}
       </div>
+      {showShareModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowShareModal(false)}>
+          <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center space-y-3">
+              <div className="bg-primary/20 size-16 rounded-[2.5rem] flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-primary text-4xl font-black">share</span>
+              </div>
+              <h3 className="text-2xl font-black text-white tracking-tighter uppercase">Share Evidence Report</h3>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl flex items-center justify-center">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/#/report/${job.id}`)}`}
+                alt="QR Code"
+                className="w-48 h-48"
+              />
+            </div>
+
+            <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+              <p className="text-xs font-mono text-white break-all text-center">{window.location.origin}/#/report/{job.id}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/#/report/${job.id}`);
+                alert('Link copied to clipboard!');
+              }} className="w-full py-4 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-sm font-black">content_copy</span>
+                Copy Link
+              </button>
+              <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

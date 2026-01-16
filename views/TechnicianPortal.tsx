@@ -18,7 +18,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     }
   }, [job?.status, navigate]);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => {
+    // Restore progress from localStorage
+    const saved = localStorage.getItem(`jobproof_progress_${jobId}`);
+    return saved ? parseInt(saved) : 0;
+  });
   const [photos, setPhotos] = useState<Photo[]>(job?.photos || []);
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map()); // Cache for IndexedDB photo data
   const [checklist, setChecklist] = useState<SafetyCheck[]>(job?.safetyChecklist || [
@@ -42,6 +46,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
+
+  // Auto-save progress: Save step to localStorage
+  useEffect(() => {
+    if (jobId && step < 5) {
+      localStorage.setItem(`jobproof_progress_${jobId}`, step.toString());
+    } else if (jobId && step === 5) {
+      // Clear progress on completion
+      localStorage.removeItem(`jobproof_progress_${jobId}`);
+    }
+  }, [step, jobId]);
 
   // Load photos from IndexedDB on mount
   useEffect(() => {
@@ -300,14 +314,100 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
-            <div key={label} className="flex-1 space-y-2">
-               <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
-               <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
+        {step > 0 && (
+          <div className="flex gap-2">
+            {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
+              <div key={label} className="flex-1 space-y-2">
+                 <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
+                 <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {step === 0 && (
+          <div className="space-y-8 animate-in">
+            <header className="space-y-3 text-center">
+               <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
+               </div>
+               <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-white">Job Assignment</h2>
+               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review job details before starting the verification protocol.</p>
+            </header>
+
+            <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
+              <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Protocol Details</p>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Service Description</p>
+                  <p className="text-2xl font-black text-white uppercase tracking-tight">{job.title}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Client</p>
+                    <p className="text-sm font-bold text-white uppercase">{job.client}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reference</p>
+                    <p className="text-sm font-mono text-primary font-black">{job.id}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Location</p>
+                  <div className="bg-slate-800 p-4 rounded-2xl border border-white/5">
+                    <p className="text-sm font-bold text-white uppercase tracking-tight leading-relaxed">{job.address}</p>
+                  </div>
+                </div>
+
+                {job.notes && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Special Instructions</p>
+                    <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
+                      <p className="text-sm text-white uppercase tracking-tight leading-relaxed">{job.notes}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Requirements</p>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
+                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Location verification via GPS + what3words</p>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
+                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Safety checklist completion required</p>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
+                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Photo evidence capture (Before/During/After)</p>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
+                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Client signature for completion seal</p>
+                </li>
+              </ul>
+            </div>
+
+            <button
+              onClick={() => setStep(1)}
+              className="w-full py-7 bg-primary rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase"
+            >
+              <span className="material-symbols-outlined text-3xl font-black">play_arrow</span>
+              Start Protocol
+            </button>
+          </div>
+        )}
 
         {step === 1 && (
           <div className="space-y-8 animate-in">
