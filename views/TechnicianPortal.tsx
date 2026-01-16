@@ -18,7 +18,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     }
   }, [job?.status, navigate]);
 
-  const [step, setStep] = useState(0); // Start with overview screen
+  const [step, setStep] = useState(() => {
+    // Restore progress from localStorage
+    const saved = localStorage.getItem(`jobproof_progress_${jobId}`);
+    return saved ? parseInt(saved) : 0;
+  });
   const [photos, setPhotos] = useState<Photo[]>(job?.photos || []);
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map()); // Cache for IndexedDB photo data
   const [checklist, setChecklist] = useState<SafetyCheck[]>(job?.safetyChecklist || [
@@ -42,6 +46,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
+
+  // Auto-save progress: Save step to localStorage
+  useEffect(() => {
+    if (jobId && step < 5) {
+      localStorage.setItem(`jobproof_progress_${jobId}`, step.toString());
+    } else if (jobId && step === 5) {
+      // Clear progress on completion
+      localStorage.removeItem(`jobproof_progress_${jobId}`);
+    }
+  }, [step, jobId]);
 
   // Load photos from IndexedDB on mount
   useEffect(() => {

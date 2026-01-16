@@ -71,10 +71,17 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
     setShowSuccessModal(true);
   };
 
+  const getMagicLink = () => `${window.location.origin}/#/track/${createdJobId}`;
+
   const copyMagicLink = () => {
-    const magicLink = `${window.location.origin}/#/track/${createdJobId}`;
-    navigator.clipboard.writeText(magicLink);
+    navigator.clipboard.writeText(getMagicLink());
     alert('Magic link copied to clipboard! Send this to your technician.');
+  };
+
+  const getQRCodeDataURL = () => {
+    // Generate QR code using Google Chart API (no library needed)
+    const url = encodeURIComponent(getMagicLink());
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${url}`;
   };
 
   const selectedClient = clients.find(c => c.id === formData.clientId);
@@ -171,15 +178,25 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
                 <p className="text-slate-400 text-sm font-medium">Protocol <span className="font-mono text-primary">{createdJobId}</span> is now active. Send the magic link below to your technician.</p>
               </div>
 
-              <div className="bg-slate-800/50 rounded-3xl p-6 space-y-4 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technician Magic Link</p>
-                  <span className="material-symbols-outlined text-primary text-sm font-black">link</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 bg-slate-800/50 rounded-3xl p-6 space-y-4 border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technician Magic Link</p>
+                    <span className="material-symbols-outlined text-primary text-sm font-black">link</span>
+                  </div>
+                  <div className="bg-slate-950 rounded-2xl p-4 border border-white/5">
+                    <p className="text-xs font-mono text-white break-all">{getMagicLink()}</p>
+                  </div>
+                  <p className="text-[9px] text-slate-500 uppercase tracking-tight">This link provides browser-based access. No app installation required.</p>
                 </div>
-                <div className="bg-slate-950 rounded-2xl p-4 border border-white/5">
-                  <p className="text-xs font-mono text-white break-all">{window.location.origin}/#/track/{createdJobId}</p>
+
+                <div className="bg-slate-800/50 rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center space-y-3">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">QR Code</p>
+                  <div className="bg-white p-3 rounded-2xl">
+                    <img src={getQRCodeDataURL()} alt="QR Code" className="w-32 h-32" />
+                  </div>
+                  <p className="text-[8px] text-slate-500 uppercase tracking-tight text-center">Scan to access</p>
                 </div>
-                <p className="text-[9px] text-slate-500 uppercase tracking-tight">This link provides browser-based access. No app installation required.</p>
               </div>
 
               <div className="flex flex-col gap-3">
