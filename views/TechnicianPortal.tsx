@@ -4,6 +4,8 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { saveMedia, getMedia } from '../db';
+import { syncJobToSupabase, addToSyncQueue } from '../lib/syncQueue';
+import { isSupabaseAvailable } from '../lib/supabase';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { jobId } = useParams();
@@ -18,30 +20,75 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     }
   }, [job?.status, navigate]);
 
+  // Check IndexedDB availability on mount
+  useEffect(() => {
+    const checkIndexedDB = async () => {
+      try {
+        if (!window.indexedDB) {
+          alert('Critical: Your browser does not support offline storage. Photos and signatures cannot be saved. Please use a modern browser (Chrome, Firefox, Safari, Edge).');
+          return;
+        }
+        // Test if we can actually use IndexedDB (private mode check)
+        const testKey = 'indexeddb_test';
+        await saveMedia(testKey, 'test');
+        await getMedia(testKey);
+      } catch (error) {
+        console.error('IndexedDB availability check failed:', error);
+        alert('Warning: Offline storage is not available. This may happen in private browsing mode. Photos and signatures may not be saved properly.');
+      }
+    };
+    checkIndexedDB();
+  }, []);
+
+  // Helper functions for draft state persistence
+  const getDraftState = () => {
+    try {
+      const saved = localStorage.getItem(`jobproof_draft_${jobId}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveDraftState = (state: any) => {
+    try {
+      localStorage.setItem(`jobproof_draft_${jobId}`, JSON.stringify(state));
+    } catch (error) {
+      console.error('Failed to save draft state:', error);
+    }
+  };
+
+  const clearDraftState = () => {
+    localStorage.removeItem(`jobproof_draft_${jobId}`);
+    localStorage.removeItem(`jobproof_progress_${jobId}`);
+  };
+
+  const draft = getDraftState();
+
   const [step, setStep] = useState(() => {
     // Restore progress from localStorage
     const saved = localStorage.getItem(`jobproof_progress_${jobId}`);
-    return saved ? parseInt(saved) : 0;
+    return saved ? parseInt(saved) : (draft?.step || 0);
   });
-  const [photos, setPhotos] = useState<Photo[]>(job?.photos || []);
+  const [photos, setPhotos] = useState<Photo[]>(draft?.photos || job?.photos || []);
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map()); // Cache for IndexedDB photo data
-  const [checklist, setChecklist] = useState<SafetyCheck[]>(job?.safetyChecklist || [
+  const [checklist, setChecklist] = useState<SafetyCheck[]>(draft?.checklist || job?.safetyChecklist || [
     { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
     { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
     { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
     { id: 'sc4', label: 'Area Clear of Bystanders', checked: false, required: true }
   ]);
-  const [notes, setNotes] = useState(job?.notes || '');
+  const [notes, setNotes] = useState(draft?.notes || job?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [localSyncStatus, setLocalSyncStatus] = useState<SyncStatus>(job?.syncStatus || 'synced');
-  const [signerName, setSignerName] = useState(job?.signerName || '');
-  const [signerRole, setSignerRole] = useState(job?.signerRole || 'Client');
+  const [signerName, setSignerName] = useState(draft?.signerName || job?.signerName || '');
+  const [signerRole, setSignerRole] = useState(draft?.signerRole || job?.signerRole || 'Client');
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
-  const [w3w, setW3w] = useState(job?.w3w || '');
-  const [coords, setCoords] = useState<{lat?: number, lng?: number}>({ lat: job?.lat, lng: job?.lng });
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>(draft?.locationStatus || 'idle');
+  const [w3w, setW3w] = useState(draft?.w3w || job?.w3w || '');
+  const [coords, setCoords] = useState<{lat?: number, lng?: number}>(draft?.coords || { lat: job?.lat, lng: job?.lng });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,10 +99,27 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     if (jobId && step < 5) {
       localStorage.setItem(`jobproof_progress_${jobId}`, step.toString());
     } else if (jobId && step === 5) {
-      // Clear progress on completion
-      localStorage.removeItem(`jobproof_progress_${jobId}`);
+      // Clear progress and draft on completion
+      clearDraftState();
     }
   }, [step, jobId]);
+
+  // Auto-save draft state: Persist all form data on change
+  useEffect(() => {
+    if (jobId && step < 5 && step > 0) {
+      saveDraftState({
+        step,
+        photos,
+        checklist,
+        notes,
+        signerName,
+        signerRole,
+        locationStatus,
+        w3w,
+        coords
+      });
+    }
+  }, [step, photos, checklist, notes, signerName, signerRole, locationStatus, w3w, coords, jobId]);
 
   // Load photos from IndexedDB on mount
   useEffect(() => {
@@ -74,17 +138,40 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   const triggerSync = useCallback(async (data: Job) => {
     if (!navigator.onLine) return;
-    setIsSyncing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      onUpdateJob({ 
-        ...data, 
-        syncStatus: 'synced', 
-        lastUpdated: Date.now(),
-        photos: data.photos.map(p => ({ ...p, syncStatus: 'synced' }))
+
+    // If Supabase not configured, run in offline-only mode
+    if (!isSupabaseAvailable()) {
+      console.log('Running in offline-only mode (Supabase not configured)');
+      onUpdateJob({
+        ...data,
+        syncStatus: 'synced',
+        lastUpdated: Date.now()
       });
       setLocalSyncStatus('synced');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      // Sync to Supabase (uploads photos, signature, and job data)
+      const success = await syncJobToSupabase(data);
+
+      if (success) {
+        onUpdateJob({
+          ...data,
+          syncStatus: 'synced',
+          lastUpdated: Date.now(),
+          photos: data.photos.map(p => ({ ...p, syncStatus: 'synced' }))
+        });
+        setLocalSyncStatus('synced');
+      } else {
+        // Add to retry queue
+        addToSyncQueue(data);
+        setLocalSyncStatus('failed');
+      }
     } catch (error) {
+      console.error('Sync error:', error);
+      addToSyncQueue(data);
       setLocalSyncStatus('failed');
     } finally {
       setIsSyncing(false);
@@ -179,33 +266,38 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
     const reader = new FileReader();
     reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      const photoId = Math.random().toString(36).substr(2, 9);
-      const mediaKey = `media_${photoId}`;
+      try {
+        const dataUrl = reader.result as string;
+        const photoId = Math.random().toString(36).substr(2, 9);
+        const mediaKey = `media_${photoId}`;
 
-      // Store full Base64 in IndexedDB
-      await saveMedia(mediaKey, dataUrl);
+        // Store full Base64 in IndexedDB
+        await saveMedia(mediaKey, dataUrl);
 
-      // Store only IndexedDB key reference in photo object for localStorage
-      const newPhoto: Photo = {
-        id: photoId,
-        url: mediaKey, // Store key, not full Base64
-        timestamp: new Date().toISOString(),
-        verified: true,
-        syncStatus: 'pending',
-        type: activePhotoType,
-        w3w: w3w || undefined,
-        lat: coords.lat,
-        lng: coords.lng,
-        isIndexedDBRef: true // Flag to indicate this is a reference key
-      };
-      const nextPhotos = [...photos, newPhoto];
-      setPhotos(nextPhotos);
+        // Store only IndexedDB key reference in photo object for localStorage
+        const newPhoto: Photo = {
+          id: photoId,
+          url: mediaKey, // Store key, not full Base64
+          timestamp: new Date().toISOString(),
+          verified: true,
+          syncStatus: 'pending',
+          type: activePhotoType,
+          w3w: w3w || undefined,
+          lat: coords.lat,
+          lng: coords.lng,
+          isIndexedDBRef: true // Flag to indicate this is a reference key
+        };
+        const nextPhotos = [...photos, newPhoto];
+        setPhotos(nextPhotos);
 
-      // Cache the dataUrl for immediate display
-      setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
+        // Cache the dataUrl for immediate display
+        setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
 
-      writeLocalDraft({ photos: nextPhotos });
+        writeLocalDraft({ photos: nextPhotos });
+      } catch (error) {
+        console.error('Failed to save photo to IndexedDB:', error);
+        alert('Failed to save photo. Your device storage may be full. Please free up space and try again.');
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -243,7 +335,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
     // Store full signature Base64 in IndexedDB
     if (signatureData && signatureKey) {
-      await saveMedia(signatureKey, signatureData);
+      try {
+        await saveMedia(signatureKey, signatureData);
+      } catch (error) {
+        console.error('Failed to save signature to IndexedDB:', error);
+        alert('Failed to save signature. Your device storage may be full. Please free up space and try again.');
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     // Store only IndexedDB key reference in job object for localStorage
@@ -269,7 +368,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     }, 1500);
   };
 
-  if (!job) return null;
+  if (!job) {
+    return (
+      <Layout isAdmin={false}>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
+          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/5 shadow-2xl relative">
+            <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
+            <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
+          </div>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+        </div>
+      </Layout>
+    );
+  }
 
   if (step === 5) {
     return (
