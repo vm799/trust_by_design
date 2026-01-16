@@ -18,6 +18,7 @@ import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
 import InvoicesView from './views/InvoicesView';
+import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 
@@ -110,6 +111,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/home" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
+        <Route path="/roadmap" element={<RoadmapView />} />
         <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
         
