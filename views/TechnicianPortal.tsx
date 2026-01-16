@@ -4,6 +4,8 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { saveMedia, getMedia } from '../db';
+import { syncJobToSupabase, addToSyncQueue } from '../lib/syncQueue';
+import { isSupabaseAvailable } from '../lib/supabase';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { jobId } = useParams();
@@ -136,17 +138,40 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   const triggerSync = useCallback(async (data: Job) => {
     if (!navigator.onLine) return;
-    setIsSyncing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      onUpdateJob({ 
-        ...data, 
-        syncStatus: 'synced', 
-        lastUpdated: Date.now(),
-        photos: data.photos.map(p => ({ ...p, syncStatus: 'synced' }))
+
+    // If Supabase not configured, run in offline-only mode
+    if (!isSupabaseAvailable()) {
+      console.log('Running in offline-only mode (Supabase not configured)');
+      onUpdateJob({
+        ...data,
+        syncStatus: 'synced',
+        lastUpdated: Date.now()
       });
       setLocalSyncStatus('synced');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      // Sync to Supabase (uploads photos, signature, and job data)
+      const success = await syncJobToSupabase(data);
+
+      if (success) {
+        onUpdateJob({
+          ...data,
+          syncStatus: 'synced',
+          lastUpdated: Date.now(),
+          photos: data.photos.map(p => ({ ...p, syncStatus: 'synced' }))
+        });
+        setLocalSyncStatus('synced');
+      } else {
+        // Add to retry queue
+        addToSyncQueue(data);
+        setLocalSyncStatus('failed');
+      }
     } catch (error) {
+      console.error('Sync error:', error);
+      addToSyncQueue(data);
       setLocalSyncStatus('failed');
     } finally {
       setIsSyncing(false);

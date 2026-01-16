@@ -19,6 +19,7 @@ import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
 import InvoicesView from './views/InvoicesView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
+import { startSyncWorker } from './lib/syncQueue';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -77,6 +78,12 @@ const App: React.FC = () => {
     localStorage.setItem('jobproof_auth', isAuthenticated.toString());
     localStorage.setItem('jobproof_onboarding_v4', hasSeenOnboarding.toString());
   }, [jobs, invoices, clients, technicians, templates, user, isAuthenticated, hasSeenOnboarding]);
+
+  // Start background sync worker on app mount
+  useEffect(() => {
+    startSyncWorker();
+    console.log('🚀 JobProof v2 - Background sync worker started');
+  }, []);
 
   const addJob = (newJob: Job) => setJobs(prev => [newJob, ...prev]);
   const updateJob = (updatedJob: Job) => setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
