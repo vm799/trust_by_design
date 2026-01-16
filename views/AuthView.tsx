@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { signIn, signUp, signInWithGoogle, type SignUpData } from '../lib/auth';
 
 interface AuthViewProps {
   type: 'login' | 'signup';
@@ -10,14 +10,78 @@ interface AuthViewProps {
 const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [fullName, setFullName] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      onAuth();
-      navigate('/admin');
-    }, 1200);
+    setError(null);
+
+    try {
+      if (type === 'signup') {
+        // Sign up with workspace creation
+        const signUpData: SignUpData = {
+          email,
+          password,
+          workspaceName,
+          fullName: fullName || undefined
+        };
+
+        const result = await signUp(signUpData);
+
+        if (!result.success) {
+          setError(result.error?.message || 'Sign up failed');
+          setLoading(false);
+          return;
+        }
+
+        // Success - check email for verification
+        alert('Account created! Please check your email to verify your account.');
+        navigate('/auth/login');
+      } else {
+        // Sign in
+        const result = await signIn(email, password);
+
+        if (!result.success) {
+          setError(result.error?.message || 'Sign in failed');
+          setLoading(false);
+          return;
+        }
+
+        // Success - call onAuth callback and navigate
+        onAuth();
+        navigate('/admin');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await signInWithGoogle();
+
+      if (!result.success) {
+        setError(result.error?.message || 'Google sign in failed');
+        setLoading(false);
+        return;
+      }
+
+      // OAuth redirect will happen automatically
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign in failed');
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,52 +96,161 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             <div className="bg-primary size-12 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30 group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined text-white text-2xl font-black">verified</span>
             </div>
-            <span className="text-3xl font-black tracking-tighter text-white uppercase">JobProof</span>
+            <span className="text-3xl font-black tracking-tighter text-white uppercase">Trust by Design</span>
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-              {type === 'login' ? 'Access Control' : 'Join the Protocol'}
+              {type === 'login' ? 'Access Control' : 'Create Workspace'}
             </h2>
             <p className="text-slate-500 text-sm font-medium">
-              {type === 'login' ? 'Welcome back to the operations hub.' : 'Professional field-service proof infrastructure.'}
+              {type === 'login' ? 'Welcome back to the operations hub.' : 'Start capturing verifiable evidence.'}
             </p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
-          {type === 'signup' && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organization Name</label>
-              <input required type="text" placeholder="e.g. Sterling Field Ops" className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" />
+          {error && (
+            <div className="bg-danger/10 border border-danger/20 rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-danger text-sm">error</span>
+                <p className="text-danger text-xs font-bold uppercase">{error}</p>
+              </div>
             </div>
           )}
+
+          {type === 'signup' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organization Name *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Sterling Field Ops"
+                  className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                  value={workspaceName}
+                  onChange={e => setWorkspaceName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Your Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Alex Sterling"
+                  className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Admin Email</label>
-            <input required type="email" placeholder="alex@company.com" className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
-              {type === 'login' && <button type="button" className="text-[10px] font-black text-primary hover:underline uppercase">Forgot?</button>}
-            </div>
-            <input required type="password" placeholder="••••••••" className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" />
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              {type === 'signup' ? 'Admin Email *' : 'Email *'}
+            </label>
+            <input
+              required
+              type="email"
+              placeholder="alex@company.com"
+              className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
           </div>
 
-          <button 
-            type="submit" 
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password *</label>
+              {type === 'login' && (
+                <button type="button" className="text-[10px] font-black text-primary hover:underline uppercase">
+                  Forgot?
+                </button>
+              )}
+            </div>
+            <input
+              required
+              type="password"
+              placeholder="••••••••"
+              className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              minLength={6}
+            />
+            {type === 'signup' && (
+              <p className="text-slate-500 text-[10px] font-medium">Minimum 6 characters</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
             disabled={loading}
-            className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center"
+            className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : (type === 'login' ? 'Enter Hub' : 'Initialize Hub')}
+            {loading ? (
+              <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              type === 'login' ? 'Enter Hub' : 'Create Workspace'
+            )}
+          </button>
+
+          {/* Google OAuth (Optional) */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-900 px-2 text-slate-500 font-black">Or continue with</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="size-5" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Google
           </button>
         </form>
 
         <p className="text-center text-xs text-slate-500 font-black uppercase tracking-widest">
-          {type === 'login' ? "New to the platform?" : "Already verified?"}
+          {type === 'login' ? "New to the platform?" : "Already have an account?"}
           <Link to={type === 'login' ? '/auth/signup' : '/auth/login'} className="text-primary font-black ml-2 hover:underline">
-            {type === 'login' ? 'Join Now' : 'Sign In'}
+            {type === 'login' ? 'Create Workspace' : 'Sign In'}
           </Link>
         </p>
+
+        {/* Legal Disclaimer (Phase C.5) */}
+        <div className="bg-slate-900 border border-warning/20 rounded-2xl p-4">
+          <div className="flex items-start gap-2">
+            <span className="material-symbols-outlined text-warning text-sm mt-0.5">info</span>
+            <div className="space-y-1">
+              <p className="text-warning text-[10px] font-black uppercase">Legal Notice</p>
+              <p className="text-slate-400 text-[10px] leading-relaxed">
+                Trust by Design is a technical evidence capture tool, not a legal authority.
+                We do not certify admissibility or provide legal advice.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
