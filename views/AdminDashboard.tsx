@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
 import { Job } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { getMedia } from '../db';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -17,6 +18,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, o
   const sealedJobs = jobs.filter(j => j.status === 'Submitted');
   const syncIssues = jobs.filter(j => j.syncStatus === 'failed').length;
   const pendingSignatures = activeJobs.filter(j => !j.signature).length;
+
+  // State for IndexedDB photo previews
+  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
+
+  // Load photo thumbnails from IndexedDB
+  useEffect(() => {
+    const loadPhotoThumbnails = async () => {
+      const loadedUrls = new Map<string, string>();
+
+      for (const job of jobs) {
+        for (const photo of job.photos.slice(0, 3)) { // Only load first 3 for previews
+          if (photo.isIndexedDBRef && !loadedUrls.has(photo.id)) {
+            try {
+              const dataUrl = await getMedia(photo.url);
+              if (dataUrl) {
+                loadedUrls.set(photo.id, dataUrl);
+              }
+            } catch (error) {
+              console.error('Failed to load photo thumbnail:', error);
+            }
+          }
+        }
+      }
+
+      setPhotoDataUrls(loadedUrls);
+    };
+
+    if (jobs.length > 0) {
+      loadPhotoThumbnails();
+    }
+  }, [jobs]);
 
   return (
     <Layout>
@@ -78,11 +110,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, o
                       </td>
                       <td className="px-8 py-6">
                          <div className="flex -space-x-2">
-                           {job.photos.slice(0, 3).map((p, i) => (
-                             <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
-                               <img src={p.url} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
-                             </div>
-                           ))}
+                           {job.photos.slice(0, 3).map((p, i) => {
+                             const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
+                             return (
+                               <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
+                                 {displayUrl ? (
+                                   <img src={displayUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="Evidence" />
+                                 ) : (
+                                   <div className="w-full h-full flex items-center justify-center">
+                                     <span className="material-symbols-outlined text-[10px] text-slate-600">image</span>
+                                   </div>
+                                 )}
+                               </div>
+                             );
+                           })}
                            {job.photos.length > 3 && (
                              <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">
                                +{job.photos.length - 3}

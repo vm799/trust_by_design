@@ -14,6 +14,8 @@ interface CreateJobProps {
 const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, templates }) => {
   const navigate = useNavigate();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdJobId, setCreatedJobId] = useState<string>('');
   const [formData, setFormData] = useState({
     title: '',
     clientId: '',
@@ -62,9 +64,17 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
       syncStatus: 'synced',
       lastUpdated: Date.now()
     };
-    
+
     onAddJob(newJob);
-    navigate('/admin');
+    setCreatedJobId(newId);
+    setShowConfirmModal(false);
+    setShowSuccessModal(true);
+  };
+
+  const copyMagicLink = () => {
+    const magicLink = `${window.location.origin}/#/track/${createdJobId}`;
+    navigator.clipboard.writeText(magicLink);
+    alert('Magic link copied to clipboard! Send this to your technician.');
   };
 
   const selectedClient = clients.find(c => c.id === formData.clientId);
@@ -146,6 +156,53 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
                 <button onClick={() => setShowConfirmModal(false)} className="w-full py-4 bg-transparent text-slate-400 font-black uppercase tracking-widest hover:text-white transition-all">Cancel Manifest</button>
               </div>
               <p className="text-center text-[8px] text-slate-600 font-black uppercase tracking-[0.4em]">Protocol Authorization Alpha-2</p>
+            </div>
+          </div>
+        )}
+
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in">
+            <div className="bg-slate-900 border border-white/10 p-12 rounded-[3.5rem] max-w-2xl w-full shadow-2xl space-y-8">
+              <div className="text-center space-y-4">
+                <div className="bg-success/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-success text-5xl font-black">check_circle</span>
+                </div>
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Job Dispatched Successfully</h3>
+                <p className="text-slate-400 text-sm font-medium">Protocol <span className="font-mono text-primary">{createdJobId}</span> is now active. Send the magic link below to your technician.</p>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-3xl p-6 space-y-4 border border-white/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technician Magic Link</p>
+                  <span className="material-symbols-outlined text-primary text-sm font-black">link</span>
+                </div>
+                <div className="bg-slate-950 rounded-2xl p-4 border border-white/5">
+                  <p className="text-xs font-mono text-white break-all">{window.location.origin}/#/track/{createdJobId}</p>
+                </div>
+                <p className="text-[9px] text-slate-500 uppercase tracking-tight">This link provides browser-based access. No app installation required.</p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button onClick={copyMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3">
+                  <span className="material-symbols-outlined font-black">content_copy</span>
+                  Copy Magic Link
+                </button>
+                <button onClick={() => navigate('/admin')} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10">
+                  Return to Operations Hub
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 pt-4 border-t border-white/5">
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Assigned To</p>
+                  <p className="text-xs font-bold text-white uppercase">{selectedTech?.name}</p>
+                </div>
+                <div className="size-1 bg-slate-700 rounded-full"></div>
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Client</p>
+                  <p className="text-xs font-bold text-white uppercase">{selectedClient?.name}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
