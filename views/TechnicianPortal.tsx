@@ -197,9 +197,34 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   };
 
   const handleFinalSeal = async () => {
+    // Critical Validation: Enforce audit spec requirements
+    if (photos.length === 0) {
+      alert('Evidence Capture Required: At least one photo must be captured before sealing the job.');
+      return;
+    }
+
+    if (!signerName || signerName.trim() === '') {
+      alert('Signatory Identification Required: Please enter the full legal name of the person signing.');
+      return;
+    }
+
     setIsSubmitting(true);
     const canvas = canvasRef.current;
     const signatureData = canvas?.toDataURL() || null;
+
+    // Validate that signature canvas is not empty
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const pixelData = ctx?.getImageData(0, 0, canvas.width, canvas.height).data;
+      const isEmpty = pixelData ? !Array.from(pixelData).some(channel => channel !== 0) : true;
+
+      if (isEmpty) {
+        alert('Signature Required: Please sign the canvas before submitting.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const signatureKey = signatureData ? `sig_${job?.id}` : null;
 
     // Store full signature Base64 in IndexedDB
@@ -435,10 +460,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
             <div className="flex gap-4">
                <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
-               <button 
+               <button
                  disabled={photos.length === 0}
-                 onClick={() => setStep(3)} 
-                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30"
+                 onClick={() => setStep(3)}
+                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
                >
                  Authorize Seal
                </button>
@@ -477,11 +502,24 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               </div>
             </div>
 
+            {photos.length === 0 && (
+              <div className="bg-warning/10 border border-warning/30 rounded-[2rem] p-6 space-y-2 animate-in">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-warning text-xl font-black">warning</span>
+                  <div>
+                    <p className="text-[11px] font-black text-warning uppercase tracking-tight">Evidence Required</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">Return to Evidence Collection to capture at least one photo before proceeding to sign-off.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4">
                <button onClick={() => setStep(2)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
-               <button 
-                 onClick={() => setStep(4)} 
-                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30"
+               <button
+                 disabled={photos.length === 0}
+                 onClick={() => setStep(4)}
+                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
                >
                  Capture Sign-Off
                </button>
@@ -585,10 +623,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               </button>
             </div>
 
-            <button 
+            <button
               onClick={handleFinalSeal}
-              disabled={isSubmitting || !signerName}
-              className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase"
+              disabled={isSubmitting || !signerName || photos.length === 0}
+              className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                  <div className="size-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
