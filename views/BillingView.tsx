@@ -16,11 +16,11 @@ const BillingView: React.FC = () => {
             <section className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-6 shadow-xl">
               <div className="flex justify-between items-start">
                  <div>
-                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Active License</p>
-                   <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Enterprise Protocol</h3>
-                   <p className="text-slate-400 text-sm font-medium">Billed annually • Renewal Jan 2025</p>
+                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Current Status</p>
+                   <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Free Beta Access</h3>
+                   <p className="text-slate-400 text-sm font-medium">Early access program • No subscription required</p>
                  </div>
-                 <span className="bg-success/10 text-success text-[10px] font-black px-3 py-1 rounded-full border border-success/20">OPERATIONAL</span>
+                 <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full border border-primary/20">FREE BETA</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -39,9 +39,9 @@ const BillingView: React.FC = () => {
           <aside className="space-y-6">
              <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-6">
                 <h3 className="font-black text-white uppercase text-xs tracking-widest">Protocol Usage</h3>
-                <div className="space-y-4">
-                   <UsageItem label="Reports Sealed" current={142} total={500} />
-                   <UsageItem label="Evidence Storage" current={4.2} total={10} unit="GB" />
+                <div className="space-y-4 text-center py-6">
+                   <p className="text-slate-500 text-sm font-medium">Usage tracking will be available when billing is implemented</p>
+                   <p className="text-slate-600 text-xs uppercase tracking-widest">(Phase E.1 - Subscriptions)</p>
                 </div>
              </div>
           </aside>
@@ -50,20 +50,5 @@ const BillingView: React.FC = () => {
     </Layout>
   );
 };
-
-const UsageItem = ({ label, current, total, unit = "" }: any) => {
-  const percent = (current / total) * 100;
-  return (
-    <div className="space-y-2">
-       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-          <span className="text-slate-500">{label}</span>
-          <span className="text-white">{current}{unit} / {total}{unit}</span>
-       </div>
-       <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-          <div className="h-full bg-primary" style={{ width: `${percent}%` }}></div>
-       </div>
-    </div>
-  );
-}
 
 export default BillingView;
