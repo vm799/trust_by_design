@@ -15,7 +15,6 @@ const LandingPage: React.FC = () => {
             <span className="text-2xl font-black tracking-tighter text-white uppercase">JobProof</span>
           </div>
           <div className="hidden md:flex items-center gap-10 text-sm font-black text-slate-400">
-            <a href="#product" className="hover:text-white transition-colors uppercase tracking-widest">Technology</a>
             <a href="#pricing" className="hover:text-white transition-colors uppercase tracking-widest">Pricing</a>
             <Link to="/admin" className="text-white bg-white/5 border border-white/10 px-6 py-2.5 rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest">Control Hub</Link>
           </div>

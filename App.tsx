@@ -11,7 +11,6 @@ import ClientsView from './views/ClientsView';
 import TechniciansView from './views/TechniciansView';
 import TemplatesView from './views/TemplatesView';
 import AuditReport from './views/docs/AuditReport';
-import BillingView from './views/BillingView';
 import HelpCenter from './views/HelpCenter';
 import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
@@ -279,7 +278,6 @@ const App: React.FC = () => {
         <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/billing" element={isAuthenticated ? <BillingView /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth/login" replace />} />
 

@@ -16,24 +16,24 @@ const PricingView: React.FC = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           <PriceCard 
-             tier="Entry" 
-             price="0" 
-             desc="Trial the verification protocol for your solo operations." 
-             features={['5 Dispatches / Mo', 'Email Support', 'Mobile Hub', 'Standard Reports']} 
+           <PriceCard
+             tier="Solo"
+             price="0"
+             desc="Perfect for individual contractors testing the platform."
+             features={['5 Jobs / Month', 'Email Support', 'Mobile Access', 'Standard Reports']}
            />
-           <PriceCard 
-             tier="Operational" 
-             price="49" 
-             desc="The primary engine for small field teams." 
-             features={['Unlimited Dispatches', 'Custom Branding', 'Priority Support', 'Audit Logs', '3 Admin Hubs']} 
+           <PriceCard
+             tier="Team"
+             price="49"
+             desc="Built for growing field service teams."
+             features={['Unlimited Jobs', 'Custom Branding', 'Priority Support', 'Audit Logs', '5 Team Members']}
              active
            />
-           <PriceCard 
-             tier="Enterprise" 
-             price="199" 
-             desc="Maximum verification for large-scale ops." 
-             features={['Unlimited Admins', 'White-label Reports', 'Success Manager', 'API Access', 'Legal DPA']} 
+           <PriceCard
+             tier="Agency"
+             price="199"
+             desc="Enterprise-grade verification for large operations."
+             features={['Unlimited Users', 'White-label Reports', 'Dedicated Support', 'API Access', 'Legal SLA']}
            />
         </div>
       </div>
