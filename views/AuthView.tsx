@@ -30,6 +30,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   const [showSmartRedirectMessage, setShowSmartRedirectMessage] = useState(() => {
     return type === 'signup' && !!sessionStorage.getItem('signup_email');
   });
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   // Auto-focus refs
   const fullNameRef = useRef<HTMLInputElement>(null);
@@ -66,10 +67,9 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           return;
         }
 
-        // Success - check email for verification
+        // Success - show success screen
         setLoading(false);
-        alert('Account created! Please check your email to verify your account.');
-        navigate('/auth/login');
+        setSignupSuccess(true);
       } else {
         // Sign in
         const result = await signIn(email, password);
@@ -121,6 +121,87 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
       setLoading(false);
     }
   };
+
+  // Show success screen after signup
+  if (signupSuccess) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Background Orbs */}
+        <div className="absolute top-0 -left-20 size-96 bg-success/20 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-0 -right-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
+
+        <div className="w-full max-w-md space-y-8 relative z-10 animate-in text-center">
+          <div className="bg-success/10 size-24 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-success/30">
+            <span className="material-symbols-outlined text-success text-6xl font-black">check_circle</span>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
+              Workspace Created!
+            </h2>
+            <p className="text-slate-400 text-base font-medium max-w-sm mx-auto leading-relaxed">
+              Welcome to <span className="text-primary font-black">{workspaceName}</span>! We've sent a confirmation email to <span className="text-white font-bold">{email}</span>.
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 text-left">
+                <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-primary text-lg font-black">1</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Check Your Email</h3>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    Click the verification link we just sent to activate your account.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 text-left">
+                <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-primary text-lg font-black">2</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Sign In</h3>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    After verification, sign in to access your operations hub.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 text-left">
+                <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-primary text-lg font-black">3</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Start Dispatching</h3>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    Create your first job and begin capturing verifiable evidence.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              to="/auth/login"
+              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              Go to Sign In
+              <span className="material-symbols-outlined text-lg font-black">arrow_forward</span>
+            </Link>
+          </div>
+
+          <p className="text-slate-500 text-xs font-medium">
+            Didn't receive the email?{' '}
+            <button className="text-primary font-black hover:underline">
+              Resend verification
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">

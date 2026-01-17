@@ -38,6 +38,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       email: data.email,
       password: data.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/#/admin`,
         data: {
           full_name: data.fullName,
           workspace_name: data.workspaceName
