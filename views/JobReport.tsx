@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice } from '../types';
 import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
+import LegalDisclaimer from '../components/LegalDisclaimer';
 
 interface JobReportProps {
   jobs: Job[];
@@ -166,13 +167,23 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Service Operator</h3>
                  <p className="text-xl font-black uppercase tracking-tight">{job.technician}</p>
                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                       <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
-                       <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Geo-metadata verified on-site</p>
+                    <div className="flex flex-col gap-1">
+                       <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
+                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                       </div>
+                       <p className="text-[8px] text-slate-500 italic pl-6">
+                          (GPS coordinates recorded, not verified against address)
+                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
-                       <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Identity Authenticated via Hub</p>
+                    <div className="flex flex-col gap-1">
+                       <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
+                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Account Verified (Email)</p>
+                       </div>
+                       <p className="text-[8px] text-slate-500 italic pl-6">
+                          (Account-based identity, not legally verified)
+                       </p>
                     </div>
                  </div>
               </div>
@@ -204,8 +215,8 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                                 <div className="flex justify-between items-center">
                                    <p className="text-[9px] text-slate-400 font-mono uppercase">UTC: {new Date(p.timestamp).toISOString().split('T')[1].substring(0,8)}</p>
                                    <div className="flex items-center gap-1">
-                                      <span className="material-symbols-outlined text-[10px] text-success font-black">verified</span>
-                                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Verified</span>
+                                      <span className="material-symbols-outlined text-[10px] text-slate-500 font-black">location_on</span>
+                                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">GPS Captured</span>
                                    </div>
                                 </div>
                                 <div className="flex flex-col gap-0.5">
@@ -276,6 +287,11 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
               </div>
            </div>
 
+           {/* Legal Disclaimer - Phase C.5 */}
+           <div className="mt-12 relative z-10">
+              <LegalDisclaimer />
+           </div>
+
            <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between items-center text-[9px] font-mono text-slate-300 uppercase tracking-widest relative z-10">
               <p>HASH: {reportHash}</p>
               <p>JOBPROOF V2.4 • GLOBAL INFRASTRUCTURE</p>
@@ -311,7 +327,6 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                     <div className="space-y-3">
                        <StatusLine label="Integrity Check" value="Pass" success />
                        <StatusLine label="Sync Status" value="Vaulted" success />
-                       <StatusLine label="Legal Admissibility" value="High" success />
                     </div>
                  </div>
               </div>
