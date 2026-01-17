@@ -76,7 +76,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       // User is created but workspace failed - they can retry or contact support
       return {
         success: false,
-        error: new Error('Workspace creation failed. Please contact support.')
+        error: new Error(`Workspace creation failed: ${workspaceError.message || workspaceError}. Please contact support at support@jobproof.io`)
       };
     }
 
