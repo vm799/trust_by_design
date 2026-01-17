@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice } from '../types';
 import { getMedia } from '../db';
+import SealBadge from '../components/SealBadge';
 
 interface JobReportProps {
   jobs: Job[];
@@ -136,6 +137,13 @@ const JobReport: React.FC<JobReportProps> = ({ jobs, invoices, onGenerateInvoice
                 <TimelineStep label="Sign-off" time={job.completedAt ? "Authenticated" : "Pending"} status={job.completedAt ? "Sealed" : "Waiting"} icon="verified" active={!!job.completedAt} />
               </div>
            </div>
+
+           {/* Phase C.3: Cryptographic Seal Badge */}
+           {job.sealedAt && (
+             <div className="relative z-10">
+               <SealBadge jobId={job.id} variant="full" />
+             </div>
+           )}
 
            <div className="grid grid-cols-2 gap-12 relative z-10">
               <div className="space-y-3">

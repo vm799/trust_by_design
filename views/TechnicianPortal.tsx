@@ -6,7 +6,8 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { saveMedia, getMedia } from '../db';
 import { syncJobToSupabase, addToSyncQueue } from '../lib/syncQueue';
 import { isSupabaseAvailable } from '../lib/supabase';
-import { validateMagicLink, getJobByToken } from '../lib/db';
+import { validateMagicLink, getJobByToken, updateJob } from '../lib/db';
+import { sealEvidence, canSealJob } from '../lib/sealing';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { token, jobId } = useParams(); // Support both token and legacy jobId
@@ -373,6 +374,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   };
 
   const handleFinalSeal = async () => {
+    if (!job) return;
+
+    // Phase C.3: Validate sealing requirements
+    const sealCheck = canSealJob({ ...job, photos, signature: signerName });
+
+    if (!sealCheck.canSeal) {
+      alert(sealCheck.reason || 'Cannot seal job');
+      return;
+    }
+
     // Critical Validation: Enforce audit spec requirements
     if (photos.length === 0) {
       alert('Evidence Capture Required: At least one photo must be captured before sealing the job.');
@@ -415,14 +426,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       }
     }
 
-    // Store only IndexedDB key reference in job object for localStorage
-    const finalJob: Job = {
-      ...job!,
-      status: 'Submitted',
+    // First, update job with final evidence data
+    const updatedJob: Job = {
+      ...job,
+      status: 'In Progress', // Will be set to 'Submitted' after seal
       photos,
       notes,
-      signature: signatureKey, // Store key, not full Base64
-      signatureIsIndexedDBRef: !!signatureKey, // Flag to indicate reference key
+      signature: signatureKey,
+      signatureIsIndexedDBRef: !!signatureKey,
       signerName,
       signerRole,
       safetyChecklist: checklist,
@@ -430,12 +441,46 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       syncStatus: 'pending',
       lastUpdated: Date.now()
     };
-    onUpdateJob(finalJob);
-    if (navigator.onLine) await triggerSync(finalJob);
-    setTimeout(() => {
+
+    // Update job in database before sealing
+    try {
+      const updateResult = await updateJob(job.id, updatedJob);
+
+      if (!updateResult.success) {
+        console.warn('Failed to update job before sealing, proceeding with local update');
+        onUpdateJob(updatedJob);
+      }
+
+      // Phase C.3: Call server-side cryptographic sealing
+      const sealResult = await sealEvidence(job.id);
+
+      if (!sealResult.success) {
+        alert(`Sealing failed: ${sealResult.error}\n\nJob data has been saved but not sealed. You can try sealing again from the admin dashboard.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Update job with seal metadata
+      const sealedJob: Job = {
+        ...updatedJob,
+        status: 'Submitted',
+        sealedAt: sealResult.sealedAt,
+        evidenceHash: sealResult.evidenceHash,
+        isSealed: true
+      };
+
+      onUpdateJob(sealedJob);
+
+      // Show success
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setStep(5);
+      }, 1000);
+    } catch (error) {
+      console.error('Sealing error:', error);
+      alert('Failed to seal evidence. Please try again or contact support.');
       setIsSubmitting(false);
-      setStep(5);
-    }, 1500);
+    }
   };
 
   // Loading state
