@@ -22,6 +22,7 @@ import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
+import { getJobs, getClients, getTechnicians } from './lib/db';
 import type { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
@@ -45,27 +46,14 @@ const App: React.FC = () => {
     return null;
   });
 
-  // localStorage data (Phase C.2 will migrate to Supabase)
-  const [jobs, setJobs] = useState<Job[]>(() => {
-    const saved = localStorage.getItem('jobproof_jobs_v2');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Data state (Phase C.2: Load from Supabase with localStorage fallback)
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [dataLoading, setDataLoading] = useState(false);
 
-  const [invoices, setInvoices] = useState<Invoice[]>(() => {
-    const saved = localStorage.getItem('jobproof_invoices_v2');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [clients, setClients] = useState<Client[]>(() => {
-    const saved = localStorage.getItem('jobproof_clients_v2');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [technicians, setTechnicians] = useState<Technician[]>(() => {
-    const saved = localStorage.getItem('jobproof_techs_v2');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Templates still in localStorage (Phase D.6 will migrate to Protocols)
   const [templates, setTemplates] = useState<JobTemplate[]>(() => {
     const saved = localStorage.getItem('jobproof_templates_v2');
     return saved ? JSON.parse(saved) : [
@@ -92,9 +80,14 @@ const App: React.FC = () => {
             workspaceName: profile.workspace?.name || 'My Workspace'
           };
           setUser(userProfile);
+
+          // Phase C.2: Load workspace data from Supabase
+          loadWorkspaceData(profile.workspace_id);
         }
       } else {
         setUser(null);
+        // Fallback to localStorage if not authenticated
+        loadLocalStorageData();
       }
 
       setAuthLoading(false);
@@ -102,6 +95,101 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Phase C.2: Load data from Supabase
+  const loadWorkspaceData = async (workspaceId: string) => {
+    setDataLoading(true);
+
+    try {
+      // Load jobs, clients, and technicians in parallel
+      const [jobsResult, clientsResult, techsResult] = await Promise.all([
+        getJobs(workspaceId),
+        getClients(workspaceId),
+        getTechnicians(workspaceId)
+      ]);
+
+      if (jobsResult.success && jobsResult.data) {
+        setJobs(jobsResult.data);
+      } else {
+        console.warn('Failed to load jobs from Supabase, falling back to localStorage:', jobsResult.error);
+        loadLocalStorageJobs();
+      }
+
+      if (clientsResult.success && clientsResult.data) {
+        setClients(clientsResult.data);
+      } else {
+        console.warn('Failed to load clients from Supabase, falling back to localStorage:', clientsResult.error);
+        loadLocalStorageClients();
+      }
+
+      if (techsResult.success && techsResult.data) {
+        setTechnicians(techsResult.data);
+      } else {
+        console.warn('Failed to load technicians from Supabase, falling back to localStorage:', techsResult.error);
+        loadLocalStorageTechnicians();
+      }
+
+      // Invoices still from localStorage (Phase E.1)
+      loadLocalStorageInvoices();
+    } catch (error) {
+      console.error('Error loading workspace data:', error);
+      loadLocalStorageData();
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Fallback: Load from localStorage
+  const loadLocalStorageData = () => {
+    loadLocalStorageJobs();
+    loadLocalStorageClients();
+    loadLocalStorageTechnicians();
+    loadLocalStorageInvoices();
+  };
+
+  const loadLocalStorageJobs = () => {
+    const saved = localStorage.getItem('jobproof_jobs_v2');
+    if (saved) {
+      try {
+        setJobs(JSON.parse(saved));
+      } catch (error) {
+        console.error('Failed to parse jobs from localStorage:', error);
+      }
+    }
+  };
+
+  const loadLocalStorageClients = () => {
+    const saved = localStorage.getItem('jobproof_clients_v2');
+    if (saved) {
+      try {
+        setClients(JSON.parse(saved));
+      } catch (error) {
+        console.error('Failed to parse clients from localStorage:', error);
+      }
+    }
+  };
+
+  const loadLocalStorageTechnicians = () => {
+    const saved = localStorage.getItem('jobproof_techs_v2');
+    if (saved) {
+      try {
+        setTechnicians(JSON.parse(saved));
+      } catch (error) {
+        console.error('Failed to parse technicians from localStorage:', error);
+      }
+    }
+  };
+
+  const loadLocalStorageInvoices = () => {
+    const saved = localStorage.getItem('jobproof_invoices_v2');
+    if (saved) {
+      try {
+        setInvoices(JSON.parse(saved));
+      } catch (error) {
+        console.error('Failed to parse invoices from localStorage:', error);
+      }
+    }
+  };
 
   // Persist localStorage data
   useEffect(() => {
@@ -195,8 +283,8 @@ const App: React.FC = () => {
         <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth/login" replace />} />
         <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth/login" replace />} />
 
-        {/* Technician Entry - Public (Phase C.2 will add token validation) */}
-        <Route path="/track/:jobId" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />
+        {/* Technician Entry - Public (Phase C.2: Token-based access) */}
+        <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />
 
         {/* Public Client Entry - Public */}
         <Route path="/report/:jobId" element={<JobReport jobs={jobs} invoices={invoices} publicView />} />

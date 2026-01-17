@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate } from '../types';
+import { createJob, generateMagicLink } from '../lib/db';
 
 interface CreateJobProps {
   onAddJob: (job: Job) => void;
@@ -16,6 +17,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState<string>('');
+  const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     clientId: '',
@@ -34,44 +37,81 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
     setShowConfirmModal(true);
   };
 
-  const executeDispatch = () => {
+  const executeDispatch = async () => {
     const client = clients.find(c => c.id === formData.clientId);
     const tech = technicians.find(t => t.id === formData.techId);
     if (!client || !tech) return;
 
-    const newId = `JP-${Math.floor(Math.random() * 90000) + 10000}`;
-    // Fix: Add missing safetyChecklist property to comply with Job interface
-    const newJob: Job = {
-      id: newId,
-      title: formData.title,
-      client: client.name,
-      clientId: client.id,
-      technician: tech.name,
-      techId: tech.id,
-      status: 'Pending',
-      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      address: formData.address || client.address,
-      notes: formData.notes,
-      photos: [],
-      signature: null,
-      safetyChecklist: [
-        { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
-        { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
-        { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
-        { id: 'sc4', label: 'Tools & Equipment Visual Inspection', checked: false, required: true }
-      ],
-      templateId: formData.templateId,
-      syncStatus: 'synced',
-      lastUpdated: Date.now()
-    };
+    setIsCreating(true);
 
-    onAddJob(newJob);
-    setCreatedJobId(newId);
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
+    try {
+      // Create job data
+      const jobData: Partial<Job> = {
+        title: formData.title,
+        client: client.name,
+        clientId: client.id,
+        technician: tech.name,
+        techId: tech.id,
+        status: 'Pending',
+        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        address: formData.address || client.address,
+        notes: formData.notes,
+        photos: [],
+        signature: null,
+        safetyChecklist: [
+          { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
+          { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
+          { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
+          { id: 'sc4', label: 'Tools & Equipment Visual Inspection', checked: false, required: true }
+        ],
+        templateId: formData.templateId,
+        syncStatus: 'synced',
+        lastUpdated: Date.now()
+      };
+
+      // Create job in database
+      const result = await createJob(jobData);
+
+      if (!result.success) {
+        // Fallback to localStorage if Supabase not configured
+        const newId = `JP-${Math.floor(Math.random() * 90000) + 10000}`;
+        const localJob: Job = { ...jobData, id: newId } as Job;
+        onAddJob(localJob);
+        setCreatedJobId(newId);
+        setMagicLinkUrl(`${window.location.origin}/#/track/${newId}`);
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
+        setIsCreating(false);
+        return;
+      }
+
+      const createdJob = result.data!;
+      setCreatedJobId(createdJob.id);
+
+      // Generate magic link
+      const magicLinkResult = await generateMagicLink(createdJob.id);
+
+      if (magicLinkResult.success && magicLinkResult.url) {
+        setMagicLinkUrl(magicLinkResult.url);
+      } else {
+        // Fallback to job ID link if token generation fails
+        setMagicLinkUrl(`${window.location.origin}/#/track/${createdJob.id}`);
+      }
+
+      // Also add to local state via onAddJob for immediate UI update
+      onAddJob(createdJob);
+
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Failed to create job:', error);
+      alert('Failed to create job. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const getMagicLink = () => `${window.location.origin}/#/track/${createdJobId}`;
+  const getMagicLink = () => magicLinkUrl || `${window.location.origin}/#/track/${createdJobId}`;
 
   const copyMagicLink = () => {
     navigator.clipboard.writeText(getMagicLink());
@@ -159,8 +199,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                <button onClick={executeDispatch} className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all">Confirm & Deploy</button>
-                <button onClick={() => setShowConfirmModal(false)} className="w-full py-4 bg-transparent text-slate-400 font-black uppercase tracking-widest hover:text-white transition-all">Cancel Manifest</button>
+                <button
+                  onClick={executeDispatch}
+                  disabled={isCreating}
+                  className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreating ? 'Creating Job...' : 'Confirm & Deploy'}
+                </button>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isCreating}
+                  className="w-full py-4 bg-transparent text-slate-400 font-black uppercase tracking-widest hover:text-white transition-all disabled:opacity-50"
+                >
+                  Cancel Manifest
+                </button>
               </div>
               <p className="text-center text-[8px] text-slate-600 font-black uppercase tracking-[0.4em]">Protocol Authorization Alpha-2</p>
             </div>

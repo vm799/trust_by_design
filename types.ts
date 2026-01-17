@@ -58,6 +58,9 @@ export interface Job {
   syncStatus: SyncStatus;
   lastUpdated: number;
   price?: number;
+  magicLinkToken?: string; // Magic link token for technician access
+  magicLinkUrl?: string; // Full URL for sharing
+  workspaceId?: string; // Workspace ID (from database)
 }
 
 export interface Invoice {
