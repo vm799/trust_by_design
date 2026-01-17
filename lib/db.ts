@@ -93,6 +93,8 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
         site_hazards: jobData.siteHazards || [],
         template_id: jobData.templateId,
         price: jobData.price,
+        sync_status: jobData.syncStatus || 'synced',
+        last_updated: jobData.lastUpdated || Date.now(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -124,9 +126,14 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
       safetyChecklist: data.safety_checklist || [],
       siteHazards: data.site_hazards || [],
       templateId: data.template_id,
-      syncStatus: 'synced',
-      lastUpdated: Date.now(),
-      price: data.price
+      syncStatus: data.sync_status || 'synced',
+      lastUpdated: data.last_updated || Date.now(),
+      price: data.price,
+      workspaceId: data.workspace_id,
+      sealedAt: data.sealed_at,
+      sealedBy: data.sealed_by,
+      evidenceHash: data.evidence_hash,
+      isSealed: !!data.sealed_at
     };
 
     return { success: true, data: job };
@@ -186,9 +193,14 @@ export const getJobs = async (workspaceId: string): Promise<DbResult<Job[]>> => 
       siteHazards: row.site_hazards || [],
       completedAt: row.completed_at,
       templateId: row.template_id,
-      syncStatus: 'synced',
-      lastUpdated: new Date(row.updated_at).getTime(),
-      price: row.price
+      syncStatus: row.sync_status || 'synced',
+      lastUpdated: row.last_updated || new Date(row.updated_at).getTime(),
+      price: row.price,
+      workspaceId: row.workspace_id,
+      sealedAt: row.sealed_at,
+      sealedBy: row.sealed_by,
+      evidenceHash: row.evidence_hash,
+      isSealed: !!row.sealed_at
     }));
 
     return { success: true, data: jobs };
@@ -252,9 +264,14 @@ export const getJobById = async (jobId: string): Promise<DbResult<Job>> => {
       siteHazards: data.site_hazards || [],
       completedAt: data.completed_at,
       templateId: data.template_id,
-      syncStatus: 'synced',
-      lastUpdated: new Date(data.updated_at).getTime(),
-      price: data.price
+      syncStatus: data.sync_status || 'synced',
+      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
+      price: data.price,
+      workspaceId: data.workspace_id,
+      sealedAt: data.sealed_at,
+      sealedBy: data.sealed_by,
+      evidenceHash: data.evidence_hash,
+      isSealed: !!data.sealed_at
     };
 
     return { success: true, data: job };
@@ -308,6 +325,8 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
     if (updates.completedAt !== undefined) updateData.completed_at = updates.completedAt;
     if (updates.templateId !== undefined) updateData.template_id = updates.templateId;
     if (updates.price !== undefined) updateData.price = updates.price;
+    if (updates.syncStatus !== undefined) updateData.sync_status = updates.syncStatus;
+    if (updates.lastUpdated !== undefined) updateData.last_updated = updates.lastUpdated;
 
     const { data, error } = await supabase
       .from('jobs')
@@ -343,9 +362,14 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
       siteHazards: data.site_hazards || [],
       completedAt: data.completed_at,
       templateId: data.template_id,
-      syncStatus: 'synced',
-      lastUpdated: new Date(data.updated_at).getTime(),
-      price: data.price
+      syncStatus: data.sync_status || 'synced',
+      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
+      price: data.price,
+      workspaceId: data.workspace_id,
+      sealedAt: data.sealed_at,
+      sealedBy: data.sealed_by,
+      evidenceHash: data.evidence_hash,
+      isSealed: !!data.sealed_at
     };
 
     return { success: true, data: job };
@@ -621,6 +645,8 @@ export const createTechnician = async (techData: Partial<Technician>): Promise<D
         name: techData.name,
         email: techData.email,
         status: techData.status || 'Available',
+        rating: techData.rating || 0,
+        jobs_completed: techData.jobsCompleted || 0,
         created_at: new Date().toISOString()
       })
       .select()
@@ -635,8 +661,8 @@ export const createTechnician = async (techData: Partial<Technician>): Promise<D
       name: data.name,
       email: data.email,
       status: data.status,
-      rating: 0,
-      jobsCompleted: 0
+      rating: data.rating || 0,
+      jobsCompleted: data.jobs_completed || 0
     };
 
     return { success: true, data: technician };
@@ -664,10 +690,7 @@ export const getTechnicians = async (workspaceId: string): Promise<DbResult<Tech
   try {
     const { data, error } = await supabase
       .from('technicians')
-      .select(`
-        *,
-        jobs:jobs(count)
-      `)
+      .select('*')
       .eq('workspace_id', workspaceId)
       .order('name', { ascending: true });
 
@@ -681,7 +704,7 @@ export const getTechnicians = async (workspaceId: string): Promise<DbResult<Tech
       email: row.email,
       status: row.status,
       rating: row.rating || 0,
-      jobsCompleted: row.jobs?.[0]?.count || 0
+      jobsCompleted: row.jobs_completed || 0
     }));
 
     return { success: true, data: technicians };
@@ -712,6 +735,7 @@ export const updateTechnician = async (techId: string, updates: Partial<Technici
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.rating !== undefined) updateData.rating = updates.rating;
+    if (updates.jobsCompleted !== undefined) updateData.jobs_completed = updates.jobsCompleted;
 
     const { data, error } = await supabase
       .from('technicians')
@@ -730,7 +754,7 @@ export const updateTechnician = async (techId: string, updates: Partial<Technici
       email: data.email,
       status: data.status,
       rating: data.rating || 0,
-      jobsCompleted: 0
+      jobsCompleted: data.jobs_completed || 0
     };
 
     return { success: true, data: technician };
@@ -949,9 +973,14 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       siteHazards: data.site_hazards || [],
       completedAt: data.completed_at,
       templateId: data.template_id,
-      syncStatus: 'synced',
-      lastUpdated: new Date(data.updated_at).getTime(),
-      price: data.price
+      syncStatus: data.sync_status || 'synced',
+      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
+      price: data.price,
+      workspaceId: data.workspace_id,
+      sealedAt: data.sealed_at,
+      sealedBy: data.sealed_by,
+      evidenceHash: data.evidence_hash,
+      isSealed: !!data.sealed_at
     };
 
     return { success: true, data: job };

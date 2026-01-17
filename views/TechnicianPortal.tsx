@@ -59,13 +59,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     loadJob();
   }, [token, jobId, jobs]);
 
-  // Immutable State Protection: Block access if job is already submitted
+  // Immutable State Protection: Block access if job is already submitted or sealed
   useEffect(() => {
-    if (job?.status === 'Submitted') {
+    if (job?.status === 'Submitted' || job?.isSealed || job?.sealedAt) {
       alert('This job has been sealed and is immutable. No further edits allowed.');
       navigate('/home');
     }
-  }, [job?.status, navigate]);
+  }, [job?.status, job?.isSealed, job?.sealedAt, navigate]);
 
   // Check IndexedDB availability on mount
   useEffect(() => {
