@@ -28,7 +28,10 @@ export const getSupabase = (): SupabaseClient | null => {
   if (!supabase) {
     supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        persistSession: false // JobProof uses magic links, not user sessions
+        persistSession: true, // Phase C.1: Real authentication with sessions
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
       },
       db: {
         schema: 'public'

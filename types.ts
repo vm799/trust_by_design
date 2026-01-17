@@ -58,6 +58,14 @@ export interface Job {
   syncStatus: SyncStatus;
   lastUpdated: number;
   price?: number;
+  magicLinkToken?: string; // Magic link token for technician access
+  magicLinkUrl?: string; // Full URL for sharing
+  workspaceId?: string; // Workspace ID (from database)
+  // Phase C.3: Cryptographic sealing
+  sealedAt?: string; // ISO timestamp when evidence was sealed
+  sealedBy?: string; // Email of user who sealed the evidence
+  evidenceHash?: string; // SHA-256 hash of evidence bundle
+  isSealed?: boolean; // Computed: !!sealedAt
 }
 
 export interface Invoice {

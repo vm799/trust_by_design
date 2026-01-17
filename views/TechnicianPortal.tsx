@@ -6,11 +6,58 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { saveMedia, getMedia } from '../db';
 import { syncJobToSupabase, addToSyncQueue } from '../lib/syncQueue';
 import { isSupabaseAvailable } from '../lib/supabase';
+import { validateMagicLink, getJobByToken, updateJob } from '../lib/db';
+import { sealEvidence, canSealJob } from '../lib/sealing';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
-  const { jobId } = useParams();
+  const { token, jobId } = useParams(); // Support both token and legacy jobId
   const navigate = useNavigate();
-  const job = jobs.find(j => j.id === jobId);
+
+  // Token-based access (Phase C.2)
+  const [job, setJob] = useState<Job | undefined>(undefined);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [isLoadingJob, setIsLoadingJob] = useState(true);
+
+  // Load job via token or legacy jobId
+  useEffect(() => {
+    const loadJob = async () => {
+      setIsLoadingJob(true);
+      setTokenError(null);
+
+      try {
+        if (token) {
+          // New token-based access (Phase C.2)
+          const result = await getJobByToken(token);
+
+          if (!result.success || !result.data) {
+            setTokenError(result.error as string || 'Invalid or expired link');
+            setIsLoadingJob(false);
+            return;
+          }
+
+          setJob(result.data);
+        } else if (jobId) {
+          // Legacy jobId access (fallback for localStorage)
+          const foundJob = jobs.find(j => j.id === jobId);
+          if (!foundJob) {
+            setTokenError('Job not found');
+            setIsLoadingJob(false);
+            return;
+          }
+          setJob(foundJob);
+        } else {
+          setTokenError('No job identifier provided');
+        }
+      } catch (error) {
+        console.error('Failed to load job:', error);
+        setTokenError('Failed to load job. Please try again.');
+      } finally {
+        setIsLoadingJob(false);
+      }
+    };
+
+    loadJob();
+  }, [token, jobId, jobs]);
 
   // Immutable State Protection: Block access if job is already submitted
   useEffect(() => {
@@ -42,8 +89,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   // Helper functions for draft state persistence
   const getDraftState = () => {
+    if (!job?.id) return null;
     try {
-      const saved = localStorage.getItem(`jobproof_draft_${jobId}`);
+      const saved = localStorage.getItem(`jobproof_draft_${job.id}`);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -51,44 +99,67 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   };
 
   const saveDraftState = (state: any) => {
+    if (!job?.id) return;
     try {
-      localStorage.setItem(`jobproof_draft_${jobId}`, JSON.stringify(state));
+      localStorage.setItem(`jobproof_draft_${job.id}`, JSON.stringify(state));
     } catch (error) {
       console.error('Failed to save draft state:', error);
     }
   };
 
   const clearDraftState = () => {
-    localStorage.removeItem(`jobproof_draft_${jobId}`);
-    localStorage.removeItem(`jobproof_progress_${jobId}`);
+    if (!job?.id) return;
+    localStorage.removeItem(`jobproof_draft_${job.id}`);
+    localStorage.removeItem(`jobproof_progress_${job.id}`);
   };
 
-  const draft = getDraftState();
-
-  const [step, setStep] = useState(() => {
-    // Restore progress from localStorage
-    const saved = localStorage.getItem(`jobproof_progress_${jobId}`);
-    return saved ? parseInt(saved) : (draft?.step || 0);
-  });
-  const [photos, setPhotos] = useState<Photo[]>(draft?.photos || job?.photos || []);
-  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map()); // Cache for IndexedDB photo data
-  const [checklist, setChecklist] = useState<SafetyCheck[]>(draft?.checklist || job?.safetyChecklist || [
+  // State management (initialized with defaults, populated after job loads)
+  const [step, setStep] = useState(0);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
+  const [checklist, setChecklist] = useState<SafetyCheck[]>([
     { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
     { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
     { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
     { id: 'sc4', label: 'Area Clear of Bystanders', checked: false, required: true }
   ]);
-  const [notes, setNotes] = useState(draft?.notes || job?.notes || '');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [localSyncStatus, setLocalSyncStatus] = useState<SyncStatus>(job?.syncStatus || 'synced');
-  const [signerName, setSignerName] = useState(draft?.signerName || job?.signerName || '');
-  const [signerRole, setSignerRole] = useState(draft?.signerRole || job?.signerRole || 'Client');
+  const [localSyncStatus, setLocalSyncStatus] = useState<SyncStatus>('synced');
+  const [signerName, setSignerName] = useState('');
+  const [signerRole, setSignerRole] = useState('Client');
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>(draft?.locationStatus || 'idle');
-  const [w3w, setW3w] = useState(draft?.w3w || job?.w3w || '');
-  const [coords, setCoords] = useState<{lat?: number, lng?: number}>(draft?.coords || { lat: job?.lat, lng: job?.lng });
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
+  const [w3w, setW3w] = useState('');
+  const [coords, setCoords] = useState<{lat?: number, lng?: number}>({});
+
+  // Initialize state from job and draft once job is loaded
+  useEffect(() => {
+    if (!job?.id) return;
+
+    const draft = getDraftState();
+    const savedProgress = localStorage.getItem(`jobproof_progress_${job.id}`);
+
+    // Restore step
+    setStep(savedProgress ? parseInt(savedProgress) : (draft?.step || 0));
+
+    // Restore photos
+    setPhotos(draft?.photos || job.photos || []);
+
+    // Restore checklist
+    setChecklist(draft?.checklist || job.safetyChecklist || checklist);
+
+    // Restore other fields
+    setNotes(draft?.notes || job.notes || '');
+    setLocalSyncStatus(job.syncStatus || 'synced');
+    setSignerName(draft?.signerName || job.signerName || '');
+    setSignerRole(draft?.signerRole || job.signerRole || 'Client');
+    setLocationStatus(draft?.locationStatus || 'idle');
+    setW3w(draft?.w3w || job.w3w || '');
+    setCoords(draft?.coords || { lat: job.lat, lng: job.lng });
+  }, [job?.id]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,9 +167,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   // Auto-save progress: Save step to localStorage
   useEffect(() => {
-    if (jobId && step < 5) {
-      localStorage.setItem(`jobproof_progress_${jobId}`, step.toString());
-    } else if (jobId && step === 5) {
+    if (job?.id && step < 5) {
+      localStorage.setItem(`jobproof_progress_${job.id}`, step.toString());
+    } else if (job?.id && step === 5) {
       // Clear progress and draft on completion
       clearDraftState();
     }
@@ -303,6 +374,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   };
 
   const handleFinalSeal = async () => {
+    if (!job) return;
+
+    // Phase C.3: Validate sealing requirements
+    const sealCheck = canSealJob({ ...job, photos, signature: signerName });
+
+    if (!sealCheck.canSeal) {
+      alert(sealCheck.reason || 'Cannot seal job');
+      return;
+    }
+
     // Critical Validation: Enforce audit spec requirements
     if (photos.length === 0) {
       alert('Evidence Capture Required: At least one photo must be captured before sealing the job.');
@@ -345,14 +426,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       }
     }
 
-    // Store only IndexedDB key reference in job object for localStorage
-    const finalJob: Job = {
-      ...job!,
-      status: 'Submitted',
+    // First, update job with final evidence data
+    const updatedJob: Job = {
+      ...job,
+      status: 'In Progress', // Will be set to 'Submitted' after seal
       photos,
       notes,
-      signature: signatureKey, // Store key, not full Base64
-      signatureIsIndexedDBRef: !!signatureKey, // Flag to indicate reference key
+      signature: signatureKey,
+      signatureIsIndexedDBRef: !!signatureKey,
       signerName,
       signerRole,
       safetyChecklist: checklist,
@@ -360,14 +441,87 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       syncStatus: 'pending',
       lastUpdated: Date.now()
     };
-    onUpdateJob(finalJob);
-    if (navigator.onLine) await triggerSync(finalJob);
-    setTimeout(() => {
+
+    // Update job in database before sealing
+    try {
+      const updateResult = await updateJob(job.id, updatedJob);
+
+      if (!updateResult.success) {
+        console.warn('Failed to update job before sealing, proceeding with local update');
+        onUpdateJob(updatedJob);
+      }
+
+      // Phase C.3: Call server-side cryptographic sealing
+      const sealResult = await sealEvidence(job.id);
+
+      if (!sealResult.success) {
+        alert(`Sealing failed: ${sealResult.error}\n\nJob data has been saved but not sealed. You can try sealing again from the admin dashboard.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Update job with seal metadata
+      const sealedJob: Job = {
+        ...updatedJob,
+        status: 'Submitted',
+        sealedAt: sealResult.sealedAt,
+        evidenceHash: sealResult.evidenceHash,
+        isSealed: true
+      };
+
+      onUpdateJob(sealedJob);
+
+      // Show success
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setStep(5);
+      }, 1000);
+    } catch (error) {
+      console.error('Sealing error:', error);
+      alert('Failed to seal evidence. Please try again or contact support.');
       setIsSubmitting(false);
-      setStep(5);
-    }, 1500);
+    }
   };
 
+  // Loading state
+  if (isLoadingJob) {
+    return (
+      <Layout isAdmin={false}>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
+          <div className="size-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading Job...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Token validation error
+  if (tokenError) {
+    return (
+      <Layout isAdmin={false}>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
+          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/5 shadow-2xl relative">
+            <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Access Denied</h2>
+            <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{tokenError}</p>
+            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 mt-4">
+              <p className="text-xs text-slate-500 font-medium">Common reasons:</p>
+              <ul className="text-xs text-slate-400 mt-2 space-y-1 text-left max-w-xs mx-auto">
+                <li>• Link has expired (7 day limit)</li>
+                <li>• Job has been sealed</li>
+                <li>• Invalid or corrupted link</li>
+              </ul>
+            </div>
+          </div>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Job not found (legacy fallback)
   if (!job) {
     return (
       <Layout isAdmin={false}>
