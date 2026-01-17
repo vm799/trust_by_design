@@ -62,7 +62,6 @@ const Layout: React.FC<LayoutProps> = ({ children, isAdmin = true }) => {
           
           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 mt-8 px-3 text-white/40">Financials</div>
           <NavLink to="/admin/invoices" icon="receipt_long" label="Invoices" active={location.pathname === '/admin/invoices'} />
-          <NavLink to="/admin/billing" icon="payments" label="Subscription" active={location.pathname === '/admin/billing'} />
           
           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 mt-8 px-3 text-white/40">System</div>
           <NavLink to="/admin/settings" icon="settings" label="Settings" active={location.pathname === '/admin/settings'} id="nav-settings" />
@@ -112,12 +111,11 @@ const Layout: React.FC<LayoutProps> = ({ children, isAdmin = true }) => {
            <div className="flex items-center gap-4">
               <button onClick={toggleMobileMenu} className="lg:hidden text-white"><span className="material-symbols-outlined">menu</span></button>
               <h1 className="text-lg lg:text-xl font-black text-white tracking-tight uppercase">
-                {location.pathname === '/admin' ? 'Operations Control' : 
+                {location.pathname === '/admin' ? 'Operations Control' :
                  location.pathname === '/admin/clients' ? 'Registry' :
                  location.pathname === '/admin/technicians' ? 'Workforce' :
-                 location.pathname === '/admin/templates' ? 'Protocols' : 
+                 location.pathname === '/admin/templates' ? 'Protocols' :
                  location.pathname === '/admin/invoices' ? 'Invoicing Hub' :
-                 location.pathname === '/admin/billing' ? 'Billing' : 
                  location.pathname === '/admin/profile' ? 'Profile' :
                  location.pathname === '/admin/help' ? 'Support' : 'System Hub'}
               </h1>

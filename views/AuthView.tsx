@@ -13,10 +13,23 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Form state
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    // Auto-fill email from smart redirect
+    if (type === 'signup') {
+      const savedEmail = sessionStorage.getItem('signup_email');
+      if (savedEmail) {
+        sessionStorage.removeItem('signup_email');
+        return savedEmail;
+      }
+    }
+    return '';
+  });
   const [password, setPassword] = useState('');
   const [workspaceName, setWorkspaceName] = useState('');
   const [fullName, setFullName] = useState('');
+  const [showSmartRedirectMessage, setShowSmartRedirectMessage] = useState(() => {
+    return type === 'signup' && !!sessionStorage.getItem('signup_email');
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +55,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
         }
 
         // Success - check email for verification
+        setLoading(false);
         alert('Account created! Please check your email to verify your account.');
         navigate('/auth/login');
       } else {
@@ -49,12 +63,24 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
         const result = await signIn(email, password);
 
         if (!result.success) {
-          setError(result.error?.message || 'Sign in failed');
+          const errorMsg = result.error?.message || 'Sign in failed';
+
+          // Smart redirect: If email not found, redirect to signup
+          if (errorMsg.includes('Invalid login credentials') || errorMsg.includes('Email not confirmed')) {
+            setLoading(false);
+            // Store email for signup form auto-fill
+            sessionStorage.setItem('signup_email', email);
+            navigate('/auth/signup');
+            return;
+          }
+
+          setError(errorMsg);
           setLoading(false);
           return;
         }
 
         // Success - call onAuth callback and navigate
+        setLoading(false);
         onAuth();
         navigate('/admin');
       }
@@ -109,6 +135,15 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          {showSmartRedirectMessage && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-sm">info</span>
+                <p className="text-primary text-xs font-bold">Oops! You seem new around here. Let's get you signed up with your own workspace!</p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="bg-danger/10 border border-danger/20 rounded-xl p-4">
               <div className="flex items-center gap-2">
@@ -121,7 +156,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           {type === 'signup' && (
             <>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organization Name *</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organisation Name *</label>
                 <input
                   required
                   type="text"
@@ -176,8 +211,34 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
               onChange={e => setPassword(e.target.value)}
               minLength={6}
             />
-            {type === 'signup' && (
-              <p className="text-slate-500 text-[10px] font-medium">Minimum 6 characters</p>
+            {type === 'signup' && password.length > 0 && (
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-1.5">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Password Requirements</p>
+                <div className="flex items-center gap-2">
+                  <span className={`material-symbols-outlined text-xs ${password.length >= 6 ? 'text-success' : 'text-slate-600'}`}>
+                    {password.length >= 6 ? 'check_circle' : 'cancel'}
+                  </span>
+                  <p className={`text-[10px] font-medium ${password.length >= 6 ? 'text-success' : 'text-slate-500'}`}>
+                    At least 6 characters
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`material-symbols-outlined text-xs ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-600'}`}>
+                    {/[A-Z]/.test(password) ? 'check_circle' : 'cancel'}
+                  </span>
+                  <p className={`text-[10px] font-medium ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
+                    One uppercase letter
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`material-symbols-outlined text-xs ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-600'}`}>
+                    {/[0-9]/.test(password) ? 'check_circle' : 'cancel'}
+                  </span>
+                  <p className={`text-[10px] font-medium ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
+                    One number
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 
