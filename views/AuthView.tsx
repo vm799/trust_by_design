@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signIn, signUp, signInWithGoogle, type SignUpData } from '../lib/auth';
 
@@ -30,6 +30,18 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   const [showSmartRedirectMessage, setShowSmartRedirectMessage] = useState(() => {
     return type === 'signup' && !!sessionStorage.getItem('signup_email');
   });
+
+  // Auto-focus refs
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus email on mount if redirected from login
+  useEffect(() => {
+    if (type === 'signup' && email) {
+      fullNameRef.current?.focus();
+    }
+  }, [type, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,11 +181,18 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Your Full Name</label>
                 <input
+                  ref={fullNameRef}
                   type="text"
                   placeholder="e.g. Alex Sterling"
                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
+                  onKeyPress={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      emailRef.current?.focus();
+                    }
+                  }}
                 />
               </div>
             </>
@@ -184,12 +203,19 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
               {type === 'signup' ? 'Admin Email *' : 'Email *'}
             </label>
             <input
+              ref={emailRef}
               required
               type="email"
               placeholder="alex@company.com"
               className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onKeyPress={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  passwordRef.current?.focus();
+                }
+              }}
             />
           </div>
 
@@ -203,6 +229,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
               )}
             </div>
             <input
+              ref={passwordRef}
               required
               type="password"
               placeholder="••••••••"
