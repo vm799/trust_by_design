@@ -112,9 +112,24 @@ const SignupSuccess: React.FC = () => {
             <button
               type="button"
               className="text-primary text-xs font-bold hover:underline uppercase tracking-wide"
-              onClick={() => {
-                // TODO: Implement resend verification email
-                alert('Resend verification not yet implemented. Please check your spam folder or contact support@jobproof.io');
+              onClick={async () => {
+                const { getSupabase } = await import('../lib/supabase');
+                const supabase = getSupabase();
+                if (!supabase) {
+                  alert('Supabase not configured');
+                  return;
+                }
+
+                const { error } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: email
+                });
+
+                if (error) {
+                  alert(`Failed to resend: ${error.message}`);
+                } else {
+                  alert('Verification email sent! Check your inbox.');
+                }
               }}
             >
               Resend Verification Email

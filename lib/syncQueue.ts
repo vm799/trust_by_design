@@ -142,7 +142,6 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       }
     }
 
-    console.log(`✅ Job ${job.id} synced successfully to Supabase`);
     return true;
 
   } catch (error) {
@@ -179,9 +178,7 @@ export const retryFailedSyncs = async (): Promise<void> => {
         success = await syncJobToSupabase(item.data);
       }
 
-      if (success) {
-        console.log(`✅ Retry successful for ${item.type} ${item.id}`);
-      } else {
+      if (!success) {
         // Increment retry count
         item.retryCount++;
         item.lastAttempt = now;

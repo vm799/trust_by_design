@@ -210,7 +210,6 @@ const App: React.FC = () => {
   // Start background sync worker on app mount
   useEffect(() => {
     startSyncWorker();
-    console.log('🚀 Trust by Design v2 - Background sync worker started');
   }, []);
 
   const addJob = (newJob: Job) => setJobs(prev => [newJob, ...prev]);
