@@ -6,11 +6,25 @@
 BEGIN;
 
 -- ============================================
--- STEP 1: Extend ENUM (Safe - Additive Only)
+-- STEP 1: Create or Extend persona_type ENUM
 -- ============================================
 
--- Add site_supervisor to persona enum
-ALTER TYPE persona_type ADD VALUE IF NOT EXISTS 'site_supervisor';
+-- Create ENUM if it doesn't exist (migration 006 will create full version)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'persona_type') THEN
+    CREATE TYPE persona_type AS ENUM ('solo_contractor', 'agency_owner', 'compliance_officer', 'safety_manager', 'site_supervisor');
+  ELSE
+    -- Add site_supervisor if ENUM exists but value doesn't
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_enum e
+      JOIN pg_type t ON e.enumtypid = t.oid
+      WHERE t.typname = 'persona_type' AND e.enumlabel = 'site_supervisor'
+    ) THEN
+      ALTER TYPE persona_type ADD VALUE 'site_supervisor';
+    END IF;
+  END IF;
+END $$;
 
 -- ============================================
 -- STEP 2: RLS Policy for Site Supervisors (Additive)
