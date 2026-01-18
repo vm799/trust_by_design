@@ -81,7 +81,6 @@ export default function DashboardPage() {
         router.push('/admin');
       }
     } catch (err) {
-      console.error('Dashboard routing error:', err);
       // Fallback to persona selection on error
       router.push('/complete-onboarding');
     } finally {

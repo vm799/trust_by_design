@@ -82,11 +82,8 @@ export default function OnboardingFactory({
       );
 
       if (rpcError) {
-        console.error('RPC error:', rpcError);
         throw new Error(rpcError.message);
       }
-
-      console.log('Step completed:', data);
 
       // Call onComplete callback if provided
       if (onComplete) {
@@ -105,7 +102,6 @@ export default function OnboardingFactory({
         router.push(PERSONA_DASHBOARDS[persona]);
       }
     } catch (err: any) {
-      console.error('Failed to complete step:', err);
       setError(err.message || 'Failed to complete step. Please try again.');
       setCompleting(false);
     }

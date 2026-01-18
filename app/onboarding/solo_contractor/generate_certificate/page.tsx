@@ -45,7 +45,6 @@ export default function GenerateCertificatePage() {
       setUserProfile(profile);
       mockCertificate.technician_name = profile?.full_name || user.email || 'Your Name';
     } catch (err) {
-      console.error('Failed to load profile:', err);
     } finally {
       setLoading(false);
     }

@@ -83,7 +83,6 @@ export default function SiteSupervisorDashboard() {
 
       setLoading(false);
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
       setLoading(false);
     }
   };

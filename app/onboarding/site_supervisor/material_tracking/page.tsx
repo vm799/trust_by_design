@@ -55,7 +55,6 @@ export default function MaterialTrackingPage() {
 
       router.push('/onboarding/site_supervisor/safety_rounds');
     } catch (err) {
-      console.error('Failed to complete step:', err);
       alert('Failed to save progress');
     } finally {
       setLoading(false);

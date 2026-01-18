@@ -56,7 +56,6 @@ export default function EndOfDayReportPage() {
       // Redirect to supervisor dashboard
       router.push('/dashboard/site-supervisor');
     } catch (err) {
-      console.error('Failed to complete onboarding:', err);
       alert('Failed to save progress');
     } finally {
       setLoading(false);

@@ -85,7 +85,6 @@ export default function CreateFirstJobPage() {
         job_title: formData.job_title,
       };
     } catch (err: any) {
-      console.error('Job creation failed:', err);
       setError(err.message);
       setCreating(false);
       throw err;

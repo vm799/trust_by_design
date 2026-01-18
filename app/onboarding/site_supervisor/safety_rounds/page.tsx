@@ -50,7 +50,6 @@ export default function SafetyRoundsPage() {
 
       router.push('/onboarding/site_supervisor/end_of_day_report');
     } catch (err) {
-      console.error('Failed to complete step:', err);
       alert('Failed to save progress');
     } finally {
       setLoading(false);

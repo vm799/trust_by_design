@@ -56,7 +56,6 @@ export default function DailyBriefingPage() {
       // Navigate to next step
       router.push('/onboarding/site_supervisor/material_tracking');
     } catch (err) {
-      console.error('Failed to complete step:', err);
       alert('Failed to save progress. Please try again.');
     } finally {
       setLoading(false);
