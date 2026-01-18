@@ -296,13 +296,13 @@ WHERE routine_schema = 'public'
      - **Agency**: £199/month (recurring subscription)
    - Copy Price IDs (starts with `price_`)
 
-5. **Implementation Tasks** (TODO):
-   - [ ] Install Stripe SDK: `npm install @stripe/stripe-js`
-   - [ ] Create Stripe checkout session endpoint (backend/edge function)
-   - [ ] Add "Upgrade" buttons to pricing page
-   - [ ] Handle successful payment webhook
-   - [ ] Update user's workspace tier in database
-   - [ ] Restrict features based on workspace tier
+5. **Implementation Status** (✅ COMPLETE - Commit 11dc942):
+   - [x] Stripe checkout edge function: `supabase/functions/stripe-checkout`
+   - [x] Stripe webhook edge function: `supabase/functions/stripe-webhook`
+   - [x] Working "Upgrade" buttons on pricing page with loading states
+   - [x] Webhook syncs to `user_subscriptions` table
+   - [x] `useSubscription` hook enforces tier limits (Solo: 5 jobs)
+   - [x] `UpgradeBanner` component shows at 60% usage threshold
 
 **Test Cards** (Stripe test mode):
 ```
@@ -311,11 +311,11 @@ Decline: 4000 0000 0000 0002
 3D Secure: 4000 0025 0000 3155
 ```
 
-**Code Not Yet Implemented**:
-- No Stripe integration exists yet
-- Pricing page buttons don't connect to Stripe
-- No webhook handler for payment events
-- No tier restrictions enforced
+**Deployment Required** (Manual Steps):
+- Deploy edge functions: `supabase functions deploy stripe-checkout stripe-webhook`
+- Set 7 Supabase secrets (Stripe keys + price IDs)
+- Configure webhook in Stripe Dashboard
+- Deploy migration 004: `supabase db push`
 
 **Recommendation**: Start with Stripe Checkout for MVP, migrate to Payment Elements later if needed.
 
