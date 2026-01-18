@@ -8,6 +8,11 @@
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Compliance Officer onboarding step 3: Seal first job
+ * Demonstrates blockchain sealing process for tamper-proof evidence
+ * @returns {JSX.Element} The seal first job onboarding page
+ */
 export default function SealFirstJobPage() {
   const [sealingStep, setSealingStep] = useState(1); // 1: review, 2: sealing, 3: complete
   const [sealed, setSealed] = useState(false);
@@ -24,6 +29,10 @@ export default function SealFirstJobPage() {
     blockchain_tx: '0x' + Math.random().toString(16).substring(2),
   };
 
+  /**
+   * Simulates blockchain sealing process with 2-second delay
+   * Progresses through sealing states: review → sealing → complete
+   */
   const handleSeal = async () => {
     setSealingStep(2);
     // Simulate blockchain sealing
@@ -32,6 +41,10 @@ export default function SealFirstJobPage() {
     setSealed(true);
   };
 
+  /**
+   * Handles step completion and returns blockchain seal data to persist
+   * @returns {Promise<Object>} Step data containing job ID, blockchain TX, evidence hash, and timestamp
+   */
   const handleComplete = async () => {
     return {
       sealed_job_id: mockJob.id,
@@ -42,7 +55,7 @@ export default function SealFirstJobPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="seal_first_job">
+    <OnboardingFactory persona="compliance_officer" step="seal_first_job" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Sealing Progress */}
         {sealingStep === 1 && (

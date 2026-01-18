@@ -8,6 +8,11 @@
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Compliance Officer onboarding step 4: Export audit report
+ * Demonstrates compliance report generation for regulatory submission
+ * @returns {JSX.Element} The export report onboarding page
+ */
 export default function ExportReportPage() {
   const [reportType, setReportType] = useState<'summary' | 'detailed' | 'audit'>('summary');
   const [dateRange, setDateRange] = useState('last_30_days');
@@ -25,6 +30,10 @@ export default function ExportReportPage() {
     safety_incidents: 0,
   };
 
+  /**
+   * Simulates PDF report generation with 2-second delay
+   * Sets generating and generated states to show progress UI
+   */
   const handleGenerate = async () => {
     setGenerating(true);
     // Simulate PDF generation
@@ -33,6 +42,10 @@ export default function ExportReportPage() {
     setGenerated(true);
   };
 
+  /**
+   * Handles step completion and returns report metadata to persist
+   * @returns {Promise<Object>} Step data containing report type, date range, and job count
+   */
   const handleComplete = async () => {
     return {
       report_generated: true,
@@ -43,7 +56,7 @@ export default function ExportReportPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="export_report">
+    <OnboardingFactory persona="compliance_officer" step="export_report" onComplete={handleComplete}>
       <div className="space-y-8">
         {!generating && !generated && (
           <>

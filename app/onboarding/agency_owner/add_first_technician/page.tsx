@@ -70,7 +70,6 @@ export default function AddFirstTechnicianPage() {
         technician_email: formData.email,
       };
     } catch (err: any) {
-      console.error('Technician creation failed:', err);
       setError(err.message);
       setCreating(false);
       throw err;

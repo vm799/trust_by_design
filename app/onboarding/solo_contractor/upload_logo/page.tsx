@@ -83,7 +83,7 @@ export default function UploadLogoPage() {
         file_size: file.size,
       };
     } catch (err: any) {
-      console.error('Upload failed:', err);
+      // Error displayed in UI
       setUploadError(err.message);
       setUploading(false);
       throw err;

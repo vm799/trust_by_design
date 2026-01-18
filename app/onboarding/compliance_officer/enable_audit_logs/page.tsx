@@ -8,6 +8,11 @@
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Compliance Officer onboarding step 1: Enable audit logs
+ * Teaches compliance officers about comprehensive audit trail tracking features
+ * @returns {JSX.Element} The enable audit logs onboarding page
+ */
 export default function EnableAuditLogsPage() {
   const [logsEnabled, setLogsEnabled] = useState(false);
 
@@ -21,6 +26,10 @@ export default function EnableAuditLogsPage() {
 
   const [features, setFeatures] = useState(auditFeatures);
 
+  /**
+   * Toggles the checked state of an audit feature
+   * @param {string} id - The unique identifier of the feature to toggle
+   */
   const toggleFeature = (id: string) => {
     setFeatures(prev =>
       prev.map(f => f.id === id ? { ...f, checked: !f.checked } : f)
@@ -29,6 +38,10 @@ export default function EnableAuditLogsPage() {
 
   const allEnabled = features.every(f => f.checked);
 
+  /**
+   * Handles step completion and returns data to persist
+   * @returns {Promise<Object>} Step data containing audit_logs_enabled flag and enabled features list
+   */
   const handleComplete = async () => {
     return {
       audit_logs_enabled: true,
@@ -37,7 +50,7 @@ export default function EnableAuditLogsPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="enable_audit_logs">
+    <OnboardingFactory persona="compliance_officer" step="enable_audit_logs" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Enable Toggle */}
         <div className="p-6 bg-green-50 border-2 border-green-200 rounded-2xl">

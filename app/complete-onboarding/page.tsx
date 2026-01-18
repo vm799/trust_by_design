@@ -62,7 +62,7 @@ export default function CompleteOnboardingPage() {
 
       setLoading(false);
     } catch (err) {
-      console.error('Failed to check persona:', err);
+      // Error handled silently
       setLoading(false);
     }
   };
@@ -118,7 +118,7 @@ export default function CompleteOnboardingPage() {
 
       // Note: Redirect is handled by PersonaCard component
     } catch (err) {
-      console.error('Failed to create persona:', err);
+      // Error shown via alert
       alert('Failed to start onboarding. Please try again.');
       setSelecting(false);
     }

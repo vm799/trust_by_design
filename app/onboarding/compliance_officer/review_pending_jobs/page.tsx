@@ -8,6 +8,11 @@
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Compliance Officer onboarding step 2: Review pending jobs
+ * Teaches job approval workflow with compliance checklist validation
+ * @returns {JSX.Element} The review pending jobs onboarding page
+ */
 export default function ReviewPendingJobsPage() {
   const mockJobs = [
     {
@@ -49,14 +54,23 @@ export default function ReviewPendingJobsPage() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [reviewedJobs, setReviewedJobs] = useState<string[]>([]);
 
+  /**
+   * Approves a job and adds it to reviewed list (with deduplication)
+   * Clears the selected job state after approval
+   * @param {string} jobId - The unique identifier of the job to approve
+   */
   const approveJob = (jobId: string) => {
-    setReviewedJobs(prev => [...prev, jobId]);
+    setReviewedJobs(prev => prev.includes(jobId) ? prev : [...prev, jobId]);
     setSelectedJob(null);
   };
 
   const selected = jobs.find(j => j.id === selectedJob);
   const allReviewed = reviewedJobs.length === jobs.length;
 
+  /**
+   * Handles step completion and returns approval statistics to persist
+   * @returns {Promise<Object>} Step data containing reviewed count, total jobs, and approval rate
+   */
   const handleComplete = async () => {
     return {
       jobs_reviewed: reviewedJobs.length,
@@ -66,7 +80,7 @@ export default function ReviewPendingJobsPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="review_pending_jobs">
+    <OnboardingFactory persona="compliance_officer" step="review_pending_jobs" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">

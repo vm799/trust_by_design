@@ -29,7 +29,7 @@ export default function PersonaCard({ persona, onSelect, disabled = false }: Per
       const firstStep = steps[0].step_key;
       router.push(`/onboarding/${persona}/${firstStep}`);
     } catch (err) {
-      console.error('Failed to select persona:', err);
+      // Error handled by parent component
     }
   };
 

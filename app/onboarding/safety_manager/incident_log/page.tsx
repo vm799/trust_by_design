@@ -1,8 +1,18 @@
 'use client';
 
+/**
+ * Safety Manager onboarding step 4: Log safety incident
+ * Demonstrates RIDDOR-compliant incident reporting with severity levels
+ */
+
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Safety Manager onboarding step 4: Incident log
+ * Teaches RIDDOR incident reporting with severity matrix
+ * @returns {JSX.Element} The incident log onboarding page
+ */
 export default function IncidentLogPage() {
   const [incidentType, setIncidentType] = useState('near_miss');
   const [severity, setSeverity] = useState('');
@@ -15,13 +25,39 @@ export default function IncidentLogPage() {
     { type: 'Major Injury', count: 0, color: 'red' },
   ];
 
-  const isFormValid = incidentType && severity && description.length > 10;
+  const colorClassMap: Record<string, { bgClass: string; titleClass: string; subtitleClass: string }> = {
+    yellow: {
+      bgClass: 'bg-yellow-50',
+      titleClass: 'text-yellow-600',
+      subtitleClass: 'text-yellow-700',
+    },
+    orange: {
+      bgClass: 'bg-orange-50',
+      titleClass: 'text-orange-600',
+      subtitleClass: 'text-orange-700',
+    },
+    red: {
+      bgClass: 'bg-red-50',
+      titleClass: 'text-red-600',
+      subtitleClass: 'text-red-700',
+    },
+  };
 
+  const isFormValid = incidentType && severity && description.length >= 10;
+
+  /**
+   * Validates form and sets logged state to show success UI
+   * Only proceeds if incident type, severity, and description (>=10 chars) are provided
+   */
   const handleLog = () => {
     if (!isFormValid) return;
     setLogged(true);
   };
 
+  /**
+   * Handles step completion and returns incident metadata to persist
+   * @returns {Promise<Object>} Step data containing incident type, severity level, and logged flag
+   */
   const handleComplete = async () => {
     return {
       incident_logged: true,
@@ -31,17 +67,20 @@ export default function IncidentLogPage() {
   };
 
   return (
-    <OnboardingFactory persona="safety_manager" step="incident_log">
+    <OnboardingFactory persona="safety_manager" step="incident_log" onComplete={handleComplete}>
       <div className="space-y-8">
         {!logged && (
           <>
             <div className="grid grid-cols-3 gap-4">
-              {mockIncidents.map(incident => (
-                <div key={incident.type} className={`p-4 bg-${incident.color}-50 rounded-2xl text-center`}>
-                  <div className={`text-3xl font-bold text-${incident.color}-600 mb-1`}>{incident.count}</div>
-                  <div className={`text-sm text-${incident.color}-700`}>{incident.type}</div>
-                </div>
-              ))}
+              {mockIncidents.map(incident => {
+                const classes = colorClassMap[incident.color];
+                return (
+                  <div key={incident.type} className={`p-4 ${classes.bgClass} rounded-2xl text-center`}>
+                    <div className={`text-3xl font-bold ${classes.titleClass} mb-1`}>{incident.count}</div>
+                    <div className={`text-sm ${classes.subtitleClass}`}>{incident.type}</div>
+                  </div>
+                );
+              })}
             </div>
 
             <div>
