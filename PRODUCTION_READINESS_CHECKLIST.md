@@ -215,12 +215,12 @@ npm run build
 
 ---
 
-### 10. ❓ Live user test (vaishalimehmi@yahoo.co.uk → step 4)
+### 10. ❓ Live user test (test-user@example.com → step 4)
 
 **Evidence:** NONE
 
 **Required Test:**
-1. Login: vaishalimehmi@yahoo.co.uk
+1. Login: test-user@example.com
 2. Navigate to: `/complete-onboarding`
 3. Select: Solo Contractor persona
 4. Complete: All 4 steps
@@ -313,7 +313,7 @@ npm run build
 ### Action 4: Live User Test (10 minutes)
 
 1. Open browser: https://jobproof.pro (or localhost)
-2. Login: vaishalimehmi@yahoo.co.uk
+2. Login: test-user@example.com
 3. Visit: `/complete-onboarding`
 4. Click: "Solo Contractor" card
 5. Complete all 4 steps:
@@ -326,7 +326,7 @@ npm run build
    ```sql
    SELECT persona_type, is_complete, current_step
    FROM user_personas
-   WHERE user_id = (SELECT id FROM users WHERE email = 'vaishalimehmi@yahoo.co.uk');
+   WHERE user_id = (SELECT id FROM users WHERE email = 'test-user@example.com');
    ```
    Expected: `is_complete = true, current_step = NULL`
 

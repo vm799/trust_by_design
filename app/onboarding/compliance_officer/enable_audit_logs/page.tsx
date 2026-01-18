@@ -37,7 +37,7 @@ export default function EnableAuditLogsPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="enable_audit_logs">
+    <OnboardingFactory persona="compliance_officer" step="enable_audit_logs" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Enable Toggle */}
         <div className="p-6 bg-green-50 border-2 border-green-200 rounded-2xl">

@@ -42,7 +42,7 @@ export default function SealFirstJobPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="seal_first_job">
+    <OnboardingFactory persona="compliance_officer" step="seal_first_job" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Sealing Progress */}
         {sealingStep === 1 && (

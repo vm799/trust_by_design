@@ -50,7 +50,7 @@ export default function ReviewPendingJobsPage() {
   const [reviewedJobs, setReviewedJobs] = useState<string[]>([]);
 
   const approveJob = (jobId: string) => {
-    setReviewedJobs(prev => [...prev, jobId]);
+    setReviewedJobs(prev => prev.includes(jobId) ? prev : [...prev, jobId]);
     setSelectedJob(null);
   };
 
@@ -66,7 +66,7 @@ export default function ReviewPendingJobsPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="review_pending_jobs">
+    <OnboardingFactory persona="compliance_officer" step="review_pending_jobs" onComplete={handleComplete}>
       <div className="space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">

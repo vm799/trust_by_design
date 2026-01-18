@@ -43,7 +43,7 @@ export default function ExportReportPage() {
   };
 
   return (
-    <OnboardingFactory persona="compliance_officer" step="export_report">
+    <OnboardingFactory persona="compliance_officer" step="export_report" onComplete={handleComplete}>
       <div className="space-y-8">
         {!generating && !generated && (
           <>
