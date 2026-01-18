@@ -16,6 +16,8 @@ import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
+import EmailFirstAuth from './views/EmailFirstAuth';
+import SignupSuccess from './views/SignupSuccess';
 import InvoicesView from './views/InvoicesView';
 import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
@@ -258,6 +260,12 @@ const App: React.FC = () => {
         <Route path="/home" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
+
+        {/* Email-First Authentication (Primary) */}
+        <Route path="/auth" element={<EmailFirstAuth />} />
+        <Route path="/auth/signup-success" element={<SignupSuccess />} />
+
+        {/* Legacy Auth Routes (Fallback) */}
         <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
 
@@ -269,17 +277,17 @@ const App: React.FC = () => {
               showOnboarding={!hasSeenOnboarding}
               onCloseOnboarding={completeOnboarding}
             />
-          ) : <Navigate to="/auth/login" replace />
+          ) : <Navigate to="/auth" replace />
         } />
-        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView templates={templates} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth/login" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth/login" replace />} />
+        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView templates={templates} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
 
         {/* Technician Entry - Public (Phase C.2: Token-based access) */}
         <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />

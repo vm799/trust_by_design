@@ -1,14 +1,40 @@
 # JobProof / Trust by Design - Project Progress
 
-**Last Updated**: 2026-01-17
+**Last Updated**: 2026-01-17 (Evening Session)
 **Branch**: `claude/jobproof-audit-spec-PEdmd`
-**Status**: Active Development
+**Status**: Active Development - Email-First Auth Implemented
 
 ---
 
-## 🎯 Current Phase: UI/UX Refinement & Backend Sync
+## 🎯 Current Phase: Email-First Authentication & Payment Integration
 
-### Recently Completed (2026-01-17)
+### 🆕 Just Completed - Email-First Auth (2026-01-17 Evening)
+
+✅ **New Email-First Authentication Flow**
+- Created `EmailFirstAuth.tsx` component (500+ lines)
+- Created `SignupSuccess.tsx` professional success screen
+- Integrated routes: `/auth` (primary) and `/auth/signup-success`
+- Auto-detects existing vs new users by checking email in database
+- Three-step UX: Email → Password/Signup → Success
+- Better 400 error handling with user-friendly messages
+- Pre-fills workspace name suggestion from email domain
+- Google OAuth button ready (requires Supabase configuration)
+
+**Route Changes**:
+- `/auth` → New email-first flow (PRIMARY ENTRY POINT)
+- `/auth/login` → Legacy login (still available)
+- `/auth/signup` → Legacy signup (still available)
+- `/auth/signup-success` → Professional success screen with 3-step guide
+- All protected routes now redirect to `/auth` instead of `/auth/login`
+
+**⚠️ NOT YET TESTED** - Implementation complete but needs manual testing:
+- Email existence check against actual Supabase database
+- Auto-detection branching (existing user → password, new user → signup)
+- Workspace name suggestion logic
+- Error display for 400 errors
+- Success screen navigation flow
+
+### Recently Completed (2026-01-17 Morning)
 
 ✅ **Critical Bug Fixes**
 - Fixed infinite loading spinner on "Enter Hub" button
@@ -150,11 +176,18 @@ WHERE routine_schema = 'public'
 
 ## 📋 Pending Tasks
 
+### 🔴 Critical - Blocking Production
+- [ ] **Test email-first auth flow** - Implementation done, needs manual testing
+- [ ] **Deploy database migration** `001_auth_and_workspaces.sql` (workspace creation will fail without this)
+- [ ] **Configure Google OAuth** in Supabase dashboard (see setup guide below)
+- [ ] **Set up Stripe test mode** for payment processing (see setup guide below)
+
 ### High Priority
-- [ ] Deploy database migration `001_auth_and_workspaces.sql`
-- [ ] Test workspace creation end-to-end
-- [ ] Enable Google OAuth (requires Supabase OAuth setup)
+- [ ] Test workspace creation end-to-end with new flow
+- [ ] Verify email existence check works correctly
+- [ ] Test auto-detection branching (existing vs new user)
 - [ ] Verify price consistency across all pages
+- [ ] Test workspace name suggestion from email domain
 
 ### Medium Priority
 - [ ] Complete UK/AUS spelling audit (non-user-facing docs)
@@ -170,11 +203,132 @@ WHERE routine_schema = 'public'
 
 ---
 
+## 🔧 Setup Guides for Pending Integrations
+
+### Google OAuth Configuration (⏳ NOT YET DONE)
+
+**Status**: Code is ready, Supabase configuration required
+
+**Steps to Enable Google Login**:
+
+1. **Create Google Cloud Project**:
+   - Go to https://console.cloud.google.com
+   - Create new project or select existing
+   - Enable "Google+ API" (required for OAuth)
+
+2. **Create OAuth Credentials**:
+   - Navigate to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
+   - Application type: "Web application"
+   - Authorized redirect URIs:
+     ```
+     https://<your-project-ref>.supabase.co/auth/v1/callback
+     ```
+   - Copy Client ID and Client Secret
+
+3. **Configure Supabase Dashboard**:
+   - Go to Supabase Dashboard → Authentication → Providers
+   - Enable "Google" provider
+   - Paste Client ID and Client Secret
+   - Save changes
+
+4. **Test OAuth Flow**:
+   - Navigate to `/auth` route
+   - Click "Continue with Google"
+   - Should redirect to Google consent screen
+   - After consent, redirect back to `/#/admin`
+   - Verify workspace is created for OAuth users
+
+**Code Already Implemented**:
+- `lib/auth.ts:143-171` - `signInWithGoogle()` function
+- `views/EmailFirstAuth.tsx:164-182` - Google sign-in button handler
+- Redirect URL: `${window.location.origin}/#/admin`
+
+**Environment Variables**: None required (uses Supabase OAuth flow)
+
+**Known Issues**:
+- OAuth users don't have workspace_name in metadata yet
+- May need to prompt for workspace name after first OAuth login
+- TODO: Add workspace creation logic for OAuth users without workspace
+
+---
+
+### Stripe Test Mode Setup (⏳ NOT YET DONE)
+
+**Status**: Not implemented, awaiting user decision
+
+**Decision Required**: Which Stripe integration?
+1. **Stripe Checkout** (recommended for MVP):
+   - Hosted payment page
+   - Faster to implement
+   - Less customization
+   - Handles 3D Secure, Apple Pay, Google Pay automatically
+
+2. **Stripe Payment Elements**:
+   - Embedded in your UI
+   - More customization
+   - More code required
+   - Full control over UX
+
+**Steps for Stripe Checkout (Recommended)**:
+
+1. **Create Stripe Account**:
+   - Go to https://stripe.com
+   - Create account (if not already)
+   - Switch to "Test Mode" (toggle in top-right)
+
+2. **Get API Keys**:
+   - Dashboard → Developers → API Keys
+   - Copy "Publishable key" (starts with `pk_test_`)
+   - Copy "Secret key" (starts with `sk_test_`)
+
+3. **Add Environment Variables**:
+   ```bash
+   # .env.local
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   STRIPE_SECRET_KEY=sk_test_...  # Backend only, never expose
+   ```
+
+4. **Create Products in Stripe Dashboard**:
+   - Dashboard → Products → Add Product
+   - Create 3 products matching pricing tiers:
+     - **Solo**: £0/month (Free tier - no Stripe needed)
+     - **Team**: £49/month (recurring subscription)
+     - **Agency**: £199/month (recurring subscription)
+   - Copy Price IDs (starts with `price_`)
+
+5. **Implementation Tasks** (TODO):
+   - [ ] Install Stripe SDK: `npm install @stripe/stripe-js`
+   - [ ] Create Stripe checkout session endpoint (backend/edge function)
+   - [ ] Add "Upgrade" buttons to pricing page
+   - [ ] Handle successful payment webhook
+   - [ ] Update user's workspace tier in database
+   - [ ] Restrict features based on workspace tier
+
+**Test Cards** (Stripe test mode):
+```
+Success: 4242 4242 4242 4242
+Decline: 4000 0000 0000 0002
+3D Secure: 4000 0025 0000 3155
+```
+
+**Code Not Yet Implemented**:
+- No Stripe integration exists yet
+- Pricing page buttons don't connect to Stripe
+- No webhook handler for payment events
+- No tier restrictions enforced
+
+**Recommendation**: Start with Stripe Checkout for MVP, migrate to Payment Elements later if needed.
+
+---
+
 ## 🗂️ Key Files Modified
 
-### Authentication
-- `lib/auth.ts` - Improved error messages, added support email
-- `views/AuthView.tsx` - Smart redirect, password checklist, auto-focus
+### Authentication (NEW - 2026-01-17 Evening)
+- `views/EmailFirstAuth.tsx` - **NEW** 500+ line email-first auth component
+- `views/SignupSuccess.tsx` - **NEW** Professional success screen with 3-step guide
+- `App.tsx` - Added routes for `/auth` and `/auth/signup-success`, updated redirects
+- `lib/auth.ts` - Email redirect fix, improved error messages with support email
+- `views/AuthView.tsx` - Smart redirect, password checklist, auto-focus (legacy flow)
 
 ### Database
 - `lib/db.ts` - Synced with backend schema (sync_status, sealing fields)
@@ -305,12 +459,26 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 ## 📝 Git Commit History
 
+**Next Commit** (Ready to push):
 ```
+feat(auth): Implement email-first authentication flow
+
+- Add EmailFirstAuth component with auto-detection
+- Add SignupSuccess professional success screen
+- Update routes: /auth primary, /auth/signup-success
+- Add setup guides for Google OAuth and Stripe
+- All protected routes now redirect to /auth
+
+BREAKING: Primary auth route changed from /auth/login to /auth
+```
+
+**Recent Commits**:
+```
+52f6728 - docs(progress): Update with workspace creation flow fixes
+1da19d0 - feat(auth): Add professional workspace creation success screen
+7302cd7 - fix(auth): Improve workspace creation error messages and add support info
 4adcbe2 - docs(ui): Add comprehensive UI/UX fixes summary
 1f41e2d - feat(auth): Add auto-focus navigation between form fields
-b56ec35 - fix(ui): Critical UI/UX fixes and cleanup
-4238146 - feat(sync): Sync frontend with updated backend schema
-eeaed8d - docs(analysis): Add comprehensive domain truth extraction
 ```
 
 ---
