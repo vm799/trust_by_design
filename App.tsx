@@ -266,7 +266,7 @@ const App: React.FC = () => {
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
 
         {/* Legacy Auth Routes (Fallback) */}
-        <Route path="/auth" element={<AuthView type="login" onAuth={handleLogin} />} />
+        <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
 
         {/* Admin Hub - Protected by real session */}
