@@ -1,8 +1,18 @@
 'use client';
 
+/**
+ * Safety Manager onboarding step 4: Log safety incident
+ * Demonstrates RIDDOR-compliant incident reporting with severity levels
+ */
+
 import { useState } from 'react';
 import OnboardingFactory from '@/components/OnboardingFactory';
 
+/**
+ * Safety Manager onboarding step 4: Incident log
+ * Teaches RIDDOR incident reporting with severity matrix
+ * @returns {JSX.Element} The incident log onboarding page
+ */
 export default function IncidentLogPage() {
   const [incidentType, setIncidentType] = useState('near_miss');
   const [severity, setSeverity] = useState('');
@@ -35,11 +45,19 @@ export default function IncidentLogPage() {
 
   const isFormValid = incidentType && severity && description.length >= 10;
 
+  /**
+   * Validates form and sets logged state to show success UI
+   * Only proceeds if incident type, severity, and description (>=10 chars) are provided
+   */
   const handleLog = () => {
     if (!isFormValid) return;
     setLogged(true);
   };
 
+  /**
+   * Handles step completion and returns incident metadata to persist
+   * @returns {Promise<Object>} Step data containing incident type, severity level, and logged flag
+   */
   const handleComplete = async () => {
     return {
       incident_logged: true,
