@@ -22,8 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, isAdmin = true }) => {
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             <JobProofLogo variant="full" size="sm" showTagline={false} />
             <div className="flex items-center gap-2">
-              <span className="size-2 bg-success rounded-full animate-pulse"></span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protocol Active</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secure Evidence Capture</span>
             </div>
           </div>
         </header>

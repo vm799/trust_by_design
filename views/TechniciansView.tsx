@@ -20,8 +20,8 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
       id: Math.random().toString(36).substr(2, 9),
       name: newTech.name,
       email: newTech.email,
-      status: 'Available',
-      rating: 5.0,
+      status: 'Authorised',
+      rating: 0,
       jobsCompleted: 0
     });
     setNewTech({ name: '', email: '' });
@@ -41,7 +41,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-widest"
           >
             <span className="material-symbols-outlined text-lg font-black">{showAdd ? 'close' : 'add'}</span>
-            {showAdd ? 'Cancel' : 'Authorize Tech'}
+            {showAdd ? 'Cancel' : 'Authorise Tech'}
           </button>
         </div>
 
@@ -49,7 +49,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
             <input required placeholder="Operator Full Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
             <input required type="email" placeholder="Operator Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
-            <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Commit Authorization</button>
+            <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Commit Authorisation</button>
           </form>
         )}
 
@@ -75,10 +75,12 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
                 <div>
                   <h3 className="font-black text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{tech.name}</h3>
                   <p className="text-[10px] text-slate-500 font-mono mb-2 uppercase">{tech.email}</p>
-                  <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                    <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500 font-black">star</span>
-                    {tech.rating} Verified Score
-                  </div>
+                  {tech.rating > 0 && (
+                    <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500 font-black">star</span>
+                      {tech.rating} Field Rating
+                    </div>
+                  )}
                 </div>
               </div>
             ))

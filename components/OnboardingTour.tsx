@@ -20,7 +20,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
     const baseSteps: TourStep[] = [
       {
         title: "Welcome to JobProof",
-        description: `As a ${persona?.replace('_', ' ') || 'User'}, your dashboard is now initialized. This tour will guide you through your first capture.`,
+        description: `As a ${persona?.replace('_', ' ') || 'User'}, your dashboard is now initialised. This tour will guide you through your first capture.`,
         targetId: "nav-dashboard",
         icon: "verified"
       }
@@ -31,7 +31,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
         ...baseSteps,
         {
           title: "Build Your Workforce",
-          description: "Initialize your workforce first. Add technicians who will be capturing evidence in the field.",
+          description: "Initialise your workforce first. Add technicians who will be capturing evidence in the field.",
           targetId: "qs-tech",
           icon: "engineering"
         },
@@ -42,7 +42,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
           icon: "person_check"
         },
         {
-          title: "Initialize Dispatch",
+          title: "Initialise Dispatch",
           description: "Once ready, use the Dispatch button to create a new protocol for a technician.",
           targetId: "qs-dispatch",
           icon: "send"
@@ -72,7 +72,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
     return [
       ...baseSteps,
       {
-        title: "Initialize Dispatch",
+        title: "Initialise Dispatch",
         description: "Dispatch your first job to see the operational flow or explore your toolkit below.",
         targetId: "btn-dispatch",
         icon: "send"
@@ -132,7 +132,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
             onClick={next}
             className="flex-[2] py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase transition-all shadow-xl shadow-primary/20 tracking-widest"
           >
-            {currentStep === steps.length - 1 ? "Initialize Hub" : "Continue"}
+            {currentStep === steps.length - 1 ? "Initialise Hub" : "Continue"}
           </button>
         </div>
       </div>

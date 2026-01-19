@@ -71,10 +71,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, user, showOnboard
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Live Field Work" />
+          <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Protocol Ingress" />
           <MetricCard label="Awaiting Seal" value={pendingSignatures.toString()} icon="signature" trend="Pending Signatures" color="text-warning" />
-          <MetricCard label="Sealed Proofs" value={sealedJobs.length.toString()} icon="verified" trend="Validated Reports" color="text-success" />
-          <MetricCard label="Sync Issues" value={syncIssues.toString()} icon="sync_problem" trend="Require Attention" color={syncIssues > 0 ? "text-danger" : "text-slate-500"} />
+          <MetricCard label="Sealed Proofs" value={sealedJobs.length.toString()} icon="verified" trend="Sealed History" color="text-success" />
+          <MetricCard label="Sync Issues" value={syncIssues.toString()} icon="sync_problem" trend="Sync Queue" color={syncIssues > 0 ? "text-danger" : "text-slate-500"} />
         </div>
 
         <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
@@ -103,11 +103,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, user, showOnboard
                         </div>
                         <div className="space-y-4">
                           <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Your Hub is Ready</h4>
-                          <p className="text-slate-400 text-sm font-medium">Follow these verification steps to initialize your field operations.</p>
+                          <p className="text-slate-400 text-sm font-medium">Follow these verification steps to initialise your field operations.</p>
                         </div>
                         <div className="grid grid-cols-1 gap-3 text-left">
                           <QuickStartItem icon="person_add" label="1. Register Client" desc="Add your first customer to the registry." onClick={() => navigate('/admin/clients')} id="qs-client" />
-                          <QuickStartItem icon="engineering" label="2. Authorize Tech" desc="Add a field agent to capture evidence." onClick={() => navigate('/admin/technicians')} id="qs-tech" />
+                          <QuickStartItem icon="engineering" label="2. Authorise Tech" desc="Add a field agent to capture evidence." onClick={() => navigate('/admin/technicians')} id="qs-tech" />
                           <QuickStartItem icon="send" label="3. Dispatch Protocol" desc="Deploy your first verifiable job link." onClick={() => navigate('/admin/create')} id="qs-dispatch" />
                         </div>
                       </div>

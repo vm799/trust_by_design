@@ -52,6 +52,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
     setIsCreating(true);
 
+    // Yield to main thread to show loading state
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
       // Create job data
       const jobData: Partial<Job> = {
@@ -194,7 +197,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                   <span className="material-symbols-outlined text-primary text-5xl font-black">verified_user</span>
                 </div>
-                <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Authorize Dispatch</h3>
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Authorise Dispatch</h3>
                 <div className="bg-slate-800/50 rounded-3xl p-6 text-left space-y-4 border border-white/5">
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-500">Service</span>

@@ -133,7 +133,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
   const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
   const [w3w, setW3w] = useState('');
-  const [coords, setCoords] = useState<{lat?: number, lng?: number}>({});
+  const [coords, setCoords] = useState<{ lat?: number, lng?: number }>({});
 
   // Initialize state from job and draft once job is loaded
   useEffect(() => {
@@ -380,7 +380,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     const sealCheck = canSealJob({ ...job, photos, signature: signerName });
 
     if (!sealCheck.canSeal) {
-      alert(sealCheck.reason || 'Cannot seal job');
+      alert(sealCheck.reasons?.join(', ') || 'Cannot seal job');
       return;
     }
 
@@ -559,8 +559,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   return (
     <Layout isAdmin={false}>
       <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-900">
-        <div 
-          className={`h-full transition-all duration-1000 ${isOnline ? (isSyncing ? 'bg-primary animate-pulse' : 'bg-success') : 'bg-warning'}`} 
+        <div
+          className={`h-full transition-all duration-1000 ${isOnline ? (isSyncing ? 'bg-primary animate-pulse' : 'bg-success') : 'bg-warning'}`}
           style={{ width: `${(step / 4) * 100}%` }}
         ></div>
       </div>
@@ -575,10 +575,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
           </div>
           <div className="text-right">
-             <div className="flex items-center gap-2 justify-end">
-                <span className={`size-2 rounded-full ${isOnline ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isOnline ? 'text-success' : 'text-warning'}`}>{isOnline ? 'Online' : 'Offline'}</p>
-             </div>
+            <div className="flex items-center gap-2 justify-end">
+              <span className={`size-2 rounded-full ${isOnline ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${isOnline ? 'text-success' : 'text-warning'}`}>{isOnline ? 'Online' : 'Offline'}</p>
+            </div>
           </div>
         </div>
 
@@ -586,8 +586,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
           <div className="flex gap-2">
             {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
               <div key={label} className="flex-1 space-y-2">
-                 <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
-                 <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
+                <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
+                <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
               </div>
             ))}
           </div>
@@ -596,11 +596,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 0 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-3 text-center">
-               <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
-                  <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
-               </div>
-               <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-white">Job Assignment</h2>
-               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review job details before starting the verification protocol.</p>
+              <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
+              </div>
+              <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-white">Job Assignment</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review job details before starting the verification protocol.</p>
             </header>
 
             <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
@@ -680,45 +680,43 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Baseline Security</h2>
-               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verified pre-work assessment and location telemetry capture.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Baseline Security</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verified pre-work assessment and location telemetry capture.</p>
             </header>
 
             <div className="space-y-4">
               <button
                 onClick={captureLocation}
                 disabled={locationStatus === 'captured' || locationStatus === 'capturing'}
-                className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${
-                  locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
+                className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
                   locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' :
-                  locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-900 border-white/10 text-white'
-                }`}
+                    locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-900 border-white/10 text-white'
+                  }`}
               >
                 <div className="flex items-center gap-5">
-                   <div className={`size-12 rounded-2xl flex items-center justify-center ${
-                     locationStatus === 'captured' ? 'bg-success/20' :
-                     locationStatus === 'denied' ? 'bg-warning/20' : 'bg-white/5'
-                   }`}>
-                      <span className="material-symbols-outlined text-2xl font-black">
-                        {locationStatus === 'captured' ? 'near_me' : locationStatus === 'denied' ? 'location_disabled' : 'my_location'}
-                      </span>
-                   </div>
-                   <div className="text-left">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em]">Geo-Verification</p>
-                      <div className="flex flex-col mt-0.5">
-                        <div className="flex items-center gap-2">
-                          {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
-                          <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
-                            {locationStatus === 'captured' ? w3w.replace('///', '') :
-                             locationStatus === 'capturing' ? 'Acquiring Signal...' :
-                             locationStatus === 'denied' ? 'Permission Denied' : 'Authorize Location Hub'}
-                          </p>
-                        </div>
-                        {locationStatus === 'captured' && coords.lat && (
-                          <p className="text-[8px] font-mono text-slate-500 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
-                        )}
+                  <div className={`size-12 rounded-2xl flex items-center justify-center ${locationStatus === 'captured' ? 'bg-success/20' :
+                    locationStatus === 'denied' ? 'bg-warning/20' : 'bg-white/5'
+                    }`}>
+                    <span className="material-symbols-outlined text-2xl font-black">
+                      {locationStatus === 'captured' ? 'near_me' : locationStatus === 'denied' ? 'location_disabled' : 'my_location'}
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Geo-Verification</p>
+                    <div className="flex flex-col mt-0.5">
+                      <div className="flex items-center gap-2">
+                        {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
+                          {locationStatus === 'captured' ? w3w.replace('///', '') :
+                            locationStatus === 'capturing' ? 'Acquiring Signal...' :
+                              locationStatus === 'denied' ? 'Permission Denied' : 'Authorise Location Hub'}
+                        </p>
                       </div>
-                   </div>
+                      {locationStatus === 'captured' && coords.lat && (
+                        <p className="text-[8px] font-mono text-slate-500 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {locationStatus === 'captured' && <span className="material-symbols-outlined text-success font-black">check_circle</span>}
                 {locationStatus === 'denied' && <span className="material-symbols-outlined text-warning font-black">error</span>}
@@ -744,11 +742,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                   </button>
                 </div>
               )}
-              
+
               <div className="space-y-3">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Risk Check-off</p>
                 {checklist.map((item, idx) => (
-                  <button 
+                  <button
                     key={item.id}
                     onClick={() => {
                       const next = [...checklist];
@@ -768,7 +766,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               </div>
             </div>
 
-            <button 
+            <button
               disabled={locationStatus !== 'captured' || checklist.some(i => i.required && !i.checked)}
               onClick={() => setStep(2)}
               className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
@@ -782,13 +780,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 2 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Evidence Collection</h2>
-               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Categorized evidence for dispute-free verification.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Evidence Collection</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Categorized evidence for dispute-free verification.</p>
             </header>
 
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
               {(['Before', 'During', 'After', 'Evidence'] as PhotoType[]).map(type => (
-                <button 
+                <button
                   key={type}
                   onClick={() => setActivePhotoType(type)}
                   className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-600 hover:text-white'}`}
@@ -797,19 +795,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 </button>
               ))}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-5">
               <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={onFileSelect} />
-              <button 
-                onClick={() => fileInputRef.current?.click()} 
+              <button
+                onClick={() => fileInputRef.current?.click()}
                 className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 transition-all"
               >
                 <div className="size-14 bg-primary/10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                   <span className="material-symbols-outlined text-4xl font-black">add_a_photo</span>
+                  <span className="material-symbols-outlined text-4xl font-black">add_a_photo</span>
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center px-4 leading-none">Capture Phase: {activePhotoType}</span>
               </button>
-              
+
               {photos.filter(p => p.type === activePhotoType).map(p => {
                 const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
                 return (
@@ -819,7 +817,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                       <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
-                       <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
+                      <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
                     </div>
                   </div>
                 );
@@ -827,29 +825,29 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             </div>
 
             <div className="flex gap-4">
-               <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
-               <button
-                 disabled={photos.length === 0}
-                 onClick={() => setStep(3)}
-                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
-               >
-                 Authorize Seal
-               </button>
+              <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+              <button
+                disabled={photos.length === 0}
+                onClick={() => setStep(3)}
+                className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Authorize Seal
+              </button>
             </div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-8 animate-in">
-             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Job Summary</h2>
-               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Review operational notes and evidence before sign-off.</p>
+            <header className="space-y-2">
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Job Summary</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Review operational notes and evidence before sign-off.</p>
             </header>
 
             <div className="space-y-6">
               <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] space-y-4 shadow-2xl">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Narrative</p>
-                <textarea 
+                <textarea
                   value={notes}
                   onChange={(e) => { setNotes(e.target.value); writeLocalDraft({ notes: e.target.value }); }}
                   placeholder="Summarize the work completed for the client's review..."
@@ -883,14 +881,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             )}
 
             <div className="flex gap-4">
-               <button onClick={() => setStep(2)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
-               <button
-                 disabled={photos.length === 0}
-                 onClick={() => setStep(4)}
-                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
-               >
-                 Capture Sign-Off
-               </button>
+              <button onClick={() => setStep(2)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+              <button
+                disabled={photos.length === 0}
+                onClick={() => setStep(4)}
+                className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Capture Sign-Off
+              </button>
             </div>
           </div>
         )}
@@ -898,92 +896,92 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 4 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Authentication</h2>
-               <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Client attestation to verify service satisfaction.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Authentication</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Client attestation to verify service satisfaction.</p>
             </header>
 
             <div className="space-y-4">
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Signatory Identification</label>
-                  <input 
-                    type="text"
-                    placeholder="Full Legal Name"
-                    value={signerName}
-                    onChange={e => setSignerName(e.target.value)}
-                    className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary transition-all uppercase font-bold text-xs"
-                  />
-               </div>
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Authorization Role</label>
-                  <select 
-                    value={signerRole}
-                    onChange={e => setSignerRole(e.target.value)}
-                    className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary uppercase font-black text-[10px] appearance-none cursor-pointer"
-                  >
-                    <option value="Client">Client / Property Owner</option>
-                    <option value="Manager">On-Site Manager</option>
-                    <option value="Agent">Authorized Third-Party Agent</option>
-                  </select>
-               </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Signatory Identification</label>
+                <input
+                  type="text"
+                  placeholder="Full Legal Name"
+                  value={signerName}
+                  onChange={e => setSignerName(e.target.value)}
+                  className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary transition-all uppercase font-bold text-xs"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Authorization Role</label>
+                <select
+                  value={signerRole}
+                  onChange={e => setSignerRole(e.target.value)}
+                  className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary uppercase font-black text-[10px] appearance-none cursor-pointer"
+                >
+                  <option value="Client">Client / Property Owner</option>
+                  <option value="Manager">On-Site Manager</option>
+                  <option value="Agent">Authorized Third-Party Agent</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-4">
               <div className="bg-slate-50 rounded-[3rem] p-8 border-4 border-slate-900 shadow-2xl relative">
-                 <p className="text-[9px] font-black text-slate-300 absolute top-4 inset-x-0 text-center uppercase tracking-[0.3em] pointer-events-none">JobProof Secure Sign-Off</p>
-                 <div className="h-60 relative border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden bg-white/60 shadow-inner">
-                    <canvas 
-                      ref={canvasRef} 
-                      width={600}
-                      height={240}
-                      className="absolute inset-0 w-full h-full cursor-crosshair"
-                      onMouseDown={(e) => {
-                         isDrawing.current = true;
-                         const ctx = canvasRef.current?.getContext('2d');
-                         if (ctx) {
-                            ctx.beginPath();
-                            ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-                         }
-                      }}
-                      onMouseMove={(e) => {
-                         if (!isDrawing.current) return;
-                         const ctx = canvasRef.current?.getContext('2d');
-                         if (ctx) {
-                            ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-                            ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); ctx.stroke();
-                         }
-                      }}
-                      onMouseUp={() => (isDrawing.current = false)}
-                      onMouseLeave={() => (isDrawing.current = false)}
-                      onTouchStart={(e) => {
-                         isDrawing.current = true;
-                         const rect = canvasRef.current?.getBoundingClientRect();
-                         const touch = e.touches[0];
-                         const ctx = canvasRef.current?.getContext('2d');
-                         if (ctx && rect) {
-                            ctx.beginPath();
-                            ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-                            ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-                         }
-                         e.preventDefault();
-                      }}
-                      onTouchMove={(e) => {
-                         if (!isDrawing.current) return;
-                         const rect = canvasRef.current?.getBoundingClientRect();
-                         const touch = e.touches[0];
-                         const ctx = canvasRef.current?.getContext('2d');
-                         if (ctx && rect) {
-                            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-                            ctx.stroke();
-                         }
-                         e.preventDefault();
-                      }}
-                      onTouchEnd={() => (isDrawing.current = false)}
-                    ></canvas>
-                 </div>
+                <p className="text-[9px] font-black text-slate-300 absolute top-4 inset-x-0 text-center uppercase tracking-[0.3em] pointer-events-none">JobProof Secure Sign-Off</p>
+                <div className="h-60 relative border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden bg-white/60 shadow-inner">
+                  <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={240}
+                    className="absolute inset-0 w-full h-full cursor-crosshair"
+                    onMouseDown={(e) => {
+                      isDrawing.current = true;
+                      const ctx = canvasRef.current?.getContext('2d');
+                      if (ctx) {
+                        ctx.beginPath();
+                        ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                      }
+                    }}
+                    onMouseMove={(e) => {
+                      if (!isDrawing.current) return;
+                      const ctx = canvasRef.current?.getContext('2d');
+                      if (ctx) {
+                        ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                        ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); ctx.stroke();
+                      }
+                    }}
+                    onMouseUp={() => (isDrawing.current = false)}
+                    onMouseLeave={() => (isDrawing.current = false)}
+                    onTouchStart={(e) => {
+                      isDrawing.current = true;
+                      const rect = canvasRef.current?.getBoundingClientRect();
+                      const touch = e.touches[0];
+                      const ctx = canvasRef.current?.getContext('2d');
+                      if (ctx && rect) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                        ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                      }
+                      e.preventDefault();
+                    }}
+                    onTouchMove={(e) => {
+                      if (!isDrawing.current) return;
+                      const rect = canvasRef.current?.getBoundingClientRect();
+                      const touch = e.touches[0];
+                      const ctx = canvasRef.current?.getContext('2d');
+                      if (ctx && rect) {
+                        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                        ctx.stroke();
+                      }
+                      e.preventDefault();
+                    }}
+                    onTouchEnd={() => (isDrawing.current = false)}
+                  ></canvas>
+                </div>
               </div>
-              
-              <button 
-                onClick={clearSignature} 
+
+              <button
+                onClick={clearSignature}
                 className="w-full py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm font-black">backspace</span>
@@ -997,7 +995,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
-                 <div className="size-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="size-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-3xl font-black">lock</span>

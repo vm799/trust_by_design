@@ -8,7 +8,7 @@ import { JobProofLogo } from '../components/branding/jobproof-logo';
 /**
  * Email-First Authentication Flow
  *
- * UX optimized for contractors who need to get into workspace ASAP:
+ * UX optimised for contractors who need to get into workspace ASAP:
  * 1. Enter email → Auto-detect new vs existing user
  * 2. Branch to password (existing) or signup (new)
  * 3. Minimal friction, clear guidance

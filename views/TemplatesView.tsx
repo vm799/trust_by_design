@@ -21,7 +21,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
         <header className="flex justify-between items-end">
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Service Protocols</h2>
-            <p className="text-slate-400">Standardize field capture sequences for organizational precision.</p>
+            <p className="text-slate-400">Standardise field capture sequences for organisational precision.</p>
           </div>
           <button
             onClick={() => navigate('/admin/create')}
@@ -57,7 +57,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
             className="border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-8 gap-3 opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
           >
             <span className="material-symbols-outlined text-4xl font-black">add</span>
-            <span className="font-black text-xs uppercase tracking-widest">Initialize Blueprint</span>
+            <span className="font-black text-xs uppercase tracking-widest">Initialise Blueprint</span>
           </div>
         </div>
       </div>

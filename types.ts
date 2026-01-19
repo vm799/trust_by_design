@@ -91,7 +91,7 @@ export interface Technician {
   id: string;
   name: string;
   email: string;
-  status: 'Available' | 'On Site' | 'Off Duty';
+  status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
   rating: number;
   jobsCompleted: number;
 }

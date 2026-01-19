@@ -118,7 +118,7 @@ const CompleteOnboarding: React.FC = () => {
                     </div>
                     <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Choose Your Role</h1>
                     <p className="text-slate-400 max-w-2xl mx-auto">
-                        Select how you will use JobProof. We'll customize your experience with workflows optimized for your daily operations.
+                        Select how you will use JobProof. We'll customise your experience with workflows optimised for your daily operations.
                     </p>
                 </div>
 
