@@ -1,12 +1,9 @@
-'use client';
-
 /**
  * PersonaCard - Reusable persona selection card
  * Used in /complete-onboarding page
  */
 
-import { useRouter } from 'next/navigation';
-import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '@/lib/onboarding';
+import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '../lib/onboarding';
 
 interface PersonaCardProps {
   persona: PersonaType;
@@ -15,22 +12,12 @@ interface PersonaCardProps {
 }
 
 export default function PersonaCard({ persona, onSelect, disabled = false }: PersonaCardProps) {
-  const router = useRouter();
   const meta = PERSONA_METADATA[persona];
   const steps = PERSONA_STEPS[persona];
 
   const handleSelect = async () => {
     if (disabled) return;
-
-    try {
-      await onSelect(persona);
-
-      // Redirect to first step
-      const firstStep = steps[0].step_key;
-      router.push(`/onboarding/${persona}/${firstStep}`);
-    } catch (err) {
-      // Error handled by parent component
-    }
+    await onSelect(persona);
   };
 
   const colorClasses = {

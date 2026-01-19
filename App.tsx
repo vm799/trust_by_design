@@ -12,12 +12,15 @@ import TechniciansView from './views/TechniciansView';
 import TemplatesView from './views/TemplatesView';
 import AuditReport from './views/docs/AuditReport';
 import HelpCenter from './views/HelpCenter';
+import OnboardingTour from './components/OnboardingTour';
 import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
 import EmailFirstAuth from './views/EmailFirstAuth';
 import SignupSuccess from './views/SignupSuccess';
+import CompleteOnboarding from './views/CompleteOnboarding';
+import OAuthSetup from './views/OAuthSetup';
 import InvoicesView from './views/InvoicesView';
 import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
@@ -71,6 +74,7 @@ const App: React.FC = () => {
       if (newSession?.user) {
         // Load user profile from database
         const profile = await getUserProfile(newSession.user.id);
+
         if (profile) {
           // Map database profile to UserProfile type
           const userProfile: UserProfile = {
@@ -84,6 +88,10 @@ const App: React.FC = () => {
 
           // Phase C.2: Load workspace data from Supabase
           loadWorkspaceData(profile.workspace_id);
+        } else {
+          // Authenticated but no profile - must be a new user (OAuth or broken signup)
+          setUser(null);
+          // We'll handle redirection to /onboarding in the router
         }
       } else {
         setUser(null);
@@ -225,7 +233,10 @@ const App: React.FC = () => {
   const addTech = (t: Technician) => setTechnicians(prev => [...prev, t]);
   const deleteTech = (id: string) => setTechnicians(prev => prev.filter(t => t.id !== id));
 
-  const completeOnboarding = () => setHasSeenOnboarding(true);
+  const completeOnboarding = () => {
+    setHasSeenOnboarding(true);
+    localStorage.setItem('jobproof_onboarding_v4', 'true');
+  };
 
   // Phase C.1: Real authentication callbacks
   const handleLogin = () => {
@@ -263,19 +274,37 @@ const App: React.FC = () => {
         {/* Email-First Authentication (Primary) */}
         <Route path="/auth" element={<EmailFirstAuth />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
+        <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
+        <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
 
         {/* Legacy Auth Routes (Fallback) */}
         <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
 
+        {/* Onboarding & Setup */}
+        <Route path="/setup" element={
+          isAuthenticated ? <SignupSuccess /> : <Navigate to="/auth" replace />
+        } />
+        <Route path="/complete-onboarding" element={
+          isAuthenticated ? <OnboardingTour onComplete={completeOnboarding} /> : <Navigate to="/auth" replace />
+        } />
+
         {/* Admin Hub - Protected by real session */}
         <Route path="/admin" element={
           isAuthenticated ? (
-            <AdminDashboard
-              jobs={jobs}
-              showOnboarding={!hasSeenOnboarding}
-              onCloseOnboarding={completeOnboarding}
-            />
+            user ? (
+              hasSeenOnboarding ? (
+                <AdminDashboard
+                  jobs={jobs}
+                  showOnboarding={false}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              ) : (
+                <Navigate to="/onboarding" replace />
+              )
+            ) : (
+              <Navigate to="/auth/setup" replace />
+            )
           ) : <Navigate to="/auth" replace />
         } />
         <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
