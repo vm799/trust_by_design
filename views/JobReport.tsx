@@ -120,7 +120,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorization</p>
+                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorisation</p>
                      <p className="text-xl font-black uppercase leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{job.completedAt ? new Date(job.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                   </div>
@@ -309,7 +309,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                            {job.status === 'Submitted' && !existingInvoice && (
                               <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
                                  <span className="material-symbols-outlined text-sm font-black group-hover:rotate-12 transition-transform">receipt</span>
-                                 Initialize Billing
+                                 Initialise Billing
                               </button>
                            )}
                            <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
