@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { JobProofLogo } from '../components/branding/jobproof-logo';
 
 const LandingPage: React.FC = () => {
   return (
@@ -8,12 +9,9 @@ const LandingPage: React.FC = () => {
       {/* Navbar */}
       <nav className="fixed w-full z-50 border-b border-white/5 glass">
         <div className="max-w-7xl mx-auto px-6 h-16 lg:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary size-9 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <span className="material-symbols-outlined text-white text-xl font-black">verified</span>
-            </div>
-            <span className="text-2xl font-black tracking-tighter text-white uppercase">JobProof</span>
-          </div>
+          <Link to="/home">
+            <JobProofLogo variant="full" size="sm" />
+          </Link>
           <div className="hidden md:flex items-center gap-10 text-sm font-black text-slate-400">
             <a href="#pricing" className="hover:text-white transition-colors uppercase tracking-widest">Pricing</a>
             <Link to="/admin" className="text-white bg-white/5 border border-white/10 px-6 py-2.5 rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest">Control Hub</Link>
