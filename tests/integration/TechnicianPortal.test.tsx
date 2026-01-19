@@ -22,9 +22,20 @@ import type { Job } from '@/types';
  * Testing Trophy Level: INTEGRATION (Component + API + State)
  */
 
-// Mock dependencies
+// Mock dependencies (defined BEFORE vi.mock() calls for proper hoisting)
 const mockOnUpdateJob = vi.fn();
 const mockNavigate = vi.fn();
+const mockUploadPhoto = vi.fn().mockResolvedValue({
+  success: true,
+  data: { url: 'https://storage.supabase.co/photo.jpg' },
+});
+
+// Mock IndexedDB operations
+const mockIndexedDB = {
+  get: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+};
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -34,13 +45,6 @@ vi.mock('react-router-dom', async () => {
     useParams: () => ({ token: 'mock-token-123' }),
   };
 });
-
-// Mock IndexedDB operations
-const mockIndexedDB = {
-  get: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
-};
 
 vi.mock('@/lib/db', async () => {
   const actual = await vi.importActual('@/lib/db');
@@ -65,6 +69,10 @@ vi.mock('@/lib/db', async () => {
     })),
   };
 });
+
+vi.mock('@/lib/supabase', () => ({
+  uploadPhoto: mockUploadPhoto,
+}));
 
 // Helper to render component with router
 const renderWithRouter = (jobs: Job[] = mockJobs) => {
@@ -594,14 +602,12 @@ describe('INTEGRATION: TechnicianPortal - Complete Job Submission Workflow', () 
 
     it('should upload photos to Supabase storage before submission', async () => {
       const user = userEvent.setup();
-      const mockUploadPhoto = vi.fn().mockResolvedValue({
+
+      // Reset mock and set return value for this test
+      mockUploadPhoto.mockResolvedValueOnce({
         success: true,
         data: { url: 'https://storage.supabase.co/photo.jpg' },
       });
-
-      vi.mock('@/lib/supabase', () => ({
-        uploadPhoto: mockUploadPhoto,
-      }));
 
       renderWithRouter();
 
@@ -630,17 +636,15 @@ describe('INTEGRATION: TechnicianPortal - Complete Job Submission Workflow', () 
 
     it('should retry failed uploads with exponential backoff', async () => {
       const user = userEvent.setup();
-      const mockUploadPhoto = vi.fn()
+
+      // Reset mock and set return values for retry logic
+      mockUploadPhoto
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           success: true,
           data: { url: 'https://storage.supabase.co/photo.jpg' },
         });
-
-      vi.mock('@/lib/supabase', () => ({
-        uploadPhoto: mockUploadPhoto,
-      }));
 
       renderWithRouter();
 
@@ -682,11 +686,9 @@ describe('INTEGRATION: TechnicianPortal - Complete Job Submission Workflow', () 
 
     it('should handle network timeout during submission', async () => {
       const user = userEvent.setup();
-      const mockUploadPhoto = vi.fn(() => new Promise(() => {})); // Never resolves
 
-      vi.mock('@/lib/supabase', () => ({
-        uploadPhoto: mockUploadPhoto,
-      }));
+      // Mock upload that never resolves (timeout scenario)
+      mockUploadPhoto.mockImplementationOnce(() => new Promise(() => {}));
 
       renderWithRouter();
 

@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { canSealJob, sealEvidence, verifyEvidence } from '@/lib/sealing';
+import { canSealJob, sealEvidence, verifyEvidence, enableMockSealing } from '@/lib/sealing';
+import { initMockDatabase } from '@/lib/db';
 import { mockJobs, createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
 
 describe('lib/sealing - Evidence Sealing Operations', () => {
+  beforeEach(() => {
+    // Initialize mock database and sealing for tests
+    initMockDatabase();
+    enableMockSealing();
+  });
+
   describe('canSealJob', () => {
     it('should return true for a job ready to seal', () => {
       const job: Job = createMockJob({
@@ -186,10 +193,10 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
       const result = await sealEvidence('job-3'); // Submitted job with photos
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('evidenceHash');
-      expect(result.data).toHaveProperty('signature');
-      expect(result.data).toHaveProperty('sealedAt');
-      expect(result.data?.evidenceHash).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex
+      expect(result).toHaveProperty('evidenceHash');
+      expect(result).toHaveProperty('signature');
+      expect(result).toHaveProperty('sealedAt');
+      expect(result.evidenceHash).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex
     });
 
     it('should return error when job is not ready to seal', async () => {
@@ -210,7 +217,7 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
       const result = await sealEvidence('job-3');
 
       expect(result.success).toBe(true);
-      expect(result.data?.job_status).toBe('Archived');
+      expect(result.job_status).toBe('Archived');
     });
 
     it('should invalidate magic link tokens after sealing', async () => {
@@ -225,13 +232,17 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
 
   describe('verifyEvidence', () => {
     it('should verify sealed evidence successfully', async () => {
-      const result = await verifyEvidence('job-4'); // Sealed job
+      // First seal the job
+      await sealEvidence('job-3');
+
+      // Then verify it
+      const result = await verifyEvidence('job-3');
 
       expect(result.success).toBe(true);
-      expect(result.data?.isValid).toBe(true);
-      expect(result.data?.message).toContain('verified');
-      expect(result.data).toHaveProperty('evidenceHash');
-      expect(result.data).toHaveProperty('sealedAt');
+      expect(result.isValid).toBe(true);
+      expect(result.message).toContain('verified');
+      expect(result).toHaveProperty('evidenceHash');
+      expect(result).toHaveProperty('sealedAt');
     });
 
     it('should return error when job is not sealed', async () => {
@@ -242,13 +253,12 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
     });
 
     it('should detect tampered evidence (hash mismatch)', async () => {
-      // This test would require mocking the verification endpoint
-      // to simulate a hash mismatch scenario
+      // This test uses a special test job ID that simulates tampering
       const result = await verifyEvidence('tampered-job-id');
 
       expect(result.success).toBe(true);
-      expect(result.data?.isValid).toBe(false);
-      expect(result.data?.message).toContain('tampered');
+      expect(result.isValid).toBe(false);
+      expect(result.message).toContain('tampered');
     });
 
     it('should return error when seal not found', async () => {
@@ -259,12 +269,16 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
     });
 
     it('should include seal metadata in verification result', async () => {
-      const result = await verifyEvidence('job-4');
+      // First seal the job
+      await sealEvidence('job-3');
+
+      // Then verify and check metadata
+      const result = await verifyEvidence('job-3');
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('sealedAt');
-      expect(result.data).toHaveProperty('sealedBy');
-      expect(result.data).toHaveProperty('evidenceHash');
+      expect(result).toHaveProperty('sealedAt');
+      expect(result).toHaveProperty('sealedBy');
+      expect(result).toHaveProperty('evidenceHash');
     });
   });
 
@@ -281,16 +295,15 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
     });
 
     it('should include all required evidence fields in bundle', async () => {
-      // This test would inspect the bundle structure
-      // In practice, this is tested server-side in Edge Functions
+      // This test inspects the bundle structure
       const result = await sealEvidence('job-3');
 
       expect(result.success).toBe(true);
       // Verify bundle includes: job, photos, signature, metadata
-      expect(result.data?.bundle).toHaveProperty('job');
-      expect(result.data?.bundle).toHaveProperty('photos');
-      expect(result.data?.bundle).toHaveProperty('signature');
-      expect(result.data?.bundle).toHaveProperty('metadata');
+      expect(result.bundle).toHaveProperty('job');
+      expect(result.bundle).toHaveProperty('photos');
+      expect(result.bundle).toHaveProperty('signature');
+      expect(result.bundle).toHaveProperty('metadata');
     });
   });
 });
