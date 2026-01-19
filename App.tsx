@@ -62,8 +62,9 @@ const App: React.FC = () => {
   const [templates, setTemplates] = useState<JobTemplate[]>(() => {
     const saved = localStorage.getItem('jobproof_templates_v2');
     return saved ? JSON.parse(saved) : [
-      { id: 't1', name: 'General Maintenance', description: 'Standard check-up and evidence capture.', defaultTasks: [] },
-      { id: 't2', name: 'Emergency Callout', description: 'Priority documentation for reactive repairs.', defaultTasks: [] }
+      { id: 't1', name: 'Electrical Safety Audit', description: 'Standard 20-point precision audit for commercial infrastructure.', defaultTasks: ['Verify PPE', 'Lockout Tagout', 'Voltage Check', 'Evidence Capture'] },
+      { id: 't2', name: 'Mechanical Systems Check', description: 'Quarterly operational protocol for HVAC/R units.', defaultTasks: ['Filter Inspection', 'Fluid Levels', 'Acoustic Test', 'Final Evidence'] },
+      { id: 't3', name: 'Rapid Proof Capture', description: 'Priority evidence sequence for emergency callouts.', defaultTasks: ['Emergency Snapshot', 'Hazard ID', 'Signature Capture'] }
     ];
   });
 
@@ -108,7 +109,8 @@ const App: React.FC = () => {
             email: profile.email,
             avatar: profile.avatar_url,
             role: profile.role,
-            workspaceName: profile.workspace?.name || 'My Workspace'
+            workspaceName: profile.workspace?.name || 'My Workspace',
+            persona: profile.personas?.[0]?.persona_type
           };
           setUser(userProfile);
 
@@ -321,6 +323,7 @@ const App: React.FC = () => {
               hasSeenOnboarding ? (
                 <AdminDashboard
                   jobs={jobs}
+                  user={user}
                   showOnboarding={false}
                   onCloseOnboarding={completeOnboarding}
                 />

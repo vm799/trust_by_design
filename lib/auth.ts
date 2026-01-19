@@ -247,7 +247,8 @@ export const getUserProfile = async (userId: string) => {
       .from('users')
       .select(`
         *,
-        workspace:workspaces(*)
+        workspace:workspaces(*),
+        personas:user_personas(*)
       `)
       .eq('id', userId)
       .single();

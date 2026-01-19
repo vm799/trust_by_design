@@ -102,4 +102,5 @@ export interface UserProfile {
   avatar?: string;
   role: string;
   workspaceName: string;
+  persona?: string;
 }

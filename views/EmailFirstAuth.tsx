@@ -439,7 +439,7 @@ const EmailFirstAuth: React.FC = () => {
                   {password && validatePassword(password).isValid && (
                     <p className="text-[10px] text-success font-bold uppercase tracking-tight flex items-center gap-1 animate-in">
                       <span className="material-symbols-outlined text-sm">check_circle</span>
-                      PhD Level Security Verified
+                      Security Requirements Verified
                     </p>
                   )}
                 </div>

@@ -2,17 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
-import { Job } from '../types';
+import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
 
 interface AdminDashboardProps {
   jobs: Job[];
+  user: UserProfile | null;
   showOnboarding: boolean;
   onCloseOnboarding: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, onCloseOnboarding }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, user, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
   const activeJobs = jobs.filter(j => j.status !== 'Submitted');
   const sealedJobs = jobs.filter(j => j.status === 'Submitted');
@@ -51,8 +52,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, o
   }, [jobs]);
 
   return (
-    <Layout>
-      {showOnboarding && <OnboardingTour onComplete={onCloseOnboarding} />}
+    <Layout user={user}>
+      {showOnboarding && <OnboardingTour onComplete={onCloseOnboarding} persona={user?.persona} />}
       <div className="space-y-8 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Live Field Work" />
@@ -96,40 +97,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, showOnboarding, o
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
-                           <div className="size-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">{job.technician[0]}</div>
-                           <span className="text-xs text-slate-300 font-bold uppercase">{job.technician}</span>
+                          <div className="size-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">{job.technician[0]}</div>
+                          <span className="text-xs text-slate-300 font-bold uppercase">{job.technician}</span>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${
-                          job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' : 
-                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-500 border-slate-700'
-                        }`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' :
+                            job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-500 border-slate-700'
+                          }`}>
                           {job.status}
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                         <div className="flex -space-x-2">
-                           {job.photos.slice(0, 3).map((p, i) => {
-                             const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
-                             return (
-                               <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
-                                 {displayUrl ? (
-                                   <img src={displayUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="Evidence" />
-                                 ) : (
-                                   <div className="w-full h-full flex items-center justify-center">
-                                     <span className="material-symbols-outlined text-[10px] text-slate-600">image</span>
-                                   </div>
-                                 )}
-                               </div>
-                             );
-                           })}
-                           {job.photos.length > 3 && (
-                             <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">
-                               +{job.photos.length - 3}
-                             </div>
-                           )}
-                         </div>
+                        <div className="flex -space-x-2">
+                          {job.photos.slice(0, 3).map((p, i) => {
+                            const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
+                            return (
+                              <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
+                                {displayUrl ? (
+                                  <img src={displayUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="Evidence" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[10px] text-slate-600">image</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {job.photos.length > 3 && (
+                            <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">
+                              +{job.photos.length - 3}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className={`inline-flex items-center gap-1.5 ${job.syncStatus === 'synced' ? 'text-success' : job.syncStatus === 'failed' ? 'text-danger' : 'text-primary'}`}>
