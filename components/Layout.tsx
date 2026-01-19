@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { JobProofLogo, JobProofMark } from './branding/jobproof-logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,15 +19,7 @@ const Layout: React.FC<LayoutProps> = ({ children, isAdmin = true }) => {
       <div className="flex flex-col min-h-screen bg-slate-950 font-sans selection:bg-primary/30">
         <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-4 py-4">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary size-7 rounded-md flex items-center justify-center text-white">
-                <span className="material-symbols-outlined text-sm">verified</span>
-              </div>
-              <div>
-                <h1 className="text-sm font-black leading-none tracking-tight uppercase">JobProof</h1>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Field Hub</p>
-              </div>
-            </div>
+            <JobProofLogo variant="full" size="sm" showTagline={false} />
             <div className="flex items-center gap-2">
               <span className="size-2 bg-success rounded-full animate-pulse"></span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protocol Active</span>
@@ -45,11 +38,8 @@ const Layout: React.FC<LayoutProps> = ({ children, isAdmin = true }) => {
       {/* Desktop Sidebar */}
       <aside className="w-72 hidden lg:flex flex-col border-r border-white/5 bg-slate-950/50 backdrop-blur-md">
         <div className="p-8">
-          <Link to="/home" className="flex items-center gap-3 group">
-            <div className="bg-primary size-10 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-all">
-              <span className="material-symbols-outlined text-white text-xl font-black">verified</span>
-            </div>
-            <span className="text-2xl font-black tracking-tighter text-white uppercase">JobProof</span>
+          <Link to="/home" className="group">
+            <JobProofLogo variant="full" size="md" className="transition-transform group-hover:scale-105" />
           </Link>
         </div>
         
