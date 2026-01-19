@@ -766,6 +766,450 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
   }
 };
 
+// ============================================================================
+// CLIENTS
+// ============================================================================
+
+/**
+ * Get all clients for a workspace
+ */
+export const getClients = async (workspaceId: string): Promise<DbResult<Client[]>> => {
+  if (shouldUseMockDB()) {
+    const clients = Array.from(mockDatabase.clients.values())
+      .filter(client => (client as any).workspaceId === workspaceId);
+    return { success: true, data: clients };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('name', { ascending: true });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const clients: Client[] = (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      address: row.address,
+      totalJobs: 0
+    }));
+
+    return { success: true, data: clients };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch clients'
+    };
+  }
+};
+
+/**
+ * Create a new client
+ */
+export const createClient = async (clientData: Partial<Client>): Promise<DbResult<Client>> => {
+  if (shouldUseMockDB()) {
+    const newClient: Client = {
+      id: `client-${Date.now()}`,
+      name: clientData.name || '',
+      email: clientData.email || '',
+      address: clientData.address || '',
+      totalJobs: 0
+    };
+    mockDatabase.clients.set(newClient.id, newClient);
+    return { success: true, data: newClient };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('workspace_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!userProfile?.workspace_id) {
+      return { success: false, error: 'User has no workspace' };
+    }
+
+    const { data, error } = await supabase
+      .from('clients')
+      .insert({
+        workspace_id: userProfile.workspace_id,
+        name: clientData.name,
+        email: clientData.email,
+        address: clientData.address
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const client: Client = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      address: data.address,
+      totalJobs: 0
+    };
+
+    return { success: true, data: client };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create client'
+    };
+  }
+};
+
+/**
+ * Update a client
+ */
+export const updateClient = async (clientId: string, updates: Partial<Client>): Promise<DbResult<Client>> => {
+  if (shouldUseMockDB()) {
+    const client = mockDatabase.clients.get(clientId);
+    if (!client) {
+      return { success: false, error: 'Client not found' };
+    }
+    const updatedClient = { ...client, ...updates };
+    mockDatabase.clients.set(clientId, updatedClient);
+    return { success: true, data: updatedClient };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.address !== undefined) updateData.address = updates.address;
+
+    const { data, error } = await supabase
+      .from('clients')
+      .update(updateData)
+      .eq('id', clientId)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const client: Client = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      address: data.address,
+      totalJobs: 0
+    };
+
+    return { success: true, data: client };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update client'
+    };
+  }
+};
+
+/**
+ * Delete a client
+ */
+export const deleteClient = async (clientId: string): Promise<DbResult<void>> => {
+  if (shouldUseMockDB()) {
+    const exists = mockDatabase.clients.has(clientId);
+    if (!exists) {
+      return { success: false, error: 'Client not found' };
+    }
+    mockDatabase.clients.delete(clientId);
+    return { success: true };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', clientId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete client'
+    };
+  }
+};
+
+// ============================================================================
+// TECHNICIANS
+// ============================================================================
+
+/**
+ * Get all technicians for a workspace
+ */
+export const getTechnicians = async (workspaceId: string): Promise<DbResult<Technician[]>> => {
+  if (shouldUseMockDB()) {
+    const technicians = Array.from(mockDatabase.technicians.values())
+      .filter(tech => (tech as any).workspaceId === workspaceId);
+    return { success: true, data: technicians };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('technicians')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('name', { ascending: true });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const technicians: Technician[] = (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      status: row.status,
+      rating: row.rating || 0,
+      jobsCompleted: row.jobs_completed || 0
+    }));
+
+    return { success: true, data: technicians };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch technicians'
+    };
+  }
+};
+
+/**
+ * Create a new technician
+ */
+export const createTechnician = async (techData: Partial<Technician>): Promise<DbResult<Technician>> => {
+  if (shouldUseMockDB()) {
+    const newTechnician: Technician = {
+      id: `tech-${Date.now()}`,
+      name: techData.name || '',
+      email: techData.email || '',
+      status: techData.status || 'Available',
+      rating: techData.rating || 0,
+      jobsCompleted: techData.jobsCompleted || 0
+    };
+    mockDatabase.technicians.set(newTechnician.id, newTechnician);
+    return { success: true, data: newTechnician };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('workspace_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!userProfile?.workspace_id) {
+      return { success: false, error: 'User has no workspace' };
+    }
+
+    const { data, error } = await supabase
+      .from('technicians')
+      .insert({
+        workspace_id: userProfile.workspace_id,
+        name: techData.name,
+        email: techData.email,
+        status: techData.status || 'Available',
+        rating: techData.rating || 0,
+        jobs_completed: techData.jobsCompleted || 0
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const technician: Technician = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      status: data.status,
+      rating: data.rating || 0,
+      jobsCompleted: data.jobs_completed || 0
+    };
+
+    return { success: true, data: technician };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create technician'
+    };
+  }
+};
+
+/**
+ * Update a technician
+ */
+export const updateTechnician = async (techId: string, updates: Partial<Technician>): Promise<DbResult<Technician>> => {
+  if (shouldUseMockDB()) {
+    const technician = mockDatabase.technicians.get(techId);
+    if (!technician) {
+      return { success: false, error: 'Technician not found' };
+    }
+    const updatedTechnician = { ...technician, ...updates };
+    mockDatabase.technicians.set(techId, updatedTechnician);
+    return { success: true, data: updatedTechnician };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.rating !== undefined) updateData.rating = updates.rating;
+    if (updates.jobsCompleted !== undefined) updateData.jobs_completed = updates.jobsCompleted;
+
+    const { data, error } = await supabase
+      .from('technicians')
+      .update(updateData)
+      .eq('id', techId)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const technician: Technician = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      status: data.status,
+      rating: data.rating || 0,
+      jobsCompleted: data.jobs_completed || 0
+    };
+
+    return { success: true, data: technician };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update technician'
+    };
+  }
+};
+
+/**
+ * Delete a technician
+ */
+export const deleteTechnician = async (techId: string): Promise<DbResult<void>> => {
+  if (shouldUseMockDB()) {
+    const exists = mockDatabase.technicians.has(techId);
+    if (!exists) {
+      return { success: false, error: 'Technician not found' };
+    }
+    mockDatabase.technicians.delete(techId);
+    return { success: true };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('technicians')
+      .delete()
+      .eq('id', techId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete technician'
+    };
+  }
+};
+
 // Auto-init mock database if in test environment
 if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
   initMockDatabase();
