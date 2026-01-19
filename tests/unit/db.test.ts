@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createJob, getJobs, updateJob, deleteJob, generateMagicLink, validateMagicLink } from '@/lib/db';
+import { createJob, getJobs, updateJob, deleteJob, generateMagicLink, validateMagicLink, initMockDatabase } from '@/lib/db';
 import { createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
 
 describe('lib/db - Database Operations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Initialize mock database for tests
+    initMockDatabase();
   });
 
   describe('createJob', () => {
