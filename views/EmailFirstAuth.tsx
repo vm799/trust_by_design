@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signIn, signInWithGoogle } from '../lib/auth';
 import { getSupabase } from '../lib/supabase';
+import { JobProofLogo } from '../components/branding/jobproof-logo';
 
 /**
  * Email-First Authentication Flow
@@ -190,11 +191,8 @@ const EmailFirstAuth: React.FC = () => {
       <div className="w-full max-w-md space-y-8 relative z-10 animate-in">
         {/* Header */}
         <div className="text-center space-y-4">
-          <Link to="/home" className="inline-flex items-center gap-3 group">
-            <div className="bg-primary size-12 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-white text-2xl font-black">verified</span>
-            </div>
-            <span className="text-3xl font-black tracking-tighter text-white uppercase">JobProof</span>
+          <Link to="/home" className="inline-block group">
+            <JobProofLogo variant="full" size="lg" showTagline className="transition-transform group-hover:scale-105" />
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
