@@ -328,22 +328,27 @@ const App: React.FC = () => {
                   onCloseOnboarding={completeOnboarding}
                 />
               ) : (
-                <Navigate to="/onboarding" replace />
+                <AdminDashboard
+                  jobs={jobs}
+                  user={user}
+                  showOnboarding={true}
+                  onCloseOnboarding={completeOnboarding}
+                />
               )
             ) : (
               <Navigate to="/auth/setup" replace />
             )
           ) : <Navigate to="/auth" replace />
         } />
-        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView user={user} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView user={user} invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter user={user} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport user={user} jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
 
         {/* Technician Entry - Public (Phase C.2: Token-based access) */}
         <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />

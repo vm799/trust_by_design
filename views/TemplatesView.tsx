@@ -1,6 +1,13 @@
+import React from 'react';
+import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
+import { UserProfile } from '../types';
 
-const TemplatesView: React.FC = () => {
+interface TemplatesViewProps {
+  user: UserProfile | null;
+}
+
+const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
   const navigate = useNavigate();
   const templates = [
     { id: 't1', name: 'Electrical Safety Audit', description: 'Standard 20-point precision audit for commercial infrastructure.', tasks: 20 },
@@ -9,7 +16,7 @@ const TemplatesView: React.FC = () => {
   ];
 
   return (
-    <Layout>
+    <Layout user={user}>
       <div className="space-y-8">
         <header className="flex justify-between items-end">
           <div className="space-y-1">

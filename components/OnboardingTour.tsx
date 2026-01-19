@@ -32,20 +32,20 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
         {
           title: "Build Your Workforce",
           description: "Initialize your workforce first. Add technicians who will be capturing evidence in the field.",
-          targetId: "nav-techs",
+          targetId: "qs-tech",
           icon: "engineering"
+        },
+        {
+          title: "Protocol Registry",
+          description: "Populate your hub with clients. Verified dispatches require a registered target.",
+          targetId: "qs-client",
+          icon: "person_check"
         },
         {
           title: "Initialize Dispatch",
           description: "Once ready, use the Dispatch button to create a new protocol for a technician.",
-          targetId: "btn-dispatch",
+          targetId: "qs-dispatch",
           icon: "send"
-        },
-        {
-          title: "Monitor Operations",
-          description: "The operations hub will populate with live field syncs and audit trails.",
-          targetId: "nav-dashboard",
-          icon: "security"
         }
       ];
     }
@@ -54,16 +54,16 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
       return [
         ...baseSteps,
         {
-          title: "Capture Evidence",
-          description: "Starting a job is instant. Use 'Dispatch' to create your on-site evidence protocol.",
-          targetId: "btn-dispatch",
-          icon: "photo_camera"
+          title: "Client Registry",
+          description: "First, add your customers. Every verifiable report is linked to a client identity.",
+          targetId: "qs-client",
+          icon: "group"
         },
         {
-          title: "Protocol Registry",
-          description: "Manage your client database and historical service records here.",
-          targetId: "nav-clients",
-          icon: "group"
+          title: "Deploy Dispatch",
+          description: "Starting a job is instant. Use 'Dispatch' to create your on-site evidence protocol.",
+          targetId: "qs-dispatch",
+          icon: "photo_camera"
         }
       ];
     }
@@ -81,6 +81,21 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
   };
 
   const steps = getSteps();
+  const step = steps[currentStep];
+
+  // Highlight target element
+  React.useEffect(() => {
+    const target = document.getElementById(step.targetId);
+    if (target) {
+      target.classList.add('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return () => {
+      if (target) {
+        target.classList.remove('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative');
+      }
+    };
+  }, [currentStep, step.targetId]);
 
   const next = () => {
     if (currentStep < steps.length - 1) {
@@ -90,7 +105,6 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona }) 
     }
   };
 
-  const step = steps[currentStep];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">

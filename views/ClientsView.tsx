@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-import { Client } from '../types';
+import { Client, UserProfile } from '../types';
 
 interface ClientsViewProps {
+  user: UserProfile | null;
   clients: Client[];
   onAdd: (c: Client) => void;
   onDelete: (id: string) => void;
 }
 
-const ClientsView: React.FC<ClientsViewProps> = ({ clients, onAdd, onDelete }) => {
+const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelete }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '', address: '' });
 
@@ -25,14 +26,14 @@ const ClientsView: React.FC<ClientsViewProps> = ({ clients, onAdd, onDelete }) =
   };
 
   return (
-    <Layout>
+    <Layout user={user}>
       <div className="space-y-6">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Client Registry</h2>
-             <p className="text-slate-400">Primary organizational database for customer assets and service locations.</p>
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Client Registry</h2>
+            <p className="text-slate-400">Primary organizational database for customer assets and service locations.</p>
           </div>
-          <button 
+          <button
             onClick={() => setShowAdd(!showAdd)}
             className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-widest"
           >
@@ -43,10 +44,10 @@ const ClientsView: React.FC<ClientsViewProps> = ({ clients, onAdd, onDelete }) =
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
-             <input required placeholder="Client Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} />
-             <input required type="email" placeholder="Verification Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} />
-             <input required placeholder="Operational Address" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})} />
-             <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
+            <input required placeholder="Client Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <input required type="email" placeholder="Verification Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <input required placeholder="Operational Address" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
+            <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
           </form>
         )}
 
@@ -69,12 +70,12 @@ const ClientsView: React.FC<ClientsViewProps> = ({ clients, onAdd, onDelete }) =
                 {clients.map(client => (
                   <tr key={client.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-6 py-4">
-                       <p className="font-bold text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{client.name}</p>
-                       <p className="text-xs text-slate-500 font-mono">{client.email}</p>
+                      <p className="font-bold text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{client.name}</p>
+                      <p className="text-xs text-slate-500 font-mono">{client.email}</p>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-400 font-medium">{client.address}</td>
                     <td className="px-6 py-4 text-right">
-                      <button 
+                      <button
                         onClick={() => onDelete(client.id)}
                         className="material-symbols-outlined text-slate-600 hover:text-red-500 transition-colors font-black"
                       >
