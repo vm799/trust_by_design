@@ -34,6 +34,19 @@ const EmailFirstAuth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-redirect if session is detected (e.g. after Google OAuth return)
+  React.useEffect(() => {
+    const checkSession = async () => {
+      const supabase = getSupabase();
+      if (!supabase) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/admin');
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
   /**
    * Step 1: Check if email exists in system
    * Returns: 'existing' if user found, 'new' if not
@@ -399,23 +412,36 @@ const EmailFirstAuth: React.FC = () => {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
-                <div className="space-y-1 mt-2">
-                  <p className={`text-[10px] font-medium flex items-center gap-1 ${password.length >= 15 ? 'text-success' : 'text-slate-500'}`}>
-                    <span className="material-symbols-outlined text-[12px]">{password.length >= 15 ? 'check_circle' : 'circle'}</span>
-                    Minimum 15 characters
-                  </p>
-                  <p className={`text-[10px] font-medium flex items-center gap-1 ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
-                    <span className="material-symbols-outlined text-[12px]">{/[A-Z]/.test(password) ? 'check_circle' : 'circle'}</span>
-                    One uppercase letter
-                  </p>
-                  <p className={`text-[10px] font-medium flex items-center gap-1 ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
-                    <span className="material-symbols-outlined text-[12px]">{/[0-9]/.test(password) ? 'check_circle' : 'circle'}</span>
-                    One number
-                  </p>
-                  <p className={`text-[10px] font-medium flex items-center gap-1 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
-                    <span className="material-symbols-outlined text-[12px]">{/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'check_circle' : 'circle'}</span>
-                    One special character
-                  </p>
+                <div className="space-y-3 mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 15 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                      15+ Characters
+                    </span>
+                    <span className="text-[10px] font-black text-slate-600 self-center">OR</span>
+                    <div className="flex gap-1.5 pt-0.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 8 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                        8+ Chars
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[A-Z]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                        CAPS
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                        Symbol
+                      </span>
+                    </div>
+                  </div>
+                  {password && !validatePassword(password).isValid && (
+                    <p className="text-[10px] text-warning font-bold uppercase tracking-tight flex items-center gap-1 animate-in">
+                      <span className="material-symbols-outlined text-sm">info</span>
+                      Requirements not met yet
+                    </p>
+                  )}
+                  {password && validatePassword(password).isValid && (
+                    <p className="text-[10px] text-success font-bold uppercase tracking-tight flex items-center gap-1 animate-in">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      PhD Level Security Verified
+                    </p>
+                  )}
                 </div>
               </div>
 

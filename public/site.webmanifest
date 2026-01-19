@@ -2,20 +2,7 @@
   "name": "JobProof - Prove Your Work",
   "short_name": "JobProof",
   "description": "Track jobs, prove delivery, win repeat business. Professional field evidence management for contractors.",
-  "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
+  "icons": [],
   "theme_color": "#2563EB",
   "background_color": "#ffffff",
   "display": "standalone",

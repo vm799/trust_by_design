@@ -26,6 +26,7 @@ import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
+import { getSupabase } from './lib/supabase';
 import { getJobs, getClients, getTechnicians } from './lib/db';
 import type { Session } from '@supabase/supabase-js';
 
@@ -73,7 +74,32 @@ const App: React.FC = () => {
 
       if (newSession?.user) {
         // Load user profile from database
-        const profile = await getUserProfile(newSession.user.id);
+        let profile = await getUserProfile(newSession.user.id);
+
+        // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
+        if (!profile && newSession.user.user_metadata?.workspace_name) {
+          console.log('Profile missing but metadata found. Attempting auto-healing...');
+          const meta = newSession.user.user_metadata;
+          const workspaceSlug = (meta.workspace_name as string)
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+          const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 5)}`;
+
+          const supabase = getSupabase();
+          if (supabase) {
+            await supabase.rpc('create_workspace_with_owner', {
+              p_user_id: newSession.user.id,
+              p_email: newSession.user.email,
+              p_workspace_name: meta.workspace_name,
+              p_workspace_slug: finalSlug,
+              p_full_name: meta.full_name || null
+            });
+            // Try fetching again after creation
+            profile = await getUserProfile(newSession.user.id);
+          }
+        }
 
         if (profile) {
           // Map database profile to UserProfile type
@@ -89,9 +115,8 @@ const App: React.FC = () => {
           // Phase C.2: Load workspace data from Supabase
           loadWorkspaceData(profile.workspace_id);
         } else {
-          // Authenticated but no profile - must be a new user (OAuth or broken signup)
+          // Still no profile - must be a new OAuth user or real failure
           setUser(null);
-          // We'll handle redirection to /onboarding in the router
         }
       } else {
         setUser(null);
@@ -267,12 +292,12 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/home" element={<LandingPage />} />
+        <Route path="/home" element={isAuthenticated ? <Navigate to="/admin" replace /> : <LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
 
         {/* Email-First Authentication (Primary) */}
-        <Route path="/auth" element={<EmailFirstAuth />} />
+        <Route path="/auth" element={isAuthenticated ? <Navigate to="/admin" replace /> : <EmailFirstAuth />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
@@ -310,7 +335,7 @@ const App: React.FC = () => {
         <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView templates={templates} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />

@@ -160,7 +160,7 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/#/admin`
+        redirectTo: window.location.origin
       }
     });
 
@@ -265,7 +265,11 @@ export const getUserProfile = async (userId: string) => {
  */
 export const onAuthStateChange = (callback: (session: Session | null) => void) => {
   const supabase = getSupabase();
-  if (!supabase) return () => { };
+  if (!supabase) {
+    // Call callback immediately with null if Supabase is missing to avoid loading hang
+    callback(null);
+    return () => { };
+  }
 
   const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
     callback(session);
