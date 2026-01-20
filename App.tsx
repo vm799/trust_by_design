@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
 import AdminDashboard from './views/AdminDashboard';
 import CreateJob from './views/CreateJob';
+import ContractorDashboard from './views/ContractorDashboard';
 import TechnicianPortal from './views/TechnicianPortal';
 import JobReport from './views/JobReport';
 import Settings from './views/Settings';
@@ -13,6 +14,7 @@ import TemplatesView from './views/TemplatesView';
 import AuditReport from './views/docs/AuditReport';
 import HelpCenter from './views/HelpCenter';
 import OnboardingTour from './components/OnboardingTour';
+import ClientDashboard from './views/ClientDashboard';
 import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
@@ -291,29 +293,93 @@ const App: React.FC = () => {
     );
   }
 
+  // Helper for Persona-Aware Routing
+  const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
+    if (!user) return null; // Wait for user profile to load
+
+    // Normalise persona check
+    const persona = user.persona?.toLowerCase() || '';
+
+    if (persona === 'technician' || persona === 'contractor' || persona === 'solo_contractor') {
+      return <Navigate to="/contractor" replace />;
+    }
+
+    if (persona === 'client') {
+      return <Navigate to="/client" replace />;
+    }
+
+    // Default to Admin Dashboard for Managers/Owners
+    return <Navigate to="/admin" replace />;
+  };
+
   return (
     <HashRouter>
       <Routes>
-        <Route path="/home" element={isAuthenticated ? <Navigate to="/admin" replace /> : <LandingPage />} />
+        {/* Redirect root to Landing or Dashboard based on Auth */}
+        <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
+        <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
 
         {/* Email-First Authentication (Primary) */}
-        <Route path="/auth" element={isAuthenticated ? <Navigate to="/admin" replace /> : <EmailFirstAuth />} />
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <EmailFirstAuth />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
 
         {/* Legacy Auth Routes (Fallback) */}
-        <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
-        <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
+        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
+        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="signup" onAuth={handleLogin} />} />
 
         {/* Onboarding & Setup */}
         <Route path="/setup" element={
           isAuthenticated ? <SignupSuccess /> : <Navigate to="/auth" replace />
         } />
         <Route path="/complete-onboarding" element={
-          isAuthenticated ? <OnboardingTour onComplete={completeOnboarding} /> : <Navigate to="/auth" replace />
+          isAuthenticated ? <OnboardingTour onComplete={completeOnboarding} persona={user?.persona} /> : <Navigate to="/auth" replace />
+        } />
+
+        {/* Contractor Persona Flow */}
+        {/* Contractor Persona Flow */}
+        <Route path="/contractor" element={
+          isAuthenticated ? (
+            user ? (
+              hasSeenOnboarding ? (
+                <ContractorDashboard
+                  jobs={jobs}
+                  user={user}
+                  showOnboarding={false}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              ) : (
+                <ContractorDashboard
+                  jobs={jobs}
+                  user={user}
+                  showOnboarding={true}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              )
+            ) : (
+              <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )
+          ) : <Navigate to="/auth" replace />
+        } />
+
+        <Route path="/contractor/job/:jobId" element={
+          isAuthenticated ? (
+            <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
+          ) : <Navigate to="/auth" replace />
+        } />
+
+
+
+        {/* Client Persona Flow */}
+        <Route path="/client" element={
+          isAuthenticated ? (
+            <ClientDashboard jobs={jobs} invoices={invoices} user={user} />
+          ) : <Navigate to="/auth" replace />
         } />
 
         {/* Admin Hub - Protected by real session */}
@@ -323,6 +389,8 @@ const App: React.FC = () => {
               hasSeenOnboarding ? (
                 <AdminDashboard
                   jobs={jobs}
+                  clients={clients}
+                  technicians={technicians}
                   user={user}
                   showOnboarding={false}
                   onCloseOnboarding={completeOnboarding}
@@ -330,6 +398,8 @@ const App: React.FC = () => {
               ) : (
                 <AdminDashboard
                   jobs={jobs}
+                  clients={clients}
+                  technicians={technicians}
                   user={user}
                   showOnboarding={true}
                   onCloseOnboarding={completeOnboarding}
@@ -361,8 +431,7 @@ const App: React.FC = () => {
         <Route path="/legal/:type" element={<LegalPage />} />
 
         {/* Fallbacks */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );
