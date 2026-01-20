@@ -8,12 +8,14 @@ import { getMedia } from '../db';
 
 interface AdminDashboardProps {
   jobs: Job[];
+  clients?: any[]; // Phase C.2: Added specific types if possible, but any[] is fine for count
+  technicians?: any[];
   user: UserProfile | null;
   showOnboarding: boolean;
   onCloseOnboarding: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, user, showOnboarding, onCloseOnboarding }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], technicians = [], user, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
   const activeJobs = jobs.filter(j => j.status !== 'Submitted');
   const sealedJobs = jobs.filter(j => j.status === 'Submitted');
@@ -53,7 +55,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, user, showOnboard
 
   return (
     <Layout user={user}>
-      {showOnboarding && <OnboardingTour onComplete={onCloseOnboarding} persona={user?.persona} />}
+      {showOnboarding && (
+        <OnboardingTour
+          onComplete={onCloseOnboarding}
+          persona={user?.persona}
+          counts={{ clients: clients.length, techs: technicians.length, jobs: jobs.length }}
+        />
+      )}
       <div className="space-y-8 pb-20">
         <header className="flex justify-between items-end">
           <div className="space-y-1">

@@ -29,6 +29,19 @@ const OAuthSetup: React.FC = () => {
                 return;
             }
 
+            // Check if profile already exists - if so, skip setup
+            const { data: profile } = await supabase
+                .from('users')
+                .select('id')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                window.location.href = '/#/admin';
+                window.location.reload();
+                return;
+            }
+
             setUserEmail(user.email || '');
             setUserId(user.id);
 
@@ -50,6 +63,12 @@ const OAuthSetup: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!userId) {
+            setError('User session not fully loaded. Please wait a moment and try again.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -150,7 +169,7 @@ const OAuthSetup: React.FC = () => {
                             {loading ? (
                                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (
-                                'Finalize Setup'
+                                'Finalise Setup'
                             )}
                         </button>
                     </form>

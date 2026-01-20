@@ -145,6 +145,24 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
 };
 
 /**
+ * Sign in with Magic Link
+ */
+export const signInWithMagicLink = async (email: string): Promise<AuthResult> => {
+  const supabase = getSupabase();
+  if (!supabase) return { success: false, error: new Error('Supabase not configured') };
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${window.location.origin}/#/admin`,
+    },
+  });
+
+  if (error) return { success: false, error };
+  return { success: true };
+};
+
+/**
  * Sign in with Google OAuth
  */
 export const signInWithGoogle = async (): Promise<AuthResult> => {
