@@ -364,6 +364,20 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
   }
 
   try {
+    const { data: existingJob, error: fetchError } = await supabase
+      .from('jobs')
+      .select('sealed_at')
+      .eq('id', jobId)
+      .single();
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message };
+    }
+
+    if (existingJob?.sealed_at) {
+      return { success: false, error: 'Cannot update a sealed job' };
+    }
+
     const updateData: any = {
       updated_at: new Date().toISOString()
     };
@@ -392,6 +406,12 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
     if (updates.price !== undefined) updateData.price = updates.price;
     if (updates.syncStatus !== undefined) updateData.sync_status = updates.syncStatus;
     if (updates.lastUpdated !== undefined) updateData.last_updated = updates.lastUpdated;
+
+    // Security: Prevent updating seal-related fields directly. 
+    // These must be set via the seal-evidence Edge Function.
+    // if (updates.sealedAt !== undefined) updateData.sealed_at = updates.sealedAt;
+    // if (updates.sealedBy !== undefined) updateData.sealed_by = updates.sealedBy;
+    // if (updates.evidenceHash !== undefined) updateData.evidence_hash = updates.evidenceHash;
 
     const { data, error } = await supabase
       .from('jobs')
