@@ -417,7 +417,7 @@
 | Field | Type | Required | Source | Notes |
 |-------|------|----------|--------|-------|
 | id | UUID | Yes | System | |
-| name | Text | Yes | User input | Organization name |
+| name | Text | Yes | User input | Organisation name |
 | slug | Text | Yes | System | URL-safe identifier (unique) |
 | subscription_tier | Enum | Yes | System | free \| pro \| team \| enterprise (default: free) |
 | subscription_status | Enum | Yes | System | active \| cancelled \| suspended (default: active) |

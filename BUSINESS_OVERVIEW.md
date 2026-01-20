@@ -24,7 +24,7 @@ Field service companies lose $50,000-500,000/year from:
 - Integration-ready (CRM, QuickBooks, insurance portals)
 
 **Business Model:**
-- B2B SaaS: $49-199/month per organization (5-50 jobs/month)
+- B2B SaaS: $49-199/month per organisation (5-50 jobs/month)
 - Enterprise: Custom pricing for 500+ jobs/month
 - Integration fees: $500-2,000 one-time for QuickBooks/Salesforce connectors
 
@@ -404,12 +404,12 @@ if (job.status === 'Submitted') {
 | **Starter** | 5-25 | $49/mo | Solo contractors |
 | **Professional** | 25-100 | $99/mo | Small teams (5-10 techs) |
 | **Business** | 100-500 | $199/mo | Mid-size companies |
-| **Enterprise** | 500+ | Custom | Large organizations |
+| **Enterprise** | 500+ | Custom | Large organisations |
 
 **Add-Ons:**
 - QuickBooks integration: **$500 one-time** (sync invoices)
 - Salesforce integration: **$1,000 one-time** (CRM sync)
-- White-label branding: **+$50/month** (your logo, colors)
+- White-label branding: **+$50/month** (your logo, colours)
 - Custom domain: **+$20/month** (yourcompany.jobproof.app)
 - Advanced analytics: **+$30/month** (reports, dashboards)
 
@@ -574,7 +574,7 @@ Revenue: $99/month
 
 ### Phase 3: Enterprise (Months 18-36)
 
-**Target:** Large organizations (50-500 techs)
+**Target:** Large organisations (50-500 techs)
 
 **Channels:**
 - Direct sales team (hire 3-5 AEs)

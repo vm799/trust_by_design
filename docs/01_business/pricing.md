@@ -11,7 +11,7 @@
 | **Starter** | 5-25 | $49 | $470 (20% off) | Solo contractors |
 | **Professional** | 25-100 | $99 | $950 (20% off) | Small teams (5-10 techs) |
 | **Business** | 100-500 | $199 | $1,910 (20% off) | Mid-size companies (10-50 techs) |
-| **Enterprise** | 500+ | Custom | Custom | Large organizations (50+ techs) |
+| **Enterprise** | 500+ | Custom | Custom | Large organisations (50+ techs) |
 
 ---
 
