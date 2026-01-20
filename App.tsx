@@ -28,11 +28,20 @@ import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
-import { getSupabase } from './lib/supabase';
+import { OfflineBanner } from './components/OfflineBanner';
 import { getJobs, getClients, getTechnicians } from './lib/db';
+import { getSupabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
+import { pushQueue, pullJobs } from './lib/offline/sync';
+
+// ... (existing imports)
+
 const App: React.FC = () => {
+  // ... (existing state)
+
+
+  // Initial load logic (existing)
   // Phase C.1: Real authentication with Supabase sessions
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -52,6 +61,35 @@ const App: React.FC = () => {
     }
     return null;
   });
+
+  // Offline Sync Engine
+  useEffect(() => {
+    // Initial Pull
+    if (user?.workspace?.id) {
+      pullJobs(user.workspace.id);
+    }
+
+    // Background Sync Interval (every 30s)
+    const interval = setInterval(() => {
+      if (navigator.onLine && user?.workspace?.id) {
+        pushQueue();
+        pullJobs(user.workspace.id);
+      }
+    }, 30000);
+
+    // Online Listener
+    const handleOnline = () => {
+      console.log('[App] Online - Triggering sync');
+      pushQueue();
+      if (user?.workspace?.id) pullJobs(user.workspace.id);
+    };
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [user?.workspace?.id]);
 
   // Data state (Phase C.2: Load from Supabase with localStorage fallback)
   const [jobs, setJobs] = useState<Job[]>([]);

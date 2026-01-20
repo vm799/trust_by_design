@@ -59,7 +59,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4" id="job-list-container">
                         {activeJobs.map(job => (
                             <JobCard key={job.id} job={job} onClick={() => navigate(`/contractor/job/${job.id}`)} />
                         ))}

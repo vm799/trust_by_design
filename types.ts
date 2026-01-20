@@ -103,4 +103,9 @@ export interface UserProfile {
   role: string;
   workspaceName: string;
   persona?: string;
+  workspace?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 }

@@ -64,7 +64,29 @@ const EmailFirstAuth: React.FC = () => {
         return;
       }
 
-      // Check if user exists by attempting to get user profile
+      // 1. Try RPC check (Secure & Reliable)
+      const { data: rpcExists, error: rpcError } = await supabase.rpc('check_user_exists', {
+        p_email: email.toLowerCase().trim()
+      });
+
+      if (!rpcError && typeof rpcExists === 'boolean') {
+        if (rpcExists) {
+          setUserStatus('existing');
+          setStep('password');
+        } else {
+          setUserStatus('new');
+          setStep('signup');
+          // Pre-fill workspace name suggestion
+          const domain = email.split('@')[1];
+          const suggestedName = domain ? domain.split('.')[0] : 'My Company';
+          setWorkspaceName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+        }
+        setLoading(false);
+        return;
+      }
+
+      // 2. Fallback: Check 'users' table (May be blocked by RLS, returns [] if blocked)
+      // This is less reliable but kept as backup
       const { data: users, error: checkError } = await supabase
         .from('users')
         .select('email, workspace_id')
