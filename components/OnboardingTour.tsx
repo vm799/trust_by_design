@@ -86,6 +86,26 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
       ];
     }
 
+    if (persona === 'technician' || persona === 'contractor') {
+      return [
+        ...baseSteps,
+        {
+          title: "Your Assignments",
+          description: "Here are your active protocols. Tap any card to begin capturing evidence.",
+          targetId: "job-list-container",
+          icon: "assignment",
+          isCompleted: false
+        },
+        {
+          title: "Offline Ready",
+          description: "You can complete these jobs without internet. Evidence will sync automatically when you're back online.",
+          targetId: "nav-dashboard",
+          icon: "cloud_off",
+          isCompleted: true
+        }
+      ];
+    }
+
     // Fallback
     return baseSteps;
   };

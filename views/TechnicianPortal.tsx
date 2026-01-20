@@ -1,10 +1,10 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
-import { saveMediaLocal, getMediaLocal, getJobLocal, saveJobLocal, queueAction } from '../lib/offline/db';
+import { OfflineBanner } from '../components/OfflineBanner';
 import { validateMagicLink, getJobByToken, updateJob } from '../lib/db';
+import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
 
@@ -109,7 +109,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const getDraftState = () => {
     if (!job?.id) return null;
     try {
-      const saved = localStorage.getItem(`jobproof_draft_${job.id}`);
+      const saved = localStorage.getItem(`jobproof_draft_${job.id} `);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -119,7 +119,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const saveDraftState = (state: any) => {
     if (!job?.id) return;
     try {
-      localStorage.setItem(`jobproof_draft_${job.id}`, JSON.stringify(state));
+      localStorage.setItem(`jobproof_draft_${job.id} `, JSON.stringify(state));
     } catch (error) {
       console.error('Failed to save draft state:', error);
     }
@@ -127,8 +127,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
   const clearDraftState = () => {
     if (!job?.id) return;
-    localStorage.removeItem(`jobproof_draft_${job.id}`);
-    localStorage.removeItem(`jobproof_progress_${job.id}`);
+    localStorage.removeItem(`jobproof_draft_${job.id} `);
+    localStorage.removeItem(`jobproof_progress_${job.id} `);
   };
 
   // State management (initialized with defaults, populated after job loads)
@@ -158,7 +158,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     if (!job?.id) return;
 
     const draft = getDraftState();
-    const savedProgress = localStorage.getItem(`jobproof_progress_${job.id}`);
+    const savedProgress = localStorage.getItem(`jobproof_progress_${job.id} `);
 
     // Restore step
     setStep(savedProgress ? parseInt(savedProgress) : (draft?.step || 0));
@@ -186,7 +186,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   // Auto-save progress: Save step to localStorage
   useEffect(() => {
     if (job?.id && step < 5) {
-      localStorage.setItem(`jobproof_progress_${job.id}`, step.toString());
+      localStorage.setItem(`jobproof_progress_${job.id} `, step.toString());
     } else if (job?.id && step === 5) {
       // Clear progress and draft on completion
       clearDraftState();

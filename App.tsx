@@ -28,8 +28,9 @@ import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
-import { getSupabase } from './lib/supabase';
+import { OfflineBanner } from './components/OfflineBanner';
 import { getJobs, getClients, getTechnicians } from './lib/db';
+import { getSupabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
 import { pushQueue, pullJobs } from './lib/offline/sync';
