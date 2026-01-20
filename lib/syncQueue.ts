@@ -17,7 +17,7 @@ interface SyncQueueItem {
   lastAttempt: number;
 }
 
-const RETRY_DELAYS = [2000, 5000, 10000, 30000]; // Exponential backoff: 2s, 5s, 10s, 30s
+export const RETRY_DELAYS = [2000, 5000, 10000, 30000]; // Exponential backoff: 2s, 5s, 10s, 30s
 const MAX_RETRIES = 4;
 
 /**
@@ -209,18 +209,23 @@ export const retryFailedSyncs = async (): Promise<void> => {
  * Add job to sync queue for retry
  */
 export const addToSyncQueue = (job: Job): void => {
-  const queueJson = localStorage.getItem('jobproof_sync_queue');
-  const queue: SyncQueueItem[] = queueJson ? JSON.parse(queueJson) : [];
+  try {
+    const queueJson = localStorage.getItem('jobproof_sync_queue');
+    const queue: SyncQueueItem[] = queueJson ? JSON.parse(queueJson) : [];
 
-  queue.push({
-    id: job.id,
-    type: 'job',
-    data: job,
-    retryCount: 0,
-    lastAttempt: Date.now()
-  });
+    queue.push({
+      id: job.id,
+      type: 'job',
+      data: job,
+      retryCount: 0,
+      lastAttempt: Date.now()
+    });
 
-  localStorage.setItem('jobproof_sync_queue', JSON.stringify(queue));
+    localStorage.setItem('jobproof_sync_queue', JSON.stringify(queue));
+  } catch (error) {
+    // Handle quota exceeded or other localStorage errors
+    console.warn('Failed to add job to sync queue:', error);
+  }
 };
 
 /**
