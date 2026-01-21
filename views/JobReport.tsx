@@ -6,6 +6,7 @@ import { Job, PhotoType, Invoice, UserProfile } from '../types';
 import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
 import LegalDisclaimer from '../components/LegalDisclaimer';
+import { getReportUrl } from '../lib/redirects';
 
 interface JobReportProps {
    user?: UserProfile | null;
@@ -346,19 +347,19 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
 
                   <div className="bg-white p-6 rounded-3xl flex items-center justify-center">
                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/#/report/${job.id}`)}`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getReportUrl(job.id))}`}
                         alt="QR Code"
                         className="w-48 h-48"
                      />
                   </div>
 
                   <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
-                     <p className="text-xs font-mono text-white break-all text-center">{window.location.origin}/#/report/{job.id}</p>
+                     <p className="text-xs font-mono text-white break-all text-center">{getReportUrl(job.id)}</p>
                   </div>
 
                   <div className="flex flex-col gap-3">
                      <button onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/#/report/${job.id}`);
+                        navigator.clipboard.writeText(getReportUrl(job.id));
                         alert('Link copied to clipboard!');
                      }} className="w-full py-4 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-sm font-black">content_copy</span>

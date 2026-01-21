@@ -1,9 +1,11 @@
 /**
  * Authentication Helper Functions
  * Phase C.1 - Real Authentication
+ * PATH A - Secure OAuth redirects with allowlist
  */
 
 import { getSupabase } from './supabase';
+import { getAuthRedirectUrl } from './redirects';
 import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 export interface AuthResult {
@@ -38,7 +40,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/#/admin`,
+        emailRedirectTo: getAuthRedirectUrl('/#/admin'),
         data: {
           full_name: data.fullName,
           workspace_name: data.workspaceName
@@ -154,7 +156,7 @@ export const signInWithMagicLink = async (email: string): Promise<AuthResult> =>
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${window.location.origin}/#/admin`,
+      emailRedirectTo: getAuthRedirectUrl('/#/admin'),
     },
   });
 
@@ -178,7 +180,7 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: getAuthRedirectUrl()
       }
     });
 
@@ -313,7 +315,7 @@ export const requestPasswordReset = async (email: string): Promise<AuthResult> =
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/#/auth/reset-password`
+      redirectTo: getAuthRedirectUrl('/#/auth/reset-password')
     });
 
     if (error) {
