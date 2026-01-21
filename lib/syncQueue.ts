@@ -164,6 +164,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
  */
 export const retryFailedSyncs = async (): Promise<void> => {
   if (!isSupabaseAvailable()) return;
+  if (!navigator.onLine) return; // Skip retries when offline
 
   const queueJson = localStorage.getItem('jobproof_sync_queue');
   if (!queueJson) return;
