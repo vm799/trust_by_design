@@ -3,11 +3,14 @@ import type { Job, Client, Technician, UserProfile, Photo, SafetyCheck } from '.
 export const mockUser: UserProfile = {
   id: 'user-123',
   email: 'test@jobproof.pro',
-  full_name: 'Test User',
-  workspace_id: 'workspace-123',
+  name: 'Test User',
   role: 'admin',
-  created_at: '2024-01-01T00:00:00Z',
-  last_sign_in_at: '2024-01-15T10:00:00Z',
+  workspaceName: 'Test Workspace',
+  workspace: {
+    id: 'workspace-123',
+    name: 'Test Workspace',
+    slug: 'test-workspace'
+  }
 };
 
 export const mockClients: Client[] = [
@@ -17,8 +20,7 @@ export const mockClients: Client[] = [
     email: 'contact@acme.com',
     phone: '+1-555-0100',
     address: '123 Business St, New York, NY 10001',
-    workspace_id: 'workspace-123',
-    created_at: '2024-01-01T00:00:00Z',
+    totalJobs: 5,
   },
   {
     id: 'client-2',
@@ -26,8 +28,7 @@ export const mockClients: Client[] = [
     email: 'info@globalind.com',
     phone: '+1-555-0200',
     address: '456 Commerce Ave, Los Angeles, CA 90001',
-    workspace_id: 'workspace-123',
-    created_at: '2024-01-02T00:00:00Z',
+    totalJobs: 3,
   },
 ];
 
@@ -37,18 +38,18 @@ export const mockTechnicians: Technician[] = [
     name: 'John Smith',
     email: 'john@jobproof.pro',
     phone: '+1-555-1000',
-    specialty: 'HVAC',
-    workspace_id: 'workspace-123',
-    created_at: '2024-01-01T00:00:00Z',
+    status: 'Available',
+    rating: 4.8,
+    jobsCompleted: 42,
   },
   {
     id: 'tech-2',
     name: 'Jane Doe',
     email: 'jane@jobproof.pro',
     phone: '+1-555-2000',
-    specialty: 'Electrical',
-    workspace_id: 'workspace-123',
-    created_at: '2024-01-02T00:00:00Z',
+    status: 'On Site',
+    rating: 4.9,
+    jobsCompleted: 38,
   },
 ];
 
@@ -276,8 +277,7 @@ export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   email: 'client@test.com',
   phone: '+1-555-0000',
   address: '123 Test St',
-  workspace_id: 'workspace-123',
-  created_at: new Date().toISOString(),
+  totalJobs: 0,
   ...overrides,
 });
 
@@ -286,8 +286,8 @@ export const createMockTechnician = (overrides: Partial<Technician> = {}): Techn
   name: 'Test Technician',
   email: 'tech@test.com',
   phone: '+1-555-0000',
-  specialty: 'General',
-  workspace_id: 'workspace-123',
-  created_at: new Date().toISOString(),
+  status: 'Available',
+  rating: 5.0,
+  jobsCompleted: 0,
   ...overrides,
 });

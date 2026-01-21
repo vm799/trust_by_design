@@ -285,11 +285,11 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
   describe('Evidence Bundle Structure', () => {
     it('should create deterministic hash for same data', async () => {
       const result1 = await sealEvidence('job-3');
-      const hash1 = result1.data?.evidenceHash;
+      const hash1 = result1.evidenceHash;
 
       // Seal again (assuming we can reset the seal)
       const result2 = await sealEvidence('job-3');
-      const hash2 = result2.data?.evidenceHash;
+      const hash2 = result2.evidenceHash;
 
       expect(hash1).toBe(hash2); // Same job should produce same hash
     });

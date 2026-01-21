@@ -70,6 +70,10 @@ export default function OnboardingFactory({
     setError(null);
 
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
       // Call RPC to complete step
       const { data, error: rpcError } = await supabase.rpc(
         'complete_onboarding_step',

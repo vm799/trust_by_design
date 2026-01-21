@@ -1,11 +1,173 @@
-# DEPLOYMENT GUIDE
+# DEPLOYMENT GUIDE - EMERGENCY FIX
 **Trust by Design - JobProof**
-**Phases C.1-C.5 Infrastructure Deployment**
-**Last Updated:** 2026-01-17
+**CRITICAL: Application Non-Functional Until Supabase Configured**
+**Last Updated:** 2026-01-21
 
 ---
 
-## OVERVIEW
+## 🚨 EMERGENCY STATUS - READ THIS FIRST
+
+### Current State: NON-FUNCTIONAL
+**Root Cause:** No `.env` file with Supabase credentials configured
+
+**Impact:**
+- ❌ Magic Links DON'T WORK for all personas
+- ❌ Authentication completely broken
+- ❌ No database persistence (mock mode only)
+- ❌ Photo capture and sealing unavailable
+- ❌ Core MLP flow CANNOT BE TESTED
+
+### Immediate Action Required (15 minutes)
+
+**DO THIS NOW to restore functionality:**
+
+1. **Configure Supabase Credentials** (5 min)
+   - A `.env` file has been created at `/home/user/trust_by_design/.env`
+   - You MUST replace placeholders with real credentials:
+     - Get credentials from: https://supabase.com/dashboard → Your Project → Settings → API
+     - Replace `YOUR_PROJECT_REF` and `YOUR_ANON_KEY_HERE` in the `.env` file
+     - Restart dev server: `npm run dev`
+
+2. **Configure Auth Redirect URLs** (3 min)
+   - Go to: Supabase Dashboard → Authentication → URL Configuration
+   - Add redirect URL: `http://localhost:5173` (and production URLs if deploying)
+   - **WHY:** Magic links will fail with 400 error without this
+
+3. **Run Database Migrations** (5 min)
+   ```bash
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase db push
+   ```
+   - **WHY:** Creates all required tables, RLS policies, and triggers
+
+4. **Verify It Works** (2 min)
+   - Open `http://localhost:5173` in browser
+   - Check console: Should say "Supabase client initialized"
+   - Try signing up: Should receive confirmation email
+   - Magic links should work
+
+### What Was Fixed
+
+✅ **Created `.env` file** with template and instructions
+✅ **Identified root causes** of magic link failure
+✅ **Added comprehensive deployment checklist** (see below)
+⚠️ **You must complete setup steps above** to restore functionality
+
+---
+
+## QUICK START: Get Running in 15 Minutes
+
+### Prerequisites Check
+- [ ] Supabase account created at https://supabase.com
+- [ ] Supabase CLI installed: `npm install -g supabase`
+- [ ] OpenSSL installed (for key generation)
+
+### Step-by-Step Setup
+
+#### 1. Create Supabase Project (2 min)
+- Go to https://supabase.com/dashboard
+- Click "New Project"
+- Name: `jobproof-production`
+- Database Password: Save this securely!
+- Region: Choose closest to users
+- Click "Create new project" (wait ~2 min)
+
+#### 2. Configure .env File (3 min)
+- Open `/home/user/trust_by_design/.env`
+- Replace these values with credentials from Supabase Dashboard → Settings → API:
+  ```env
+  VITE_SUPABASE_URL=https://YOUR_ACTUAL_PROJECT_REF.supabase.co
+  VITE_SUPABASE_ANON_KEY=eyJhbGc... (your actual anon key)
+  ```
+- Save and close file
+
+#### 3. Configure Auth Redirect URLs (2 min)
+- Supabase Dashboard → Authentication → URL Configuration
+- Add these URLs (one per line):
+  ```
+  http://localhost:5173
+  http://localhost:5173/
+  http://localhost:5173/#/admin
+  http://localhost:5173/#/contractor
+  ```
+- Click "Save"
+
+#### 4. Run Migrations (5 min)
+```bash
+cd /home/user/trust_by_design
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+```
+- When prompted, enter database password from Step 1
+
+#### 5. Restart Dev Server (1 min)
+```bash
+npm run dev
+```
+- Open http://localhost:5173
+- Check browser console for "Supabase client initialized" ✅
+
+#### 6. Test Full Flow (2 min)
+1. Sign up: manager@test.com / password123 / "Test Company"
+2. Create client: "Acme Corp"
+3. Create technician: "John Doe"
+4. Create job: Assign to Acme/John
+5. Copy magic link from success modal
+6. Open magic link in incognito browser
+7. ✅ Should see Technician Portal (NOT login prompt)
+
+**If Step 7 fails:** Check Section "Troubleshooting Magic Links" below.
+
+---
+
+## Troubleshooting Magic Links
+
+### Issue: Magic link returns 400 error
+**Symptom:** After clicking magic link in email, browser shows 400 Bad Request
+
+**Solution:**
+1. Go to Supabase Dashboard → Authentication → URL Configuration
+2. Verify your app URL is in "Redirect URLs" list
+3. Wait 30 seconds for changes to propagate
+4. Generate new magic link and test again
+
+### Issue: Magic link shows login page instead of job
+**Symptom:** Clicking magic link redirects to `/auth` login page
+
+**Root Causes:**
+1. Token expired (default: 7 days) - Generate new magic link
+2. Token not in database - Check RPC function `generate_job_access_token` logs
+3. RLS policy blocking token access - Run SQL:
+   ```sql
+   SELECT * FROM job_access_tokens WHERE token = 'YOUR_TOKEN_HERE';
+   ```
+   If empty, token wasn't created. Check Supabase logs.
+
+### Issue: "Invalid or expired link" error
+**Symptom:** TechnicianPortal shows error banner
+
+**Solution:**
+1. Check token expiration:
+   ```sql
+   SELECT token, expires_at, revoked_at
+   FROM job_access_tokens
+   WHERE token = 'YOUR_TOKEN_HERE';
+   ```
+2. If `expires_at < NOW()`, generate new magic link
+3. If `revoked_at` is not NULL, token was revoked - check audit logs
+
+### Issue: "Supabase not configured" in console
+**Symptom:** Browser console shows "Running in offline-only mode"
+
+**Solution:**
+1. Check `.env` file exists: `ls -la .env`
+2. Check values are filled (not `YOUR_...` placeholders)
+3. Restart dev server: `npm run dev`
+4. Clear browser cache and hard refresh (Ctrl+Shift+R)
+
+---
+
+## OVERVIEW (Original Guide Follows)
 
 This guide walks through deploying the Trust by Design backend infrastructure to Supabase. After completing these steps, all Phases C.1-C.5 functionality will be operational.
 

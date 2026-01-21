@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  // @ts-expect-error - Vite/Vitest version mismatch in types
   plugins: [react()],
   test: {
     globals: true,
@@ -21,10 +22,12 @@ export default defineConfig({
         'dist/'
       ],
       all: true,
-      lines: 80,
-      functions: 75,
-      branches: 75,
-      statements: 80
+      thresholds: {
+        lines: 80,
+        functions: 75,
+        branches: 75,
+        statements: 80
+      }
     },
     mockReset: true,
     restoreMocks: true,
