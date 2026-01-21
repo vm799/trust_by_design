@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
 import { createJob, generateMagicLink } from '../lib/db';
+import { getMagicLinkUrl } from '../lib/redirects';
 
 interface CreateJobProps {
   onAddJob: (job: Job) => void;
@@ -94,7 +95,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         const localJob: Job = { ...jobData, id: newId } as Job;
         onAddJob(localJob);
         setCreatedJobId(newId);
-        setMagicLinkUrl(`${window.location.origin}/#/track/${newId}`);
+        setMagicLinkUrl(getMagicLinkUrl(newId));
         setShowConfirmModal(false);
         setShowSuccessModal(true);
         setIsCreating(false);
@@ -111,7 +112,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         setMagicLinkUrl(magicLinkResult.data.url);
       } else {
         // Fallback to job ID link if token generation fails
-        setMagicLinkUrl(`${window.location.origin}/#/track/${createdJob.id}`);
+        setMagicLinkUrl(getMagicLinkUrl(createdJob.id));
       }
 
       // Also add to local state via onAddJob for immediate UI update
@@ -127,7 +128,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     }
   };
 
-  const getMagicLink = () => magicLinkUrl || `${window.location.origin}/#/track/${createdJobId}`;
+  const getMagicLink = () => magicLinkUrl || getMagicLinkUrl(createdJobId);
 
   const copyMagicLink = () => {
     navigator.clipboard.writeText(getMagicLink());

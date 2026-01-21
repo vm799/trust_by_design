@@ -1,4 +1,5 @@
 import { getSupabase } from './supabase';
+import { getMagicLinkUrl } from './redirects';
 import type { Job, Client, Technician } from '../types';
 import { mockJobs } from '../tests/mocks/mockData';
 
@@ -539,7 +540,7 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
 
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const url = `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost'}/#/track/${token}`;
+    const url = getMagicLinkUrl(token);
 
     mockDatabase.magicLinks.set(token, {
       job_id: jobId,
@@ -580,8 +581,7 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
       return { success: false, error: 'Failed to generate token' };
     }
 
-    const baseUrl = window.location.origin;
-    const url = `${baseUrl}/#/track/${data.token}`;
+    const url = getMagicLinkUrl(data.token);
 
     return {
       success: true,
