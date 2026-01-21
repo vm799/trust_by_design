@@ -184,21 +184,60 @@ serve(async (req) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const evidenceHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 
-    // 9. Generate RSA-2048 signature
-    //    NOTE: For production, use actual RSA keys from Supabase Vault
-    //    This simplified version uses HMAC-SHA256 as a placeholder
-    const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION'
-    const keyData = encoder.encode(secretKey)
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(evidenceHash))
-    const signatureArray = Array.from(new Uint8Array(signatureBuffer))
-    const signature = btoa(String.fromCharCode(...signatureArray)) // Base64 encode
+    // Helper to convert PEM to ArrayBuffer
+    function pemToArrayBuffer(pem: string): ArrayBuffer {
+      const b64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+      const binary = atob(b64);
+      const buffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        buffer[i] = binary.charCodeAt(i);
+      }
+      return buffer.buffer;
+    }
+
+    // 9. Generate Signature (RSA-2048 or HMAC-SHA256)
+    let signature: string;
+    let algorithm = 'SHA256-HMAC';
+    const rsaPrivateKeyPem = Deno.env.get('SEAL_PRIVATE_KEY');
+
+    if (rsaPrivateKeyPem) {
+      // PROD: Use RSA-2048
+      try {
+        const keyData = pemToArrayBuffer(rsaPrivateKeyPem);
+        const privateKey = await crypto.subtle.importKey(
+          'pkcs8',
+          keyData,
+          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+          false,
+          ['sign']
+        );
+        const signatureBuffer = await crypto.subtle.sign(
+          'RSASSA-PKCS1-v1_5',
+          privateKey,
+          encoder.encode(evidenceHash)
+        );
+        const signatureArray = Array.from(new Uint8Array(signatureBuffer));
+        signature = btoa(String.fromCharCode(...signatureArray));
+        algorithm = 'SHA256-RSA2048';
+      } catch (e) {
+        console.error('RSA Signing failed:', e);
+        throw new Error('Failed to sign with RSA key');
+      }
+    } else {
+      // DEV/FALLBACK: Use HMAC-SHA256
+      const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION';
+      const keyData = encoder.encode(secretKey);
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(evidenceHash));
+      const signatureArray = Array.from(new Uint8Array(signatureBuffer));
+      signature = btoa(String.fromCharCode(...signatureArray));
+    }
 
     // 10. Store seal in database (using service role client for insert permission)
     const supabaseServiceClient = createClient(
@@ -213,7 +252,7 @@ serve(async (req) => {
       workspace_id: job.workspace_id,
       evidence_hash: evidenceHash,
       signature: signature,
-      algorithm: 'SHA256-HMAC', // In production: 'SHA256-RSA2048'
+      algorithm: algorithm,
       sealed_by_user_id: user.id,
       sealed_by_email: user.email,
       evidence_bundle: evidenceBundle,

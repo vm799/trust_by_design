@@ -1,16 +1,17 @@
 
 import React from 'react';
 import Layout from '../components/Layout';
-import { Invoice } from '../types';
+import { Invoice, UserProfile } from '../types';
 
 interface InvoicesViewProps {
+  user: UserProfile | null;
   invoices: Invoice[];
   updateStatus: (id: string, status: Invoice['status']) => void;
 }
 
-const InvoicesView: React.FC<InvoicesViewProps> = ({ invoices, updateStatus }) => {
+const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatus }) => {
   return (
-    <Layout>
+    <Layout user={user}>
       <div className="space-y-8 pb-20">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
@@ -47,21 +48,20 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ invoices, updateStatus }) =
                     </td>
                     <td className="px-8 py-6 font-black text-white">£{inv.amount.toFixed(2)}</td>
                     <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
-                        inv.status === 'Paid' ? 'bg-success/10 text-success border-success/20' :
-                        inv.status === 'Sent' ? 'bg-primary/10 text-primary border-primary/20' :
-                        inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-500 border-slate-700'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${inv.status === 'Paid' ? 'bg-success/10 text-success border-success/20' :
+                          inv.status === 'Sent' ? 'bg-primary/10 text-primary border-primary/20' :
+                            inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-500 border-slate-700'
+                        }`}>
                         {inv.status}
                       </span>
                     </td>
                     <td className="px-8 py-6 text-right">
-                       <button 
+                      <button
                         onClick={() => updateStatus(inv.id, 'Paid')}
                         className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
-                       >
-                         Mark Paid
-                       </button>
+                      >
+                        Mark Paid
+                      </button>
                     </td>
                   </tr>
                 ))

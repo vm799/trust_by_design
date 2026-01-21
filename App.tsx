@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
 import AdminDashboard from './views/AdminDashboard';
 import CreateJob from './views/CreateJob';
+import ContractorDashboard from './views/ContractorDashboard';
 import TechnicianPortal from './views/TechnicianPortal';
 import JobReport from './views/JobReport';
 import Settings from './views/Settings';
@@ -12,21 +13,35 @@ import TechniciansView from './views/TechniciansView';
 import TemplatesView from './views/TemplatesView';
 import AuditReport from './views/docs/AuditReport';
 import HelpCenter from './views/HelpCenter';
+import OnboardingTour from './components/OnboardingTour';
+import ClientDashboard from './views/ClientDashboard';
 import LegalPage from './views/LegalPage';
 import PricingView from './views/PricingView';
 import ProfileView from './views/ProfileView';
 import AuthView from './views/AuthView';
 import EmailFirstAuth from './views/EmailFirstAuth';
 import SignupSuccess from './views/SignupSuccess';
+import CompleteOnboarding from './views/CompleteOnboarding';
+import OAuthSetup from './views/OAuthSetup';
 import InvoicesView from './views/InvoicesView';
 import RoadmapView from './views/RoadmapView';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
+import { OfflineBanner } from './components/OfflineBanner';
 import { getJobs, getClients, getTechnicians } from './lib/db';
+import { getSupabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
+import { pushQueue, pullJobs } from './lib/offline/sync';
+
+// ... (existing imports)
+
 const App: React.FC = () => {
+  // ... (existing state)
+
+
+  // Initial load logic (existing)
   // Phase C.1: Real authentication with Supabase sessions
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -47,6 +62,35 @@ const App: React.FC = () => {
     return null;
   });
 
+  // Offline Sync Engine
+  useEffect(() => {
+    // Initial Pull
+    if (user?.workspace?.id) {
+      pullJobs(user.workspace.id);
+    }
+
+    // Background Sync Interval (every 30s)
+    const interval = setInterval(() => {
+      if (navigator.onLine && user?.workspace?.id) {
+        pushQueue();
+        pullJobs(user.workspace.id);
+      }
+    }, 30000);
+
+    // Online Listener
+    const handleOnline = () => {
+      console.log('[App] Online - Triggering sync');
+      pushQueue();
+      if (user?.workspace?.id) pullJobs(user.workspace.id);
+    };
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [user?.workspace?.id]);
+
   // Data state (Phase C.2: Load from Supabase with localStorage fallback)
   const [jobs, setJobs] = useState<Job[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -58,8 +102,9 @@ const App: React.FC = () => {
   const [templates, setTemplates] = useState<JobTemplate[]>(() => {
     const saved = localStorage.getItem('jobproof_templates_v2');
     return saved ? JSON.parse(saved) : [
-      { id: 't1', name: 'General Maintenance', description: 'Standard check-up and evidence capture.', defaultTasks: [] },
-      { id: 't2', name: 'Emergency Callout', description: 'Priority documentation for reactive repairs.', defaultTasks: [] }
+      { id: 't1', name: 'Electrical Safety Audit', description: 'Standard 20-point precision audit for commercial infrastructure.', defaultTasks: ['Verify PPE', 'Lockout Tagout', 'Voltage Check', 'Evidence Capture'] },
+      { id: 't2', name: 'Mechanical Systems Check', description: 'Quarterly operational protocol for HVAC/R units.', defaultTasks: ['Filter Inspection', 'Fluid Levels', 'Acoustic Test', 'Final Evidence'] },
+      { id: 't3', name: 'Rapid Proof Capture', description: 'Priority evidence sequence for emergency callouts.', defaultTasks: ['Emergency Snapshot', 'Hazard ID', 'Signature Capture'] }
     ];
   });
 
@@ -70,7 +115,33 @@ const App: React.FC = () => {
 
       if (newSession?.user) {
         // Load user profile from database
-        const profile = await getUserProfile(newSession.user.id);
+        let profile = await getUserProfile(newSession.user.id);
+
+        // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
+        if (!profile && newSession.user.user_metadata?.workspace_name) {
+          console.log('Profile missing but metadata found. Attempting auto-healing...');
+          const meta = newSession.user.user_metadata;
+          const workspaceSlug = (meta.workspace_name as string)
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+          const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 5)}`;
+
+          const supabase = getSupabase();
+          if (supabase) {
+            await supabase.rpc('create_workspace_with_owner', {
+              p_user_id: newSession.user.id,
+              p_email: newSession.user.email,
+              p_workspace_name: meta.workspace_name,
+              p_workspace_slug: finalSlug,
+              p_full_name: meta.full_name || null
+            });
+            // Try fetching again after creation
+            profile = await getUserProfile(newSession.user.id);
+          }
+        }
+
         if (profile) {
           // Map database profile to UserProfile type
           const userProfile: UserProfile = {
@@ -78,12 +149,16 @@ const App: React.FC = () => {
             email: profile.email,
             avatar: profile.avatar_url,
             role: profile.role,
-            workspaceName: profile.workspace?.name || 'My Workspace'
+            workspaceName: profile.workspace?.name || 'My Workspace',
+            persona: profile.personas?.[0]?.persona_type
           };
           setUser(userProfile);
 
           // Phase C.2: Load workspace data from Supabase
           loadWorkspaceData(profile.workspace_id);
+        } else {
+          // Still no profile - must be a new OAuth user or real failure
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -225,7 +300,10 @@ const App: React.FC = () => {
   const addTech = (t: Technician) => setTechnicians(prev => [...prev, t]);
   const deleteTech = (id: string) => setTechnicians(prev => prev.filter(t => t.id !== id));
 
-  const completeOnboarding = () => setHasSeenOnboarding(true);
+  const completeOnboarding = () => {
+    setHasSeenOnboarding(true);
+    localStorage.setItem('jobproof_onboarding_v4', 'true');
+  };
 
   // Phase C.1: Real authentication callbacks
   const handleLogin = () => {
@@ -253,40 +331,132 @@ const App: React.FC = () => {
     );
   }
 
+  // Helper for Persona-Aware Routing
+  const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
+    if (!user) return null; // Wait for user profile to load
+
+    // Normalise persona check
+    const persona = user.persona?.toLowerCase() || '';
+
+    if (persona === 'technician' || persona === 'contractor' || persona === 'solo_contractor') {
+      return <Navigate to="/contractor" replace />;
+    }
+
+    if (persona === 'client') {
+      return <Navigate to="/client" replace />;
+    }
+
+    // Default to Admin Dashboard for Managers/Owners
+    return <Navigate to="/admin" replace />;
+  };
+
   return (
     <HashRouter>
       <Routes>
-        <Route path="/home" element={<LandingPage />} />
+        {/* Redirect root to Landing or Dashboard based on Auth */}
+        <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
+        <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
 
         {/* Email-First Authentication (Primary) */}
-        <Route path="/auth" element={<EmailFirstAuth />} />
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <EmailFirstAuth />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
+        <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
+        <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
 
         {/* Legacy Auth Routes (Fallback) */}
-        <Route path="/auth/login" element={<AuthView type="login" onAuth={handleLogin} />} />
-        <Route path="/auth/signup" element={<AuthView type="signup" onAuth={handleLogin} />} />
+        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
+        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="signup" onAuth={handleLogin} />} />
+
+        {/* Onboarding & Setup */}
+        <Route path="/setup" element={
+          isAuthenticated ? <SignupSuccess /> : <Navigate to="/auth" replace />
+        } />
+        <Route path="/complete-onboarding" element={
+          isAuthenticated ? <OnboardingTour onComplete={completeOnboarding} persona={user?.persona} /> : <Navigate to="/auth" replace />
+        } />
+
+        {/* Contractor Persona Flow */}
+        {/* Contractor Persona Flow */}
+        <Route path="/contractor" element={
+          isAuthenticated ? (
+            user ? (
+              hasSeenOnboarding ? (
+                <ContractorDashboard
+                  jobs={jobs}
+                  user={user}
+                  showOnboarding={false}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              ) : (
+                <ContractorDashboard
+                  jobs={jobs}
+                  user={user}
+                  showOnboarding={true}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              )
+            ) : (
+              <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )
+          ) : <Navigate to="/auth" replace />
+        } />
+
+        <Route path="/contractor/job/:jobId" element={
+          isAuthenticated ? (
+            <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
+          ) : <Navigate to="/auth" replace />
+        } />
+
+
+
+        {/* Client Persona Flow */}
+        <Route path="/client" element={
+          isAuthenticated ? (
+            <ClientDashboard jobs={jobs} invoices={invoices} user={user} />
+          ) : <Navigate to="/auth" replace />
+        } />
 
         {/* Admin Hub - Protected by real session */}
         <Route path="/admin" element={
           isAuthenticated ? (
-            <AdminDashboard
-              jobs={jobs}
-              showOnboarding={!hasSeenOnboarding}
-              onCloseOnboarding={completeOnboarding}
-            />
+            user ? (
+              hasSeenOnboarding ? (
+                <AdminDashboard
+                  jobs={jobs}
+                  clients={clients}
+                  technicians={technicians}
+                  user={user}
+                  showOnboarding={false}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              ) : (
+                <AdminDashboard
+                  jobs={jobs}
+                  clients={clients}
+                  technicians={technicians}
+                  user={user}
+                  showOnboarding={true}
+                  onCloseOnboarding={completeOnboarding}
+                />
+              )
+            ) : (
+              <Navigate to="/auth/setup" replace />
+            )
           ) : <Navigate to="/auth" replace />
         } />
-        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView templates={templates} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView user={user} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView user={user} invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter user={user} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport user={user} jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
 
         {/* Technician Entry - Public (Phase C.2: Token-based access) */}
         <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />
@@ -299,8 +469,7 @@ const App: React.FC = () => {
         <Route path="/legal/:type" element={<LegalPage />} />
 
         {/* Fallbacks */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );

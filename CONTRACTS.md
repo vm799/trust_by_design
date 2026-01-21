@@ -1,205 +1,150 @@
-# API Contracts - Jobproof.pro
+# JobProof API Contracts & Database Specification
 
-**Version:** 1.0.0  
-**Date:** 2026-01-18  
-**Status:** Production
-
-This document defines all API contracts for Jobproof's backend services.
+**Version:** 1.0.0
+**Status:** Production Ready
+**Last Updated:** 2026-01-20
 
 ---
 
-## RPC Functions
+## 📚 Table of Contents
 
-### create_workspace_with_owner
+1. [Database Schema](#database-schema)
+2. [Row Level Security (RLS)](#row-level-security-rls)
+3. [Edge Functions](#edge-functions)
+4. [RPC Functions](#rpc-functions)
+5. [Storage Buckets](#storage-buckets)
 
-**Purpose:** Atomically creates workspace + owner user
+---
 
-**Signature:**
+## 🗄️ Database Schema
+
+### `workspaces`
+Top-level tenant container. All data is scoped to a workspace.
+
+| Column | Type | Description |
+|:---|:---|:---|
+| `id` | `uuid` | Primary Key |
+| `name` | `text` | Workspace display name |
+| `slug` | `text` | Unique URL-friendly identifier |
+| `created_at` | `timestamptz` | Creation timestamp |
+
+### `users`
+Authenticated users, linked to Supabase Auth.
+
+| Column | Type | Description |
+|:---|:---|:---|
+| `id` | `uuid` | Primary Key (matches `auth.users.id`) |
+| `email` | `text` | User email |
+| `full_name` | `text` | Display name |
+| `workspace_id` | `uuid` | Foreign Key -> `workspaces.id` |
+| `role` | `text` | 'admin', 'technician', 'manager' |
+| `avatar_url` | `text` | Profile picture URL |
+
+### `jobs`
+Core work order entity.
+
+| Column | Type | Description |
+|:---|:---|:---|
+| `id` | `text` | Primary Key (e.g., "JOB-1234") |
+| `workspace_id` | `uuid` | Foreign Key -> `workspaces.id` |
+| `title` | `text` | Job title |
+| `status` | `text` | 'Pending', 'In Progress', 'Submitted' |
+| `client_name` | `text` | Denormalized client name |
+| `technician_id` | `uuid` | Assigned technician |
+| `sync_status` | `text` | 'synced', 'pending' |
+| `sealed_at` | `timestamptz` | Timestamp of evidence sealing |
+| `evidence_hash` | `text` | Cryptographic hash of evidence |
+
+### `user_subscriptions`
+Stripe subscription mapping.
+
+| Column | Type | Description |
+|:---|:---|:---|
+| `user_id` | `uuid` | Primary Key -> `users.id` |
+| `stripe_customer_id` | `text` | Stripe Customer ID |
+| `stripe_subscription_id` | `text` | Stripe Subscription ID |
+| `tier` | `text` | 'solo', 'team', 'agency' |
+| `status` | `text` | 'active', 'past_due', 'canceled' |
+
+---
+
+## 🔒 Row Level Security (RLS)
+
+All tables have RLS enabled. Policies strictly enforce `workspace_id` isolation.
+
+**General Policy Pattern:**
 ```sql
-create_workspace_with_owner(
-  p_user_id uuid,
-  p_workspace_name text,
-  p_full_name text,
-  p_email text
-) RETURNS uuid
+CREATE POLICY "Users can view data from their workspace"
+ON table_name
+USING (workspace_id IN (
+  SELECT workspace_id FROM users WHERE id = auth.uid()
+));
 ```
 
-**Parameters:**
-- `p_user_id` (uuid, required): Auth user ID
-- `p_workspace_name` (text, required): Company name
-- `p_full_name` (text, required): User's full name
-- `p_email` (text, required): Verified email
-
-**Returns:** Workspace ID (uuid)
-
-**Security:** SECURITY DEFINER, authenticated only
+**Specific Policies:**
+- **`user_subscriptions`**: Users can only view their own subscription. Service role can view all.
 
 ---
 
-## Edge Functions
+## ⚡ Edge Functions
 
-### 1. seal-evidence
+### `seal-evidence`
+Cryptographically seals a job's evidence bundle.
 
-**Endpoint:** `POST /functions/v1/seal-evidence`
-
-**Request:**
-```json
-{ "jobId": "uuid", "workspaceId": "uuid" }
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "sealId": "uuid",
-  "evidenceHash": "sha256-hex",
-  "signature": "hmac-hex",
-  "algorithm": "SHA256-HMAC",
-  "timestamp": "ISO-8601"
-}
-```
-
-**Process:** SHA-256 hash → HMAC-SHA256 sign → Insert seal → Update job status
-
----
-
-### 2. verify-evidence
-
-**Endpoint:** `POST /functions/v1/verify-evidence`
-
-**Request:**
-```json
-{ "sealId": "uuid" }
-```
-
-**Response (200):**
-```json
-{
-  "valid": true,
-  "seal": { "id": "uuid", "evidence_hash": "hex", "...": "..." },
-  "verification": {
-    "computed_hash": "hex",
-    "stored_hash": "hex",
-    "hash_match": true,
-    "signature_valid": true
+- **URL:** `POST /functions/v1/seal-evidence`
+- **Auth:** Required (Bearer Token)
+- **Body:** `{ "jobId": "JOB-123" }`
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "sealedAt": "2026-01-20T10:00:00Z",
+    "evidenceHash": "sha256-..."
   }
-}
-```
+  ```
 
-**Public:** No auth required (audit verification is public)
+### `verify-evidence`
+Verifies the integrity of a sealed job.
 
----
+- **URL:** `POST /functions/v1/verify-evidence`
+- **Auth:** Public
+- **Body:** `{ "jobId": "JOB-123", "evidenceHash": "..." }`
+- **Response:** `{ "verified": true, "tampered": false }`
 
-### 3. stripe-checkout
+### `stripe-checkout`
+Creates a Stripe Checkout session.
 
-**Endpoint:** `POST /functions/v1/stripe-checkout`
-
-**Request:**
-```json
-{ "priceId": "price_xxx" }
-```
-
-**Response (200):**
-```json
-{ "url": "https://checkout.stripe.com/xxx" }
-```
-
-**Auth:** Supabase JWT required
-
-**Process:** Create Stripe Checkout Session → Return redirect URL
+- **URL:** `POST /functions/v1/stripe-checkout`
+- **Auth:** Required
+- **Body:** `{ "priceId": "price_..." }`
+- **Response:** `{ "url": "https://checkout.stripe.com/..." }`
 
 ---
 
-### 4. stripe-webhook
+## 🛠️ RPC Functions
 
-**Endpoint:** `POST /functions/v1/stripe-webhook`
+### `create_workspace_with_owner`
+Transactional workspace creation.
 
-**Events:**
-- `checkout.session.completed` → Create subscription in DB
-- `customer.subscription.updated` → Update subscription
-- `customer.subscription.deleted` → Mark canceled
+- **Params:** `p_user_id`, `p_email`, `p_workspace_name`
+- **Returns:** `workspace_id`
 
-**Auth:** Stripe signature verification (STRIPE_WEBHOOK_SECRET)
+### `generate_job_access_token`
+Creates a time-limited magic link for a job.
 
-**Security:** Uses SERVICE_ROLE_KEY (bypasses RLS)
-
----
-
-## Database Schema
-
-### user_subscriptions
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | FK to auth.users (UNIQUE) |
-| tier | text | 'solo', 'team', 'agency' |
-| status | text | 'active', 'canceled', 'past_due', 'trialing' |
-| stripe_customer_id | text | cus_xxx |
-| stripe_subscription_id | text | sub_xxx (UNIQUE) |
-| current_period_end | timestamptz | Renewal date |
-
-**RLS:** Users view own subscription only
-
-**Trigger:** Auto-creates 'solo' for new users
+- **Params:** `p_job_id`
+- **Returns:** `{ "token": "...", "expires_at": "..." }`
 
 ---
 
-### seals
+## 📦 Storage Buckets
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| job_id | uuid | FK to jobs |
-| evidence_hash | text | SHA-256 (hex) |
-| signature | text | HMAC-SHA256 (hex) |
-| algorithm | text | 'SHA256-HMAC' |
-| sealed_at | timestamptz | Seal timestamp |
-| sealed_by | uuid | FK to users |
+### `job-photos`
+- **Public:** Yes
+- **RLS:** Authenticated users can upload. Public read access.
+- **Path structure:** `{workspace_id}/{job_id}/{filename}`
 
-**RLS:** Public read, workspace write
-
----
-
-## Authentication
-
-**Provider:** Supabase Auth  
-**Token:** JWT in `Authorization: Bearer <token>` header  
-**Expiry:** 1 hour (auto-refreshed)
-
-**RLS Enforcement:**
-```sql
-auth.uid() = user_id  -- User-level policies
-workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())  -- Workspace-level
-```
-
----
-
-## Error Codes
-
-| HTTP | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not found |
-| 500 | Server error |
-
-**Format:**
-```json
-{ "error": "Human message", "code": "ERROR_CODE" }
-```
-
----
-
-## Known Limitations
-
-1. **HMAC Placeholder:** Using HMAC-SHA256 instead of RSA-2048 (Phase D.2 upgrade planned)
-2. **No Rate Limiting:** Relying on Supabase defaults (500 req/min)
-3. **No API Versioning:** Breaking changes will bump major version
-
----
-
-**Last Updated:** 2026-01-18  
-**Contact:** support@jobproof.io
+### `job-signatures`
+- **Public:** Yes
+- **RLS:** Authenticated users can upload. Public read access.
+- **Path structure:** `{workspace_id}/{job_id}/signature.png`

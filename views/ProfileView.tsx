@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { UserProfile } from '../types';
@@ -53,7 +53,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorized Email</label>
+                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorised Email</label>
                  <input 
                    type="email" 
                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 

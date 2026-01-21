@@ -96,28 +96,71 @@ serve(async (req) => {
       )
     }
 
+    // Helper to convert PEM to ArrayBuffer
+    function pemToArrayBuffer(pem: string): ArrayBuffer {
+      const b64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+      const binary = atob(b64);
+      const buffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        buffer[i] = binary.charCodeAt(i);
+      }
+      return buffer.buffer;
+    }
+
     // 6. Verify signature
-    //    NOTE: For production, use actual RSA public key verification
-    //    This simplified version uses HMAC-SHA256 as a placeholder
-    const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION'
-    const keyData = encoder.encode(secretKey)
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['verify']
-    )
+    let isSignatureValid = false;
 
-    // Decode base64 signature
-    const signatureBytes = Uint8Array.from(atob(seal.signature), (c) => c.charCodeAt(0))
+    if (seal.algorithm === 'SHA256-RSA2048') {
+      // RSA Verification
+      const publicKeyPem = Deno.env.get('SEAL_PUBLIC_KEY');
+      if (!publicKeyPem) {
+        throw new Error('Server configuration error: Missing SEAL_PUBLIC_KEY');
+      }
 
-    const isSignatureValid = await crypto.subtle.verify(
-      'HMAC',
-      cryptoKey,
-      signatureBytes,
-      encoder.encode(seal.evidence_hash)
-    )
+      try {
+        const keyData = pemToArrayBuffer(publicKeyPem);
+        const cryptoKey = await crypto.subtle.importKey(
+          'spki',
+          keyData,
+          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+          false,
+          ['verify']
+        );
+
+        const signatureBytes = Uint8Array.from(atob(seal.signature), (c) => c.charCodeAt(0));
+
+        isSignatureValid = await crypto.subtle.verify(
+          'RSASSA-PKCS1-v1_5',
+          cryptoKey,
+          signatureBytes,
+          encoder.encode(seal.evidence_hash)
+        );
+      } catch (e) {
+        console.error('RSA Verification failed:', e);
+        isSignatureValid = false;
+      }
+    } else {
+      // HMAC Fallback (Legacy/Dev)
+      const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION';
+      const keyData = encoder.encode(secretKey);
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['verify']
+      );
+
+      // Decode base64 signature
+      const signatureBytes = Uint8Array.from(atob(seal.signature), (c) => c.charCodeAt(0));
+
+      isSignatureValid = await crypto.subtle.verify(
+        'HMAC',
+        cryptoKey,
+        signatureBytes,
+        encoder.encode(seal.evidence_hash)
+      );
+    }
 
     if (!isSignatureValid) {
       return new Response(

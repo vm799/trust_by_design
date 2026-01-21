@@ -91,7 +91,7 @@ export interface Technician {
   id: string;
   name: string;
   email: string;
-  status: 'Available' | 'On Site' | 'Off Duty';
+  status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
   rating: number;
   jobsCompleted: number;
 }
@@ -102,4 +102,10 @@ export interface UserProfile {
   avatar?: string;
   role: string;
   workspaceName: string;
+  persona?: string;
+  workspace?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 }

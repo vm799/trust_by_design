@@ -30,7 +30,6 @@ export interface MagicLinkData {
 
 export interface TokenValidationData {
   job_id: string;
-  workspace_id: string;
   is_valid: boolean;
 }
 
@@ -93,7 +92,7 @@ export const resetMockDatabase = () => {
 
 // Check if we should use mock database (for testing)
 const shouldUseMockDB = () => {
-  return MOCK_DB_ENABLED || process.env.NODE_ENV === 'test' || typeof vi !== 'undefined';
+  return MOCK_DB_ENABLED || process.env.NODE_ENV === 'test' || typeof (globalThis as any).vi !== 'undefined';
 };
 
 // ============================================================================
@@ -105,10 +104,10 @@ const shouldUseMockDB = () => {
  */
 export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> => {
   if (shouldUseMockDB()) {
-    if (!jobData.workspaceId && !jobData.workspace_id) {
+    if (!jobData.workspaceId) {
       return {
         success: false,
-        error: 'workspace_id is required'
+        error: 'workspaceId is required'
       };
     }
 
@@ -138,7 +137,7 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
       syncStatus: jobData.syncStatus || 'synced',
       lastUpdated: jobData.lastUpdated || Date.now(),
       price: jobData.price,
-      workspaceId: jobData.workspaceId || jobData.workspace_id || 'workspace-123',
+      workspaceId: jobData.workspaceId || 'workspace-123',
       sealedAt: jobData.sealedAt,
       sealedBy: jobData.sealedBy,
       evidenceHash: jobData.evidenceHash,
@@ -365,6 +364,20 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
   }
 
   try {
+    const { data: existingJob, error: fetchError } = await supabase
+      .from('jobs')
+      .select('sealed_at')
+      .eq('id', jobId)
+      .single();
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message };
+    }
+
+    if (existingJob?.sealed_at) {
+      return { success: false, error: 'Cannot update a sealed job' };
+    }
+
     const updateData: any = {
       updated_at: new Date().toISOString()
     };
@@ -393,6 +406,12 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
     if (updates.price !== undefined) updateData.price = updates.price;
     if (updates.syncStatus !== undefined) updateData.sync_status = updates.syncStatus;
     if (updates.lastUpdated !== undefined) updateData.last_updated = updates.lastUpdated;
+
+    // Security: Prevent updating seal-related fields directly. 
+    // These must be set via the seal-evidence Edge Function.
+    // if (updates.sealedAt !== undefined) updateData.sealed_at = updates.sealedAt;
+    // if (updates.sealedBy !== undefined) updateData.sealed_by = updates.sealedBy;
+    // if (updates.evidenceHash !== undefined) updateData.evidence_hash = updates.evidenceHash;
 
     const { data, error } = await supabase
       .from('jobs')
@@ -614,7 +633,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       success: true,
       data: {
         job_id: linkData.job_id,
-        workspace_id: linkData.workspace_id,
         is_valid: true
       }
     };
@@ -631,7 +649,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
   try {
     const { data, error } = await supabase
       .from('job_access_tokens')
-      .select('job_id, workspace_id, expires_at, used_at')
+      .select('job_id, expires_at, used_at')
       .eq('token', token)
       .single();
 
@@ -667,7 +685,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       success: true,
       data: {
         job_id: data.job_id,
-        workspace_id: data.workspace_id,
         is_valid: true
       }
     };

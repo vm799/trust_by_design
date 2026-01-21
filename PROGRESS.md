@@ -8,6 +8,23 @@
 
 ## 🎯 Current Phase: Email-First Authentication & Payment Integration
 
+### 🆕 Just Completed - Hardening & Audit (2026-01-20)
+
+✅ **Security Hardening (PhD Level)**
+- Upgraded `seal-evidence` Edge Function to support RSA-2048 signing
+- Upgraded `verify-evidence` Edge Function to support RSA-2048 verification
+- Implemented intelligent fallback to HMAC for dev environments
+- Added PEM key parsing logic to Edge Functions
+
+✅ **Documentation Strategy**
+- Created `CONTRACTS.md` (API & DB Specification)
+- Documented all Edge Function contracts and RLS policies
+
+✅ **Auth Flow Perfection**
+- Created `check_user_exists` RPC migration (`005_check_user_email_rpc.sql`)
+- Updated `EmailFirstAuth.tsx` to use RPC for reliable user detection
+- Fixed RLS blocker in client-side user check logic
+
 ### 🆕 Just Completed - Email-First Auth (2026-01-17 Evening)
 
 ✅ **New Email-First Authentication Flow**

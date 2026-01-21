@@ -1,29 +1,37 @@
 
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-import { useNavigate } from 'react-router-dom';
-import { Job, Client, Technician, JobTemplate } from '../types';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
 import { createJob, generateMagicLink } from '../lib/db';
 
 interface CreateJobProps {
   onAddJob: (job: Job) => void;
+  user: UserProfile | null;
   clients: Client[];
   technicians: Technician[];
   templates: JobTemplate[];
 }
 
-const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, templates }) => {
+const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technicians, templates }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Parse query params for pre-filled templates
+  const queryParams = new URLSearchParams(location.search);
+  const initialTemplateId = queryParams.get('template') || '';
+  const initialTitle = queryParams.get('title') || '';
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState<string>('');
   const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
+    title: initialTitle,
     clientId: '',
     techId: '',
-    templateId: '',
+    templateId: initialTemplateId,
     address: '',
     notes: '',
   });
@@ -44,6 +52,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
 
     setIsCreating(true);
 
+    // Yield to main thread to show loading state
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
       // Create job data
       const jobData: Partial<Job> = {
@@ -61,8 +72,12 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
         safetyChecklist: [
           { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
           { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
-          { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
-          { id: 'sc4', label: 'Tools & Equipment Visual Inspection', checked: false, required: true }
+          ...(templates.find(t => t.id === formData.templateId)?.defaultTasks.map((task, idx) => ({
+            id: `template-task-${idx}`,
+            label: task,
+            checked: false,
+            required: true
+          })) || [])
         ],
         templateId: formData.templateId,
         syncStatus: 'synced',
@@ -91,8 +106,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
       // Generate magic link
       const magicLinkResult = await generateMagicLink(createdJob.id);
 
-      if (magicLinkResult.success && magicLinkResult.url) {
-        setMagicLinkUrl(magicLinkResult.url);
+      if (magicLinkResult.success && magicLinkResult.data?.url) {
+        setMagicLinkUrl(magicLinkResult.data.url);
       } else {
         // Fallback to job ID link if token generation fails
         setMagicLinkUrl(`${window.location.origin}/#/track/${createdJob.id}`);
@@ -128,34 +143,34 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
   const selectedTech = technicians.find(t => t.id === formData.techId);
 
   return (
-    <Layout>
+    <Layout user={user}>
       <div className="max-w-2xl mx-auto space-y-6 pb-20">
         <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Initialize Dispatch</h2>
-        
+
         <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Description</label>
-              <input 
+              <input
                 required
-                type="text" 
+                type="text"
                 className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                 placeholder="e.g. Asset Inspection - Unit 4B"
                 value={formData.title}
-                onChange={e => setFormData({...formData, title: e.target.value})}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Client</label>
-                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})}>
+                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.clientId} onChange={e => setFormData({ ...formData, clientId: e.target.value })}>
                   <option value="">Select Registry...</option>
                   {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Field Operator</label>
-                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.techId} onChange={e => setFormData({...formData, techId: e.target.value})}>
+                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.techId} onChange={e => setFormData({ ...formData, techId: e.target.value })}>
                   <option value="">Select Tech...</option>
                   {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
@@ -163,12 +178,12 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Deployment Location Override</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                 placeholder="Defaults to Client Registry address"
                 value={formData.address}
-                onChange={e => setFormData({...formData, address: e.target.value})}
+                onChange={e => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
           </div>
@@ -182,7 +197,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, clients, technicians, t
                 <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                   <span className="material-symbols-outlined text-primary text-5xl font-black">verified_user</span>
                 </div>
-                <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Authorize Dispatch</h3>
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Authorise Dispatch</h3>
                 <div className="bg-slate-800/50 rounded-3xl p-6 text-left space-y-4 border border-white/5">
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-500">Service</span>
