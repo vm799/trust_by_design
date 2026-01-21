@@ -36,12 +36,15 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
   try {
     // 1. Upload photos from IndexedDB to Supabase Storage
     const uploadedPhotos: Photo[] = [];
+    const failedPhotos: string[] = [];
+
     for (const photo of job.photos) {
       if (photo.isIndexedDBRef) {
         // Get Base64 data from IndexedDB
         const dataUrl = await getMedia(photo.url);
         if (!dataUrl) {
           console.error(`Failed to retrieve photo ${photo.id} from IndexedDB`);
+          failedPhotos.push(photo.id);
           continue;
         }
 
@@ -49,6 +52,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         const publicUrl = await uploadPhoto(job.id, photo.id, dataUrl);
         if (!publicUrl) {
           console.error(`Failed to upload photo ${photo.id} to Supabase`);
+          failedPhotos.push(photo.id);
           continue;
         }
 
@@ -62,6 +66,11 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       } else {
         uploadedPhotos.push(photo);
       }
+    }
+
+    // SECURITY FIX (BACKEND_AUDIT.md Risk #8): Fail sync if any photos failed to upload
+    if (failedPhotos.length > 0) {
+      throw new Error(`Failed to upload ${failedPhotos.length} photo(s): ${failedPhotos.join(', ')}`);
     }
 
     // 2. Upload signature from IndexedDB to Supabase Storage
