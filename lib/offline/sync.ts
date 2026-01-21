@@ -132,11 +132,14 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
         dataUrl = record.data;
     }
 
+    // Check if dataUrl is valid
+    if (!dataUrl) return false;
+
     // Convert and Upload
     // Reuse existing upload logic from supabase.ts or reimplement here
     // For now, assuming successful upload logic:
 
-    // We need to implement the upload. 
+    // We need to implement the upload.
     // Usually we'd use the helper `uploadPhoto` from lib/supabase
     // But circular dependency risk.
     // Let's implement basics here.
