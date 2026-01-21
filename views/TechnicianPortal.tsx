@@ -41,7 +41,26 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             // @ts-ignore - LocalJob needs number lastUpdated
             await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
           } else {
-            setTokenError(result.error as string || 'Invalid or expired link');
+            // Token validation failed - check if it's actually a job ID (fallback for offline/legacy URLs)
+            if (token.startsWith('JP-')) {
+              console.log('Token looks like a job ID, trying direct lookup...');
+              // Try local DB first
+              const local = await getJobLocal(token);
+              if (local) {
+                loadedJob = local as Job;
+              } else {
+                // Try props/legacy
+                loadedJob = jobs.find(j => j.id === token);
+              }
+
+              if (loadedJob) {
+                await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+              } else {
+                setTokenError(result.error as string || 'Invalid or expired link');
+              }
+            } else {
+              setTokenError(result.error as string || 'Invalid or expired link');
+            }
           }
         } else if (!loadedJob && jobId) {
           // Fallback to props/legacy
