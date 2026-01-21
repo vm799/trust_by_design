@@ -272,11 +272,12 @@ export const getUserProfile = async (userId: string) => {
 
   try {
     // Fetch user profile first
+    // Use maybeSingle() instead of single() to avoid 406 error when user doesn't exist
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (userError) throw userError;
     if (!userData) return null;
@@ -286,7 +287,7 @@ export const getUserProfile = async (userId: string) => {
       .from('workspaces')
       .select('*')
       .eq('id', userData.workspace_id)
-      .single();
+      .maybeSingle();
 
     // Fetch personas separately
     const { data: personasData } = await supabase
