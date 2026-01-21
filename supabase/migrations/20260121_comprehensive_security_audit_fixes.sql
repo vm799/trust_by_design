@@ -45,8 +45,7 @@ COMMENT ON FUNCTION public.get_workspace_id() IS 'Returns workspace_id for curre
 REVOKE EXECUTE ON FUNCTION public.get_workspace_id() FROM anon, authenticated;
 
 -- Function: Get current user's workspace IDs (for multiple workspace support)
--- Already exists, but let's optimize it
-DROP FUNCTION IF EXISTS public.user_workspace_ids();
+-- Update in place to avoid breaking dependent RLS policies
 CREATE OR REPLACE FUNCTION public.user_workspace_ids()
 RETURNS SETOF UUID
 LANGUAGE sql
