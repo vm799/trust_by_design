@@ -214,6 +214,14 @@ export const signOut = async (): Promise<AuthResult> => {
       return { success: false, error };
     }
 
+    // Clear sensitive user data from localStorage
+    // Keep job drafts and sync queue for offline functionality
+    localStorage.removeItem('jobproof_user_v2');
+    localStorage.removeItem('jobproof_onboarding_v4');
+
+    // Clear session storage
+    sessionStorage.clear();
+
     return { success: true };
   } catch (error) {
     return {
