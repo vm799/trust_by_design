@@ -89,7 +89,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
       if (!result.success) {
         // Fallback to localStorage if Supabase not configured
-        const newId = `JP-${Math.floor(Math.random() * 90000) + 10000}`;
+        // Use UUID to prevent enumeration attacks (BACKEND_AUDIT.md Risk #5)
+        const newId = `JP-${crypto.randomUUID()}`;
         const localJob: Job = { ...jobData, id: newId } as Job;
         onAddJob(localJob);
         setCreatedJobId(newId);

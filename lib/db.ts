@@ -112,7 +112,7 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
     }
 
     const newJob: Job = {
-      id: `job-${Date.now()}`,
+      id: crypto.randomUUID(),
       title: jobData.title || 'Untitled Job',
       client: jobData.client || '',
       clientId: jobData.clientId || '',
@@ -536,7 +536,7 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
       };
     }
 
-    const token = `token-${jobId}-${Date.now()}`;
+    const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const url = `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost'}/#/track/${token}`;
 
@@ -633,7 +633,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       success: true,
       data: {
         job_id: linkData.job_id,
-        workspace_id: linkData.workspace_id,
         is_valid: true
       }
     };
@@ -840,7 +839,7 @@ export const getClients = async (workspaceId: string): Promise<DbResult<Client[]
 export const createClient = async (clientData: Partial<Client>): Promise<DbResult<Client>> => {
   if (shouldUseMockDB()) {
     const newClient: Client = {
-      id: `client-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: clientData.name || '',
       email: clientData.email || '',
       address: clientData.address || '',
@@ -1059,7 +1058,7 @@ export const getTechnicians = async (workspaceId: string): Promise<DbResult<Tech
 export const createTechnician = async (techData: Partial<Technician>): Promise<DbResult<Technician>> => {
   if (shouldUseMockDB()) {
     const newTechnician: Technician = {
-      id: `tech-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: techData.name || '',
       email: techData.email || '',
       status: techData.status || 'Available',
