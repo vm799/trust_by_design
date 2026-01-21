@@ -15,7 +15,7 @@ vi.mock('react-router-dom', async () => {
 // Mock Supabase
 const mockSupabase = {
     auth: {
-        getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
     },
     from: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -45,7 +45,8 @@ describe('EmailFirstAuth View', () => {
 
         expect(screen.getByText(/Access Your Workspace/i)).toBeInTheDocument();
         expect(screen.getByPlaceholderText('contractor@company.com')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Continue/i })).toBeInTheDocument();
+        // Query the email submit button specifically (not "Continue with Google")
+        expect(screen.getByRole('button', { name: /^Continue$/ })).toBeInTheDocument();
     });
 
     it('updates email state on input change', () => {

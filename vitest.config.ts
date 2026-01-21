@@ -33,7 +33,7 @@ export default defineConfig({
     restoreMocks: true,
     clearMocks: true,
     include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache']
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', '**/e2e/**']
   },
   resolve: {
     alias: {
