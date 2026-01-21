@@ -25,6 +25,7 @@ import CompleteOnboarding from './views/CompleteOnboarding';
 import OAuthSetup from './views/OAuthSetup';
 import InvoicesView from './views/InvoicesView';
 import RoadmapView from './views/RoadmapView';
+import TrackLookup from './views/TrackLookup';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
@@ -361,6 +362,9 @@ const App: React.FC = () => {
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
 
+        {/* Technician Entry Point - Public */}
+        <Route path="/track-lookup" element={<TrackLookup />} />
+
         {/* Email-First Authentication (Primary) */}
         <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <EmailFirstAuth />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
@@ -406,14 +410,6 @@ const App: React.FC = () => {
             )
           ) : <Navigate to="/auth" replace />
         } />
-
-        <Route path="/contractor/job/:jobId" element={
-          isAuthenticated ? (
-            <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
-          ) : <Navigate to="/auth" replace />
-        } />
-
-
 
         {/* Client Persona Flow */}
         <Route path="/client" element={

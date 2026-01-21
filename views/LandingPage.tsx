@@ -26,19 +26,53 @@ const LandingPage: React.FC = () => {
             <span className="size-1.5 rounded-full bg-primary animate-ping"></span>
             Operational Verification Engine v2.0
           </div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
-            Proof of Work, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-400">Reimagined.</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
+            Verifiable Field Evidence<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-400">You Can Trust</span>
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Eliminate payment disputes. JobProof captures authenticated evidence and digital signatures on-site with zero-tamper offline protocols.
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
+            Capture, timestamp, and cryptographically seal on-site work with mobile-first offline support. Eliminate payment disputes forever.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link to="/admin" className="w-full sm:w-auto px-10 py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest">
-              Access Admin Hub
-              <span className="material-symbols-outlined font-black">arrow_forward</span>
+
+          {/* Benefits Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+              <span className="material-symbols-outlined text-success text-2xl">verified</span>
+              <span className="text-sm font-bold text-white">Immutable Proof</span>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+              <span className="material-symbols-outlined text-success text-2xl">wifi_off</span>
+              <span className="text-sm font-bold text-white">Works Offline</span>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+              <span className="material-symbols-outlined text-success text-2xl">signature</span>
+              <span className="text-sm font-bold text-white">Client Signatures</span>
+            </div>
+          </div>
+
+          {/* Split CTA */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+            <Link
+              to="/auth"
+              className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-base md:text-lg shadow-2xl shadow-primary/30 transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest group"
+            >
+              <span className="material-symbols-outlined font-black">admin_panel_settings</span>
+              For Managers
+              <span className="material-symbols-outlined font-black group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </Link>
+            <Link
+              to="/track-lookup"
+              className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 bg-white/10 hover:bg-white/15 border-2 border-white/20 text-white rounded-2xl font-black text-base md:text-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest group"
+            >
+              <span className="material-symbols-outlined font-black">engineering</span>
+              I Have a Link
+              <span className="material-symbols-outlined font-black group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </Link>
           </div>
+
+          <p className="text-xs text-slate-500 uppercase tracking-widest pt-4">
+            Technicians: Click "I Have a Link" to access your dispatch
+          </p>
         </div>
 
         {/* Product Visual */}

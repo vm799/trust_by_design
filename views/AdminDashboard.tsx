@@ -190,6 +190,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           }}
         />
 
+        {/* Mobile Onboarding Checklist - BEFORE grid to prevent overlap */}
+        {!checklistDismissed && (
+          <div className="lg:hidden">
+            <OnboardingChecklist
+              steps={onboardingSteps}
+              onDismiss={handleDismissChecklist}
+              user={user}
+            />
+          </div>
+        )}
+
         {/* Main Content Grid - Sidebar + Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar - Onboarding Checklist (Desktop) */}
@@ -205,8 +216,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Header with Sticky CTA */}
-            <div className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur-sm pb-4 -mt-2 pt-2">
+            {/* Header with Sticky CTA (sticky only on desktop to prevent mobile overlap) */}
+            <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
               <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div className="space-y-1">
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
@@ -222,17 +233,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 </button>
               </header>
             </div>
-
-            {/* Mobile Onboarding Checklist */}
-            {!checklistDismissed && (
-              <div className="lg:hidden">
-                <OnboardingChecklist
-                  steps={onboardingSteps}
-                  onDismiss={handleDismissChecklist}
-                  user={user}
-                />
-              </div>
-            )}
 
         {/* Sync message notification */}
         {syncMessage && (
