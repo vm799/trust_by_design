@@ -162,6 +162,8 @@ const App: React.FC = () => {
         }
       } else {
         setUser(null);
+        // Clear user data from localStorage on logout
+        localStorage.removeItem('jobproof_user_v2');
         // Fallback to localStorage if not authenticated
         loadLocalStorageData();
       }
