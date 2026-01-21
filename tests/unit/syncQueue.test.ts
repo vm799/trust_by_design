@@ -7,6 +7,8 @@ import {
 } from '@/lib/syncQueue';
 import { createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
+import * as supabase from '@/lib/supabase';
+import * as db from '@/db';
 
 describe('lib/syncQueue - Sync Queue Operations', () => {
   beforeEach(() => {
@@ -131,6 +133,9 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
 
   describe('syncJobToSupabase', () => {
     it('should return false when Supabase not configured', async () => {
+      // Mock isSupabaseAvailable to return false
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(false);
+
       const job = createMockJob();
 
       const result = await syncJobToSupabase(job);
@@ -139,6 +144,9 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
     });
 
     it('should handle jobs with IndexedDB photo references', async () => {
+      // Mock isSupabaseAvailable to return false to avoid actual sync attempts
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(false);
+
       const job = createMockJob({
         photos: [
           {
@@ -155,11 +163,14 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
 
       const result = await syncJobToSupabase(job);
 
-      // Should attempt to upload even if it fails (Supabase not configured)
+      // Should return false when Supabase not configured
       expect(result).toBe(false);
     });
 
     it('should handle jobs with IndexedDB signature references', async () => {
+      // Mock isSupabaseAvailable to return false to avoid actual sync attempts
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(false);
+
       const job = createMockJob({
         signature: 'sig_job_123',
         signatureIsIndexedDBRef: true,

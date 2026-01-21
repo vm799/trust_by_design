@@ -38,7 +38,7 @@ export interface TokenValidationData {
 // ============================================================================
 
 let MOCK_DB_ENABLED = false;
-let mockDatabase: {
+const mockDatabase: {
   jobs: Map<string, Job>;
   clients: Map<string, Client>;
   technicians: Map<string, Technician>;
@@ -633,6 +633,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       success: true,
       data: {
         job_id: linkData.job_id,
+        workspace_id: linkData.workspace_id,
         is_valid: true
       }
     };
