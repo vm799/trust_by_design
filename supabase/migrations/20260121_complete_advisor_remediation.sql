@@ -18,116 +18,118 @@
 -- DOWNTIME REQUIRED: None (all operations are online)
 -- ============================================================================
 
-BEGIN;
+-- NOTE: Changed from CONCURRENTLY to regular CREATE INDEX because Supabase
+-- wraps migrations in transactions. Regular indexes will briefly lock tables
+-- but are safe for small to medium tables.
 
 -- ============================================================================
 -- SECTION 1: ADD MISSING INDEXES FOR FOREIGN KEYS
 -- ============================================================================
 -- Purpose: Improve JOIN performance and RLS policy evaluation
--- Risk: LOW (additive only, no locks)
+-- Risk: LOW (additive only, brief locks during creation)
 -- Impact: 30-50% faster queries involving foreign key lookups
 -- ============================================================================
 
 -- Photos table: Ensure job_id has optimal index
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_photos_job_id_fk
+CREATE INDEX IF NOT EXISTS idx_photos_job_id_fk
   ON public.photos(job_id);
 
 -- Safety checks table: Ensure job_id has optimal index
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_safety_checks_job_id_fk
+CREATE INDEX IF NOT EXISTS idx_safety_checks_job_id_fk
   ON public.safety_checks(job_id);
 
 -- Clients table: Ensure workspace_id has optimal index
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_clients_workspace_id_fk
+CREATE INDEX IF NOT EXISTS idx_clients_workspace_id_fk
   ON public.clients(workspace_id)
   WHERE workspace_id IS NOT NULL;
 
 -- Technicians table: Ensure workspace_id and user_id have optimal indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_technicians_workspace_id_fk
+CREATE INDEX IF NOT EXISTS idx_technicians_workspace_id_fk
   ON public.technicians(workspace_id)
   WHERE workspace_id IS NOT NULL;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_technicians_user_id_fk
+CREATE INDEX IF NOT EXISTS idx_technicians_user_id_fk
   ON public.technicians(user_id)
   WHERE user_id IS NOT NULL;
 
 -- Audit logs: Ensure foreign keys are indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_logs_user_id_fk
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id_fk
   ON public.audit_logs(user_id)
   WHERE user_id IS NOT NULL;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_logs_workspace_id_fk
+CREATE INDEX IF NOT EXISTS idx_audit_logs_workspace_id_fk
   ON public.audit_logs(workspace_id);
 
 -- Evidence seals: Ensure foreign keys are indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_evidence_seals_job_id_fk
+CREATE INDEX IF NOT EXISTS idx_evidence_seals_job_id_fk
   ON public.evidence_seals(job_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_evidence_seals_workspace_id_fk
+CREATE INDEX IF NOT EXISTS idx_evidence_seals_workspace_id_fk
   ON public.evidence_seals(workspace_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_evidence_seals_sealed_by_fk
+CREATE INDEX IF NOT EXISTS idx_evidence_seals_sealed_by_fk
   ON public.evidence_seals(sealed_by_user_id)
   WHERE sealed_by_user_id IS NOT NULL;
 
 -- Job access tokens: Ensure foreign keys are indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_job_access_tokens_granted_by_fk
+CREATE INDEX IF NOT EXISTS idx_job_access_tokens_granted_by_fk
   ON public.job_access_tokens(granted_by_user_id)
   WHERE granted_by_user_id IS NOT NULL;
 
 -- User personas: Ensure foreign keys are indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_personas_user_id_fk
+CREATE INDEX IF NOT EXISTS idx_user_personas_user_id_fk
   ON public.user_personas(user_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_personas_workspace_id_fk
+CREATE INDEX IF NOT EXISTS idx_user_personas_workspace_id_fk
   ON public.user_personas(workspace_id)
   WHERE workspace_id IS NOT NULL;
 
 -- User journey progress: Ensure user_id is indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_journey_progress_user_id_fk
+CREATE INDEX IF NOT EXISTS idx_user_journey_progress_user_id_fk
   ON public.user_journey_progress(user_id);
 
 -- User subscriptions: Ensure user_id is indexed
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_subscriptions_user_id_fk
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id_fk
   ON public.user_subscriptions(user_id);
 
 -- ============================================================================
 -- SECTION 2: ADD COMPOSITE INDEXES FOR COMMON QUERY PATTERNS
 -- ============================================================================
 -- Purpose: Optimize multi-column WHERE clauses and JOINs
--- Risk: LOW (additive only)
+-- Risk: LOW (additive only, brief locks during creation)
 -- Impact: 40-70% faster for complex queries
 -- ============================================================================
 
 -- Jobs: workspace + status (common filter pattern)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_jobs_workspace_status_composite
+CREATE INDEX IF NOT EXISTS idx_jobs_workspace_status_composite
   ON public.jobs(workspace_id, status)
   WHERE workspace_id IS NOT NULL;
 
 -- Jobs: workspace + created_at (for sorting/pagination)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_jobs_workspace_created_composite
+CREATE INDEX IF NOT EXISTS idx_jobs_workspace_created_composite
   ON public.jobs(workspace_id, created_at DESC)
   WHERE workspace_id IS NOT NULL;
 
 -- Jobs: workspace + assigned technician (for technician dashboard)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_jobs_workspace_tech_composite
+CREATE INDEX IF NOT EXISTS idx_jobs_workspace_tech_composite
   ON public.jobs(workspace_id, assigned_technician_id)
   WHERE assigned_technician_id IS NOT NULL;
 
 -- Photos: job_id + type (common filter pattern)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_photos_job_type_composite
+CREATE INDEX IF NOT EXISTS idx_photos_job_type_composite
   ON public.photos(job_id, type);
 
 -- Photos: job_id + created_at (for ordering)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_photos_job_created_composite
+CREATE INDEX IF NOT EXISTS idx_photos_job_created_composite
   ON public.photos(job_id, timestamp DESC);
 
 -- Job access tokens: token + expires_at (for validation)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_tokens_token_expires_composite
+CREATE INDEX IF NOT EXISTS idx_tokens_token_expires_composite
   ON public.job_access_tokens(token, expires_at)
   WHERE revoked_at IS NULL;
 
 -- Audit logs: workspace + action + created_at (for filtering audit trail)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_workspace_action_time
+CREATE INDEX IF NOT EXISTS idx_audit_workspace_action_time
   ON public.audit_logs(workspace_id, action, created_at DESC);
 
 -- ============================================================================
@@ -379,7 +381,7 @@ GRANT EXECUTE ON FUNCTION public.get_workspace_entitlements(UUID) TO authenticat
 -- SECTION 8: ADD QUERY OPTIMIZATION FOR HEAVY TABLES
 -- ============================================================================
 -- Purpose: Optimize slow queries identified in Postgres logs
--- Risk: LOW (additive indexes only)
+-- Risk: LOW (additive indexes only, brief locks during creation)
 -- Impact: Addresses specific slow query patterns
 -- ============================================================================
 
@@ -389,20 +391,20 @@ GRANT EXECUTE ON FUNCTION public.get_workspace_entitlements(UUID) TO authenticat
 -- 3. Fetching photos with job details
 
 -- Jobs: Add index for counting photos per job
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_photos_job_id_covering
+CREATE INDEX IF NOT EXISTS idx_photos_job_id_covering
   ON public.photos(job_id, id, type);
 
 -- Users: Add covering index for workspace lookups
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_id_workspace_covering
+CREATE INDEX IF NOT EXISTS idx_users_id_workspace_covering
   ON public.users(id, workspace_id, email, full_name, role);
 
 -- Jobs: Add partial index for active/pending jobs (common query)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_jobs_active_partial
+CREATE INDEX IF NOT EXISTS idx_jobs_active_partial
   ON public.jobs(workspace_id, created_at DESC)
   WHERE status IN ('Pending', 'In Progress', 'Submitted');
 
 -- Photos: Add partial index for non-deleted photos
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_photos_active_partial
+CREATE INDEX IF NOT EXISTS idx_photos_active_partial
   ON public.photos(job_id, created_at DESC)
   WHERE sync_status != 'deleted';
 
@@ -453,8 +455,6 @@ BEGIN
     RAISE NOTICE 'RLS enabled (or already enabled) on public.%', r.tablename;
   END LOOP;
 END $$;
-
-COMMIT;
 
 -- ============================================================================
 -- POST-MIGRATION VERIFICATION QUERIES

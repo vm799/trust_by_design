@@ -271,18 +271,35 @@ export const getUserProfile = async (userId: string) => {
   if (!supabase) return null;
 
   try {
-    const { data, error } = await supabase
+    // Fetch user profile first
+    const { data: userData, error: userError } = await supabase
       .from('users')
-      .select(`
-        *,
-        workspace:workspaces(*),
-        personas:user_personas(*)
-      `)
+      .select('*')
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
-    return data;
+    if (userError) throw userError;
+    if (!userData) return null;
+
+    // Fetch workspace separately
+    const { data: workspaceData } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('id', userData.workspace_id)
+      .single();
+
+    // Fetch personas separately
+    const { data: personasData } = await supabase
+      .from('user_personas')
+      .select('*')
+      .eq('user_id', userId);
+
+    // Combine results
+    return {
+      ...userData,
+      workspace: workspaceData || null,
+      personas: personasData || []
+    };
   } catch (error) {
     console.error('Failed to get user profile:', error);
     return null;
