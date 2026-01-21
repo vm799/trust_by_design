@@ -486,10 +486,10 @@ CREATE INDEX IF NOT EXISTS idx_jobs_active_partial
   ON public.jobs(workspace_id, created_at DESC)
   WHERE status IN ('Pending', 'In Progress', 'Submitted');
 
--- Photos: Add partial index for non-deleted photos
+-- Photos: Add partial index for active photos (exclude failed sync)
 CREATE INDEX IF NOT EXISTS idx_photos_active_partial
   ON public.photos(job_id, created_at DESC)
-  WHERE sync_status != 'deleted';
+  WHERE sync_status IN ('pending', 'syncing', 'synced');
 
 -- ============================================================================
 -- SECTION 9: CREATE STATISTICS FOR QUERY PLANNER
