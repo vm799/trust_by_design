@@ -166,75 +166,54 @@ Then compare indexdef to find duplicates.
 -- Verify and update all public functions to have search_path protection
 -- (Most already fixed in prior migrations, this ensures completeness)
 
--- Evidence sealing functions (with existence checks)
+-- Evidence sealing functions (with error handling - silently skip if not exists)
 DO $$
 BEGIN
-  -- seal_job_evidence
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'seal_job_evidence'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.seal_job_evidence(UUID, TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.seal_job_evidence(UUID, TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function seal_job_evidence does not exist, skipping';
+  END;
 
-  -- get_job_seal_status
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'get_job_seal_status'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.get_job_seal_status(UUID) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.get_job_seal_status(UUID) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function get_job_seal_status does not exist, skipping';
+  END;
 
-  -- get_evidence_bundle
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'get_evidence_bundle'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.get_evidence_bundle(UUID) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.get_evidence_bundle(UUID) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function get_evidence_bundle does not exist, skipping';
+  END;
 
-  -- count_workspace_seals
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'count_workspace_seals'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.count_workspace_seals(UUID) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.count_workspace_seals(UUID) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function count_workspace_seals does not exist, skipping';
+  END;
 END $$;
 
--- Audit trail functions (with existence checks)
+-- Audit trail functions (with error handling - silently skip if not exists)
 DO $$
 BEGIN
-  -- log_audit_event
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'log_audit_event'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.log_audit_event(UUID, TEXT, TEXT, TEXT, JSONB) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.log_audit_event(UUID, TEXT, TEXT, TEXT, JSONB) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function log_audit_event does not exist, skipping';
+  END;
 
-  -- get_audit_logs
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'get_audit_logs'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.get_audit_logs(UUID, INTEGER, INTEGER, TEXT, TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.get_audit_logs(UUID, INTEGER, INTEGER, TEXT, TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function get_audit_logs does not exist, skipping';
+  END;
 
-  -- count_audit_logs
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'count_audit_logs'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.count_audit_logs(UUID, TEXT, TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.count_audit_logs(UUID, TEXT, TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function count_audit_logs does not exist, skipping';
+  END;
 END $$;
 
 -- Onboarding functions (already have search_path from 20260121_fix_complete_onboarding_step.sql)
@@ -258,84 +237,60 @@ BEGIN
   END IF;
 END $$;
 
--- User management functions (with existence checks)
+-- User management functions (with error handling - silently skip if not exists)
 DO $$
 BEGIN
-  -- create_workspace_with_owner
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'create_workspace_with_owner'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.create_workspace_with_owner(UUID, TEXT, TEXT, TEXT, TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.create_workspace_with_owner(UUID, TEXT, TEXT, TEXT, TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function create_workspace_with_owner does not exist, skipping';
+  END;
 
-  -- generate_job_access_token
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'generate_job_access_token'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.generate_job_access_token(TEXT, UUID, TEXT, INTEGER) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.generate_job_access_token(TEXT, UUID, TEXT, INTEGER) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function generate_job_access_token does not exist, skipping';
+  END;
 
-  -- check_user_exists
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'check_user_exists'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.check_user_exists(TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.check_user_exists(TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function check_user_exists does not exist, skipping';
+  END;
 END $$;
 
--- Helper functions (with existence checks)
+-- Helper functions (with error handling - silently skip if not exists)
 DO $$
 BEGIN
-  -- get_workspace_id
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'get_workspace_id'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.get_workspace_id() SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.get_workspace_id() SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function get_workspace_id does not exist, skipping';
+  END;
 
-  -- user_workspace_ids
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'user_workspace_ids'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.user_workspace_ids() SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.user_workspace_ids() SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function user_workspace_ids does not exist, skipping';
+  END;
 
-  -- validate_job_access_token
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'validate_job_access_token'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.validate_job_access_token(TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.validate_job_access_token(TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function validate_job_access_token does not exist, skipping';
+  END;
 
-  -- validate_job_access_token_hash
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'validate_job_access_token_hash'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.validate_job_access_token_hash(TEXT) SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.validate_job_access_token_hash(TEXT) SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function validate_job_access_token_hash does not exist, skipping';
+  END;
 
-  -- get_request_job_token
-  IF EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON p.pronamespace = n.oid
-    WHERE n.nspname = 'public' AND p.proname = 'get_request_job_token'
-  ) THEN
-    EXECUTE 'ALTER FUNCTION public.get_request_job_token() SET search_path = public, pg_temp';
-  END IF;
+  BEGIN
+    ALTER FUNCTION public.get_request_job_token() SET search_path = public, pg_temp;
+  EXCEPTION WHEN undefined_function THEN
+    RAISE NOTICE 'Function get_request_job_token does not exist, skipping';
+  END;
 END $$;
 
 -- ============================================================================
