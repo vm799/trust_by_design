@@ -30,6 +30,7 @@ export interface MagicLinkData {
 
 export interface TokenValidationData {
   job_id: string;
+  workspace_id?: string;
   is_valid: boolean;
 }
 
@@ -674,7 +675,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
 
     const { data: job } = await supabase
       .from('jobs')
-      .select('sealed_at')
+      .select('sealed_at, workspace_id')
       .eq('id', data.job_id)
       .single();
 
@@ -686,6 +687,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       success: true,
       data: {
         job_id: data.job_id,
+        workspace_id: job?.workspace_id,
         is_valid: true
       }
     };
