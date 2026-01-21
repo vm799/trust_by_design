@@ -18,7 +18,9 @@
 -- DOWNTIME REQUIRED: None (all operations are online)
 -- ============================================================================
 
-BEGIN;
+-- NOTE: No transaction block is used because CREATE INDEX CONCURRENTLY
+-- cannot run inside a transaction. All operations are idempotent and safe
+-- to run individually.
 
 -- ============================================================================
 -- SECTION 1: ADD MISSING INDEXES FOR FOREIGN KEYS
@@ -453,8 +455,6 @@ BEGIN
     RAISE NOTICE 'RLS enabled (or already enabled) on public.%', r.tablename;
   END LOOP;
 END $$;
-
-COMMIT;
 
 -- ============================================================================
 -- POST-MIGRATION VERIFICATION QUERIES

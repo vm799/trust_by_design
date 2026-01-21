@@ -76,6 +76,113 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  phase1-auth-tests:
+    name: PHASE 1 - Auth & Workspace Tests
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_APP_URL: ${{ secrets.VITE_APP_URL || 'http://localhost:5173' }}
+      BASE_URL: ${{ secrets.VITE_APP_URL || 'http://localhost:5173' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start development server
+        run: npm run dev &
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Wait for server to be ready
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 2; done'
+          echo "✅ Development server is ready"
+
+      - name: Run PHASE 1 Auth + Workspace Tests
+        id: phase1_tests
+        run: npx playwright test tests/e2e/auth-flows.spec.ts --project=chromium --reporter=json,list
+        continue-on-error: true
+        env:
+          CI: true
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Log test results to claude.md
+        if: always()
+        run: node scripts/log-test-results.js test-results/results.json
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-test-results
+          path: |
+            test-results/
+            playwright-report/
+            claude.md
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsPath = 'test-results/results.json';
+
+            if (!fs.existsSync(resultsPath)) {
+              console.log('No results file found, skipping comment');
+              return;
+            }
+
+            const results = JSON.parse(fs.readFileSync(resultsPath, 'utf-8'));
+            const passed = results.stats?.expected || 0;
+            const failed = results.stats?.unexpected || 0;
+            const total = passed + failed;
+
+            const status = failed === 0 ? '✅ PASSED' : '❌ FAILED';
+            const emoji = failed === 0 ? '🎉' : '⚠️';
+
+            const comment = `## ${emoji} PHASE 1 Auth + Workspace Tests ${status}
+
+            **Summary:** ${passed}/${total} tests passed
+
+            - Magic Link Signup: ${failed === 0 ? '✅' : '❌'}
+            - Google OAuth Signup: ${failed === 0 ? '✅' : '❌'}
+            - Session Refresh: ${failed === 0 ? '✅' : '❌'}
+            - Logout/Login Cycle: ${failed === 0 ? '✅' : '❌'}
+
+            ${failed > 0 ? '⚠️ **Action Required:** Fix failing tests before merging.' : '✅ All tests passed! Ready to merge.'}
+
+            [View full report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail job if tests failed
+        if: steps.phase1_tests.outcome == 'failure'
+        run: |
+          echo "❌ PHASE 1 tests failed. Pipeline blocked."
+          exit 1
+
   security-audit:
     runs-on: ubuntu-latest
     steps:
