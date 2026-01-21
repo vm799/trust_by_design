@@ -134,6 +134,14 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      localStorage.setItem('jobproof_onboarding_v4', 'true');
+      onComplete();
+    }
+  };
+
+  const handleSkip = () => {
+    if (window.confirm('Skip onboarding tour? You can restart it anytime from Settings.')) {
+      localStorage.setItem('jobproof_onboarding_v4', 'true');
       onComplete();
     }
   };
@@ -146,7 +154,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         <div className="absolute top-0 left-0 h-1 bg-primary transition-all duration-300" style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}></div>
 
         <button
-          onClick={onComplete}
+          onClick={handleSkip}
           className="absolute top-6 right-8 text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
         >
           Skip Tour

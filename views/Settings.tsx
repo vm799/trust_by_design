@@ -98,6 +98,23 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   </div>
                </div>
             </div>
+
+            <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl space-y-4">
+               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">User Experience</h3>
+               <button
+                  onClick={() => {
+                    localStorage.removeItem('jobproof_onboarding_v4');
+                    window.location.reload();
+                  }}
+                  className="w-full py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/30 rounded-2xl text-primary text-xs font-black uppercase tracking-widest transition-all"
+               >
+                  <span className="material-symbols-outlined text-base mr-2 align-middle">refresh</span>
+                  Restart Onboarding Tour
+               </button>
+               <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Launch the interactive walkthrough again to review key features and workflows.
+               </p>
+            </div>
           </aside>
         </div>
       </div>

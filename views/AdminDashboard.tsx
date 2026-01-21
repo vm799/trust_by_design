@@ -5,6 +5,7 @@ import OnboardingTour from '../components/OnboardingTour';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
+import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -20,10 +21,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const activeJobs = jobs.filter(j => j.status !== 'Submitted');
   const sealedJobs = jobs.filter(j => j.status === 'Submitted');
   const syncIssues = jobs.filter(j => j.syncStatus === 'failed').length;
+  const failedJobs = jobs.filter(j => j.syncStatus === 'failed');
   const pendingSignatures = activeJobs.filter(j => !j.signature).length;
 
   // State for IndexedDB photo previews
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
+
+  // State for manual sync
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   // Load photo thumbnails from IndexedDB
   useEffect(() => {
@@ -53,6 +59,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     }
   }, [jobs]);
 
+  // Manual sync handler
+  const handleManualSync = async () => {
+    if (isSyncing) return;
+
+    setIsSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      await retryFailedSyncs();
+      setSyncMessage('Sync completed. Check job status for results.');
+      setTimeout(() => setSyncMessage(null), 5000);
+      // Reload page to show updated sync status
+      window.location.reload();
+    } catch (error) {
+      console.error('Manual sync failed:', error);
+      setSyncMessage('Sync failed. Please check your connection.');
+      setTimeout(() => setSyncMessage(null), 5000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Retry single job sync
+  const handleJobRetry = async (job: Job, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent navigation to job report
+
+    try {
+      const success = await syncJobToSupabase(job);
+      if (success) {
+        setSyncMessage(`Job "${job.title}" synced successfully!`);
+        setTimeout(() => setSyncMessage(null), 3000);
+        window.location.reload();
+      } else {
+        setSyncMessage(`Failed to sync job "${job.title}". Please try again.`);
+        setTimeout(() => setSyncMessage(null), 5000);
+      }
+    } catch (error) {
+      console.error('Job retry failed:', error);
+      setSyncMessage(`Error syncing job "${job.title}".`);
+      setTimeout(() => setSyncMessage(null), 5000);
+    }
+  };
+
   return (
     <Layout user={user}>
       {showOnboarding && (
@@ -77,6 +126,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             Initialize Dispatch
           </button>
         </header>
+
+        {/* Sync message notification */}
+        {syncMessage && (
+          <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl animate-in">
+            <p className="text-primary text-sm font-bold">{syncMessage}</p>
+          </div>
+        )}
+
+        {/* Sync issues warning */}
+        {syncIssues > 0 && (
+          <div className="bg-warning/10 border border-warning/20 p-6 rounded-2xl flex items-center justify-between animate-in">
+            <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-warning text-3xl">sync_problem</span>
+              <div>
+                <p className="text-white font-bold">{syncIssues} job{syncIssues > 1 ? 's' : ''} failed to sync</p>
+                <p className="text-slate-400 text-sm">Click "Retry Sync" to attempt synchronization again.</p>
+              </div>
+            </div>
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="px-6 py-3 bg-warning/20 hover:bg-warning/30 border border-warning/30 text-warning rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <span className={`material-symbols-outlined text-sm ${isSyncing ? 'animate-spin' : ''}`}>
+                {isSyncing ? 'sync' : 'refresh'}
+              </span>
+              {isSyncing ? 'Syncing...' : 'Retry Sync'}
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Protocol Ingress" />
@@ -165,11 +244,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <div className={`inline-flex items-center gap-1.5 ${job.syncStatus === 'synced' ? 'text-success' : job.syncStatus === 'failed' ? 'text-danger' : 'text-primary'}`}>
-                          <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === 'pending' ? 'animate-spin' : ''}`}>
-                            {job.syncStatus === 'synced' ? 'cloud_done' : job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
-                          </span>
-                          <span className="text-[10px] font-black uppercase tracking-widest">{job.syncStatus}</span>
+                        <div className="flex items-center justify-end gap-2">
+                          <div className={`inline-flex items-center gap-1.5 ${job.syncStatus === 'synced' ? 'text-success' : job.syncStatus === 'failed' ? 'text-danger' : 'text-primary'}`}>
+                            <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === 'pending' ? 'animate-spin' : ''}`}>
+                              {job.syncStatus === 'synced' ? 'cloud_done' : job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{job.syncStatus}</span>
+                          </div>
+                          {job.syncStatus === 'failed' && (
+                            <button
+                              onClick={(e) => handleJobRetry(job, e)}
+                              className="px-2 py-1 bg-danger/10 hover:bg-danger/20 border border-danger/20 text-danger rounded-lg text-[8px] font-black uppercase tracking-widest transition-all"
+                              title="Retry sync for this job"
+                            >
+                              <span className="material-symbols-outlined text-xs">refresh</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -83,6 +83,7 @@ export interface Client {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   address: string;
   totalJobs: number;
 }
@@ -91,12 +92,14 @@ export interface Technician {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
   rating: number;
   jobsCompleted: number;
 }
 
 export interface UserProfile {
+  id?: string;
   name: string;
   email: string;
   avatar?: string;

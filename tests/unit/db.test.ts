@@ -30,7 +30,7 @@ describe('lib/db - Database Operations', () => {
       expect(result.data).toHaveProperty('id');
       expect(result.data?.title).toBe('New HVAC Installation');
       expect(result.data?.status).toBe('Pending'); // Default status
-      expect(result.data?.workspace_id).toBe('workspace-123');
+      expect(result.data?.workspaceId).toBe('workspace-123');
     });
 
     it('should return error when workspace_id is missing', async () => {

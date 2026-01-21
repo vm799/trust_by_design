@@ -82,7 +82,7 @@ export const handlers = [
 
     // Simulate sealed job protection
     const job = mockJobs.find((j) => j.id === jobId);
-    if (job?.sealed_at) {
+    if (job?.sealedAt) {
       return HttpResponse.json(
         { message: 'Cannot modify sealed job' },
         { status: 403 }
