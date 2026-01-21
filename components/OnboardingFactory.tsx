@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Onboarding Factory - Universal Step Renderer
  * Phase D.3 - Handholding Onboarding Flows
@@ -10,9 +8,9 @@
  * - CTA button (complete & continue)
  */
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { getSupabase } from '../lib/supabase';
 import {
   PersonaType,
   getProgressInfo,
@@ -21,7 +19,7 @@ import {
   PERSONA_DASHBOARDS,
   PERSONA_METADATA,
   getPersonaTailwindColors,
-} from '@/lib/onboarding';
+} from '../lib/onboarding';
 
 export interface OnboardingFactoryProps {
   persona: PersonaType;
@@ -36,8 +34,8 @@ export default function OnboardingFactory({
   children,
   onComplete,
 }: OnboardingFactoryProps) {
-  const router = useRouter();
-  const supabase = createClient();
+  const navigate = useNavigate();
+  const supabase = getSupabase();
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,13 +91,13 @@ export default function OnboardingFactory({
       // Redirect to next step or dashboard
       if (data.is_complete) {
         // Onboarding complete - go to dashboard
-        router.push(PERSONA_DASHBOARDS[persona]);
+        navigate(PERSONA_DASHBOARDS[persona]);
       } else if (data.next_step) {
         // Go to next step
-        router.push(`/onboarding/${persona}/${data.next_step}`);
+        navigate(`/onboarding/${persona}/${data.next_step}`);
       } else {
         // Fallback to dashboard
-        router.push(PERSONA_DASHBOARDS[persona]);
+        navigate(PERSONA_DASHBOARDS[persona]);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to complete step. Please try again.');
@@ -115,7 +113,7 @@ export default function OnboardingFactory({
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <button
-              onClick={() => router.push('/complete-onboarding')}
+              onClick={() => navigate('/complete-onboarding')}
               className="hover:text-gray-900 transition-colors"
             >
               Choose Persona
@@ -255,12 +253,12 @@ function getProTip(persona: PersonaType, step: string): string {
   const tips: Record<PersonaType, Record<string, string>> = {
     solo_contractor: {
       upload_logo: 'Use a square logo (500x500px) for best results on certificates. PNG or JPG formats work great!',
-      create_first_job: 'Your first job is practice! Don't worry about perfection - you can edit or delete it later.',
+      create_first_job: "Your first job is practice! Don't worry about perfection - you can edit or delete it later.",
       safety_checklist: 'Create a template checklist you can reuse across all jobs. Add items specific to your trade.',
       generate_certificate: 'Certificates are blockchain-sealed and tamper-proof. Share them with clients for instant trust.',
     },
     agency_owner: {
-      add_first_technician: 'Invite technicians with their email. They'll get setup instructions automatically.',
+      add_first_technician: "Invite technicians with their email. They'll get setup instructions automatically.",
       bulk_job_import: 'Use CSV import to migrate existing jobs from spreadsheets. Download our template to get started.',
       setup_billing: 'Configure Stripe for automatic billing. Technicians see their invoices in the dashboard.',
       compliance_dashboard: 'Filter by date range, technician, or client to drill into specific metrics.',
@@ -281,7 +279,7 @@ function getProTip(persona: PersonaType, step: string): string {
       daily_briefing: 'Assign crews before 7am so technicians see their jobs when they arrive on site.',
       material_tracking: 'Log deliveries as they arrive to maintain accurate inventory counts.',
       safety_rounds: 'Conduct rounds at the same time daily. Consistency builds a safety culture.',
-      end_of_day_report: 'Seal completed jobs daily - don't let paperwork pile up!',
+      end_of_day_report: "Seal completed jobs daily - don't let paperwork pile up!",
     },
   };
 

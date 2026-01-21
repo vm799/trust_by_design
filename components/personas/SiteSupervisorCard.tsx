@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   onSelect: (persona: string) => void;
@@ -14,12 +14,12 @@ interface Props {
  * Mobile-first: 90% iPhone usage on construction sites
  */
 const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleSelect = () => {
     if (disabled) return;
     onSelect('site_supervisor');
-    router.push('/onboarding/site_supervisor/daily_briefing');
+    navigate('/onboarding/site_supervisor/daily_briefing');
   };
 
   return (

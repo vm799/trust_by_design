@@ -89,11 +89,11 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         lat: job.lat,
         lng: job.lng,
         w3w: job.w3w,
-        assignee: job.assignee,
+        assignee: job.technician,
         signer_name: job.signerName,
         signer_role: job.signerRole,
         signature_url: signatureUrl,
-        created_at: job.createdAt,
+        created_at: job.date,
         completed_at: job.completedAt,
         last_updated: job.lastUpdated,
         sync_status: 'synced'

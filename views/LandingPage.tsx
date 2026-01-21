@@ -16,7 +16,6 @@ const LandingPage: React.FC = () => {
             <a href="#pricing" className="hover:text-white transition-colors uppercase tracking-widest">Pricing</a>
             <Link to="/admin" className="text-white bg-white/5 border border-white/10 px-6 py-2.5 rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest">Control Hub</Link>
           </div>
-          <button className="md:hidden material-symbols-outlined">menu</button>
         </div>
       </nav>
 

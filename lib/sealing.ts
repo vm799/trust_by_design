@@ -52,6 +52,15 @@ export interface CanSealResult {
   reasons: string[];
 }
 
+export interface SealStatus {
+  isSealed: boolean;
+  sealedAt?: string;
+  sealedBy?: string;
+  evidenceHash?: string;
+  signature?: string;
+  algorithm?: string;
+}
+
 // ============================================================================
 // MOCK STORAGE FOR TESTING
 // ============================================================================
@@ -79,7 +88,7 @@ export const disableMockSealing = () => {
 };
 
 const shouldUseMockSealing = () => {
-  return MOCK_SEALING_ENABLED || process.env.NODE_ENV === 'test' || typeof vi !== 'undefined';
+  return MOCK_SEALING_ENABLED || process.env.NODE_ENV === 'test' || (typeof globalThis !== 'undefined' && 'vi' in globalThis);
 };
 
 // ============================================================================
@@ -492,14 +501,7 @@ export const verifyEvidence = async (jobId: string): Promise<VerificationResult>
 /**
  * Get seal status for a job without performing verification
  */
-export const getSealStatus = async (jobId: string): Promise<{
-  isSealed: boolean;
-  sealedAt?: string;
-  sealedBy?: string;
-  evidenceHash?: string;
-  signature?: string;
-  algorithm?: string;
-}> => {
+export const getSealStatus = async (jobId: string): Promise<SealStatus> => {
   if (shouldUseMockSealing()) {
     const seal = mockSeals.get(jobId);
 
