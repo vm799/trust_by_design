@@ -1,29 +1,48 @@
 # DATABASE_BLUEPRINT
 
-This document serves as the comprehensive database schema blueprint for the Job Proof MLP. It is inferred directly from `PROJECT_SPEC_V3.md` and designed for the Supabase SQL AI Editor.
+This document serves as the comprehensive database schema blueprint for the Job Proof MLP. It is aligned with the existing **Supabase Schema**, enforces **Multi-tenancy (Workspaces)**, and defines the missing **RLS Policies**.
 
 ## Section A: Table Definitions (SQL-like Syntax)
 
 ### 1. **users**
-Stores user profiles linked to Supabase Auth. Segments users by role (Manager, Contractor, Client) to drive RLS.
+Existing table in `public` schema, synced with `auth.users`.
 
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  workspace_id UUID NOT NULL, -- Critical for Tenant Isolation
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
-  role TEXT NOT NULL CHECK (role IN ('manager', 'contractor', 'client')),
+  role TEXT NOT NULL CHECK (role IN ('manager', 'technician', 'client')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-### 2. **clients**
-Represents the customers (homeowners/businesses) issuing the jobs.
+### 2. **technicians**
+Profiles for field staff. Renamed from `contractors` to match existing codebase.
+
+```sql
+CREATE TABLE technicians (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id UUID NOT NULL, -- Tenant Scoped
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- specific user linkage
+  name TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  specialty TEXT,
+  status TEXT DEFAULT 'available', -- available, on_job, offline
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 3. **clients**
+Represents the customers.
 
 ```sql
 CREATE TABLE clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id UUID NOT NULL, -- Tenant Scoped
   name TEXT NOT NULL,
   email TEXT,
   phone TEXT,
@@ -32,123 +51,139 @@ CREATE TABLE clients (
 );
 ```
 
-### 3. **contractors**
-Profiles for the field technicians. Can be linked to a user account for login or managed as resources.
-
-```sql
-CREATE TABLE contractors (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- specific user linkage
-  name TEXT NOT NULL,
-  phone TEXT,
-  email TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
 ### 4. **jobs**
-The central entity for the application. Tracks the lifecycle of a request from dispatch to sealing.
+The central entity. Includes existing location/status fields and strict workspace scoping.
 
 ```sql
 CREATE TABLE jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  contractor_id UUID REFERENCES contractors(id) ON DELETE SET NULL,
+  workspace_id UUID NOT NULL, -- Tenant Scoped
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  technician_id UUID REFERENCES technicians(id) ON DELETE SET NULL,
   
-  -- Job Details
+  -- Core Fields
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'completed', 'sealed')),
+  status TEXT NOT NULL DEFAULT 'open',
   
-  -- Offline-First / Sync Fields
-  local_id TEXT, -- Generated on device
-  sync_status TEXT DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'conflict')),
+  -- Location (Dual Signal)
+  address TEXT,
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
+  w3w TEXT,
   
-  -- Cryptographic Sealing (Server-Side Source of Truth)
-  seal_signature TEXT, -- RSA-2048 signature
-  seal_public_key_id TEXT, -- Reference to the key used for sealing
-  sealed_at TIMESTAMPTZ,
+  -- Offline/Sync
+  sync_status TEXT DEFAULT 'pending', 
   
   -- Timestamps
   scheduled_at TIMESTAMPTZ,
   started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
+  
+  -- Sealing Linkage (One-to-One mostly, but kept separate for security)
+  sealed_at TIMESTAMPTZ,
+  
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-### 5. **proof_photos**
-Immutable evidence captured by technicians. Must enable integrity verification.
+### 5. **photos**
+Use `photos` (not `proof_photos`).
 
 ```sql
-CREATE TABLE proof_photos (
+CREATE TABLE photos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  workspace_id UUID NOT NULL, -- Tenant Scoped (Denormalized for RLS performance)
   
-  -- Asset storage
-  storage_path TEXT NOT NULL, -- Path in Supabase Storage
+  url TEXT NOT NULL,
+  type TEXT NOT NULL, -- Before, During, After, Evidence
   
-  -- Metadata (Source of Truth for verification)
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  accuracy DOUBLE PRECISION, -- GPS accuracy radius
-  captured_at TIMESTAMPTZ, -- Client-side timestamp
-  
-  -- Offline-First
-  local_id TEXT,
-  
-  -- Integrity
-  immutable_hash TEXT NOT NULL, -- SHA-256 hash of photo + metadata
+  -- Verification
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
+  timestamp TIMESTAMPTZ,
+  verified BOOLEAN DEFAULT false,
   
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-### 6. **invoices**
-generated billing documents for completed jobs, requiring client signature.
+### 6. **evidence_seals**
+Immutable record of the cryptographic seal.
 
 ```sql
-CREATE TABLE invoices (
+CREATE TABLE evidence_seals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  workspace_id UUID NOT NULL,
   
-  amount NUMERIC(10, 2) NOT NULL,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid')),
+  evidence_hash TEXT NOT NULL,
+  signature TEXT NOT NULL,
+  algorithm TEXT NOT NULL,
+  sealed_at TIMESTAMPTZ DEFAULT NOW(),
+  sealed_by_user_id UUID,
   
-  -- Client Interaction
-  client_signature TEXT, -- SVG path or Base64 signature data
-  signed_at TIMESTAMPTZ,
-  
+  evidence_json JSONB NOT NULL -- Snapshot of data at time of seal
+);
+```
+
+### 7. **job_access_tokens**
+Magic link tokens for simplified technician access.
+
+```sql
+CREATE TABLE job_access_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
 ## Section B: Table Relationships (Foreign Keys)
 
-| Source Table | Source Column | Target Table | Target Column | Relationship Type |
+| Source Table | Source Column | Target Table | Target Column | Type |
 | :--- | :--- | :--- | :--- | :--- |
-| `contractors` | `user_id` | `users` | `id` | One-to-One (Optional) |
+| `technicians` | `user_id` | `users` | `id` | One-to-One (Optional) |
 | `jobs` | `client_id` | `clients` | `id` | One-to-Many |
-| `jobs` | `contractor_id` | `contractors` | `id` | One-to-Many |
-| `proof_photos` | `job_id` | `jobs` | `id` | One-to-Many |
-| `invoices` | `job_id` | `jobs` | `id` | One-to-One |
+| `jobs` | `technician_id` | `technicians` | `id` | One-to-Many |
+| `photos` | `job_id` | `jobs` | `id` | One-to-Many |
+| `evidence_seals` | `job_id` | `jobs` | `id` | One-to-One |
 
 ## Section C: Row-Level Security (RLS) Policy Requirements
 
-| Persona | Table | Policy Requirement (Who can do what) |
-| :--- | :--- | :--- |
-| **Contractor** | `jobs` | **SELECT:** jobs where `contractor_id` matches their profile.<br>**UPDATE:** Only `status`, `started_at`, `completed_at`, `sync_status`. |
-| **Contractor** | `proof_photos` | **INSERT:** Allow if linked to a job assigned to them.<br>**SELECT:** Allow if linked to a job assigned to them. |
-| **Client** | `invoices` | **SELECT:** Invoices linked to jobs they requested (via `client_id`).<br>**UPDATE:** `client_signature`, `signed_at` (only if currently null). |
-| **Manager** | **All Users** | **FULL ACCESS**: SELECT/INSERT/UPDATE/DELETE on all tables. |
-| **Manager** | **All Data** | **FULL ACCESS**: SELECT/INSERT/UPDATE/DELETE on all tables. |
+**Critical Implementation Note:**
+Current `auth.uid()` maps to `public.users.id`.
+`workspace_id` is NOT in the JWT default claims.
+**Strategy:** We will use a Helper Function or a nested Select for policies.
+*Recommended:* Function `auth.workspace_id()` for cleaner SQL.
+
+#### Helper Function
+```sql
+CREATE OR REPLACE FUNCTION auth.workspace_id() RETURNS UUID AS $$
+  SELECT workspace_id FROM public.users WHERE id = auth.uid()
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+```
+
+#### Policies
+
+| Persona | Table | Policy Name | Definition (Pseudo-SQL) |
+| :--- | :--- | :--- | :--- |
+| **Manager** | `jobs` | `manager_read_all` | `auth.workspace_id() = workspace_id` |
+| **Manager** | `jobs` | `manager_write_all` | `auth.workspace_id() = workspace_id` |
+| **Technician** | `jobs` | `tech_read_own` | `auth.uid() = (select user_id from technicians where id = jobs.technician_id)` |
+| **Technician** | `jobs` | `tech_update_status` | `(Using separate Update policy on specific cols if possible, else check ID match)` |
+| **Public** | `jobs` | `magic_link_access` | `id = (select job_id from job_access_tokens where token = current_setting('app.current_token'))` (Advanced) <br> OR <br> Use Helper Function `verify_job_token(token)` |
+| **Client** | `jobs` | `client_read_own` | `auth.email() = (select email from clients where id = jobs.client_id)` (If Client Auth exists) |
 
 ## Section D: Offline-First Sync Fields
 
 | Table | Field Name | Data Type | Purpose |
 | :--- | :--- | :--- | :--- |
-| `jobs` | `local_id` | `text` | Temporary UUID generated on mobile device to identify record before server sync. |
-| `jobs` | `sync_status` | `text` | Tracks sync state (`pending`, `synced`, `conflict`) to manage background processes. |
-| `proof_photos` | `local_id` | `text` | Temporary UUID for linking photos to `local_id` jobs before full sync. |
-| `proof_photos` | `immutable_hash`| `text` | Client-generated cryptographic hash of the photo blob + metadata. Used to verify integrity post-sync. |
+| `jobs` | `onboarding_steps` | `jsonb` | (Existing) Tracks local state. |
+| `jobs` | `sync_status` | `text` | 'pending', 'synced', 'conflict'. |
+| `photos` | `url` | `text` | Stores `media_idx_...` reference key when local, replaced by URL on sync. |
+| `photos` | `is_indexeddb_ref` | `boolean` | Flag to indicate image blob is in IndexedDB. |
