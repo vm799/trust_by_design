@@ -24,7 +24,7 @@ describe('lib/db - Database Operations', () => {
         workspaceId: 'workspace-123',
       };
 
-      const result = await createJob(jobData);
+      const result = await createJob(jobData, 'workspace-123');
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('id');
@@ -40,7 +40,7 @@ describe('lib/db - Database Operations', () => {
         // Missing workspace_id
       };
 
-      const result = await createJob(jobData);
+      const result = await createJob(jobData, '');
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -52,7 +52,7 @@ describe('lib/db - Database Operations', () => {
         workspaceId: 'workspace-123',
       };
 
-      const result = await createJob(jobData);
+      const result = await createJob(jobData, 'workspace-123');
 
       expect(result.success).toBe(true);
       expect(result.data?.syncStatus).toBe('synced');

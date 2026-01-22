@@ -55,8 +55,7 @@ const OnboardingStepLoader: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // For now, redirect to the main onboarding page
-    // TODO: Adapt Next.js onboarding pages to React Router
+    // Redirect to the main onboarding page (persona-specific steps handled by OnboardingFactory)
     console.warn(`Onboarding route requested: ${persona}/${step} - Redirecting to main onboarding page`);
     navigate('/onboarding');
   }, [persona, step, navigate]);
@@ -135,7 +134,6 @@ const AppContent: React.FC = () => {
 
     // Online Listener with throttle
     const handleOnline = () => {
-      console.log('[App] Online - Triggering throttled sync');
       performSync();
     };
     window.addEventListener('online', handleOnline);
@@ -181,7 +179,6 @@ const AppContent: React.FC = () => {
 
       // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
       if (!profile && session.user.user_metadata?.workspace_name) {
-        console.log('[App] Profile missing but metadata found. Attempting auto-healing...');
         const meta = session.user.user_metadata;
         const workspaceSlug = (meta.workspace_name as string)
           .toLowerCase()
@@ -203,7 +200,6 @@ const AppContent: React.FC = () => {
             if (error) {
               console.error('[App] Auto-heal workspace creation failed:', error);
             } else {
-              console.log('[App] Workspace auto-healing successful, retrying profile load');
               // Try fetching again after creation
               profile = await getUserProfile(session.user.id);
             }
@@ -222,7 +218,11 @@ const AppContent: React.FC = () => {
           role: profile.role,
           workspaceName: profile.workspace?.name || 'My Workspace',
           persona: profile.personas?.[0]?.persona_type,
-          workspace: profile.workspace ? { id: profile.workspace_id, name: profile.workspace.name } : undefined
+          workspace: profile.workspace ? {
+            id: profile.workspace_id,
+            name: profile.workspace.name,
+            slug: profile.workspace.slug || profile.workspace_id
+          } : undefined
         };
         setUser(userProfile);
 

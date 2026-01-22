@@ -84,7 +84,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               Syncing Changes
             </h3>
             <p className="text-xs text-slate-300 font-medium">
-              {syncStatus.pending} {syncStatus.pending === 1 ? 'item' : 'items'} pending sync...
+              {syncStatus?.pending || 0} {syncStatus?.pending === 1 ? 'item' : 'items'} pending sync...
             </p>
           </div>
         </div>
@@ -101,7 +101,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               Sync Issues Detected
             </h3>
             <p className="text-xs text-slate-300 font-medium">
-              {syncStatus.failed} {syncStatus.failed === 1 ? 'item' : 'items'} failed to sync. Check your connection.
+              {syncStatus?.failed || 0} {syncStatus?.failed === 1 ? 'item' : 'items'} failed to sync. Check your connection.
             </p>
           </div>
         </div>

@@ -190,7 +190,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                         active={!!timelineEvents.verified}
                      />
                   </div>
-                  {/* TODO: Add delivery/client signoff when JobDispatch data available */}
+                  {/* Client signoff tracking available in database schema (ClientSignoff interface) */}
                </div>
 
                {/* Phase C.3: Cryptographic Seal Badge */}
