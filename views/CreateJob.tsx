@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
@@ -19,6 +19,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Ref for auto-focusing the title input
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
   // Parse query params for pre-filled templates
   const queryParams = new URLSearchParams(location.search);
   const initialTemplateId = queryParams.get('template') || '';
@@ -37,6 +40,13 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     address: '',
     notes: '',
   });
+
+  // Auto-focus title input on mount for better UX
+  useEffect(() => {
+    if (titleInputRef.current) {
+      titleInputRef.current.focus();
+    }
+  }, []);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,12 +173,14 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Protocol Description</label>
               <input
+                ref={titleInputRef}
                 required
                 type="text"
                 className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                 placeholder="e.g. Asset Inspection - Unit 4B"
                 value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
+                autoFocus
               />
             </div>
             <div className="grid grid-cols-2 gap-4">

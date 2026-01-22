@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
@@ -14,16 +14,24 @@ interface ContractorDashboardProps {
 const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, showOnboarding, onCloseOnboarding }) => {
     const navigate = useNavigate();
 
-    // Filter jobs for this contractor
-    // Logic: Match techId if available, otherwise match name (fallback)
-    const myJobs = jobs.filter(job => {
-        if (!user) return false;
-        // Fallback: Match by name or email
-        return job.technician === user.name || job.technician === user.email;
-    });
+    // PERFORMANCE OPTIMIZATION: Memoize job filtering to prevent recalculation on every render
+    const myJobs = useMemo(() => {
+        // Filter jobs for this contractor
+        // Logic: Match techId if available, otherwise match name (fallback)
+        return jobs.filter(job => {
+            if (!user) return false;
+            // Fallback: Match by name or email
+            return job.technician === user.name || job.technician === user.email;
+        });
+    }, [jobs, user]);
 
-    const activeJobs = myJobs.filter(j => j.status !== 'Submitted');
-    const completedJobs = myJobs.filter(j => j.status === 'Submitted');
+    const activeJobs = useMemo(() => myJobs.filter(j => j.status !== 'Submitted'), [myJobs]);
+    const completedJobs = useMemo(() => myJobs.filter(j => j.status === 'Submitted'), [myJobs]);
+
+    // PERFORMANCE OPTIMIZATION: Memoize navigation handler to prevent JobCard re-renders
+    const handleNavigateToJob = useCallback((jobId: string) => {
+        navigate(`/contractor/job/${jobId}`);
+    }, [navigate]);
 
     return (
         <Layout user={user} isAdmin={false}>
@@ -61,7 +69,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                 ) : (
                     <div className="space-y-4" id="job-list-container">
                         {activeJobs.map(job => (
-                            <JobCard key={job.id} job={job} onClick={() => navigate(`/contractor/job/${job.id}`)} />
+                            <JobCard key={job.id} job={job} onNavigate={handleNavigateToJob} />
                         ))}
 
                         {completedJobs.length > 0 && (
@@ -72,7 +80,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                                     <div className="h-px bg-white/10 flex-1"></div>
                                 </div>
                                 {completedJobs.map(job => (
-                                    <JobCard key={job.id} job={job} onClick={() => navigate(`/contractor/job/${job.id}`)} completed />
+                                    <JobCard key={job.id} job={job} onNavigate={handleNavigateToJob} completed />
                                 ))}
                             </>
                         )}
@@ -83,42 +91,51 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
     );
 };
 
-const JobCard = React.memo(({ job, onClick, completed = false }: { job: Job; onClick: () => void; completed?: boolean }) => (
-    <button
-        onClick={onClick}
-        className={`w-full text-left group relative overflow-hidden transition-all duration-300 ${completed ? 'bg-slate-900/50 border border-white/5 opacity-70 hover:opacity-100' : 'bg-slate-900 border border-white/10 shadow-2xl hover:border-primary/50 hover:shadow-primary/10'
-            } rounded-[2rem] p-6`}
-    >
-        <div className="flex justify-between items-start mb-4">
-            <div className="space-y-1">
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
-                    }`}>
-                    {completed ? 'Sealed Proof' : 'Active Protocol'}
-                </span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors">
-                    {job.title}
-                </h3>
-            </div>
-            {!completed && (
-                <div className="bg-white/5 p-2 rounded-full group-hover:bg-primary group-hover:text-white transition-all">
-                    <span className="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            )}
-        </div>
+// PERFORMANCE OPTIMIZATION: JobCard wrapped in React.memo to prevent unnecessary re-renders
+const JobCard = React.memo(({ job, onNavigate, completed = false }: { job: Job; onNavigate: (jobId: string) => void; completed?: boolean }) => {
+    // PERFORMANCE OPTIMIZATION: Memoize click handler with job ID
+    const handleClick = useCallback(() => {
+        onNavigate(job.id);
+    }, [onNavigate, job.id]);
 
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
-                <p className="text-xs font-bold text-slate-300 uppercase">{job.client}</p>
+    return (
+        <button
+            onClick={handleClick}
+            className={`w-full text-left group relative overflow-hidden transition-all duration-300 ${completed ? 'bg-slate-900/50 border border-white/5 opacity-70 hover:opacity-100' : 'bg-slate-900 border border-white/10 shadow-2xl hover:border-primary/50 hover:shadow-primary/10'
+                } rounded-[2rem] p-6`}
+        >
+            <div className="flex justify-between items-start mb-4">
+                <div className="space-y-1">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
+                        }`}>
+                        {completed ? 'Sealed Proof' : 'Active Protocol'}
+                    </span>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors">
+                        {job.title}
+                    </h3>
+                </div>
+                {!completed && (
+                    <div className="bg-white/5 p-2 rounded-full group-hover:bg-primary group-hover:text-white transition-all">
+                        <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                    </div>
+                )}
             </div>
-            <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
-                <p className="text-xs font-bold text-slate-300 uppercase truncate">{job.address}</p>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
+                    <p className="text-xs font-bold text-slate-300 uppercase">{job.client}</p>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
+                    <p className="text-xs font-bold text-slate-300 uppercase truncate">{job.address}</p>
+                </div>
             </div>
-        </div>
-    </button>
-));
+        </button>
+    );
+});
 
 JobCard.displayName = 'ContractorJobCard';
 
-export default ContractorDashboard;
+// PERFORMANCE OPTIMIZATION: Wrap main component in React.memo
+export default React.memo(ContractorDashboard);

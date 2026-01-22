@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
-import { validateMagicLink, getJobByToken, updateJob } from '../lib/db';
+import { validateMagicLink, getJobByToken, updateJob, getJob } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
@@ -13,6 +13,8 @@ import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../l
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { token, jobId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const jobIdFromUrl = searchParams.get('jobId');
 
   // Token-based access (Phase C.2)
   const [job, setJob] = useState<Job | undefined>(undefined);
@@ -28,44 +30,91 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       try {
         let loadedJob: Job | undefined;
 
-        // 1. Try Local DB (Dexie) first
-        if (jobId) {
-          const local = await getJobLocal(jobId);
-          if (local) loadedJob = local as Job;
-        }
+        // Priority: jobId from URL > token validation > local cache
+        if (jobIdFromUrl && token) {
+          // New flow: Deep-linking with jobId parameter
+          console.log(`[TechnicianPortal] Loading job via deep-link: jobId=${jobIdFromUrl}, token=${token}`);
 
-        // 2. If not local, try Token/Network
-        if (!loadedJob && token) {
-          const result = await getJobByToken(token);
-          if (result.success && result.data) {
-            loadedJob = result.data;
-            // Cache to Local DB immediately
-            // @ts-ignore - LocalJob needs number lastUpdated
-            await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
-          } else {
-            // Token validation failed - check if it's actually a job ID (fallback for offline/legacy URLs)
-            if (token.startsWith('JP-')) {
-              console.log('Token looks like a job ID, trying direct lookup...');
-              // Try local DB first
-              const local = await getJobLocal(token);
-              if (local) {
-                loadedJob = local as Job;
-              } else {
-                // Try props/legacy
-                loadedJob = jobs.find(j => j.id === token);
+          // 1. Try Local DB (Dexie) first
+          const local = await getJobLocal(jobIdFromUrl);
+          if (local) {
+            loadedJob = local as Job;
+            console.log('[TechnicianPortal] Job loaded from local cache');
+          }
+
+          // 2. Validate token to get workspace_id
+          if (!loadedJob) {
+            const validation = await validateMagicLink(token);
+            if (validation.success && validation.data) {
+              const { job_id, workspace_id } = validation.data;
+
+              // Verify jobId from URL matches the token's job_id
+              if (job_id !== jobIdFromUrl) {
+                setTokenError('Token does not match the requested job');
+                setIsLoadingJob(false);
+                return;
               }
 
-              if (loadedJob) {
-                await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+              // Load job by ID from database
+              if (workspace_id) {
+                const result = await getJob(jobIdFromUrl, workspace_id);
+                if (result.success && result.data) {
+                  loadedJob = result.data;
+                  // Cache to Local DB
+                  // @ts-ignore - LocalJob needs number lastUpdated
+                  await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+                  console.log('[TechnicianPortal] Job loaded from database via deep-link');
+                } else {
+                  setTokenError(result.error || 'Job not found');
+                }
+              }
+            } else {
+              setTokenError(validation.error || 'Invalid or expired link');
+            }
+          }
+        } else if (token) {
+          // Legacy flow: Token-only routing
+          console.log(`[TechnicianPortal] Loading job via token-only flow: token=${token}`);
+
+          // 1. Try Local DB (Dexie) first
+          if (jobId) {
+            const local = await getJobLocal(jobId);
+            if (local) loadedJob = local as Job;
+          }
+
+          // 2. If not local, try Token/Network
+          if (!loadedJob) {
+            const result = await getJobByToken(token);
+            if (result.success && result.data) {
+              loadedJob = result.data;
+              // Cache to Local DB immediately
+              // @ts-ignore - LocalJob needs number lastUpdated
+              await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+            } else {
+              // Token validation failed - check if it's actually a job ID (fallback for offline/legacy URLs)
+              if (token.startsWith('JP-')) {
+                console.log('Token looks like a job ID, trying direct lookup...');
+                // Try local DB first
+                const local = await getJobLocal(token);
+                if (local) {
+                  loadedJob = local as Job;
+                } else {
+                  // Try props/legacy
+                  loadedJob = jobs.find(j => j.id === token);
+                }
+
+                if (loadedJob) {
+                  await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+                } else {
+                  setTokenError(result.error as string || 'Invalid or expired link');
+                }
               } else {
                 setTokenError(result.error as string || 'Invalid or expired link');
               }
-            } else {
-              setTokenError(result.error as string || 'Invalid or expired link');
             }
           }
-        } else if (!loadedJob && jobId) {
-          // Fallback to props/legacy
+        } else if (jobId) {
+          // Fallback to props/legacy (no token)
           loadedJob = jobs.find(j => j.id === jobId);
           if (loadedJob) {
             await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
@@ -87,7 +136,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     };
 
     loadJob();
-  }, [token, jobId, jobs]);
+  }, [token, jobId, jobIdFromUrl, jobs]);
 
   // Immutable State Protection: Block access if job is already submitted or sealed
   useEffect(() => {
@@ -319,7 +368,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         setCoords({ lat, lng });
         setW3w(w3wAddress);
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: w3wAddress, lat, lng, gps_accuracy: accuracy });
+        writeLocalDraft({ w3w: w3wAddress, lat, lng });
       },
       (error) => {
         console.error('Geolocation error:', error);
@@ -375,6 +424,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     }
   };
 
+  const calculatePhotoHash = async (dataUrl: string): Promise<string> => {
+    // Convert base64 to ArrayBuffer
+    const base64Data = dataUrl.split(',')[1];
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Calculate SHA-256 hash
+    const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !job) return;
@@ -386,10 +450,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         const photoId = Math.random().toString(36).substr(2, 9);
         const mediaKey = `media_${photoId}`;
 
-        // 1. Store full Base64 in Dexie (Local DB)
+        // 1. Calculate SHA-256 hash of photo data
+        const photoHash = await calculatePhotoHash(dataUrl);
+
+        // 2. Store full Base64 in Dexie (Local DB)
         await saveMediaLocal(mediaKey, job.id, dataUrl);
 
-        // 2. Create Photo Object (Lightweight)
+        // 3. Create Photo Object (Lightweight)
         const newPhoto: Photo = {
           id: photoId,
           url: mediaKey, // Key reference
@@ -400,19 +467,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
           w3w: w3w || undefined,
           lat: coords.lat,
           lng: coords.lng,
-          isIndexedDBRef: true
+          isIndexedDBRef: true,
+          photo_hash: photoHash,
+          photo_hash_algorithm: 'SHA-256'
         };
 
         const nextPhotos = [...photos, newPhoto];
         setPhotos(nextPhotos);
 
-        // 3. Cache for display
+        // 4. Cache for display
         setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
 
-        // 4. Update Job with new photo list
+        // 5. Update Job with new photo list
         writeLocalDraft({ photos: nextPhotos });
 
-        // 5. Queue Background Upload
+        // 6. Queue Background Upload
         // We rely on the Sync Engine to read the blob from Dexie using the ID
         await queueAction('UPLOAD_PHOTO', { id: mediaKey, jobId: job.id });
 

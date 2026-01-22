@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
 import OnboardingChecklist, { OnboardingStep } from '../components/OnboardingChecklist';
@@ -24,76 +24,83 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], technicians = [], user, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
-  const activeJobs = jobs.filter(j => j.status !== 'Submitted');
-  const sealedJobs = jobs.filter(j => j.status === 'Submitted');
-  const syncIssues = jobs.filter(j => j.syncStatus === 'failed').length;
-  const failedJobs = jobs.filter(j => j.syncStatus === 'failed');
-  const pendingSignatures = activeJobs.filter(j => !j.signature).length;
 
-  // ATTENTION REQUIRED: Critical job exceptions
-  const jobsAwaitingSeal = activeJobs.filter(j => !j.signature && !j.sealedAt);
-  const jobsMissingEvidence = activeJobs.filter(j => j.photos.length === 0);
-  const jobsIncompleteChecklist = activeJobs.filter(j => {
-    const requiredChecks = j.safetyChecklist.filter(c => c.required);
-    const completedRequired = requiredChecks.filter(c => c.checked);
-    return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
-  });
+  // PERFORMANCE OPTIMIZATION: Memoize job filtering to prevent recalculation on every render
+  const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
+  const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted'), [jobs]);
+  const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const syncIssues = useMemo(() => failedJobs.length, [failedJobs]);
+  const pendingSignatures = useMemo(() => activeJobs.filter(j => !j.signature).length, [activeJobs]);
 
-  const attentionItems = [
-    ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
-    ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
-    ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
-    ...jobsIncompleteChecklist.map(j => ({ job: j, reason: 'incomplete_checklist', label: 'Incomplete Safety', icon: 'shield', color: 'warning' as const })),
-  ];
+  // PERFORMANCE OPTIMIZATION: Memoize attention items calculation
+  const uniqueAttentionJobs = useMemo(() => {
+    // ATTENTION REQUIRED: Critical job exceptions
+    const jobsAwaitingSeal = activeJobs.filter(j => !j.signature && !j.sealedAt);
+    const jobsMissingEvidence = activeJobs.filter(j => j.photos.length === 0);
+    const jobsIncompleteChecklist = activeJobs.filter(j => {
+      const requiredChecks = j.safetyChecklist.filter(c => c.required);
+      const completedRequired = requiredChecks.filter(c => c.checked);
+      return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
+    });
 
-  // Remove duplicates (a job can have multiple issues)
-  const uniqueAttentionJobs = Array.from(
-    new Map(attentionItems.map(item => [item.job.id, item])).values()
-  );
+    const attentionItems = [
+      ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
+      ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
+      ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
+      ...jobsIncompleteChecklist.map(j => ({ job: j, reason: 'incomplete_checklist', label: 'Incomplete Safety', icon: 'shield', color: 'warning' as const })),
+    ];
 
-  // WORKFORCE STATUS: Technician availability and current assignments
-  const technicianStatus = technicians.map(tech => {
-    const activeTechJobs = activeJobs.filter(j => j.techId === tech.id);
-    const hasActiveJobs = activeTechJobs.length > 0;
+    // Remove duplicates (a job can have multiple issues)
+    return Array.from(
+      new Map(attentionItems.map(item => [item.job.id, item])).values()
+    );
+  }, [activeJobs, failedJobs]);
 
-    // Determine operational status
-    let operationalStatus: 'in_field' | 'available' | 'off_duty' | 'idle';
-    let statusLabel: string;
-    let statusColor: string;
-    let statusIcon: string;
+  // PERFORMANCE OPTIMIZATION: Memoize technician status calculation
+  const technicianStatus = useMemo(() => {
+    return technicians.map(tech => {
+      const activeTechJobs = activeJobs.filter(j => j.techId === tech.id);
+      const hasActiveJobs = activeTechJobs.length > 0;
 
-    if (hasActiveJobs) {
-      operationalStatus = 'in_field';
-      statusLabel = 'In Field';
-      statusColor = 'text-primary';
-      statusIcon = 'location_on';
-    } else if (tech.status === 'Available' || tech.status === 'Authorised') {
-      operationalStatus = 'available';
-      statusLabel = 'Available';
-      statusColor = 'text-success';
-      statusIcon = 'check_circle';
-    } else if (tech.status === 'Off Duty') {
-      operationalStatus = 'off_duty';
-      statusLabel = 'Off Duty';
-      statusColor = 'text-slate-400';
-      statusIcon = 'schedule';
-    } else {
-      operationalStatus = 'idle';
-      statusLabel = 'Idle';
-      statusColor = 'text-slate-400';
-      statusIcon = 'schedule';
-    }
+      // Determine operational status
+      let operationalStatus: 'in_field' | 'available' | 'off_duty' | 'idle';
+      let statusLabel: string;
+      let statusColor: string;
+      let statusIcon: string;
 
-    return {
-      tech,
-      activeTechJobs,
-      hasActiveJobs,
-      operationalStatus,
-      statusLabel,
-      statusColor,
-      statusIcon,
-    };
-  });
+      if (hasActiveJobs) {
+        operationalStatus = 'in_field';
+        statusLabel = 'In Field';
+        statusColor = 'text-primary';
+        statusIcon = 'location_on';
+      } else if (tech.status === 'Available' || tech.status === 'Authorised') {
+        operationalStatus = 'available';
+        statusLabel = 'Available';
+        statusColor = 'text-success';
+        statusIcon = 'check_circle';
+      } else if (tech.status === 'Off Duty') {
+        operationalStatus = 'off_duty';
+        statusLabel = 'Off Duty';
+        statusColor = 'text-slate-400';
+        statusIcon = 'schedule';
+      } else {
+        operationalStatus = 'idle';
+        statusLabel = 'Idle';
+        statusColor = 'text-slate-400';
+        statusIcon = 'schedule';
+      }
+
+      return {
+        tech,
+        activeTechJobs,
+        hasActiveJobs,
+        operationalStatus,
+        statusLabel,
+        statusColor,
+        statusIcon,
+      };
+    });
+  }, [technicians, activeJobs]);
 
   // State for IndexedDB photo previews
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
@@ -117,7 +124,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     }
   }, [session]);
 
-  // Load photo thumbnails from IndexedDB
+  // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
+  // Uses memoized job IDs to prevent unnecessary reloads
+  const jobPhotoIds = useMemo(() => {
+    return jobs.flatMap(job =>
+      job.photos.slice(0, 3).map(p => p.id)
+    ).join(',');
+  }, [jobs]);
+
   useEffect(() => {
     const loadPhotoThumbnails = async () => {
       const loadedUrls = new Map<string, string>();
@@ -143,10 +157,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     if (jobs.length > 0) {
       loadPhotoThumbnails();
     }
-  }, [jobs]);
+  }, [jobPhotoIds, jobs]);
 
-  // Manual sync handler
-  const handleManualSync = async () => {
+  // PERFORMANCE OPTIMIZATION: Memoize event handlers to prevent child re-renders
+  const handleManualSync = useCallback(async () => {
     if (isSyncing) return;
 
     setIsSyncing(true);
@@ -165,10 +179,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [isSyncing]);
 
   // Retry single job sync
-  const handleJobRetry = async (job: Job, event: React.MouseEvent) => {
+  const handleJobRetry = useCallback(async (job: Job, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent navigation to job report
 
     try {
@@ -186,10 +200,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
       setSyncMessage(`Error syncing job "${job.title}".`);
       setTimeout(() => setSyncMessage(null), 5000);
     }
-  };
+  }, []);
 
-  // Onboarding checklist steps
-  const onboardingSteps: OnboardingStep[] = [
+  // PERFORMANCE OPTIMIZATION: Memoize onboarding steps to prevent recalculation
+  const onboardingSteps: OnboardingStep[] = useMemo(() => [
     {
       id: 'verify-email',
       label: 'Verify Email',
@@ -221,12 +235,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
       icon: 'send',
       path: '/admin/create'
     }
-  ];
+  ], [isEmailVerified, clients.length, technicians.length, jobs.length]);
 
-  const handleDismissChecklist = () => {
+  const handleDismissChecklist = useCallback(() => {
     localStorage.setItem('jobproof_checklist_dismissed', 'true');
     setChecklistDismissed(true);
-  };
+  }, []);
 
   return (
     <Layout user={user}>
@@ -772,4 +786,5 @@ const CompactMetricCard = ({ label, value, icon, color = "text-white" }: any) =>
   </div>
 );
 
-export default AdminDashboard;
+// PERFORMANCE OPTIMIZATION: Wrap in React.memo to prevent unnecessary re-renders
+export default React.memo(AdminDashboard);

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
@@ -8,6 +8,18 @@ import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
 import { pushQueue, pullJobs } from './lib/offline/sync';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+
+// PERFORMANCE: Custom debounce utility to batch localStorage writes
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -330,8 +342,10 @@ const AppContent: React.FC = () => {
     }
   };
 
-  // Persist localStorage data
-  useEffect(() => {
+  // PERFORMANCE OPTIMIZATION: Debounced localStorage persistence
+  // Previously: 8 writes per state change (causing performance issues)
+  // Now: Batched writes with 1000ms debounce, immediate save on unmount
+  const saveToLocalStorage = useCallback(() => {
     localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
     localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
     localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
@@ -344,6 +358,19 @@ const AppContent: React.FC = () => {
       localStorage.setItem('jobproof_user_v2', JSON.stringify(user));
     }
   }, [jobs, invoices, clients, technicians, templates, user, hasSeenOnboarding]);
+
+  // Create debounced version once
+  const debouncedSave = useRef(debounce(saveToLocalStorage, 1000)).current;
+
+  // Trigger debounced save on state changes
+  useEffect(() => {
+    debouncedSave();
+
+    // CRITICAL: Save immediately on unmount to ensure final state is persisted
+    return () => {
+      saveToLocalStorage();
+    };
+  }, [jobs, invoices, clients, technicians, templates, user, hasSeenOnboarding, debouncedSave, saveToLocalStorage]);
 
   // Start background sync worker on app mount
   useEffect(() => {

@@ -2,6 +2,7 @@ import { db, queueAction, LocalJob, OfflineAction } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Job, Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
+import { sealEvidence } from '../sealing';
 
 /**
  * PULL: Fetch latest jobs from Supabase and update local DB
@@ -235,6 +236,55 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
         // Clean up IndexedDB media record
         await db.media.delete(payload.id);
         console.log(`[Sync] Cleaned up IndexedDB media: ${payload.id}`);
+
+        // AUTO-SEAL: Check if all photos are synced and job should be sealed
+        const updatedJob = await db.jobs.get(payload.jobId);
+        if (updatedJob) {
+            const allPhotosUploaded = updatedJob.photos.every(
+                (p: Photo) => p.syncStatus === 'synced' && !p.isIndexedDBRef
+            );
+
+            console.log(`[Auto-Seal] Job ${payload.jobId} status check:`, {
+                allPhotosUploaded,
+                jobStatus: updatedJob.status,
+                isSealed: !!updatedJob.sealedAt,
+                photoCount: updatedJob.photos.length
+            });
+
+            if (allPhotosUploaded &&
+                updatedJob.status === 'Submitted' &&
+                !updatedJob.sealedAt) {
+                console.log(`[Auto-Seal] All photos synced for submitted job - auto-sealing job ${payload.jobId}...`);
+
+                try {
+                    const sealResult = await sealEvidence(payload.jobId);
+
+                    if (sealResult.success) {
+                        console.log(`[Auto-Seal] Successfully sealed job ${payload.jobId}`, {
+                            sealedAt: sealResult.sealedAt,
+                            evidenceHash: sealResult.evidenceHash
+                        });
+
+                        // Update local job with seal data
+                        await db.jobs.update(payload.jobId, {
+                            sealedAt: sealResult.sealedAt,
+                            evidenceHash: sealResult.evidenceHash,
+                            status: 'Archived' as const,
+                            isSealed: true,
+                            lastUpdated: Date.now()
+                        });
+
+                        console.log(`[Auto-Seal] Job ${payload.jobId} updated locally with seal data`);
+                    } else {
+                        console.error(`[Auto-Seal] Failed to seal job ${payload.jobId}:`, sealResult.error);
+                        // Don't fail the photo upload if sealing fails - can retry later
+                    }
+                } catch (error) {
+                    console.error(`[Auto-Seal] Exception during auto-seal for job ${payload.jobId}:`, error);
+                    // Don't fail the photo upload if sealing fails - can retry later
+                }
+            }
+        }
 
         return true;
     } catch (e) {
