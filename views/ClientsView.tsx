@@ -67,7 +67,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Organization</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Organisation</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Service Asset</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Action</th>
                 </tr>

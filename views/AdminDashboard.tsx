@@ -225,7 +225,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     {
       id: 'add-tech',
       label: 'Add Technician',
-      description: 'Authorize a field agent',
+      description: 'Authorise a field agent',
       status: technicians.length > 0 ? 'completed' : (clients.length > 0 ? 'in_progress' : 'locked'),
       icon: 'engineering',
       path: '/admin/technicians'

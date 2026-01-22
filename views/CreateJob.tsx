@@ -257,7 +257,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   Cancel Manifest
                 </button>
               </div>
-              <p className="text-center text-[8px] text-slate-400 font-black uppercase tracking-[0.4em]">Protocol Authorization Alpha-2</p>
+              <p className="text-center text-[8px] text-slate-400 font-black uppercase tracking-[0.4em]">Protocol Authorisation Alpha-2</p>
             </div>
           </div>
         )}

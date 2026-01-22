@@ -49,6 +49,7 @@ const JobCreationWizard = lazy(() => import('./views/JobCreationWizard'));
 const InvoicesView = lazy(() => import('./views/InvoicesView'));
 const RoadmapView = lazy(() => import('./views/RoadmapView'));
 const TrackLookup = lazy(() => import('./views/TrackLookup'));
+const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -474,8 +475,8 @@ const AppContent: React.FC = () => {
       return <Navigate to="/client" replace />;
     }
 
-    // Default to Admin Dashboard for Managers/Owners
-    return <Navigate to="/admin" replace />;
+    // Default to Manager Intent Selector for Managers/Owners (Intent-First UX)
+    return <Navigate to="/manager/intent" replace />;
   };
 
   return (
@@ -499,6 +500,20 @@ const AppContent: React.FC = () => {
         <Route path="/onboarding/:persona/:step" element={isAuthenticated ? <OnboardingStepLoader /> : <Navigate to="/auth" replace />} />
         {/* Manager Onboarding Wizard - UX Spec Compliant */}
         <Route path="/manager-onboarding" element={isAuthenticated ? <ManagerOnboarding /> : <Navigate to="/auth" replace />} />
+        {/* Manager Intent Selector - Intent-First Entry Point */}
+        <Route path="/manager/intent" element={
+          isAuthenticated ? (
+            user ? (
+              <ManagerIntentSelector
+                user={user}
+                pendingJobsCount={jobs.filter(j => j.status !== 'Submitted').length}
+                unseenNotificationsCount={0}
+              />
+            ) : (
+              <Navigate to="/auth/setup" replace />
+            )
+          ) : <Navigate to="/auth" replace />
+        } />
 
         {/* Legacy Auth Routes (Fallback) */}
         <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />

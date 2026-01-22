@@ -51,7 +51,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: getAuthRedirectUrl('/#/admin'),
+        emailRedirectTo: getAuthRedirectUrl('/'), // Let router decide destination
         data: {
           full_name: data.fullName,
           workspace_name: data.workspaceName
@@ -167,7 +167,7 @@ export const signInWithMagicLink = async (email: string): Promise<AuthResult> =>
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getAuthRedirectUrl('/#/admin'),
+      emailRedirectTo: getAuthRedirectUrl('/'), // Let router decide destination
     },
   });
 

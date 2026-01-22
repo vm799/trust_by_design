@@ -40,7 +40,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
         <div className="flex justify-between items-end">
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Workforce</h2>
-            <p className="text-slate-400">Authorized field operators linked to the verification hub.</p>
+            <p className="text-slate-400">Authorised field operators linked to the verification hub.</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}

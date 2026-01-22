@@ -63,10 +63,11 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     `,
   };
 
+  // Touch targets: minimum 48px height for accessibility (WCAG 2.1 AAA)
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-xs rounded-lg',
-    md: 'px-4 py-2.5 text-sm rounded-xl',
-    lg: 'px-6 py-3 text-base rounded-xl',
+    sm: 'px-4 py-2.5 text-xs rounded-lg min-h-[44px]', // 44px for compact contexts
+    md: 'px-5 py-3 text-sm rounded-xl min-h-[48px]',   // 48px standard
+    lg: 'px-6 py-4 text-base rounded-xl min-h-[52px]', // 52px for primary CTAs
   };
 
   const iconSizes = {
