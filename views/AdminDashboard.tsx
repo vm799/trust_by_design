@@ -29,6 +29,71 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const failedJobs = jobs.filter(j => j.syncStatus === 'failed');
   const pendingSignatures = activeJobs.filter(j => !j.signature).length;
 
+  // ATTENTION REQUIRED: Critical job exceptions
+  const jobsAwaitingSeal = activeJobs.filter(j => !j.signature && !j.sealedAt);
+  const jobsMissingEvidence = activeJobs.filter(j => j.photos.length === 0);
+  const jobsIncompleteChecklist = activeJobs.filter(j => {
+    const requiredChecks = j.safetyChecklist.filter(c => c.required);
+    const completedRequired = requiredChecks.filter(c => c.checked);
+    return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
+  });
+
+  const attentionItems = [
+    ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
+    ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
+    ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
+    ...jobsIncompleteChecklist.map(j => ({ job: j, reason: 'incomplete_checklist', label: 'Incomplete Safety', icon: 'shield', color: 'warning' as const })),
+  ];
+
+  // Remove duplicates (a job can have multiple issues)
+  const uniqueAttentionJobs = Array.from(
+    new Map(attentionItems.map(item => [item.job.id, item])).values()
+  );
+
+  // WORKFORCE STATUS: Technician availability and current assignments
+  const technicianStatus = technicians.map(tech => {
+    const activeTechJobs = activeJobs.filter(j => j.techId === tech.id);
+    const hasActiveJobs = activeTechJobs.length > 0;
+
+    // Determine operational status
+    let operationalStatus: 'in_field' | 'available' | 'off_duty' | 'idle';
+    let statusLabel: string;
+    let statusColor: string;
+    let statusIcon: string;
+
+    if (hasActiveJobs) {
+      operationalStatus = 'in_field';
+      statusLabel = 'In Field';
+      statusColor = 'text-primary';
+      statusIcon = 'location_on';
+    } else if (tech.status === 'Available' || tech.status === 'Authorised') {
+      operationalStatus = 'available';
+      statusLabel = 'Available';
+      statusColor = 'text-success';
+      statusIcon = 'check_circle';
+    } else if (tech.status === 'Off Duty') {
+      operationalStatus = 'off_duty';
+      statusLabel = 'Off Duty';
+      statusColor = 'text-slate-400';
+      statusIcon = 'schedule';
+    } else {
+      operationalStatus = 'idle';
+      statusLabel = 'Idle';
+      statusColor = 'text-slate-400';
+      statusIcon = 'schedule';
+    }
+
+    return {
+      tech,
+      activeTechJobs,
+      hasActiveJobs,
+      operationalStatus,
+      statusLabel,
+      statusColor,
+      statusIcon,
+    };
+  });
+
   // State for IndexedDB photo previews
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
 
@@ -264,6 +329,61 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
+            {/* ATTENTION REQUIRED PANEL */}
+            {uniqueAttentionJobs.length > 0 && (
+              <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-warning text-xl font-black">priority_high</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Attention Required</h3>
+                    <p className="text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} need{uniqueAttentionJobs.length === 1 ? 's' : ''} immediate action</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {uniqueAttentionJobs.map(item => (
+                    <button
+                      key={item.job.id}
+                      onClick={() => navigate(`/admin/report/${item.job.id}`)}
+                      className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3"
+                    >
+                      <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        item.color === 'danger' ? 'bg-danger/20' : 'bg-warning/20'
+                      }`}>
+                        <span className={`material-symbols-outlined text-sm ${
+                          item.color === 'danger' ? 'text-danger' : 'text-warning'
+                        }`}>
+                          {item.icon}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-black text-white text-sm uppercase tracking-tight truncate group-hover:text-warning transition-colors">
+                            {item.job.title}
+                          </h4>
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 ${
+                            item.color === 'danger'
+                              ? 'bg-danger/20 text-danger border border-danger/30'
+                              : 'bg-warning/20 text-warning border border-warning/30'
+                          }`}>
+                            {item.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono">{item.job.client} • {item.job.technician}</p>
+                      </div>
+
+                      <span className="material-symbols-outlined text-slate-300 text-sm group-hover:text-warning transition-colors flex-shrink-0">
+                        arrow_forward
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Compact Metrics - Mobile First */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <CompactMetricCard
@@ -291,6 +411,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 color={syncIssues > 0 ? "text-danger" : "text-slate-300"}
               />
             </div>
+
+            {/* WORKFORCE STATUS PANEL */}
+            {technicians.length > 0 && (
+              <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-lg font-black">groups</span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Workforce Status</h3>
+                      <p className="text-[10px] text-slate-400">{technicians.length} technician{technicians.length > 1 ? 's' : ''} registered</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <span className="text-success">●</span>
+                    <span className="text-slate-400 font-medium">{technicianStatus.filter(t => t.operationalStatus === 'available').length} Available</span>
+                    <span className="text-primary ml-2">●</span>
+                    <span className="text-slate-400 font-medium">{technicianStatus.filter(t => t.operationalStatus === 'in_field').length} In Field</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {technicianStatus.map(({ tech, activeTechJobs, statusLabel, statusColor, statusIcon }) => (
+                    <div
+                      key={tech.id}
+                      className="bg-slate-950/50 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="size-10 rounded-lg bg-slate-800 flex items-center justify-center text-sm font-black text-slate-300 uppercase flex-shrink-0">
+                          {tech.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-black text-white truncate">{tech.name}</h4>
+                          <div className={`flex items-center gap-1.5 mt-1 ${statusColor}`}>
+                            <span className="material-symbols-outlined text-xs font-black">{statusIcon}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider">{statusLabel}</span>
+                          </div>
+                          {activeTechJobs.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <p className="text-[9px] text-slate-400 font-medium mb-1">Active Jobs:</p>
+                              {activeTechJobs.slice(0, 2).map(job => (
+                                <button
+                                  key={job.id}
+                                  onClick={() => navigate(`/admin/report/${job.id}`)}
+                                  className="block w-full text-left text-[10px] text-slate-300 hover:text-primary transition-colors truncate"
+                                >
+                                  • {job.title}
+                                </button>
+                              ))}
+                              {activeTechJobs.length > 2 && (
+                                <p className="text-[9px] text-slate-500 mt-1">+{activeTechJobs.length - 2} more</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile Job Cards (shown on mobile, hidden on desktop) */}
             {jobs.length > 0 && (
@@ -340,7 +522,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     </td>
                   </tr>
                 ) : (
-                  jobs.map(job => (
+                  jobs.map(job => {
+                    const lifecycle = getJobLifecycle(job);
+                    return (
                     <tr key={job.id} className="hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
                         <div className="font-bold text-white tracking-tighter uppercase group-hover:text-primary transition-colors">{job.title}</div>
@@ -353,10 +537,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' :
-                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-300 border-slate-700'
-                          }`}>
-                          {job.status}
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
+                          <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
+                          {lifecycle.label}
                         </div>
                       </td>
                       <td className="px-8 py-6">
@@ -402,7 +585,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -413,6 +597,81 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   </div>
     </Layout>
   );
+};
+
+/**
+ * Job Lifecycle Stage Determination
+ * Maps job state to operational spine: DISPATCH → CAPTURE → SEAL → VERIFY → DELIVER
+ */
+type LifecycleStage = 'dispatched' | 'capture' | 'awaiting_seal' | 'sealed' | 'verified';
+
+interface LifecycleInfo {
+  stage: LifecycleStage;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+const getJobLifecycle = (job: Job): LifecycleInfo => {
+  // VERIFIED: Submitted status (already sealed and verified)
+  if (job.status === 'Submitted') {
+    return {
+      stage: 'verified',
+      label: 'Verified',
+      icon: 'verified',
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
+    };
+  }
+
+  // SEALED: Has sealedAt timestamp
+  if (job.sealedAt || job.isSealed) {
+    return {
+      stage: 'sealed',
+      label: 'Sealed',
+      icon: 'lock',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // AWAITING SEAL: Has evidence and signature, ready to seal
+  if (job.photos.length > 0 && job.signature) {
+    return {
+      stage: 'awaiting_seal',
+      label: 'Awaiting Seal',
+      icon: 'signature',
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/20',
+    };
+  }
+
+  // CAPTURE: In progress with photos
+  if (job.status === 'In Progress' && job.photos.length > 0) {
+    return {
+      stage: 'capture',
+      label: 'Capturing',
+      icon: 'photo_camera',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // DISPATCHED: Created but not yet started or no evidence
+  return {
+    stage: 'dispatched',
+    label: 'Dispatched',
+    icon: 'send',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-800',
+    borderColor: 'border-slate-700',
+  };
 };
 
 /**

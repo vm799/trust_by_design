@@ -9,6 +9,81 @@ interface JobCardProps {
 }
 
 /**
+ * Job Lifecycle Stage Determination
+ * Maps job state to operational spine: DISPATCH → CAPTURE → SEAL → VERIFY → DELIVER
+ */
+type LifecycleStage = 'dispatched' | 'capture' | 'awaiting_seal' | 'sealed' | 'verified';
+
+interface LifecycleInfo {
+  stage: LifecycleStage;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+const getJobLifecycle = (job: Job): LifecycleInfo => {
+  // VERIFIED: Submitted status (already sealed and verified)
+  if (job.status === 'Submitted') {
+    return {
+      stage: 'verified',
+      label: 'Verified',
+      icon: 'verified',
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
+    };
+  }
+
+  // SEALED: Has sealedAt timestamp
+  if (job.sealedAt || job.isSealed) {
+    return {
+      stage: 'sealed',
+      label: 'Sealed',
+      icon: 'lock',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // AWAITING SEAL: Has evidence and signature, ready to seal
+  if (job.photos.length > 0 && job.signature) {
+    return {
+      stage: 'awaiting_seal',
+      label: 'Awaiting Seal',
+      icon: 'signature',
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/20',
+    };
+  }
+
+  // CAPTURE: In progress with photos
+  if (job.status === 'In Progress' && job.photos.length > 0) {
+    return {
+      stage: 'capture',
+      label: 'Capturing',
+      icon: 'photo_camera',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // DISPATCHED: Created but not yet started or no evidence
+  return {
+    stage: 'dispatched',
+    label: 'Dispatched',
+    icon: 'send',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-800',
+    borderColor: 'border-slate-700',
+  };
+};
+
+/**
  * Mobile-Optimized Job Card
  * Replaces table view on small screens
  *
@@ -21,12 +96,14 @@ interface JobCardProps {
  * - Memoized to prevent unnecessary re-renders
  */
 const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, photoDataUrls }) => {
+  const lifecycle = getJobLifecycle(job);
+
   return (
     <button
       onClick={onClick}
       className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 hover:border-primary/30 transition-all text-left group"
     >
-      {/* Header: Title + Status */}
+      {/* Header: Title + Lifecycle Status */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
           <h3 className="font-black text-white tracking-tighter uppercase group-hover:text-primary transition-colors truncate">
@@ -39,14 +116,10 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
 
         <div className={`
           inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-tight flex-shrink-0
-          ${job.status === 'Submitted'
-            ? 'bg-success/10 text-success border-success/20'
-            : job.status === 'In Progress'
-              ? 'bg-primary/10 text-primary border-primary/20'
-              : 'bg-slate-800 text-slate-300 border-slate-700'
-          }
+          ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}
         `}>
-          {job.status}
+          <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
+          {lifecycle.label}
         </div>
       </div>
 
