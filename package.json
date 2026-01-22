@@ -20,6 +20,12 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit",
+    "audit:security": "tsx scripts/run-security-audit.ts",
+    "audit:security:verbose": "tsx scripts/run-security-audit.ts --verbose",
+    "audit:performance": "tsx scripts/audit-performance.ts",
+    "audit:monitor": "tsx scripts/monitor-production.ts",
+    "audit:all": "npm run audit:security && npm run audit:performance",
+    "verify:deployment": "tsx scripts/verify-deployment.ts",
     "prepare": "husky install || true"
   },
   "dependencies": {
