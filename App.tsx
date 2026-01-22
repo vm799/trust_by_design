@@ -3,12 +3,11 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
-import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
+import { signOut, getUserProfile } from './lib/auth';
 import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
-import type { Session } from '@supabase/supabase-js';
 import { pushQueue, pullJobs } from './lib/offline/sync';
-import { AuthProvider } from './lib/AuthContext';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -70,14 +69,10 @@ const LoadingFallback: React.FC = () => (
   </div>
 );
 
-const App: React.FC = () => {
-  // ... (existing state)
-
-
-  // Initial load logic (existing)
-  // Phase C.1: Real authentication with Supabase sessions
-  const [session, setSession] = useState<Session | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+// Inner component that consumes AuthContext
+const AppContent: React.FC = () => {
+  // CRITICAL FIX: Consume AuthContext instead of managing own auth state
+  const { session, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
     return localStorage.getItem('jobproof_onboarding_v4') === 'true';
@@ -156,94 +151,89 @@ const App: React.FC = () => {
     ];
   });
 
-  // Phase C.1: Listen to auth state changes
+  // CRITICAL FIX: Load user profile when AuthContext session changes
+  // This replaces the duplicate onAuthStateChange listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChange(async (newSession) => {
-      setSession(newSession);
-
-      if (newSession?.user) {
-        // Load user profile from database
-        let profile = await getUserProfile(newSession.user.id);
-
-        // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
-        if (!profile && newSession.user.user_metadata?.workspace_name) {
-          console.log('[App] Profile missing but metadata found. Attempting auto-healing...');
-          const meta = newSession.user.user_metadata;
-          const workspaceSlug = (meta.workspace_name as string)
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
-          const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 5)}`;
-
-          const supabase = getSupabase();
-          if (supabase) {
-            try {
-              const { error } = await supabase.rpc('create_workspace_with_owner', {
-                p_user_id: newSession.user.id,
-                p_email: newSession.user.email,
-                p_workspace_name: meta.workspace_name,
-                p_workspace_slug: finalSlug,
-                p_full_name: meta.full_name || null
-              });
-              if (error) {
-                console.error('[App] Auto-heal workspace creation failed:', error);
-              } else {
-                console.log('[App] Workspace auto-healing successful, retrying profile load');
-                // Try fetching again after creation
-                profile = await getUserProfile(newSession.user.id);
-              }
-            } catch (err) {
-              console.error('[App] Auto-heal exception:', err);
-            }
-          }
-        }
-
-        if (profile) {
-          // Map database profile to UserProfile type
-          const userProfile: UserProfile = {
-            name: profile.full_name || profile.email,
-            email: profile.email,
-            avatar: profile.avatar_url,
-            role: profile.role,
-            workspaceName: profile.workspace?.name || 'My Workspace',
-            persona: profile.personas?.[0]?.persona_type,
-            workspace: profile.workspace ? { id: profile.workspace_id, name: profile.workspace.name } : undefined
-          };
-          setUser(userProfile);
-
-          // Phase C.2: Load workspace data from Supabase
-          loadWorkspaceData(profile.workspace_id);
-        } else {
-          // CRITICAL FIX: Profile load failed - handle gracefully
-          // Option 1: If we have a session but no profile, redirect to setup
-          console.warn('[App] Session exists but profile missing. Redirecting to setup.');
-
-          // Create minimal user profile from session data for routing
-          const fallbackProfile: UserProfile = {
-            name: newSession.user.email || 'User',
-            email: newSession.user.email || '',
-            role: 'member',
-            workspaceName: 'Setup Required',
-            persona: undefined
-          };
-          setUser(fallbackProfile);
-
-          // Don't load workspace data if profile is missing
-        }
-      } else {
+    const loadProfile = async () => {
+      if (!session?.user) {
         setUser(null);
         // Clear user data from localStorage on logout
         localStorage.removeItem('jobproof_user_v2');
         // Fallback to localStorage if not authenticated
         loadLocalStorageData();
+        return;
       }
 
-      setAuthLoading(false);
-    });
+      // Load user profile from database
+      let profile = await getUserProfile(session.user.id);
 
-    return () => unsubscribe();
-  }, []);
+      // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
+      if (!profile && session.user.user_metadata?.workspace_name) {
+        console.log('[App] Profile missing but metadata found. Attempting auto-healing...');
+        const meta = session.user.user_metadata;
+        const workspaceSlug = (meta.workspace_name as string)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '');
+        const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 5)}`;
+
+        const supabase = getSupabase();
+        if (supabase) {
+          try {
+            const { error } = await supabase.rpc('create_workspace_with_owner', {
+              p_user_id: session.user.id,
+              p_email: session.user.email,
+              p_workspace_name: meta.workspace_name,
+              p_workspace_slug: finalSlug,
+              p_full_name: meta.full_name || null
+            });
+            if (error) {
+              console.error('[App] Auto-heal workspace creation failed:', error);
+            } else {
+              console.log('[App] Workspace auto-healing successful, retrying profile load');
+              // Try fetching again after creation
+              profile = await getUserProfile(session.user.id);
+            }
+          } catch (err) {
+            console.error('[App] Auto-heal exception:', err);
+          }
+        }
+      }
+
+      if (profile) {
+        // Map database profile to UserProfile type
+        const userProfile: UserProfile = {
+          name: profile.full_name || profile.email,
+          email: profile.email,
+          avatar: profile.avatar_url,
+          role: profile.role,
+          workspaceName: profile.workspace?.name || 'My Workspace',
+          persona: profile.personas?.[0]?.persona_type,
+          workspace: profile.workspace ? { id: profile.workspace_id, name: profile.workspace.name } : undefined
+        };
+        setUser(userProfile);
+
+        // Phase C.2: Load workspace data from Supabase
+        loadWorkspaceData(profile.workspace_id);
+      } else {
+        // CRITICAL FIX: Profile load failed - handle gracefully
+        console.warn('[App] Session exists but profile missing. Redirecting to setup.');
+
+        // Create minimal user profile from session data for routing
+        const fallbackProfile: UserProfile = {
+          name: session.user.email || 'User',
+          email: session.user.email || '',
+          role: 'member',
+          workspaceName: 'Setup Required',
+          persona: undefined
+        };
+        setUser(fallbackProfile);
+      }
+    };
+
+    loadProfile();
+  }, [session]);
 
   // Phase C.2: Load data from Supabase
   const loadWorkspaceData = async (workspaceId: string) => {
@@ -380,17 +370,14 @@ const App: React.FC = () => {
 
   // Phase C.1: Real authentication callbacks
   const handleLogin = () => {
-    // Session is set automatically by onAuthStateChange
+    // Session is managed by AuthContext
     // This callback just exists for compatibility with AuthView
   };
 
   const handleLogout = async () => {
     await signOut();
-    // onAuthStateChange will automatically clear session and user
+    // AuthContext will automatically update session state
   };
-
-  // Computed: User is authenticated if session exists
-  const isAuthenticated = !!session;
 
   // Show loading spinner while checking auth state
   if (authLoading) {
@@ -554,6 +541,16 @@ const App: React.FC = () => {
           </Routes>
         </Suspense>
       </HashRouter>
+  );
+};
+
+// Main App component that provides AuthContext
+const App: React.FC = () => {
+  // We need to lift user state out to pass workspaceId to AuthProvider
+  // But we'll use a temporary approach: pass null initially, AuthContext manages its own
+  return (
+    <AuthProvider workspaceId={null}>
+      <AppContent />
     </AuthProvider>
   );
 };
