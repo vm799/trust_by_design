@@ -70,8 +70,8 @@ export default function EndOfDayReportPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+            <div className="size-12 rounded-xl bg-safety-orange/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 summarize
               </span>
             </div>
@@ -85,12 +85,12 @@ export default function EndOfDayReportPage() {
 
           {/* Progress Bar */}
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 transition-all" style={{ width: '100%' }} />
+            <div className="h-full bg-safety-orange transition-all" style={{ width: '100%' }} />
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 mb-8">
+        <div className="bg-safety-orange/10 border border-safety-orange/20 rounded-2xl p-6 mb-8">
           <h2 className="text-white font-black text-lg mb-2">
             Wrap Up Your Day
           </h2>
@@ -135,7 +135,7 @@ export default function EndOfDayReportPage() {
               w-full p-6 rounded-xl border-2 transition-all font-bold uppercase text-sm
               ${sealCompleted
                 ? 'bg-success/10 border-success text-success cursor-default'
-                : 'bg-slate-800 border-orange-500 text-orange-500 hover:bg-orange-500/10'
+                : 'bg-slate-800 border-safety-orange text-safety-orange hover:bg-safety-orange/10'
               }
             `}
           >
@@ -178,7 +178,7 @@ export default function EndOfDayReportPage() {
 ⚠️ Blocked: Roofing job delayed due to weather
 
 📋 Tomorrow: Safety training for new crew, material delivery scheduled for 8 AM"
-            className="w-full bg-slate-800 border border-slate-600 rounded-xl p-4 text-white text-sm min-h-[200px] focus:ring-2 focus:ring-orange-500 outline-none resize-none font-mono"
+            className="w-full bg-slate-800 border border-slate-600 rounded-xl p-4 text-white text-sm min-h-[200px] focus:ring-2 focus:ring-safety-orange outline-none resize-none font-mono"
           />
 
           <div className="flex items-center justify-between mt-3">
@@ -199,7 +199,7 @@ export default function EndOfDayReportPage() {
           <h3 className="text-white font-black text-lg mb-4">📊 Daily Metrics</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 schedule
               </span>
               <div>
@@ -209,7 +209,7 @@ export default function EndOfDayReportPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 groups
               </span>
               <div>
@@ -219,7 +219,7 @@ export default function EndOfDayReportPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 inventory
               </span>
               <div>
@@ -229,7 +229,7 @@ export default function EndOfDayReportPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 health_and_safety
               </span>
               <div>

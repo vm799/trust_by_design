@@ -17,8 +17,9 @@ interface OfflineIndicatorProps {
  * - Sync queue visibility
  * - Auto-hide when online and synced
  * - Mobile-optimized
+ * - Memoized to prevent unnecessary re-renders
  */
-const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ syncStatus, className = '' }) => {
+const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStatus, className = '' }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -107,6 +108,8 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ syncStatus, classNa
       )}
     </div>
   );
-};
+});
+
+OfflineIndicator.displayName = 'OfflineIndicator';
 
 export default OfflineIndicator;

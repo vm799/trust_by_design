@@ -123,24 +123,24 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
           <div className="bg-slate-950/50 rounded-2xl p-5 space-y-3 border border-white/5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Evidence Hash</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Evidence Hash</p>
                 <p className="text-xs font-mono text-white break-all">
                   {formatHash(sealStatus?.evidenceHash, 24)}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Algorithm</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Algorithm</p>
                 <p className="text-xs font-bold text-white uppercase">{sealStatus?.algorithm || 'SHA256-HMAC'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-white/5">
               <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Sealed At</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Sealed At</p>
                 <p className="text-xs font-bold text-white">{formatSealDate(sealStatus?.sealedAt)}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Sealed By</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Sealed By</p>
                 <p className="text-xs font-bold text-white">{sealStatus?.sealedBy || 'Unknown'}</p>
               </div>
             </div>
@@ -148,7 +148,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
             {/* Verification Details */}
             {verification?.verification && (
               <div className="pt-3 border-t border-white/5">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Verification Status</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">Verification Status</p>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <span className={`material-symbols-outlined text-sm ${
@@ -195,7 +195,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
 
           {/* Legal Disclaimer */}
           {verification?.isValid && (
-            <p className="text-[9px] text-slate-500 italic">
+            <p className="text-[9px] text-slate-300 italic">
               This seal provides cryptographic proof of evidence integrity at the time of sealing.
               It does not guarantee legal admissibility in court.
             </p>

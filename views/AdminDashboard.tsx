@@ -288,7 +288,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 label="Sync Issues"
                 value={syncIssues.toString()}
                 icon="sync_problem"
-                color={syncIssues > 0 ? "text-danger" : "text-slate-500"}
+                color={syncIssues > 0 ? "text-danger" : "text-slate-300"}
               />
             </div>
 
@@ -317,11 +317,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             <table className="w-full text-left">
               <thead className="bg-slate-950/50">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Service Details</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Field Agent</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Evidence</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Hub Sync</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Service Details</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Field Agent</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Evidence</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Hub Sync</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -344,7 +344,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     <tr key={job.id} className="hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
                         <div className="font-bold text-white tracking-tighter uppercase group-hover:text-primary transition-colors">{job.title}</div>
-                        <div className="text-[10px] text-slate-500 font-mono mt-1">{job.id} • {job.client}</div>
+                        <div className="text-[10px] text-slate-300 font-mono mt-1">{job.id} • {job.client}</div>
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
@@ -354,7 +354,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                       </td>
                       <td className="px-8 py-6">
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' :
-                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-500 border-slate-700'
+                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-300 border-slate-700'
                           }`}>
                           {job.status}
                         </div>
@@ -369,14 +369,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                                   <img src={displayUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="Evidence" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-[10px] text-slate-600">image</span>
+                                    <span className="material-symbols-outlined text-[10px] text-slate-400">image</span>
                                   </div>
                                 )}
                               </div>
                             );
                           })}
                           {job.photos.length > 3 && (
-                            <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">
+                            <div className="size-6 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-300">
                               +{job.photos.length - 3}
                             </div>
                           )}
@@ -422,7 +422,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
 const CompactMetricCard = ({ label, value, icon, color = "text-white" }: any) => (
   <div className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 transition-all">
     <span className={`material-symbols-outlined absolute -top-1 -right-1 text-5xl opacity-5 transition-transform group-hover:scale-110 font-black ${color.replace('text-', 'text-')}`}>{icon}</span>
-    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 relative z-10">{label}</p>
+    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 relative z-10">{label}</p>
     <p className={`text-2xl sm:text-3xl font-black tracking-tighter ${color} relative z-10`}>{value}</p>
   </div>
 );

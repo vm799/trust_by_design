@@ -155,7 +155,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
 
         <button
           onClick={handleSkip}
-          className="absolute top-6 right-8 text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
+          className="absolute top-6 right-8 text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
         >
           Skip Tour
         </button>
@@ -185,7 +185,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
           <button
             onClick={next}
             disabled={!step.isCompleted}
-            className="flex-[2] py-4 bg-primary hover:bg-primary-hover disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm uppercase transition-all shadow-xl shadow-primary/20 tracking-widest"
+            className="flex-[2] py-4 bg-primary hover:bg-primary-hover disabled:bg-slate-800 disabled:text-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm uppercase transition-all shadow-xl shadow-primary/20 tracking-widest"
           >
             {!step.isCompleted ? "Complete Action" : (currentStep === steps.length - 1 ? "Initialise Hub" : "Continue")}
           </button>

@@ -14,7 +14,7 @@ const LegalDisclaimer: React.FC = () => {
     <div className="bg-slate-50 border-l-4 border-slate-300 p-6 rounded-lg shadow-sm">
       <div className="flex items-start gap-3">
         <span className="material-symbols-outlined text-slate-400 text-lg">info</span>
-        <div className="text-[10px] text-slate-600 space-y-2">
+        <div className="text-[10px] text-slate-400 space-y-2">
           <p className="font-bold uppercase tracking-wide text-slate-700">Legal Notice</p>
           <p className="leading-relaxed">
             This is a technical evidence capture tool, not legal authority.

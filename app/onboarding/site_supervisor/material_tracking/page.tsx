@@ -69,8 +69,8 @@ export default function MaterialTrackingPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+            <div className="size-12 rounded-xl bg-safety-orange/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 inventory_2
               </span>
             </div>
@@ -84,12 +84,12 @@ export default function MaterialTrackingPage() {
 
           {/* Progress Bar */}
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 transition-all" style={{ width: '50%' }} />
+            <div className="h-full bg-safety-orange transition-all" style={{ width: '50%' }} />
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 mb-8">
+        <div className="bg-safety-orange/10 border border-safety-orange/20 rounded-2xl p-6 mb-8">
           <h2 className="text-white font-black text-lg mb-2">
             Log Material Deliveries
           </h2>
@@ -136,7 +136,7 @@ export default function MaterialTrackingPage() {
                         placeholder="e.g., 100m, 50 units"
                         value={delivery.quantity}
                         onChange={(e) => handleLogDelivery(delivery.id, e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                        className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-safety-orange outline-none"
                       />
                     </div>
 
@@ -144,7 +144,7 @@ export default function MaterialTrackingPage() {
                       <label className="text-slate-400 text-xs font-bold uppercase mb-2 block">
                         Condition
                       </label>
-                      <select className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                      <select className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-safety-orange outline-none">
                         <option>Good</option>
                         <option>Damaged</option>
                         <option>Partial delivery</option>
@@ -169,7 +169,7 @@ export default function MaterialTrackingPage() {
           <h3 className="text-white font-black text-lg mb-4">📦 Material Management Tips</h3>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 schedule
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -177,7 +177,7 @@ export default function MaterialTrackingPage() {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 photo_camera
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -185,7 +185,7 @@ export default function MaterialTrackingPage() {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 warning
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -207,7 +207,7 @@ export default function MaterialTrackingPage() {
           <button
             onClick={handleComplete}
             disabled={loading || !allLogged}
-            className="px-8 py-3 bg-orange-500 text-white rounded-xl font-bold text-sm uppercase hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3 bg-safety-orange text-white rounded-xl font-bold text-sm uppercase hover:bg-safety-orange-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? 'Saving...' : 'Continue'}
             <span className="material-symbols-outlined text-lg">arrow_forward</span>

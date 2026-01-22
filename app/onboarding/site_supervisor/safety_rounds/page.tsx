@@ -65,8 +65,8 @@ export default function SafetyRoundsPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+            <div className="size-12 rounded-xl bg-safety-orange/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 health_and_safety
               </span>
             </div>
@@ -80,7 +80,7 @@ export default function SafetyRoundsPage() {
 
           {/* Progress Bar */}
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 transition-all" style={{ width: '75%' }} />
+            <div className="h-full bg-safety-orange transition-all" style={{ width: '75%' }} />
           </div>
         </div>
 
@@ -182,7 +182,7 @@ export default function SafetyRoundsPage() {
             value={incidentNotes}
             onChange={(e) => setIncidentNotes(e.target.value)}
             placeholder="Document any hazards, near-misses, or incidents observed during your safety round..."
-            className="w-full bg-slate-800 border border-slate-600 rounded-xl p-4 text-white text-sm min-h-[120px] focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+            className="w-full bg-slate-800 border border-slate-600 rounded-xl p-4 text-white text-sm min-h-[120px] focus:ring-2 focus:ring-safety-orange outline-none resize-none"
           />
           <p className="text-slate-500 text-xs mt-2">
             All incident reports are logged and tracked for compliance
@@ -198,7 +198,7 @@ export default function SafetyRoundsPage() {
               <p className="text-slate-400 text-xs">Days accident-free</p>
             </div>
             <div className="text-center">
-              <p className="text-4xl font-black text-orange-500 mb-1">12</p>
+              <p className="text-4xl font-black text-safety-orange mb-1">12</p>
               <p className="text-slate-400 text-xs">Safety rounds completed</p>
             </div>
             <div className="text-center">
@@ -220,7 +220,7 @@ export default function SafetyRoundsPage() {
           <button
             onClick={handleComplete}
             disabled={loading || !canContinue}
-            className="px-8 py-3 bg-orange-500 text-white rounded-xl font-bold text-sm uppercase hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3 bg-safety-orange text-white rounded-xl font-bold text-sm uppercase hover:bg-safety-orange-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? 'Saving...' : 'Continue'}
             <span className="material-symbols-outlined text-lg">arrow_forward</span>

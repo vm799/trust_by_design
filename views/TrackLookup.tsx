@@ -54,7 +54,7 @@ const TrackLookup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-6 md:px-6 md:py-8">
       <div className="max-w-xl w-full space-y-8 animate-in">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -127,7 +127,7 @@ const TrackLookup: React.FC = () => {
 
         {/* Footer Links */}
         <div className="text-center space-y-3">
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-300 text-sm">
             Don't have a dispatch link?
           </p>
           <button

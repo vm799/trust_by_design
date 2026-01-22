@@ -229,7 +229,7 @@ const EmailFirstAuth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-0 -right-20 size-96 bg-blue-500/10 blur-[120px] rounded-full"></div>
@@ -246,7 +246,7 @@ const EmailFirstAuth: React.FC = () => {
               {step === 'password' && 'Welcome Back'}
               {step === 'signup' && 'Create Your Workspace'}
             </h2>
-            <p className="text-slate-500 text-sm font-medium">
+            <p className="text-slate-300 text-sm font-medium">
               {step === 'email' && "We'll find your workspace or help you create one."}
               {step === 'password' && 'Sign in to continue your work.'}
               {step === 'signup' && "Let's get you set up so you can start ASAP."}
@@ -255,15 +255,15 @@ const EmailFirstAuth: React.FC = () => {
         </div>
 
         {/* Main Form */}
-        <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+        <div className="bg-slate-900 border border-white/5 p-6 md:p-8 rounded-[2.5rem] shadow-2xl space-y-6">
           {/* Error Display */}
           {error && (
-            <div className="bg-danger/10 border border-danger/20 rounded-xl p-4">
+            <div role="alert" aria-live="assertive" className="bg-danger/10 border border-danger/20 rounded-xl p-4">
               <div className="flex items-start gap-2">
-                <span className="material-symbols-outlined text-danger text-sm mt-0.5">error</span>
+                <span className="material-symbols-outlined text-danger text-sm mt-0.5" aria-hidden="true">error</span>
                 <div className="flex-1">
                   <p className="text-danger text-xs font-bold uppercase mb-1">Error</p>
-                  <p className="text-danger text-xs font-medium leading-relaxed">{error}</p>
+                  <p id="auth-error" className="text-danger text-xs font-medium leading-relaxed">{error}</p>
                 </div>
               </div>
             </div>
@@ -273,7 +273,7 @@ const EmailFirstAuth: React.FC = () => {
           {step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Your Email *
                 </label>
                 <input
@@ -284,6 +284,9 @@ const EmailFirstAuth: React.FC = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   autoFocus
+                  aria-invalid={!!error}
+                  aria-describedby={error ? "auth-error" : undefined}
+                  id="email-input"
                 />
               </div>
 
@@ -305,7 +308,7 @@ const EmailFirstAuth: React.FC = () => {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-2 text-slate-500 font-black">Or</span>
+                  <span className="bg-slate-900 px-2 text-slate-300 font-black">Or</span>
                 </div>
               </div>
 
@@ -339,7 +342,7 @@ const EmailFirstAuth: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                     Password *
                   </label>
                   <button type="button" className="text-[10px] font-black text-primary hover:underline uppercase">
@@ -372,7 +375,7 @@ const EmailFirstAuth: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setStep('email'); setPassword(''); }}
-                className="w-full text-slate-500 text-xs font-bold hover:text-white transition-colors"
+                className="w-full text-slate-300 text-xs font-bold hover:text-white transition-colors"
               >
                 ← Use a different email
               </button>
@@ -395,7 +398,7 @@ const EmailFirstAuth: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Company/Workspace Name *
                 </label>
                 <input
@@ -410,7 +413,7 @@ const EmailFirstAuth: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Your Full Name
                 </label>
                 <input
@@ -423,7 +426,7 @@ const EmailFirstAuth: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Create Password *
                 </label>
                 <input
@@ -436,18 +439,18 @@ const EmailFirstAuth: React.FC = () => {
                 />
                 <div className="space-y-3 mt-2">
                   <div className="flex flex-wrap gap-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 15 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 15 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-300'}`}>
                       15+ Characters
                     </span>
-                    <span className="text-[10px] font-black text-slate-600 self-center">OR</span>
+                    <span className="text-[10px] font-black text-slate-400 self-center">OR</span>
                     <div className="flex gap-1.5 pt-0.5">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 8 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${password.length >= 8 ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-300'}`}>
                         8+ Chars
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[A-Z]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[A-Z]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-300'}`}>
                         CAPS
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-500'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter transition-all ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'bg-success/20 text-success' : 'bg-slate-800 text-slate-300'}`}>
                         Symbol
                       </span>
                     </div>
@@ -482,7 +485,7 @@ const EmailFirstAuth: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setStep('email'); setPassword(''); setWorkspaceName(''); setFullName(''); }}
-                className="w-full text-slate-500 text-xs font-bold hover:text-white transition-colors"
+                className="w-full text-slate-300 text-xs font-bold hover:text-white transition-colors"
               >
                 ← Use a different email
               </button>

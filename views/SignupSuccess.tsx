@@ -19,7 +19,7 @@ const SignupSuccess: React.FC = () => {
   const workspaceName = state?.workspaceName || 'your workspace';
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-success/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-0 -right-20 size-96 bg-primary/10 blur-[120px] rounded-full"></div>

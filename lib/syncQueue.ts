@@ -8,6 +8,7 @@
 import { Job, Photo, SafetyCheck } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
 import { getMedia } from '../db';
+import { showPersistentNotification } from './utils/syncUtils';
 
 interface SyncQueueItem {
   id: string;
@@ -199,6 +200,28 @@ export const retryFailedSyncs = async (): Promise<void> => {
           console.warn(`⚠️ Retry ${item.retryCount}/${MAX_RETRIES} failed for ${item.type} ${item.id}`);
         } else {
           console.error(`❌ Max retries exceeded for ${item.type} ${item.id} - giving up`);
+
+          // Store in failed queue for manual recovery
+          const failedQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
+          failedQueue.push({
+            ...item,
+            failedAt: new Date().toISOString(),
+            reason: 'Max retries exceeded'
+          });
+          localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+          // Show persistent notification to user
+          showPersistentNotification({
+            type: 'error',
+            title: 'Sync Failed',
+            message: `Job ${item.id} failed to sync after ${MAX_RETRIES} attempts. Your data is saved locally. Please check your connection or contact support.`,
+            persistent: true,
+            actionLabel: 'View Details',
+            onAction: () => {
+              console.log('User clicked view details for failed sync:', item.id);
+              // Could navigate to a failed sync details page
+            }
+          });
         }
       }
     }
@@ -273,4 +296,75 @@ export const startSyncWorker = (): void => {
     console.log('🌐 Network reconnected - retrying failed syncs...');
     retryFailedSyncs();
   });
+};
+
+/**
+ * Get failed sync queue items
+ *
+ * @returns Array of permanently failed sync items
+ */
+export const getFailedSyncQueue = (): SyncQueueItem[] => {
+  try {
+    const failedJson = localStorage.getItem('jobproof_failed_sync_queue');
+    return failedJson ? JSON.parse(failedJson) : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Retry a specific failed sync item
+ *
+ * @param itemId - The ID of the failed sync item to retry
+ * @returns Promise<boolean> - True if retry was successful
+ */
+export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
+  const failedQueue = getFailedSyncQueue();
+  const item = failedQueue.find(i => i.id === itemId);
+
+  if (!item) {
+    console.error(`Failed sync item ${itemId} not found`);
+    return false;
+  }
+
+  // Attempt sync
+  let success = false;
+  if (item.type === 'job') {
+    success = await syncJobToSupabase(item.data);
+  }
+
+  if (success) {
+    // Remove from failed queue
+    const updatedQueue = failedQueue.filter(i => i.id !== itemId);
+    localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(updatedQueue));
+
+    showPersistentNotification({
+      type: 'success',
+      title: 'Sync Recovered',
+      message: `Job ${itemId} has been successfully synced to cloud.`,
+      persistent: false
+    });
+
+    return true;
+  } else {
+    showPersistentNotification({
+      type: 'error',
+      title: 'Retry Failed',
+      message: `Failed to sync job ${itemId}. Please try again later or contact support.`,
+      persistent: false
+    });
+
+    return false;
+  }
+};
+
+/**
+ * Clear all failed sync items
+ *
+ * WARNING: This will permanently discard failed sync data.
+ * Use only after manual recovery or data migration.
+ */
+export const clearFailedSyncQueue = (): void => {
+  localStorage.removeItem('jobproof_failed_sync_queue');
+  console.log('[Sync] Failed sync queue cleared');
 };

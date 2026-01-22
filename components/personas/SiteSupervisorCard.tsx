@@ -35,8 +35,8 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       `}
     >
       {/* Icon */}
-      <div className="mb-6 size-16 rounded-2xl bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-all">
-        <span className="material-symbols-outlined text-orange-500 text-4xl">
+      <div className="mb-6 size-16 rounded-2xl bg-safety-orange/10 flex items-center justify-center group-hover:bg-safety-orange/20 transition-all">
+        <span className="material-symbols-outlined text-safety-orange text-4xl">
           engineering
         </span>
       </div>
@@ -54,25 +54,25 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       {/* Key Features */}
       <ul className="space-y-2 mb-6">
         <li className="flex items-center gap-2 text-slate-300 text-xs">
-          <span className="material-symbols-outlined text-orange-500 text-sm">check_circle</span>
+          <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Daily crew assignment
         </li>
         <li className="flex items-center gap-2 text-slate-300 text-xs">
-          <span className="material-symbols-outlined text-orange-500 text-sm">check_circle</span>
+          <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Material tracking & deliveries
         </li>
         <li className="flex items-center gap-2 text-slate-300 text-xs">
-          <span className="material-symbols-outlined text-orange-500 text-sm">check_circle</span>
+          <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Safety rounds & inspections
         </li>
         <li className="flex items-center gap-2 text-slate-300 text-xs">
-          <span className="material-symbols-outlined text-orange-500 text-sm">check_circle</span>
+          <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           End-of-day reporting
         </li>
       </ul>
 
       {/* Use Case */}
-      <div className="bg-orange-500/5 rounded-xl p-3 border border-orange-500/10">
+      <div className="bg-safety-orange/5 rounded-xl p-3 border border-safety-orange/10">
         <p className="text-orange-400 text-xs font-bold mb-1">Perfect for:</p>
         <p className="text-slate-400 text-xs">
           Site managers coordinating 5-20 technicians across multiple jobs daily

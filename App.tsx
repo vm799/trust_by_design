@@ -1,42 +1,73 @@
 
-import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './views/LandingPage';
-import AdminDashboard from './views/AdminDashboard';
-import CreateJob from './views/CreateJob';
-import ContractorDashboard from './views/ContractorDashboard';
-import TechnicianPortal from './views/TechnicianPortal';
-import JobReport from './views/JobReport';
-import Settings from './views/Settings';
-import ClientsView from './views/ClientsView';
-import TechniciansView from './views/TechniciansView';
-import TemplatesView from './views/TemplatesView';
-import AuditReport from './views/docs/AuditReport';
-import HelpCenter from './views/HelpCenter';
-import OnboardingTour from './components/OnboardingTour';
-import ClientDashboard from './views/ClientDashboard';
-import LegalPage from './views/LegalPage';
-import PricingView from './views/PricingView';
-import ProfileView from './views/ProfileView';
-import AuthView from './views/AuthView';
-import EmailFirstAuth from './views/EmailFirstAuth';
-import SignupSuccess from './views/SignupSuccess';
-import CompleteOnboarding from './views/CompleteOnboarding';
-import OAuthSetup from './views/OAuthSetup';
-import InvoicesView from './views/InvoicesView';
-import RoadmapView from './views/RoadmapView';
-import TrackLookup from './views/TrackLookup';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { onAuthStateChange, signOut, getUserProfile } from './lib/auth';
-import { OfflineBanner } from './components/OfflineBanner';
 import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
-
 import { pushQueue, pullJobs } from './lib/offline/sync';
 
-// ... (existing imports)
+// Lazy load all route components for optimal code splitting
+const LandingPage = lazy(() => import('./views/LandingPage'));
+const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
+const CreateJob = lazy(() => import('./views/CreateJob'));
+const ContractorDashboard = lazy(() => import('./views/ContractorDashboard'));
+const TechnicianPortal = lazy(() => import('./views/TechnicianPortal'));
+const JobReport = lazy(() => import('./views/JobReport'));
+const Settings = lazy(() => import('./views/Settings'));
+const ClientsView = lazy(() => import('./views/ClientsView'));
+const TechniciansView = lazy(() => import('./views/TechniciansView'));
+const TemplatesView = lazy(() => import('./views/TemplatesView'));
+const AuditReport = lazy(() => import('./views/docs/AuditReport'));
+const HelpCenter = lazy(() => import('./views/HelpCenter'));
+const OnboardingTour = lazy(() => import('./components/OnboardingTour'));
+const ClientDashboard = lazy(() => import('./views/ClientDashboard'));
+const LegalPage = lazy(() => import('./views/LegalPage'));
+const PricingView = lazy(() => import('./views/PricingView'));
+const ProfileView = lazy(() => import('./views/ProfileView'));
+const AuthView = lazy(() => import('./views/AuthView'));
+const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
+const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
+const CompleteOnboarding = lazy(() => import('./views/CompleteOnboarding'));
+const OAuthSetup = lazy(() => import('./views/OAuthSetup'));
+const InvoicesView = lazy(() => import('./views/InvoicesView'));
+const RoadmapView = lazy(() => import('./views/RoadmapView'));
+const TrackLookup = lazy(() => import('./views/TrackLookup'));
+
+// Dynamic onboarding step loader component
+// Note: Onboarding pages are currently Next.js format and need adaptation to React Router
+const OnboardingStepLoader: React.FC = () => {
+  const { persona, step } = useParams<{ persona: string; step: string }>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // For now, redirect to the main onboarding page
+    // TODO: Adapt Next.js onboarding pages to React Router
+    console.warn(`Onboarding route requested: ${persona}/${step} - Redirecting to main onboarding page`);
+    navigate('/onboarding');
+  }, [persona, step, navigate]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+      <div className="text-center space-y-4">
+        <div className="size-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+        <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading...</p>
+      </div>
+    </div>
+  );
+};
+
+// Loading fallback component
+const LoadingFallback: React.FC = () => (
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="text-center space-y-4">
+      <div className="size-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+      <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading...</p>
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
   // ... (existing state)
@@ -63,26 +94,40 @@ const App: React.FC = () => {
     return null;
   });
 
-  // Offline Sync Engine
+  // Offline Sync Engine - Optimized with throttling
   useEffect(() => {
-    // Initial Pull
-    if (user?.workspace?.id) {
-      pullJobs(user.workspace.id);
-    }
+    let lastSyncTime = 0;
+    const MIN_SYNC_INTERVAL = 60000; // Throttle: minimum 60s between syncs
 
-    // Background Sync Interval (every 30s)
-    const interval = setInterval(() => {
+    const performSync = () => {
+      const now = Date.now();
+      if (now - lastSyncTime < MIN_SYNC_INTERVAL) {
+        return; // Throttle: skip if synced too recently
+      }
+
       if (navigator.onLine && user?.workspace?.id) {
+        lastSyncTime = now;
         pushQueue();
         pullJobs(user.workspace.id);
       }
-    }, 30000);
+    };
 
-    // Online Listener
+    // Initial Pull (no throttle on mount)
+    if (user?.workspace?.id) {
+      pullJobs(user.workspace.id);
+      lastSyncTime = Date.now();
+    }
+
+    // Consolidated Background Sync Interval (every 90s, with throttle check)
+    // This replaces both the 30s interval here and 60s interval in syncQueue
+    const interval = setInterval(() => {
+      performSync();
+    }, 90000);
+
+    // Online Listener with throttle
     const handleOnline = () => {
-      console.log('[App] Online - Triggering sync');
-      pushQueue();
-      if (user?.workspace?.id) pullJobs(user.workspace.id);
+      console.log('[App] Online - Triggering throttled sync');
+      performSync();
     };
     window.addEventListener('online', handleOnline);
 
@@ -355,9 +400,10 @@ const App: React.FC = () => {
 
   return (
     <HashRouter>
-      <Routes>
-        {/* Redirect root to Landing or Dashboard based on Auth */}
-        <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          {/* Redirect root to Landing or Dashboard based on Auth */}
+          <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
         <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
@@ -370,6 +416,7 @@ const App: React.FC = () => {
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
+        <Route path="/onboarding/:persona/:step" element={isAuthenticated ? <OnboardingStepLoader /> : <Navigate to="/auth" replace />} />
 
         {/* Legacy Auth Routes (Fallback) */}
         <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
@@ -468,7 +515,8 @@ const App: React.FC = () => {
 
         {/* Fallbacks */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </HashRouter>
   );
 };

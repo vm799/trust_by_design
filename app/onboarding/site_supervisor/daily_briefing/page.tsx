@@ -68,8 +68,8 @@ export default function DailyBriefingPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+            <div className="size-12 rounded-xl bg-safety-orange/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 engineering
               </span>
             </div>
@@ -83,12 +83,12 @@ export default function DailyBriefingPage() {
 
           {/* Progress Bar */}
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 transition-all" style={{ width: '25%' }} />
+            <div className="h-full bg-safety-orange transition-all" style={{ width: '25%' }} />
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 mb-8">
+        <div className="bg-safety-orange/10 border border-safety-orange/20 rounded-2xl p-6 mb-8">
           <h2 className="text-white font-black text-lg mb-2">
             Start Your Day: Assign Crews to Jobs
           </h2>
@@ -133,7 +133,7 @@ export default function DailyBriefingPage() {
                 <select
                   value={assignedTechs[job.id] || ''}
                   onChange={(e) => handleAssignTech(job.id, e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-safety-orange outline-none"
                 >
                   <option value="">Select technician...</option>
                   {mockTechnicians.map((tech) => (
@@ -164,7 +164,7 @@ export default function DailyBriefingPage() {
           <h3 className="text-white font-black text-lg mb-4">💡 Pro Tips</h3>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 lightbulb
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -172,7 +172,7 @@ export default function DailyBriefingPage() {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 lightbulb
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -180,7 +180,7 @@ export default function DailyBriefingPage() {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-orange-500 text-sm mt-0.5">
+              <span className="material-symbols-outlined text-safety-orange text-sm mt-0.5">
                 lightbulb
               </span>
               <p className="text-slate-300 text-sm flex-1">
@@ -202,7 +202,7 @@ export default function DailyBriefingPage() {
           <button
             onClick={handleComplete}
             disabled={loading || Object.keys(assignedTechs).length < 2}
-            className="px-8 py-3 bg-orange-500 text-white rounded-xl font-bold text-sm uppercase hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3 bg-safety-orange text-white rounded-xl font-bold text-sm uppercase hover:bg-safety-orange-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? 'Saving...' : 'Continue'}
             <span className="material-symbols-outlined text-lg">arrow_forward</span>

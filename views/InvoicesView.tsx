@@ -24,11 +24,11 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
           <table className="w-full text-left">
             <thead className="bg-slate-950/50 border-b border-white/5">
               <tr>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Invoice Ref</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Client / Job</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Amount</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Action</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Invoice Ref</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Client / Job</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Amount</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Status</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-slate-300">
@@ -44,13 +44,13 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                     <td className="px-8 py-6 font-mono text-xs text-white uppercase">{inv.id}</td>
                     <td className="px-8 py-6">
                       <div className="font-bold text-white uppercase tracking-tight">{inv.clientName}</div>
-                      <div className="text-[9px] text-slate-500 uppercase tracking-widest">Job: {inv.jobId}</div>
+                      <div className="text-[9px] text-slate-300 uppercase tracking-widest">Job: {inv.jobId}</div>
                     </td>
                     <td className="px-8 py-6 font-black text-white">£{inv.amount.toFixed(2)}</td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${inv.status === 'Paid' ? 'bg-success/10 text-success border-success/20' :
                           inv.status === 'Sent' ? 'bg-primary/10 text-primary border-primary/20' :
-                            inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-500 border-slate-700'
+                            inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-300 border-slate-700'
                         }`}>
                         {inv.status}
                       </span>

@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Technician, UserProfile } from '../types';
+import { navigateToNextStep } from '../lib/onboarding';
 
 interface TechniciansViewProps {
   user: UserProfile | null;
@@ -11,6 +13,7 @@ interface TechniciansViewProps {
 }
 
 const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, onDelete }) => {
+  const navigate = useNavigate();
   const [showAdd, setShowAdd] = useState(false);
   const [newTech, setNewTech] = useState({ name: '', email: '' });
 
@@ -26,6 +29,9 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
     });
     setNewTech({ name: '', email: '' });
     setShowAdd(false);
+
+    // Trigger guided flow auto-navigation
+    navigateToNextStep('ADD_TECHNICIAN', user?.persona, navigate);
   };
 
   return (
@@ -74,9 +80,9 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
                 </div>
                 <div>
                   <h3 className="font-black text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{tech.name}</h3>
-                  <p className="text-[10px] text-slate-500 font-mono mb-2 uppercase">{tech.email}</p>
+                  <p className="text-[10px] text-slate-300 font-mono mb-2 uppercase">{tech.email}</p>
                   {tech.rating > 0 && (
-                    <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-300">
                       <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500 font-black">star</span>
                       {tech.rating} Field Rating
                     </div>

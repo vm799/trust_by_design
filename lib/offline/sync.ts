@@ -1,12 +1,28 @@
 import { db, queueAction, LocalJob, OfflineAction } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Job, Photo } from '../../types';
+import { requestCache, generateCacheKey } from '../performanceUtils';
 
 /**
  * PULL: Fetch latest jobs from Supabase and update local DB
+ * Uses request deduplication to prevent concurrent duplicate requests
  */
 export async function pullJobs(workspaceId: string) {
     if (!navigator.onLine || !isSupabaseAvailable()) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    // Deduplicate concurrent requests
+    const cacheKey = generateCacheKey('pullJobs', workspaceId);
+    return requestCache.dedupe(cacheKey, async () => {
+        return _pullJobsImpl(workspaceId);
+    }, 3000); // Cache for 3 seconds
+}
+
+/**
+ * Internal implementation of pullJobs
+ */
+async function _pullJobsImpl(workspaceId: string) {
     const supabase = getSupabase();
     if (!supabase) return;
 
@@ -60,10 +76,22 @@ export async function pullJobs(workspaceId: string) {
 
 /**
  * PUSH: Process offline queue
+ * Uses request deduplication to prevent concurrent queue processing
  */
 export async function pushQueue() {
     if (!navigator.onLine || !isSupabaseAvailable()) return;
 
+    // Deduplicate concurrent pushQueue calls
+    const cacheKey = generateCacheKey('pushQueue');
+    return requestCache.dedupe(cacheKey, async () => {
+        return _pushQueueImpl();
+    }, 2000); // Cache for 2 seconds
+}
+
+/**
+ * Internal implementation of pushQueue
+ */
+async function _pushQueueImpl() {
     const pending = await db.queue.where('synced').equals(0).toArray();
     if (pending.length === 0) return;
 
@@ -128,21 +156,18 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
     let dataUrl = payload.dataUrl;
     if (!dataUrl) {
         const record = await db.media.get(payload.id);
-        if (!record) return false; // Media lost?
+        if (!record) {
+            console.error(`[Sync] Photo data not found in IndexedDB: ${payload.id}`);
+            return false; // Media lost?
+        }
         dataUrl = record.data;
     }
 
     // Check if dataUrl is valid
-    if (!dataUrl) return false;
-
-    // Convert and Upload
-    // Reuse existing upload logic from supabase.ts or reimplement here
-    // For now, assuming successful upload logic:
-
-    // We need to implement the upload.
-    // Usually we'd use the helper `uploadPhoto` from lib/supabase
-    // But circular dependency risk.
-    // Let's implement basics here.
+    if (!dataUrl) {
+        console.error(`[Sync] Invalid dataUrl for photo: ${payload.id}`);
+        return false;
+    }
 
     try {
         const base64Data = dataUrl.split(',')[1];
@@ -150,12 +175,70 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
         const blob = await fetch(`data:${mimeType};base64,${base64Data}`).then(r => r.blob());
         const filePath = `${payload.jobId}/${payload.id}.jpg`;
 
-        const { error } = await supabase.storage
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
             .from('job-photos')
             .upload(filePath, blob, { contentType: mimeType, upsert: true });
 
-        return !error;
+        if (uploadError) {
+            console.error(`[Sync] Upload failed for photo ${payload.id}:`, uploadError);
+            return false;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('job-photos')
+            .getPublicUrl(filePath);
+
+        const publicUrl = urlData.publicUrl;
+
+        if (!publicUrl) {
+            console.error(`[Sync] Failed to get public URL for photo ${payload.id}`);
+            return false;
+        }
+
+        console.log(`[Sync] Photo ${payload.id} uploaded successfully to ${publicUrl}`);
+
+        // Update photo in job (IndexedDB)
+        const job = await db.jobs.get(payload.jobId);
+        if (job && job.photos) {
+            const updatedPhotos = job.photos.map(p =>
+                p.url === payload.id || p.id === payload.id
+                    ? { ...p, url: publicUrl, isIndexedDBRef: false, syncStatus: 'synced' as const }
+                    : p
+            );
+
+            // Update job in IndexedDB
+            await db.jobs.update(payload.jobId, {
+                photos: updatedPhotos,
+                syncStatus: 'synced' as const,
+                lastUpdated: Date.now()
+            });
+
+            console.log(`[Sync] Updated job ${payload.jobId} with public URL for photo ${payload.id}`);
+
+            // Also update in Supabase
+            const { error: updateError } = await supabase
+                .from('jobs')
+                .update({
+                    photos: updatedPhotos,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', payload.jobId);
+
+            if (updateError) {
+                console.warn(`[Sync] Failed to update job in Supabase:`, updateError);
+                // Not critical - photo is uploaded and IndexedDB is updated
+            }
+        }
+
+        // Clean up IndexedDB media record
+        await db.media.delete(payload.id);
+        console.log(`[Sync] Cleaned up IndexedDB media: ${payload.id}`);
+
+        return true;
     } catch (e) {
+        console.error(`[Sync] Exception in processUploadPhoto:`, e);
         return false;
     }
 }

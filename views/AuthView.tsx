@@ -144,7 +144,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   // Show success screen after signup
   if (signupSuccess) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
         {/* Background Orbs */}
         <div className="absolute top-0 -left-20 size-96 bg-success/20 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-0 -right-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
@@ -211,7 +211,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             </Link>
           </div>
 
-          <p className="text-slate-500 text-xs font-medium">
+          <p className="text-slate-300 text-xs font-medium">
             Didn't receive the email?{' '}
             <button className="text-primary font-black hover:underline">
               Resend verification
@@ -223,7 +223,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-0 -right-20 size-96 bg-blue-500/10 blur-[120px] rounded-full"></div>
@@ -240,7 +240,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
               {viewMode === 'reset' ? 'Reset Password' : viewMode === 'magic' ? 'Magic Link' : type === 'login' ? 'Access Control' : 'Create Workspace'}
             </h2>
-            <p className="text-slate-500 text-sm font-medium">
+            <p className="text-slate-300 text-sm font-medium">
               {viewMode === 'reset' ? 'Enter your email to receive recovery instructions.' : viewMode === 'magic' ? 'Sign in without a password.' : type === 'login' ? 'Welcome back to the operations hub.' : 'Start capturing verifiable evidence.'}
             </p>
           </div>
@@ -275,7 +275,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           {viewMode === 'default' && type === 'signup' && (
             <>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organisation Name *</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Organisation Name *</label>
                 <input
                   required
                   type="text"
@@ -286,7 +286,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Your Full Name</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Your Full Name</label>
                 <input
                   ref={fullNameRef}
                   type="text"
@@ -306,7 +306,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
               {type === 'signup' ? 'Admin Email *' : 'Email *'}
             </label>
             <input
@@ -329,7 +329,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           {viewMode === 'default' && (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password *</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Password *</label>
                 {type === 'login' && (
                   <button type="button" onClick={() => setViewMode('reset')} className="text-[10px] font-black text-primary hover:underline uppercase">
                     Forgot?
@@ -350,26 +350,26 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
                 <div className="bg-slate-800/50 rounded-lg p-3 space-y-1.5">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Password Requirements</p>
                   <div className="flex items-center gap-2">
-                    <span className={`material-symbols-outlined text-xs ${password.length >= 6 ? 'text-success' : 'text-slate-600'}`}>
+                    <span className={`material-symbols-outlined text-xs ${password.length >= 6 ? 'text-success' : 'text-slate-400'}`}>
                       {password.length >= 6 ? 'check_circle' : 'cancel'}
                     </span>
-                    <p className={`text-[10px] font-medium ${password.length >= 6 ? 'text-success' : 'text-slate-500'}`}>
+                    <p className={`text-[10px] font-medium ${password.length >= 6 ? 'text-success' : 'text-slate-300'}`}>
                       At least 6 characters
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`material-symbols-outlined text-xs ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-600'}`}>
+                    <span className={`material-symbols-outlined text-xs ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-400'}`}>
                       {/[A-Z]/.test(password) ? 'check_circle' : 'cancel'}
                     </span>
-                    <p className={`text-[10px] font-medium ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
+                    <p className={`text-[10px] font-medium ${/[A-Z]/.test(password) ? 'text-success' : 'text-slate-300'}`}>
                       One uppercase letter
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`material-symbols-outlined text-xs ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-600'}`}>
+                    <span className={`material-symbols-outlined text-xs ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-400'}`}>
                       {/[0-9]/.test(password) ? 'check_circle' : 'cancel'}
                     </span>
-                    <p className={`text-[10px] font-medium ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-500'}`}>
+                    <p className={`text-[10px] font-medium ${/[0-9]/.test(password) ? 'text-success' : 'text-slate-300'}`}>
                       One number
                     </p>
                   </div>
@@ -407,7 +407,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             <button
               type="button"
               onClick={() => { setViewMode('default'); setSuccessMessage(null); setError(null); }}
-              className="w-full py-3 text-slate-500 hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
+              className="w-full py-3 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
             >
               Back to Login
             </button>
@@ -421,7 +421,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-2 text-slate-500 font-black">Or continue with</span>
+                  <span className="bg-slate-900 px-2 text-slate-300 font-black">Or continue with</span>
                 </div>
               </div>
 
@@ -455,7 +455,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           )}
         </form>
 
-        <p className="text-center text-xs text-slate-500 font-black uppercase tracking-widest">
+        <p className="text-center text-xs text-slate-300 font-black uppercase tracking-widest">
           {type === 'login' ? "New to the platform?" : "Already have an account?"}
           <Link to={type === 'login' ? '/auth/signup' : '/auth/login'} className="text-primary font-black ml-2 hover:underline">
             {type === 'login' ? 'Create Workspace' : 'Sign In'}

@@ -74,10 +74,10 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
                 {/* Recent Jobs */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Recent Activity</h3>
+                    <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest">Recent Activity</h3>
                     {myJobs.length === 0 ? (
                         <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 text-center">
-                            <p className="text-slate-500 text-sm font-medium">No job history found.</p>
+                            <p className="text-slate-300 text-sm font-medium">No job history found.</p>
                         </div>
                     ) : (
                         myJobs.map(job => (
@@ -97,7 +97,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
                                         </h4>
                                         <p className="text-xs text-slate-400 font-medium">{new Date(job.date).toLocaleDateString()}</p>
                                     </div>
-                                    <span className="material-symbols-outlined text-slate-600 group-hover:text-white transition-colors">arrow_forward</span>
+                                    <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">arrow_forward</span>
                                 </div>
                             </button>
                         ))

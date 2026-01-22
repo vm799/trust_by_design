@@ -432,3 +432,330 @@ export function validateStepData(
     errors,
   };
 }
+
+// ============================================================================
+// GUIDED FLOW SYSTEM
+// ============================================================================
+
+export interface GuidedFlowStep {
+  action: string;
+  nextRoute: string;
+  autoFocusField?: string;
+  tooltipMessage?: string;
+}
+
+/**
+ * Guided flow definitions for automatic navigation after actions
+ */
+export const GUIDED_FLOWS: Record<string, GuidedFlowStep[]> = {
+  solo_contractor: [
+    {
+      action: 'CREATE_CLIENT',
+      nextRoute: '/admin/create',
+      autoFocusField: 'clientId',
+      tooltipMessage: 'Great! Now let\'s create your first job for this client.'
+    },
+    {
+      action: 'CREATE_JOB',
+      nextRoute: '/admin',
+      tooltipMessage: 'Perfect! Your technician will receive a magic link to start work.'
+    }
+  ],
+  agency_owner: [
+    {
+      action: 'ADD_TECHNICIAN',
+      nextRoute: '/admin/clients',
+      autoFocusField: 'name',
+      tooltipMessage: 'Excellent! Now add a client to assign jobs to.'
+    },
+    {
+      action: 'CREATE_CLIENT',
+      nextRoute: '/admin/create',
+      autoFocusField: 'techId',
+      tooltipMessage: 'Now create a job and assign it to your technician.'
+    },
+    {
+      action: 'CREATE_JOB',
+      nextRoute: '/admin',
+      tooltipMessage: 'All set! You can now manage jobs, clients, and technicians.'
+    }
+  ],
+  compliance_officer: [
+    {
+      action: 'CREATE_CLIENT',
+      nextRoute: '/admin/create',
+      autoFocusField: 'clientId',
+      tooltipMessage: 'Great! Now create a job to begin the compliance workflow.'
+    },
+    {
+      action: 'CREATE_JOB',
+      nextRoute: '/admin',
+      tooltipMessage: 'Job created! You can now review and seal jobs for compliance.'
+    }
+  ],
+  safety_manager: [
+    {
+      action: 'CREATE_CHECKLIST',
+      nextRoute: '/admin/templates',
+      tooltipMessage: 'Safety checklist template created! Now create your first job.'
+    },
+    {
+      action: 'CREATE_CLIENT',
+      nextRoute: '/admin/create',
+      autoFocusField: 'clientId',
+      tooltipMessage: 'Client added! Now create a safety-tracked job.'
+    },
+    {
+      action: 'CREATE_JOB',
+      nextRoute: '/admin',
+      tooltipMessage: 'Job dispatched! Safety checklist will be enforced on completion.'
+    }
+  ],
+  site_supervisor: [
+    {
+      action: 'ADD_TECHNICIAN',
+      nextRoute: '/admin/clients',
+      autoFocusField: 'name',
+      tooltipMessage: 'Team member added! Now add a client site location.'
+    },
+    {
+      action: 'CREATE_CLIENT',
+      nextRoute: '/admin/create',
+      autoFocusField: 'techId',
+      tooltipMessage: 'Site added! Now dispatch your first job.'
+    },
+    {
+      action: 'CREATE_JOB',
+      nextRoute: '/admin',
+      tooltipMessage: 'Job dispatched! You can now track daily progress.'
+    }
+  ]
+};
+
+/**
+ * Toast notification function
+ * Shows success messages with guided flow tooltips
+ */
+export const showToast = (options: {
+  type: 'success' | 'error' | 'info' | 'warning';
+  message: string;
+  duration?: number;
+}) => {
+  const { type, message, duration = 5000 } = options;
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `fixed top-6 right-6 z-[200] animate-in slide-in-from-top-5 fade-in duration-300 max-w-md`;
+
+  const bgColor = {
+    success: 'bg-success/10 border-success/30 text-success',
+    error: 'bg-red-500/10 border-red-500/30 text-red-400',
+    info: 'bg-primary/10 border-primary/30 text-primary',
+    warning: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+  }[type];
+
+  const icon = {
+    success: 'check_circle',
+    error: 'error',
+    info: 'info',
+    warning: 'warning'
+  }[type];
+
+  toast.innerHTML = `
+    <div class="bg-slate-900 border-2 ${bgColor} rounded-2xl p-4 shadow-2xl backdrop-blur-sm">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-xl">${icon}</span>
+        <div class="flex-1">
+          <p class="font-semibold text-white mb-1">Guided Flow</p>
+          <p class="text-sm ${bgColor.split(' ')[2]}">${message}</p>
+        </div>
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-slate-500 hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto-remove after duration
+  setTimeout(() => {
+    toast.classList.add('animate-out', 'slide-out-to-right-5', 'fade-out');
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 300);
+  }, duration);
+};
+
+/**
+ * Navigate to next step in the guided flow
+ * @param currentAction - The action that was just completed
+ * @param persona - User's persona type
+ * @param navigate - React Router navigate function
+ */
+export const navigateToNextStep = (
+  currentAction: string,
+  persona: string | undefined,
+  navigate: any
+) => {
+  if (!persona) {
+    console.warn('[Guided Flow] No persona provided, skipping auto-navigation');
+    return;
+  }
+
+  const normalizedPersona = persona.toLowerCase();
+  const flow = GUIDED_FLOWS[normalizedPersona];
+
+  if (!flow) {
+    console.warn(`[Guided Flow] No flow defined for persona: ${normalizedPersona}`);
+    return;
+  }
+
+  const currentStep = flow.find(s => s.action === currentAction);
+
+  if (!currentStep) {
+    console.warn(`[Guided Flow] Action ${currentAction} not found in flow for ${normalizedPersona}`);
+    return;
+  }
+
+  console.log(`[Guided Flow] Transitioning from ${currentAction} to ${currentStep.nextRoute}`);
+
+  // Navigate to next route
+  navigate(currentStep.nextRoute);
+
+  // Auto-focus field after navigation
+  if (currentStep.autoFocusField) {
+    setTimeout(() => {
+      const field = document.getElementById(currentStep.autoFocusField!) ||
+                    document.querySelector(`[name="${currentStep.autoFocusField}"]`) as HTMLElement;
+
+      if (field) {
+        field.focus();
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add visual highlight animation
+        field.classList.add('ring-4', 'ring-primary', 'ring-opacity-50', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          field.classList.remove('ring-4', 'ring-primary', 'ring-opacity-50');
+        }, 2000);
+      }
+    }, 300);
+  }
+
+  // Show tooltip notification
+  if (currentStep.tooltipMessage) {
+    setTimeout(() => {
+      showToast({
+        type: 'success',
+        message: currentStep.tooltipMessage!,
+        duration: 5000
+      });
+    }, 500);
+  }
+};
+
+/**
+ * Check if user should see guided flow based on their activity
+ * @param persona - User's persona
+ * @param activityCounts - Object with counts of user activities
+ */
+export const shouldShowGuidedFlow = (
+  persona: string | undefined,
+  activityCounts: {
+    clients: number;
+    technicians: number;
+    jobs: number;
+    templates?: number;
+  }
+): boolean => {
+  if (!persona) return false;
+
+  const normalizedPersona = persona.toLowerCase();
+
+  // Show guided flow if user has minimal activity
+  switch (normalizedPersona) {
+    case 'solo_contractor':
+      return activityCounts.clients === 0 || activityCounts.jobs === 0;
+
+    case 'agency_owner':
+      return activityCounts.technicians === 0 || activityCounts.clients === 0 || activityCounts.jobs === 0;
+
+    case 'compliance_officer':
+      return activityCounts.clients === 0 || activityCounts.jobs === 0;
+
+    case 'safety_manager':
+      return activityCounts.clients === 0 || activityCounts.jobs === 0;
+
+    case 'site_supervisor':
+      return activityCounts.technicians === 0 || activityCounts.clients === 0 || activityCounts.jobs === 0;
+
+    default:
+      return false;
+  }
+};
+
+/**
+ * Get the next recommended action for a persona based on their current state
+ */
+export const getNextRecommendedAction = (
+  persona: string | undefined,
+  activityCounts: {
+    clients: number;
+    technicians: number;
+    jobs: number;
+    templates?: number;
+  }
+): { action: string; route: string; label: string } | null => {
+  if (!persona) return null;
+
+  const normalizedPersona = persona.toLowerCase();
+  const flow = GUIDED_FLOWS[normalizedPersona];
+
+  if (!flow) return null;
+
+  // Determine what action should come next
+  if (normalizedPersona === 'solo_contractor') {
+    if (activityCounts.clients === 0) {
+      return {
+        action: 'CREATE_CLIENT',
+        route: '/admin/clients',
+        label: 'Add your first client'
+      };
+    }
+    if (activityCounts.jobs === 0) {
+      return {
+        action: 'CREATE_JOB',
+        route: '/admin/create',
+        label: 'Create your first job'
+      };
+    }
+  }
+
+  if (normalizedPersona === 'agency_owner' || normalizedPersona === 'site_supervisor') {
+    if (activityCounts.technicians === 0) {
+      return {
+        action: 'ADD_TECHNICIAN',
+        route: '/admin/technicians',
+        label: 'Add your first technician'
+      };
+    }
+    if (activityCounts.clients === 0) {
+      return {
+        action: 'CREATE_CLIENT',
+        route: '/admin/clients',
+        label: 'Add your first client'
+      };
+    }
+    if (activityCounts.jobs === 0) {
+      return {
+        action: 'CREATE_JOB',
+        route: '/admin/create',
+        label: 'Dispatch your first job'
+      };
+    }
+  }
+
+  return null;
+};

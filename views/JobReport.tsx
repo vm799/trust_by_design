@@ -63,7 +63,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
          <div className="text-center space-y-4">
             <h1 className="text-4xl font-black uppercase tracking-tighter">Report Unavailable</h1>
-            <p className="text-slate-500 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
+            <p className="text-slate-300 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
             <button onClick={() => navigate('/admin')} className="px-8 py-3 bg-primary text-white font-black rounded-xl uppercase tracking-widest">Return to Hub</button>
          </div>
       </div>
@@ -106,9 +106,9 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
                      <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
                      <div className="flex flex-wrap items-center gap-4">
-                        <p className="text-slate-500 font-bold uppercase text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
+                        <p className="text-slate-300 font-bold uppercase text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
                         <div className="size-1 bg-slate-200 rounded-full"></div>
-                        <p className="text-slate-500 font-bold uppercase text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0, 8)}</span></p>
+                        <p className="text-slate-300 font-bold uppercase text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0, 8)}</span></p>
                         {job.w3w && (
                            <>
                               <div className="size-1 bg-slate-200 rounded-full"></div>
@@ -153,7 +153,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
                      <p className="text-xl font-black uppercase tracking-tight">{job.client}</p>
                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 shadow-inner">
-                        <p className="text-slate-500 text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
+                        <p className="text-slate-300 text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
                         {job.lat && (
                            <div className="border-t border-slate-200 pt-2 space-y-1">
                               <div className="flex items-center gap-1.5">
@@ -172,18 +172,18 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
-                              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
                            </div>
-                           <p className="text-[8px] text-slate-500 italic pl-6">
+                           <p className="text-[8px] text-slate-300 italic pl-6">
                               (GPS coordinates recorded, not verified against address)
                            </p>
                         </div>
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
-                              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Account Verified (Email)</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Account Verified (Email)</p>
                            </div>
-                           <p className="text-[8px] text-slate-500 italic pl-6">
+                           <p className="text-[8px] text-slate-300 italic pl-6">
                               (Account-based identity, not legally verified)
                            </p>
                         </div>
@@ -217,15 +217,15 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                                        <div className="flex justify-between items-center">
                                           <p className="text-[9px] text-slate-400 font-mono uppercase">UTC: {new Date(p.timestamp).toISOString().split('T')[1].substring(0, 8)}</p>
                                           <div className="flex items-center gap-1">
-                                             <span className="material-symbols-outlined text-[10px] text-slate-500 font-black">location_on</span>
-                                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">GPS Captured</span>
+                                             <span className="material-symbols-outlined text-[10px] text-slate-300 font-black">location_on</span>
+                                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">GPS Captured</span>
                                           </div>
                                        </div>
                                        <div className="flex flex-col gap-0.5">
                                           {p.w3w && (
                                              <div className="flex items-center gap-1 opacity-70">
                                                 <span className="text-red-500 font-black text-[9px]">///</span>
-                                                <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
+                                                <p className="text-slate-300 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
                                              </div>
                                           )}
                                           {p.lat && (
@@ -270,7 +270,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                            <p className="text-[10px] font-black uppercase tracking-widest">Waiting for Seal</p>
                         </div>
                      )}
-                     <div className="flex justify-between text-[11px] font-black uppercase text-slate-600 px-4">
+                     <div className="flex justify-between text-[11px] font-black uppercase text-slate-400 px-4">
                         <div className="flex flex-col">
                            <span className="text-slate-400 text-[9px] mb-1">Signatory</span>
                            <span>{job.signerName || 'Pending'}</span>
@@ -305,7 +305,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                <aside className="w-full lg:w-80 space-y-6 no-print shrink-0">
                   <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
                      <div>
-                        <h3 className="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.2em]">Hub Controls</h3>
+                        <h3 className="text-xs font-black text-slate-300 mb-6 uppercase tracking-[0.2em]">Hub Controls</h3>
                         <div className="space-y-3">
                            {job.status === 'Submitted' && !existingInvoice && (
                               <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
@@ -325,7 +325,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      </div>
 
                      <div className="pt-8 border-t border-white/5">
-                        <h3 className="text-[10px] font-black text-slate-500 mb-4 uppercase tracking-[0.2em]">System Status</h3>
+                        <h3 className="text-[10px] font-black text-slate-300 mb-4 uppercase tracking-[0.2em]">System Status</h3>
                         <div className="space-y-3">
                            <StatusLine label="Integrity Check" value="Pass" success />
                            <StatusLine label="Sync Status" value="Vaulted" success />
@@ -390,7 +390,7 @@ const TimelineStep = ({ label, time, status, icon, active = true }: any) => (
 
 const StatusLine = ({ label, value, success }: any) => (
    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-      <span className="text-slate-600">{label}</span>
+      <span className="text-slate-400">{label}</span>
       <span className={success ? 'text-success' : 'text-slate-400'}>{value}</span>
    </div>
 );
