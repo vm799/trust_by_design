@@ -165,7 +165,7 @@ const App: React.FC = () => {
 
         // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
         if (!profile && newSession.user.user_metadata?.workspace_name) {
-          console.log('Profile missing but metadata found. Attempting auto-healing...');
+          console.log('[App] Profile missing but metadata found. Attempting auto-healing...');
           const meta = newSession.user.user_metadata;
           const workspaceSlug = (meta.workspace_name as string)
             .toLowerCase()
@@ -176,15 +176,24 @@ const App: React.FC = () => {
 
           const supabase = getSupabase();
           if (supabase) {
-            await supabase.rpc('create_workspace_with_owner', {
-              p_user_id: newSession.user.id,
-              p_email: newSession.user.email,
-              p_workspace_name: meta.workspace_name,
-              p_workspace_slug: finalSlug,
-              p_full_name: meta.full_name || null
-            });
-            // Try fetching again after creation
-            profile = await getUserProfile(newSession.user.id);
+            try {
+              const { error } = await supabase.rpc('create_workspace_with_owner', {
+                p_user_id: newSession.user.id,
+                p_email: newSession.user.email,
+                p_workspace_name: meta.workspace_name,
+                p_workspace_slug: finalSlug,
+                p_full_name: meta.full_name || null
+              });
+              if (error) {
+                console.error('[App] Auto-heal workspace creation failed:', error);
+              } else {
+                console.log('[App] Workspace auto-healing successful, retrying profile load');
+                // Try fetching again after creation
+                profile = await getUserProfile(newSession.user.id);
+              }
+            } catch (err) {
+              console.error('[App] Auto-heal exception:', err);
+            }
           }
         }
 
@@ -196,15 +205,29 @@ const App: React.FC = () => {
             avatar: profile.avatar_url,
             role: profile.role,
             workspaceName: profile.workspace?.name || 'My Workspace',
-            persona: profile.personas?.[0]?.persona_type
+            persona: profile.personas?.[0]?.persona_type,
+            workspace: profile.workspace ? { id: profile.workspace_id, name: profile.workspace.name } : undefined
           };
           setUser(userProfile);
 
           // Phase C.2: Load workspace data from Supabase
           loadWorkspaceData(profile.workspace_id);
         } else {
-          // Still no profile - must be a new OAuth user or real failure
-          setUser(null);
+          // CRITICAL FIX: Profile load failed - handle gracefully
+          // Option 1: If we have a session but no profile, redirect to setup
+          console.warn('[App] Session exists but profile missing. Redirecting to setup.');
+
+          // Create minimal user profile from session data for routing
+          const fallbackProfile: UserProfile = {
+            name: newSession.user.email || 'User',
+            email: newSession.user.email || '',
+            role: 'member',
+            workspaceName: 'Setup Required',
+            persona: undefined
+          };
+          setUser(fallbackProfile);
+
+          // Don't load workspace data if profile is missing
         }
       } else {
         setUser(null);
@@ -381,10 +404,20 @@ const App: React.FC = () => {
 
   // Helper for Persona-Aware Routing
   const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
-    if (!user) return null; // Wait for user profile to load
+    // CRITICAL FIX: Handle missing profile gracefully
+    if (!user) {
+      console.warn('[PersonaRedirect] No user profile, redirecting to setup');
+      return <Navigate to="/auth/setup" replace />;
+    }
+
+    // If user has no persona, redirect to onboarding
+    if (!user.persona) {
+      console.log('[PersonaRedirect] No persona set, redirecting to onboarding');
+      return <Navigate to="/onboarding" replace />;
+    }
 
     // Normalise persona check
-    const persona = user.persona?.toLowerCase() || '';
+    const persona = user.persona.toLowerCase();
 
     if (persona === 'technician' || persona === 'contractor' || persona === 'solo_contractor') {
       return <Navigate to="/contractor" replace />;
