@@ -29,6 +29,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const failedJobs = jobs.filter(j => j.syncStatus === 'failed');
   const pendingSignatures = activeJobs.filter(j => !j.signature).length;
 
+  // ATTENTION REQUIRED: Critical job exceptions
+  const jobsAwaitingSeal = activeJobs.filter(j => !j.signature && !j.sealedAt);
+  const jobsMissingEvidence = activeJobs.filter(j => j.photos.length === 0);
+  const jobsIncompleteChecklist = activeJobs.filter(j => {
+    const requiredChecks = j.safetyChecklist.filter(c => c.required);
+    const completedRequired = requiredChecks.filter(c => c.checked);
+    return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
+  });
+
+  const attentionItems = [
+    ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
+    ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
+    ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
+    ...jobsIncompleteChecklist.map(j => ({ job: j, reason: 'incomplete_checklist', label: 'Incomplete Safety', icon: 'shield', color: 'warning' as const })),
+  ];
+
+  // Remove duplicates (a job can have multiple issues)
+  const uniqueAttentionJobs = Array.from(
+    new Map(attentionItems.map(item => [item.job.id, item])).values()
+  );
+
   // State for IndexedDB photo previews
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
 
@@ -263,6 +284,61 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             </button>
           </div>
         )}
+
+            {/* ATTENTION REQUIRED PANEL */}
+            {uniqueAttentionJobs.length > 0 && (
+              <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-warning text-xl font-black">priority_high</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Attention Required</h3>
+                    <p className="text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} need{uniqueAttentionJobs.length === 1 ? 's' : ''} immediate action</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {uniqueAttentionJobs.map(item => (
+                    <button
+                      key={item.job.id}
+                      onClick={() => navigate(`/admin/report/${item.job.id}`)}
+                      className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3"
+                    >
+                      <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        item.color === 'danger' ? 'bg-danger/20' : 'bg-warning/20'
+                      }`}>
+                        <span className={`material-symbols-outlined text-sm ${
+                          item.color === 'danger' ? 'text-danger' : 'text-warning'
+                        }`}>
+                          {item.icon}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-black text-white text-sm uppercase tracking-tight truncate group-hover:text-warning transition-colors">
+                            {item.job.title}
+                          </h4>
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 ${
+                            item.color === 'danger'
+                              ? 'bg-danger/20 text-danger border border-danger/30'
+                              : 'bg-warning/20 text-warning border border-warning/30'
+                          }`}>
+                            {item.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono">{item.job.client} • {item.job.technician}</p>
+                      </div>
+
+                      <span className="material-symbols-outlined text-slate-300 text-sm group-hover:text-warning transition-colors flex-shrink-0">
+                        arrow_forward
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Compact Metrics - Mobile First */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
