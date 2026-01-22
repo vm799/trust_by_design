@@ -307,7 +307,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                   className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined font-black">send</span>
-                  Initialize Dispatch
+                  Initialise Dispatch
                 </button>
               </header>
             </div>

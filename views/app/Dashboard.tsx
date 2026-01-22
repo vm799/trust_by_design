@@ -20,6 +20,7 @@ interface QuickStat {
   value: number;
   icon: string;
   color: string;
+  link: string;
   trend?: { value: number; isUp: boolean };
 }
 
@@ -60,31 +61,35 @@ const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
-  // Calculate stats
+  // Calculate stats with clickable links
   const stats: QuickStat[] = [
     {
       label: 'Need Action',
       value: jobs.filter(j => !j.technicianId || j.status === 'pending').length,
       icon: 'priority_high',
       color: 'text-red-400 bg-red-500/10',
+      link: `${ROUTES.JOBS}?status=pending`,
     },
     {
       label: 'In Progress',
       value: jobs.filter(j => j.status === 'in-progress').length,
       icon: 'pending',
       color: 'text-amber-400 bg-amber-500/10',
+      link: `${ROUTES.JOBS}?status=in-progress`,
     },
     {
       label: 'Completed',
       value: jobs.filter(j => j.status === 'complete').length,
       icon: 'check_circle',
       color: 'text-emerald-400 bg-emerald-500/10',
+      link: `${ROUTES.JOBS}?status=complete`,
     },
     {
       label: 'Total Clients',
       value: clients.length,
       icon: 'group',
       color: 'text-blue-400 bg-blue-500/10',
+      link: ROUTES.CLIENTS,
     },
   ];
 
@@ -197,20 +202,22 @@ const Dashboard: React.FC = () => {
       </div>
 
       <PageContent>
-        {/* Quick Stats */}
+        {/* Quick Stats - Clickable metrics linking to filtered views */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat, i) => (
-            <Card key={i} padding="md">
-              <div className="flex items-center gap-3">
-                <div className={`size-10 rounded-xl flex items-center justify-center ${stat.color}`}>
-                  <span className="material-symbols-outlined text-xl">{stat.icon}</span>
+            <Link key={i} to={stat.link} className="block">
+              <Card padding="md" variant="interactive" className="h-full hover:scale-[1.02] transition-transform">
+                <div className="flex items-center gap-3">
+                  <div className={`size-10 rounded-xl flex items-center justify-center ${stat.color}`}>
+                    <span className="material-symbols-outlined text-xl">{stat.icon}</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <p className="text-xs text-slate-400">{stat.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  <p className="text-xs text-slate-400">{stat.label}</p>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
 
