@@ -7,6 +7,7 @@ import { validateMagicLink, getJobByToken, updateJob } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
+import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { token, jobId } = useParams();
@@ -293,27 +294,41 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const captureLocation = () => {
     setLocationStatus('capturing');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        // Enhanced what3words mock with more professional word pool
-        const words = ['index', 'engine', 'logic', 'rugged', 'field', 'safe', 'audit', 'track', 'proof', 'solid', 'fixed', 'frame', 'steel', 'core', 'vault', 'trust', 'chain', 'lock', 'verify', 'secure'];
-        const mockW3w = `///${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}`;
+        const accuracy = pos.coords.accuracy;
+
+        // Real what3words API call with caching
+        let w3wAddress = null;
+        try {
+          const w3wResult = await convertToW3WCached(lat, lng);
+          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
+          console.log('W3W API result:', w3wResult);
+        } catch (error) {
+          console.warn('W3W API failed, using mock fallback:', error);
+        }
+
+        // Fallback to mock if API failed or not configured
+        if (!w3wAddress) {
+          console.warn('Using mock W3W - configure VITE_W3W_API_KEY for real data');
+          w3wAddress = generateMockW3W();
+        }
 
         setCoords({ lat, lng });
-        setW3w(mockW3w);
+        setW3w(w3wAddress);
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: mockW3w, lat, lng });
+        writeLocalDraft({ w3w: w3wAddress, lat, lng, gps_accuracy: accuracy });
       },
       (error) => {
         console.error('Geolocation error:', error);
         setLocationStatus('denied');
       },
-      { timeout: 5000, enableHighAccuracy: true }
+      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
     );
   };
 
-  const manualLocationEntry = () => {
+  const manualLocationEntry = async () => {
     const manualLat = prompt('Enter latitude (e.g., 51.505):');
     const manualLng = prompt('Enter longitude (e.g., -0.09):');
 
@@ -321,16 +336,29 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       const lat = parseFloat(manualLat);
       const lng = parseFloat(manualLng);
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const words = ['manual', 'entry', 'fallback', 'override', 'verified', 'admin', 'field', 'tech', 'secure'];
-        const mockW3w = `///${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}.${words[Math.floor(Math.random() * words.length)]}`;
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        // Real what3words API call for manual entry
+        let w3wAddress = null;
+        try {
+          const w3wResult = await convertToW3WCached(lat, lng);
+          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
+          console.log('W3W API result (manual):', w3wResult);
+        } catch (error) {
+          console.warn('W3W API failed for manual entry, using mock:', error);
+        }
+
+        // Fallback to mock if API failed
+        if (!w3wAddress) {
+          console.warn('Using mock W3W for manual entry');
+          w3wAddress = generateMockW3W();
+        }
 
         setCoords({ lat, lng });
-        setW3w(mockW3w);
+        setW3w(w3wAddress);
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: mockW3w, lat, lng });
+        writeLocalDraft({ w3w: w3wAddress, lat, lng });
       } else {
-        alert('Invalid coordinates. Please try again.');
+        alert('Invalid coordinates. Latitude must be -90 to 90, longitude must be -180 to 180.');
       }
     }
   };
