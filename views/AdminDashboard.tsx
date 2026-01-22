@@ -2,10 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
+import OnboardingChecklist, { OnboardingStep } from '../components/OnboardingChecklist';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
+import JobCard from '../components/JobCard';
+import OfflineIndicator from '../components/OfflineIndicator';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
+import { getSupabase } from '../lib/supabase';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -30,6 +35,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   // State for manual sync
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  // State for onboarding checklist
+  const [checklistDismissed, setChecklistDismissed] = useState(() => {
+    return localStorage.getItem('jobproof_checklist_dismissed') === 'true';
+  });
+
+  // Check email verification status
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  useEffect(() => {
+    const checkEmailVerification = async () => {
+      const supabase = getSupabase();
+      if (!supabase) return;
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        setIsEmailVerified(!!(authUser.email_confirmed_at || authUser.confirmed_at));
+      }
+    };
+    checkEmailVerification();
+  }, [user]);
 
   // Load photo thumbnails from IndexedDB
   useEffect(() => {
@@ -102,6 +127,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     }
   };
 
+  // Onboarding checklist steps
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      id: 'verify-email',
+      label: 'Verify Email',
+      description: 'Confirm your email address',
+      status: isEmailVerified ? 'completed' : 'in_progress',
+      icon: 'mail',
+    },
+    {
+      id: 'add-client',
+      label: 'Add First Client',
+      description: 'Register a customer',
+      status: clients.length > 0 ? 'completed' : isEmailVerified ? 'in_progress' : 'locked',
+      icon: 'person_add',
+      path: '/admin/clients'
+    },
+    {
+      id: 'add-tech',
+      label: 'Add Technician',
+      description: 'Authorize a field agent',
+      status: technicians.length > 0 ? 'completed' : (clients.length > 0 ? 'in_progress' : 'locked'),
+      icon: 'engineering',
+      path: '/admin/technicians'
+    },
+    {
+      id: 'dispatch-job',
+      label: 'Dispatch First Job',
+      description: 'Create your first protocol',
+      status: jobs.length > 0 ? 'completed' : (technicians.length > 0 && clients.length > 0 ? 'in_progress' : 'locked'),
+      icon: 'send',
+      path: '/admin/create'
+    }
+  ];
+
+  const handleDismissChecklist = () => {
+    localStorage.setItem('jobproof_checklist_dismissed', 'true');
+    setChecklistDismissed(true);
+  };
+
   return (
     <Layout user={user}>
       {showOnboarding && (
@@ -111,21 +176,63 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           counts={{ clients: clients.length, techs: technicians.length, jobs: jobs.length }}
         />
       )}
-      <div className="space-y-8 pb-20">
-        <header className="flex justify-between items-end">
-          <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
-            <p className="text-slate-400">Verifiable field evidence management and workforce monitoring.</p>
+      <div className="space-y-6 pb-20">
+        {/* Email Verification Banner */}
+        {!isEmailVerified && user && (
+          <EmailVerificationBanner user={user} />
+        )}
+
+        {/* Offline Indicator */}
+        <OfflineIndicator
+          syncStatus={{
+            pending: jobs.filter(j => j.syncStatus === 'pending').length,
+            failed: syncIssues
+          }}
+        />
+
+        {/* Mobile Onboarding Checklist - BEFORE grid to prevent overlap */}
+        {!checklistDismissed && (
+          <div className="lg:hidden">
+            <OnboardingChecklist
+              steps={onboardingSteps}
+              onDismiss={handleDismissChecklist}
+              user={user}
+            />
           </div>
-          <button
-            id="btn-dispatch"
-            onClick={() => navigate('/admin/create')}
-            className="px-8 py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined font-black">send</span>
-            Initialize Dispatch
-          </button>
-        </header>
+        )}
+
+        {/* Main Content Grid - Sidebar + Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar - Onboarding Checklist (Desktop) */}
+          <aside className="hidden lg:block">
+            {!checklistDismissed && (
+              <OnboardingChecklist
+                steps={onboardingSteps}
+                onDismiss={handleDismissChecklist}
+                user={user}
+              />
+            )}
+          </aside>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Header with Sticky CTA (sticky only on desktop to prevent mobile overlap) */}
+            <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
+              <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
+                  <p className="text-slate-400 text-sm">Verifiable field evidence management.</p>
+                </div>
+                <button
+                  id="btn-dispatch"
+                  onClick={() => navigate('/admin/create')}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined font-black">send</span>
+                  Initialize Dispatch
+                </button>
+              </header>
+            </div>
 
         {/* Sync message notification */}
         {syncMessage && (
@@ -157,19 +264,56 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard label="Active Protocols" value={activeJobs.length.toString()} icon="send" trend="Protocol Ingress" />
-          <MetricCard label="Awaiting Seal" value={pendingSignatures.toString()} icon="signature" trend="Pending Signatures" color="text-warning" />
-          <MetricCard label="Sealed Proofs" value={sealedJobs.length.toString()} icon="verified" trend="Sealed History" color="text-success" />
-          <MetricCard label="Sync Issues" value={syncIssues.toString()} icon="sync_problem" trend="Sync Queue" color={syncIssues > 0 ? "text-danger" : "text-slate-500"} />
-        </div>
+            {/* Compact Metrics - Mobile First */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <CompactMetricCard
+                label="Active"
+                value={activeJobs.length.toString()}
+                icon="send"
+                color="text-primary"
+              />
+              <CompactMetricCard
+                label="Awaiting Seal"
+                value={pendingSignatures.toString()}
+                icon="signature"
+                color="text-warning"
+              />
+              <CompactMetricCard
+                label="Sealed"
+                value={sealedJobs.length.toString()}
+                icon="verified"
+                color="text-success"
+              />
+              <CompactMetricCard
+                label="Sync Issues"
+                value={syncIssues.toString()}
+                icon="sync_problem"
+                color={syncIssues > 0 ? "text-danger" : "text-slate-500"}
+              />
+            </div>
 
-        <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
-          <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Operations Hub Log</h3>
-            <button className="text-[8px] font-black uppercase tracking-widest text-primary border border-primary/20 px-3 py-1 rounded-full hover:bg-primary/5 transition-all">Filter Activity</button>
-          </div>
-          <div className="overflow-x-auto">
+            {/* Mobile Job Cards (shown on mobile, hidden on desktop) */}
+            {jobs.length > 0 && (
+              <div className="lg:hidden space-y-3">
+                {jobs.map(job => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onClick={() => navigate(`/admin/report/${job.id}`)}
+                    onRetry={handleJobRetry}
+                    photoDataUrls={photoDataUrls}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Desktop Table (hidden on mobile) */}
+            <div className="hidden lg:block bg-slate-900 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+              <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Operations Hub Log</h3>
+                <button className="text-[8px] font-black uppercase tracking-widest text-primary border border-primary/20 px-3 py-1 rounded-full hover:bg-primary/5 transition-all">Filter Activity</button>
+              </div>
+              <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-950/50">
                 <tr>
@@ -190,12 +334,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                         <div className="space-y-4">
                           <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Your Hub is Ready</h4>
-                          <p className="text-slate-400 text-sm font-medium">Follow these verification steps to initialise your field operations.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 text-left">
-                          <QuickStartItem icon="person_add" label="1. Register Client" desc="Add your first customer to the registry." onClick={() => navigate('/admin/clients')} id="qs-client" />
-                          <QuickStartItem icon="engineering" label="2. Authorise Tech" desc="Add a field agent to capture evidence." onClick={() => navigate('/admin/technicians')} id="qs-tech" />
-                          <QuickStartItem icon="send" label="3. Dispatch Protocol" desc="Deploy your first verifiable job link." onClick={() => navigate('/admin/create')} id="qs-dispatch" />
+                          <p className="text-slate-400 text-sm font-medium">Start by completing the onboarding checklist to initialise your operations.</p>
                         </div>
                       </div>
                     </td>
@@ -270,34 +409,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         </div>
       </div>
+    </div>
+  </div>
     </Layout>
   );
 };
 
-const MetricCard = ({ label, value, icon, trend, color = "text-white" }: any) => (
-  <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-2 relative overflow-hidden group shadow-lg">
-    <span className="material-symbols-outlined absolute -top-2 -right-2 text-primary/5 text-7xl transition-transform group-hover:scale-110 font-black">{icon}</span>
-    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
-    <p className={`text-4xl font-black tracking-tighter ${color}`}>{value}</p>
-    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{trend}</p>
+/**
+ * Compact Metric Card - Mobile-First Design
+ * Reduced padding and text size for better space efficiency
+ */
+const CompactMetricCard = ({ label, value, icon, color = "text-white" }: any) => (
+  <div className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 transition-all">
+    <span className={`material-symbols-outlined absolute -top-1 -right-1 text-5xl opacity-5 transition-transform group-hover:scale-110 font-black ${color.replace('text-', 'text-')}`}>{icon}</span>
+    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 relative z-10">{label}</p>
+    <p className={`text-2xl sm:text-3xl font-black tracking-tighter ${color} relative z-10`}>{value}</p>
   </div>
-);
-
-const QuickStartItem = ({ icon, label, desc, onClick, id }: any) => (
-  <button
-    id={id}
-    onClick={onClick}
-    className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 hover:border-primary/30 transition-all group"
-  >
-    <div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
-      <span className="material-symbols-outlined text-xl font-black">{icon}</span>
-    </div>
-    <div className="flex-1 text-left">
-      <p className="text-xs font-black text-white uppercase tracking-tighter">{label}</p>
-      <p className="text-[10px] text-slate-500 font-medium">{desc}</p>
-    </div>
-    <span className="material-symbols-outlined text-slate-700 group-hover:text-primary transition-colors">chevron_right</span>
-  </button>
 );
 
 export default AdminDashboard;
