@@ -3,182 +3,162 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
 
+/**
+ * Landing Page - Clean, professional V1 MVP
+ * Clear entry points for Manager vs Technician flows
+ */
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 selection:bg-primary/30 selection:text-white">
       {/* Navbar */}
-      <nav className="fixed w-full z-50 border-b border-white/5 glass">
-        <div className="max-w-7xl mx-auto px-6 h-16 lg:h-20 flex items-center justify-between">
+      <nav className="fixed w-full z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/home">
             <JobProofLogo variant="full" size="sm" />
           </Link>
-          <div className="hidden md:flex items-center gap-10 text-sm font-black text-slate-400">
-            <a href="#pricing" className="hover:text-white transition-colors uppercase tracking-widest">Pricing</a>
-            <Link to="/admin" className="text-white bg-white/5 border border-white/10 px-6 py-2.5 rounded-xl hover:bg-white/10 transition-all uppercase tracking-widest">Control Hub</Link>
+          <div className="flex items-center gap-4">
+            <Link to="/pricing" className="text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors">
+              Pricing
+            </Link>
+            <Link to="/auth" className="text-white bg-primary hover:bg-primary-hover px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all">
+              Sign In
+            </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-48 pb-32 px-6">
-        <div className="max-w-4xl mx-auto text-center space-y-10 animate-in">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary">
-            <span className="size-1.5 rounded-full bg-primary animate-ping"></span>
-            Operational Verification Engine v2.0
-          </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
-            Get Proof.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-400">Get Paid.</span>
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight text-white">
+            Evidence-First<br />
+            <span className="text-primary">Job Documentation</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Capture timestamped, geo-verified evidence of completed work. Eliminate payment disputes. Magic link access — no app install required.
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Capture timestamped, geo-verified evidence of completed work.
+            Eliminate payment disputes. Magic link access — no app install required.
           </p>
 
-          {/* Benefits Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-success text-2xl">verified</span>
-              <span className="text-sm font-bold text-white">Immutable Proof</span>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-success text-2xl">wifi_off</span>
-              <span className="text-sm font-bold text-white">Works Offline</span>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-              <span className="material-symbols-outlined text-success text-2xl">signature</span>
-              <span className="text-sm font-bold text-white">Client Signatures</span>
-            </div>
-          </div>
-
-          {/* Split CTA */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+          {/* Entry Points - Clear Manager vs Technician */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
             <Link
               to="/auth"
-              className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-base md:text-lg shadow-2xl shadow-primary/30 transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest group"
+              className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
             >
-              <span className="material-symbols-outlined font-black">admin_panel_settings</span>
-              For Managers
-              <span className="material-symbols-outlined font-black group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              <span className="material-symbols-outlined">admin_panel_settings</span>
+              Manager Sign In
             </Link>
             <Link
               to="/track-lookup"
-              className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 bg-white/10 hover:bg-white/15 border-2 border-white/20 text-white rounded-2xl font-black text-base md:text-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest group"
+              className="w-full sm:w-auto px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
             >
-              <span className="material-symbols-outlined font-black">engineering</span>
-              I Have a Link
-              <span className="material-symbols-outlined font-black group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              <span className="material-symbols-outlined">engineering</span>
+              Technician Access
             </Link>
           </div>
 
-          <p className="text-xs text-slate-300 uppercase tracking-widest pt-4">
-            Technicians: Click "I Have a Link" to access your dispatch
+          <p className="text-xs text-slate-500 pt-2">
+            Technicians: Use the link sent by your manager to access jobs
           </p>
         </div>
-
-        {/* Product Visual */}
-        <div className="max-w-6xl mx-auto mt-24 relative animate-in" style={{ animationDelay: '0.2s' }}>
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 blur-3xl opacity-20"></div>
-          <div className="relative rounded-[3rem] border border-white/10 bg-slate-900 overflow-hidden shadow-2xl aspect-video">
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40">
-              <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[3rem] text-center space-y-6 max-w-sm shadow-2xl">
-                <span className="material-symbols-outlined text-6xl text-primary font-black">verified_user</span>
-                <h3 className="text-2xl font-black text-white tracking-tighter uppercase">Verification Sealed</h3>
-                <p className="text-slate-300 text-sm font-medium">Every completion generates a verifiable log delivered instantly to the hub via encrypted offline-first sync.</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* Product Pillars */}
-      <section id="product" className="py-32 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-          <Pillar
-            icon="bolt"
-            title="Instant Dispatch"
-            desc="Initialise verifiable jobs from the hub. Magic links for field techs work instantly in the browser—no install needed."
+      {/* Features - Clean grid without heavy boxes */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Feature
+            icon="verified"
+            title="Immutable Proof"
+            desc="SHA-256 sealed evidence with timestamps and geolocation."
           />
-          <Pillar
-            icon="security"
-            title="Sealed Integrity"
-            desc="Server-synced timestamps and geo-metadata are baked into every capture. Evidence your clients can rely on."
+          <Feature
+            icon="wifi_off"
+            title="Works Offline"
+            desc="Capture evidence anywhere. Auto-sync when connected."
           />
-          <Pillar
-            icon="auto_awesome"
-            title="Automated Reporting"
-            desc="Professional reports are prepared the moment a job is sealed. Drastically reduce your billing cycle lag."
+          <Feature
+            icon="signature"
+            title="Client Signatures"
+            desc="Digital sign-off captured on completion."
           />
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-32 px-6 bg-slate-900/20">
-        <div className="max-w-7xl mx-auto space-y-16">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase">Professional Scaling</h2>
-            <p className="text-slate-400 font-medium">Clear pricing for teams of all sizes. No hidden fees.</p>
+      {/* Pricing - Aligned with PricingView.tsx */}
+      <section id="pricing" className="py-16 px-6">
+        <div className="max-w-5xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-black text-white tracking-tight">Simple Pricing</h2>
+            <p className="text-slate-400">14-day free trial on all plans</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <PriceCard tier="Solo" price="29" features={['1 Admin Hub', '1 Field Agent', 'Unlimited Sync', 'Email Support']} />
-            <PriceCard tier="Team" price="59" features={['5 Admin Hubs', '10 Field Agents', 'Protocol Templates', 'Priority Sync']} active />
-            <PriceCard tier="Agency" price="99" features={['Unlimited Hubs', 'Custom Branding', 'API Access', 'Dedicated Support']} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <PriceCard tier="Solo" price="Free" desc="5 jobs/month" features={['1 User', 'Email Support', 'Basic Reports']} />
+            <PriceCard tier="Team" price="£49" desc="Unlimited jobs" features={['5 Users', 'Priority Support', 'Custom Branding']} active />
+            <PriceCard tier="Agency" price="£199" desc="Unlimited everything" features={['Unlimited Users', 'API Access', 'Dedicated Support']} />
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-32 px-6">
-        <div className="max-w-5xl mx-auto bg-primary rounded-[4rem] p-16 md:p-24 text-center relative overflow-hidden shadow-[0_0_100px_-20px_rgba(37,99,235,0.4)]">
-          <div className="absolute -top-1/2 -right-1/4 size-96 bg-white/10 blur-[100px] rounded-full"></div>
-          <h2 className="text-4xl md:text-6xl font-black text-white leading-tight mb-8 uppercase tracking-tighter">Secure Your Operations</h2>
-          <p className="text-blue-100 text-xl font-medium mb-12 max-w-xl mx-auto opacity-90">Start capturing verifiable proof of work and eliminate operational ambiguity today.</p>
-          <Link to="/admin" className="inline-block bg-white text-primary px-12 py-6 rounded-[2rem] font-black text-2xl hover:bg-slate-50 transition-all shadow-2xl active:scale-95 uppercase tracking-widest">
-            Launch Hub
+      {/* Simple CTA */}
+      <section className="py-16 px-6">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <h2 className="text-2xl font-black text-white">Ready to get started?</h2>
+          <p className="text-slate-400">Create your workspace and dispatch your first job in minutes.</p>
+          <Link
+            to="/auth"
+            className="inline-block px-8 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+          >
+            Get Started Free
           </Link>
         </div>
       </section>
 
-      <footer className="py-20 border-t border-white/5 text-center space-y-8">
-        <div className="flex items-center justify-center gap-3">
-          <div className="bg-slate-800 size-8 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined text-sm font-black">verified</span></div>
-          <span className="font-black text-white tracking-tighter uppercase">JobProof</span>
+      {/* Footer */}
+      <footer className="py-12 border-t border-white/5 text-center">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <JobProofLogo variant="mark" size="xs" />
+          <span className="font-bold text-white">JobProof</span>
         </div>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">&copy; 2024 JobProof Technologies. Precision Field Service Infrastructure.</p>
+        <p className="text-slate-500 text-xs">&copy; 2026 JobProof. All rights reserved.</p>
       </footer>
     </div>
   );
 };
 
-const PriceCard = ({ tier, price, features, active }: any) => (
-  <div className={`p-10 rounded-[3rem] border transition-all ${active ? 'bg-primary border-primary shadow-2xl shadow-primary/20 scale-105 z-10' : 'bg-slate-900 border-white/5 hover:border-white/10'}`}>
-    <h3 className={`text-xl font-black uppercase tracking-tighter mb-2 ${active ? 'text-white' : 'text-slate-400'}`}>{tier}</h3>
-    <div className="flex items-baseline gap-1 mb-8">
-      <span className={`text-4xl font-black ${active ? 'text-white' : 'text-white'}`}>£{price}</span>
-      <span className={`text-sm font-bold ${active ? 'text-blue-200' : 'text-slate-300'}`}>/mo</span>
+const Feature = ({ icon, title, desc }: { icon: string; title: string; desc: string }) => (
+  <div className="text-center space-y-3">
+    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 text-primary">
+      <span className="material-symbols-outlined text-2xl">{icon}</span>
     </div>
-    <ul className="space-y-4 mb-10">
-      {features.map((f: string) => (
-        <li key={f} className={`flex items-center gap-3 text-sm font-bold ${active ? 'text-white' : 'text-slate-300'}`}>
-          <span className="material-symbols-outlined text-lg font-black">check_circle</span>
+    <h3 className="text-lg font-bold text-white">{title}</h3>
+    <p className="text-slate-400 text-sm">{desc}</p>
+  </div>
+);
+
+const PriceCard = ({ tier, price, desc, features, active }: { tier: string; price: string; desc: string; features: string[]; active?: boolean }) => (
+  <div className={`p-6 rounded-2xl border transition-all ${active ? 'bg-primary border-primary' : 'bg-slate-900 border-white/10'}`}>
+    <h3 className={`text-sm font-bold uppercase tracking-widest mb-1 ${active ? 'text-blue-200' : 'text-slate-400'}`}>{tier}</h3>
+    <div className="flex items-baseline gap-1 mb-1">
+      <span className="text-3xl font-black text-white">{price}</span>
+      {price !== 'Free' && <span className={`text-sm ${active ? 'text-blue-200' : 'text-slate-400'}`}>/mo</span>}
+    </div>
+    <p className={`text-sm mb-4 ${active ? 'text-blue-100' : 'text-slate-400'}`}>{desc}</p>
+    <ul className="space-y-2 mb-6">
+      {features.map((f) => (
+        <li key={f} className={`flex items-center gap-2 text-sm ${active ? 'text-white' : 'text-slate-300'}`}>
+          <span className={`material-symbols-outlined text-sm ${active ? 'text-white' : 'text-emerald-500'}`}>check</span>
           {f}
         </li>
       ))}
     </ul>
-    <button className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${active ? 'bg-white text-primary hover:bg-blue-50' : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'}`}>
-      Choose {tier}
-    </button>
-  </div>
-);
-
-const Pillar = ({ icon, title, desc }: any) => (
-  <div className="space-y-6 group">
-    <div className="size-16 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
-      <span className="material-symbols-outlined text-3xl font-black">{icon}</span>
-    </div>
-    <div className="space-y-2">
-      <h3 className="text-2xl font-black text-white tracking-tighter uppercase">{title}</h3>
-      <p className="text-slate-400 leading-relaxed font-medium">{desc}</p>
-    </div>
+    <Link
+      to="/auth"
+      className={`block w-full py-3 rounded-xl font-bold text-sm text-center uppercase tracking-widest transition-all ${
+        active ? 'bg-white text-primary hover:bg-blue-50' : 'bg-slate-800 text-white hover:bg-slate-700'
+      }`}
+    >
+      {price === 'Free' ? 'Start Free' : 'Start Trial'}
+    </Link>
   </div>
 );
 
