@@ -73,6 +73,7 @@ export interface AuditLogsResult {
 
 /**
  * Log an audit event
+ * PERFORMANCE FIX: Now accepts workspaceId as optional parameter to avoid getUser() call
  *
  * This function calls the database function log_audit_event() which:
  * - Stores event in append-only audit_logs table
@@ -81,9 +82,10 @@ export interface AuditLogsResult {
  * - Cannot be deleted or modified
  *
  * @param event - Audit event to log
+ * @param workspaceId - Optional workspace ID (pass from context to avoid API call)
  * @returns Promise<void> - Does not throw on error (fails silently)
  */
-export const logAuditEvent = async (event: AuditEvent): Promise<void> => {
+export const logAuditEvent = async (event: AuditEvent, workspaceId?: string | null): Promise<void> => {
   const supabase = getSupabase();
 
   // Fail silently if Supabase not configured
@@ -93,42 +95,29 @@ export const logAuditEvent = async (event: AuditEvent): Promise<void> => {
   }
 
   try {
-    // Get current user (may be null for anonymous/public access)
-    const { data: { user } } = await supabase.auth.getUser();
+    // Get workspace ID from parameter or infer from resource
+    let finalWorkspaceId: string | null = workspaceId || null;
 
-    // Get workspace ID (required for logging)
-    let workspaceId: string | null = null;
-
-    if (user) {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('workspace_id')
-        .eq('id', user.id)
-        .single();
-
-      workspaceId = profile?.workspace_id || null;
-    }
-
-    // If no workspace (e.g., public access to report), try to infer from resource
-    if (!workspaceId && event.resourceType === 'job') {
+    // If no workspace provided, try to infer from resource (fallback only)
+    if (!finalWorkspaceId && event.resourceType === 'job') {
       const { data: job } = await supabase
         .from('jobs')
         .select('workspace_id')
         .eq('id', event.resourceId)
         .single();
 
-      workspaceId = job?.workspace_id || null;
+      finalWorkspaceId = job?.workspace_id || null;
     }
 
     // Cannot log without workspace
-    if (!workspaceId) {
+    if (!finalWorkspaceId) {
       console.warn('Audit logging skipped: No workspace context');
       return;
     }
 
     // Call database function to log event
     const { error } = await supabase.rpc('log_audit_event', {
-      p_workspace_id: workspaceId,
+      p_workspace_id: finalWorkspaceId,
       p_event_type: event.eventType,
       p_resource_type: event.resourceType,
       p_resource_id: event.resourceId,
@@ -150,11 +139,13 @@ export const logAuditEvent = async (event: AuditEvent): Promise<void> => {
 
 /**
  * Get audit logs for the current user's workspace
+ * PERFORMANCE FIX: Now accepts workspaceId as parameter to avoid getUser() call
  *
+ * @param workspaceId - Workspace ID (required, pass from context)
  * @param options - Pagination and filtering options
  * @returns AuditLogsResult with logs array and total count
  */
-export const getAuditLogs = async (options: GetAuditLogsOptions = {}): Promise<AuditLogsResult> => {
+export const getAuditLogs = async (workspaceId: string, options: GetAuditLogsOptions = {}): Promise<AuditLogsResult> => {
   const supabase = getSupabase();
 
   if (!supabase) {
@@ -164,30 +155,14 @@ export const getAuditLogs = async (options: GetAuditLogsOptions = {}): Promise<A
     };
   }
 
+  if (!workspaceId) {
+    return {
+      success: false,
+      error: 'Workspace ID is required'
+    };
+  }
+
   try {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return {
-        success: false,
-        error: 'Not authenticated'
-      };
-    }
-
-    // Get workspace ID
-    const { data: profile } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.workspace_id) {
-      return {
-        success: false,
-        error: 'No workspace found'
-      };
-    }
 
     const {
       limit = 100,
@@ -198,7 +173,7 @@ export const getAuditLogs = async (options: GetAuditLogsOptions = {}): Promise<A
 
     // Get audit logs via database function
     const { data: logs, error: logsError } = await supabase.rpc('get_audit_logs', {
-      p_workspace_id: profile.workspace_id,
+      p_workspace_id: workspaceId,
       p_limit: limit,
       p_offset: offset,
       p_event_type: eventType || null,
@@ -214,7 +189,7 @@ export const getAuditLogs = async (options: GetAuditLogsOptions = {}): Promise<A
 
     // Get total count
     const { data: totalCount, error: countError } = await supabase.rpc('count_audit_logs', {
-      p_workspace_id: profile.workspace_id,
+      p_workspace_id: workspaceId,
       p_event_type: eventType || null,
       p_resource_type: resourceType || null
     });

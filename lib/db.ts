@@ -103,10 +103,14 @@ const shouldUseMockDB = () => {
 
 /**
  * Create a new job in the database
+ * PERFORMANCE FIX: Now accepts workspaceId as parameter instead of calling getUser()
+ *
+ * @param jobData - Job data to create
+ * @param workspaceId - Workspace ID (required, pass from context)
  */
-export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> => {
+export const createJob = async (jobData: Partial<Job>, workspaceId: string): Promise<DbResult<Job>> => {
   if (shouldUseMockDB()) {
-    if (!jobData.workspaceId) {
+    if (!workspaceId) {
       return {
         success: false,
         error: 'workspaceId is required'
@@ -139,7 +143,7 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
       syncStatus: jobData.syncStatus || 'synced',
       lastUpdated: jobData.lastUpdated || Date.now(),
       price: jobData.price,
-      workspaceId: jobData.workspaceId || 'workspace-123',
+      workspaceId: workspaceId,
       sealedAt: jobData.sealedAt,
       sealedBy: jobData.sealedBy,
       evidenceHash: jobData.evidenceHash,
@@ -158,26 +162,16 @@ export const createJob = async (jobData: Partial<Job>): Promise<DbResult<Job>> =
     };
   }
 
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!userProfile?.workspace_id) {
-      return { success: false, error: 'User has no workspace' };
-    }
 
     const { data, error } = await supabase
       .from('jobs')
       .insert({
-        workspace_id: userProfile.workspace_id,
+        workspace_id: workspaceId,
         title: jobData.title,
         client_name: jobData.client,
         client_id: jobData.clientId,
@@ -838,8 +832,12 @@ export const getClients = async (workspaceId: string): Promise<DbResult<Client[]
 
 /**
  * Create a new client
+ * PERFORMANCE FIX: Now accepts workspaceId as parameter instead of calling getUser()
+ *
+ * @param clientData - Client data to create
+ * @param workspaceId - Workspace ID (required, pass from context)
  */
-export const createClient = async (clientData: Partial<Client>): Promise<DbResult<Client>> => {
+export const createClient = async (clientData: Partial<Client>, workspaceId: string): Promise<DbResult<Client>> => {
   if (shouldUseMockDB()) {
     const newClient: Client = {
       id: crypto.randomUUID(),
@@ -860,26 +858,16 @@ export const createClient = async (clientData: Partial<Client>): Promise<DbResul
     };
   }
 
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!userProfile?.workspace_id) {
-      return { success: false, error: 'User has no workspace' };
-    }
 
     const { data, error } = await supabase
       .from('clients')
       .insert({
-        workspace_id: userProfile.workspace_id,
+        workspace_id: workspaceId,
         name: clientData.name,
         email: clientData.email,
         address: clientData.address
@@ -1057,8 +1045,12 @@ export const getTechnicians = async (workspaceId: string): Promise<DbResult<Tech
 
 /**
  * Create a new technician
+ * PERFORMANCE FIX: Now accepts workspaceId as parameter instead of calling getUser()
+ *
+ * @param techData - Technician data to create
+ * @param workspaceId - Workspace ID (required, pass from context)
  */
-export const createTechnician = async (techData: Partial<Technician>): Promise<DbResult<Technician>> => {
+export const createTechnician = async (techData: Partial<Technician>, workspaceId: string): Promise<DbResult<Technician>> => {
   if (shouldUseMockDB()) {
     const newTechnician: Technician = {
       id: crypto.randomUUID(),
@@ -1080,26 +1072,16 @@ export const createTechnician = async (techData: Partial<Technician>): Promise<D
     };
   }
 
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!userProfile?.workspace_id) {
-      return { success: false, error: 'User has no workspace' };
-    }
 
     const { data, error } = await supabase
       .from('technicians')
       .insert({
-        workspace_id: userProfile.workspace_id,
+        workspace_id: workspaceId,
         name: techData.name,
         email: techData.email,
         status: techData.status || 'Available',

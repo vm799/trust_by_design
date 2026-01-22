@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 
 type Tier = 'solo' | 'team' | 'agency';
 type Status = 'active' | 'canceled' | 'past_due' | 'trialing';
@@ -21,6 +22,9 @@ const CACHE_KEY = 'jobproof_subscription_v1';
 const CACHE_TTL = 300000; // 5 minutes
 
 export const useSubscription = () => {
+  // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
+  const { userId, workspaceId, isLoading: authLoading } = useAuth();
+
   const [subscription, setSubscription] = useState<Subscription>(() => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -41,6 +45,17 @@ export const useSubscription = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) {
+      return;
+    }
+
+    // Skip if no user/workspace
+    if (!userId || !workspaceId) {
+      setLoading(false);
+      return;
+    }
+
     let retryCount = 0;
     const maxRetries = 3;
 
@@ -52,32 +67,17 @@ export const useSubscription = () => {
       }
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from('users')
-          .select('workspace_id')
-          .eq('id', user.id)
-          .single();
-
-        const workspaceId = profile?.workspace_id;
 
         const [subResult, jobsResult] = await Promise.all([
           supabase
             .from('user_subscriptions')
             .select('tier, status')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .maybeSingle(),
-          workspaceId
-            ? supabase
-                .from('jobs')
-                .select('id', { count: 'exact', head: true })
-                .eq('workspace_id', workspaceId)
-            : Promise.resolve({ count: 0 })
+          supabase
+            .from('jobs')
+            .select('id', { count: 'exact', head: true })
+            .eq('workspace_id', workspaceId)
         ]);
 
         const tier = (subResult.data?.tier as Tier) || 'solo';
@@ -112,7 +112,7 @@ export const useSubscription = () => {
     };
 
     fetchSubscription();
-  }, []);
+  }, [userId, workspaceId, authLoading]);
 
   const canCreateJob = subscription.jobsUsed < subscription.limits.jobs;
   const usagePercent =
