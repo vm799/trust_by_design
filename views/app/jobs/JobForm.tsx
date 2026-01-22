@@ -1,18 +1,24 @@
 /**
- * JobForm - Create/Edit Job Form
+ * JobForm - Enhanced Create/Edit Job Form
  *
- * Unified form for creating and editing jobs.
- *
- * Phase E: Job Lifecycle
+ * Features:
+ * - Priority selection (Normal/Urgent) with color coding
+ * - Inline client/technician creation
+ * - Form draft auto-save (8hr retention)
+ * - Auto-focus flow between fields
+ * - Button click affordance
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
-import { getJobs, getClients, getTechnicians, addJob, updateJob } from '../../../hooks/useWorkspaceData';
-import { Job, Client, Technician } from '../../../types';
+import { Card, ActionButton, LoadingSkeleton, Modal } from '../../../components/ui';
+import { getJobs, getClients, getTechnicians, addJob, updateJob, addClient, addTechnician } from '../../../hooks/useWorkspaceData';
+import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
+
+const DRAFT_STORAGE_KEY = 'jobproof_job_draft';
+const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 interface FormData {
   title: string;
@@ -23,6 +29,12 @@ interface FormData {
   date: string;
   time: string;
   total: string;
+  priority: JobPriority;
+}
+
+interface DraftData {
+  formData: FormData;
+  savedAt: number;
 }
 
 const JobForm: React.FC = () => {
@@ -36,25 +48,78 @@ const JobForm: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
 
-  const [formData, setFormData] = useState<FormData>({
-    title: '',
-    description: '',
-    clientId: searchParams.get('clientId') || '',
-    technicianId: '',
-    address: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '09:00',
-    total: '',
-  });
+  // Inline creation modals
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [showAddTech, setShowAddTech] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newTechName, setNewTechName] = useState('');
+  const [newTechEmail, setNewTechEmail] = useState('');
+  const [addingClient, setAddingClient] = useState(false);
+  const [addingTech, setAddingTech] = useState(false);
 
+  // Load saved draft or start fresh
+  const loadDraft = useCallback((): FormData => {
+    if (isEdit) return getDefaultFormData(); // Don't load drafts when editing
+
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const draft: DraftData = JSON.parse(saved);
+        if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
+          return draft.formData;
+        }
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    } catch (e) {
+      console.warn('Failed to load draft:', e);
+    }
+    return getDefaultFormData();
+  }, [isEdit]);
+
+  function getDefaultFormData(): FormData {
+    return {
+      title: '',
+      description: '',
+      clientId: searchParams.get('clientId') || '',
+      technicianId: '',
+      address: '',
+      date: new Date().toISOString().split('T')[0],
+      time: '09:00',
+      total: '',
+      priority: 'normal',
+    };
+  }
+
+  const [formData, setFormData] = useState<FormData>(loadDraft);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
-  // Auto-focus refs for improved UX flow
+  // Auto-focus refs
   const titleRef = useRef<HTMLInputElement>(null);
   const clientRef = useRef<HTMLSelectElement>(null);
   const technicianRef = useRef<HTMLSelectElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
+
+  // Save draft on form changes (debounced)
+  useEffect(() => {
+    if (isEdit) return;
+
+    const timer = setTimeout(() => {
+      const draft: DraftData = {
+        formData,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData, isEdit]);
+
+  // Clear draft on successful save
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  };
 
   // Auto-focus title field on mount
   useEffect(() => {
@@ -81,19 +146,20 @@ const JobForm: React.FC = () => {
             const jobDate = new Date(job.date);
             setFormData({
               title: job.title || '',
-              description: job.description || '',
+              description: job.description || job.notes || '',
               clientId: job.clientId || '',
-              technicianId: job.technicianId || '',
+              technicianId: job.technicianId || job.techId || '',
               address: job.address || '',
               date: jobDate.toISOString().split('T')[0],
               time: jobDate.toTimeString().slice(0, 5),
-              total: job.total?.toString() || '',
+              total: job.total?.toString() || job.price?.toString() || '',
+              priority: job.priority || 'normal',
             });
           }
         }
 
-        // Auto-fill address from client
-        if (!isEdit && searchParams.get('clientId')) {
+        // Auto-fill address from client (only for new jobs without draft)
+        if (!isEdit && searchParams.get('clientId') && !formData.address) {
           const client = clientsData.find(c => c.id === searchParams.get('clientId'));
           if (client?.address) {
             setFormData(prev => ({ ...prev, address: client.address || '' }));
@@ -116,6 +182,8 @@ const JobForm: React.FC = () => {
     if (client?.address && !formData.address) {
       setFormData(prev => ({ ...prev, address: client.address || '' }));
     }
+    // Auto-focus next field
+    setTimeout(() => technicianRef.current?.focus(), 100);
   };
 
   const validateForm = (): boolean => {
@@ -153,13 +221,19 @@ const JobForm: React.FC = () => {
       const jobData: Partial<Job> = {
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
+        notes: formData.description.trim() || '',
         clientId: formData.clientId,
         technicianId: formData.technicianId || undefined,
+        techId: formData.technicianId || '',
         address: formData.address.trim() || undefined,
         date: dateTime.toISOString(),
         total: formData.total ? parseFloat(formData.total) : undefined,
+        price: formData.total ? parseFloat(formData.total) : undefined,
+        priority: formData.priority,
         status: 'pending',
       };
+
+      clearDraft();
 
       if (isEdit && id) {
         await updateJob(id, jobData);
@@ -182,6 +256,54 @@ const JobForm: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  // Inline client creation
+  const handleAddClient = async () => {
+    if (!newClientName.trim()) return;
+    setAddingClient(true);
+    try {
+      const newClient = await addClient({
+        name: newClientName.trim(),
+        email: newClientEmail.trim() || undefined,
+        phone: '',
+        address: '',
+      } as Omit<Client, 'id'>);
+      setClients(prev => [...prev, newClient]);
+      setFormData(prev => ({ ...prev, clientId: newClient.id }));
+      setShowAddClient(false);
+      setNewClientName('');
+      setNewClientEmail('');
+      setTimeout(() => technicianRef.current?.focus(), 100);
+    } catch (error) {
+      console.error('Failed to add client:', error);
+    } finally {
+      setAddingClient(false);
+    }
+  };
+
+  // Inline technician creation
+  const handleAddTech = async () => {
+    if (!newTechName.trim()) return;
+    setAddingTech(true);
+    try {
+      const newTech = await addTechnician({
+        name: newTechName.trim(),
+        email: newTechEmail.trim() || undefined,
+        phone: '',
+        status: 'Authorised',
+      } as Omit<Technician, 'id'>);
+      setTechnicians(prev => [...prev, newTech]);
+      setFormData(prev => ({ ...prev, technicianId: newTech.id }));
+      setShowAddTech(false);
+      setNewTechName('');
+      setNewTechEmail('');
+      setTimeout(() => dateRef.current?.focus(), 100);
+    } catch (error) {
+      console.error('Failed to add technician:', error);
+    } finally {
+      setAddingTech(false);
     }
   };
 
@@ -212,6 +334,47 @@ const JobForm: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <Card className="max-w-2xl">
             <div className="space-y-6">
+              {/* Draft indicator */}
+              {!isEdit && formData.title && (
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="material-symbols-outlined text-sm">save</span>
+                  Draft auto-saved
+                </div>
+              )}
+
+              {/* Priority Selection */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-3">
+                  Priority
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, priority: 'normal' }))}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                      formData.priority === 'normal'
+                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/10'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg">schedule</span>
+                    Normal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, priority: 'urgent' }))}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                      formData.priority === 'urgent'
+                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/10'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg">priority_high</span>
+                    Urgent
+                  </button>
+                </div>
+              </div>
+
               {/* Job Title */}
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
@@ -223,76 +386,103 @@ const JobForm: React.FC = () => {
                   type="text"
                   value={formData.title}
                   onChange={handleChange('title')}
-                  onKeyDown={(e) => e.key === 'Enter' && clientRef.current?.focus()}
-                  placeholder="e.g. Lawn Mowing, Electrical Inspection"
-                  className={`
-                    w-full px-5 py-4 bg-slate-800 border rounded-xl text-white placeholder-slate-500
-                    focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
-                    ${errors.title ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
-                  `}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), clientRef.current?.focus())}
+                  placeholder="e.g. Boiler Service, Roof Inspection"
+                  className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                    errors.title ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                  }`}
                 />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-400">{errors.title}</p>
-                )}
+                {errors.title && <p className="mt-1 text-sm text-red-400">{errors.title}</p>}
               </div>
 
-              {/* Client */}
+              {/* Client with inline add */}
               <div>
-                <label htmlFor="clientId" className="block text-sm font-medium text-slate-300 mb-2">
-                  Client <span className="text-red-400">*</span>
-                </label>
-                <select
-                  ref={clientRef}
-                  id="clientId"
-                  value={formData.clientId}
-                  onChange={(e) => {
-                    handleClientChange(e.target.value);
-                    if (e.target.value) technicianRef.current?.focus();
-                  }}
-                  className={`
-                    w-full px-5 py-4 bg-slate-800 border rounded-xl text-white
-                    focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
-                    ${errors.clientId ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
-                  `}
-                >
-                  <option value="">Select a client...</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.clientId && (
-                  <p className="mt-1 text-sm text-red-400">{errors.clientId}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="clientId" className="text-sm font-medium text-slate-300">
+                    Client <span className="text-red-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddClient(true)}
+                    className="text-xs text-primary hover:text-primary-hover font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    New Client
+                  </button>
+                </div>
+                {clients.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddClient(true)}
+                    className="w-full px-4 py-3 bg-slate-800 border border-dashed border-white/20 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    Add your first client
+                  </button>
+                ) : (
+                  <select
+                    ref={clientRef}
+                    id="clientId"
+                    value={formData.clientId}
+                    onChange={(e) => handleClientChange(e.target.value)}
+                    className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.clientId ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    }`}
+                  >
+                    <option value="">Select a client...</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>{client.name}</option>
+                    ))}
+                  </select>
                 )}
+                {errors.clientId && <p className="mt-1 text-sm text-red-400">{errors.clientId}</p>}
               </div>
 
-              {/* Technician */}
+              {/* Technician with inline add */}
               <div>
-                <label htmlFor="technicianId" className="block text-sm font-medium text-slate-300 mb-2">
-                  Assign Technician
-                </label>
-                <select
-                  ref={technicianRef}
-                  id="technicianId"
-                  value={formData.technicianId}
-                  onChange={(e) => {
-                    handleChange('technicianId')(e);
-                    dateRef.current?.focus();
-                  }}
-                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="">Assign later...</option>
-                  {technicians.map(tech => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="technicianId" className="text-sm font-medium text-slate-300">
+                    Assign Technician
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTech(true)}
+                    className="text-xs text-primary hover:text-primary-hover font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    New Tech
+                  </button>
+                </div>
+                {technicians.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTech(true)}
+                    className="w-full px-4 py-3 bg-slate-800 border border-dashed border-white/20 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    Add your first technician
+                  </button>
+                ) : (
+                  <select
+                    ref={technicianRef}
+                    id="technicianId"
+                    value={formData.technicianId}
+                    onChange={(e) => {
+                      handleChange('technicianId')(e);
+                      if (e.target.value) setTimeout(() => dateRef.current?.focus(), 100);
+                    }}
+                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  >
+                    <option value="">Assign later...</option>
+                    {technicians.map(tech => (
+                      <option key={tech.id} value={tech.id}>{tech.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* Date & Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="date" className="block text-sm font-medium text-slate-300 mb-2">
                     Date <span className="text-red-400">*</span>
@@ -303,15 +493,11 @@ const JobForm: React.FC = () => {
                     type="date"
                     value={formData.date}
                     onChange={handleChange('date')}
-                    className={`
-                      w-full px-5 py-4 bg-slate-800 border rounded-xl text-white
-                      focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
-                      ${errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
-                    `}
+                    className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    }`}
                   />
-                  {errors.date && (
-                    <p className="mt-1 text-sm text-red-400">{errors.date}</p>
-                  )}
+                  {errors.date && <p className="mt-1 text-sm text-red-400">{errors.date}</p>}
                 </div>
                 <div>
                   <label htmlFor="time" className="block text-sm font-medium text-slate-300 mb-2">
@@ -323,9 +509,9 @@ const JobForm: React.FC = () => {
                     value={formData.time}
                     onChange={(e) => {
                       handleChange('time')(e);
-                      addressRef.current?.focus();
+                      setTimeout(() => addressRef.current?.focus(), 100);
                     }}
-                    className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
               </div>
@@ -342,7 +528,7 @@ const JobForm: React.FC = () => {
                   value={formData.address}
                   onChange={handleChange('address')}
                   placeholder="Job location address"
-                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
 
@@ -356,8 +542,8 @@ const JobForm: React.FC = () => {
                   value={formData.description}
                   onChange={handleChange('description')}
                   placeholder="Job details, scope of work, special instructions..."
-                  rows={4}
-                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 resize-none"
+                  rows={3}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                 />
               </div>
 
@@ -367,46 +553,165 @@ const JobForm: React.FC = () => {
                   Total Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">£</span>
                   <input
                     id="total"
                     type="text"
                     value={formData.total}
                     onChange={handleChange('total')}
                     placeholder="0.00"
-                    className={`
-                      w-full pl-10 pr-5 py-4 bg-slate-800 border rounded-xl text-white placeholder-slate-500
-                      focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
-                      ${errors.total ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
-                    `}
+                    className={`w-full pl-8 pr-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.total ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    }`}
                   />
                 </div>
-                {errors.total && (
-                  <p className="mt-1 text-sm text-red-400">{errors.total}</p>
-                )}
+                {errors.total && <p className="mt-1 text-sm text-red-400">{errors.total}</p>}
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-white/5">
-                <ActionButton
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={() => navigate(-1)}
                   disabled={saving}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   Cancel
-                </ActionButton>
-                <ActionButton
-                  variant="primary"
+                </button>
+                <button
                   type="submit"
-                  loading={saving}
-                  icon="check"
+                  disabled={saving}
+                  className={`flex-[2] py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    formData.priority === 'urgent'
+                      ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'
+                      : 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20'
+                  }`}
                 >
-                  {isEdit ? 'Save Changes' : 'Create Job'}
-                </ActionButton>
+                  {saving ? (
+                    <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">check</span>
+                      {isEdit ? 'Save Changes' : 'Create Job'}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </Card>
         </form>
+
+        {/* Add Client Modal */}
+        <Modal isOpen={showAddClient} onClose={() => setShowAddClient(false)} title="Quick Add Client" size="sm">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Client Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={newClientName}
+                onChange={(e) => setNewClientName(e.target.value)}
+                placeholder="Company or person name"
+                autoFocus
+                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddClient()}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Email (optional)
+              </label>
+              <input
+                type="email"
+                value={newClientEmail}
+                onChange={(e) => setNewClientEmail(e.target.value)}
+                placeholder="client@company.com"
+                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAddClient(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddClient}
+                disabled={!newClientName.trim() || addingClient}
+                className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {addingClient ? (
+                  <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Add Client
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Add Technician Modal */}
+        <Modal isOpen={showAddTech} onClose={() => setShowAddTech(false)} title="Quick Add Technician" size="sm">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Technician Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={newTechName}
+                onChange={(e) => setNewTechName(e.target.value)}
+                placeholder="Full name"
+                autoFocus
+                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Email (optional)
+              </label>
+              <input
+                type="email"
+                value={newTechEmail}
+                onChange={(e) => setNewTechEmail(e.target.value)}
+                placeholder="tech@company.com"
+                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAddTech(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddTech}
+                disabled={!newTechName.trim() || addingTech}
+                className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {addingTech ? (
+                  <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Add Tech
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
       </PageContent>
     </div>
   );
