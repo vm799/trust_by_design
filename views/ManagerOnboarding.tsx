@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
+import { hapticFeedback, celebrateSuccess, showToast } from '../lib/microInteractions';
 
 /**
  * Manager Onboarding Wizard
@@ -76,6 +77,7 @@ const ManagerOnboarding: React.FC = () => {
   }, [step]);
 
   const handleSafetyToggle = (id: string) => {
+    hapticFeedback('light');
     setCompanyData(prev => ({
       ...prev,
       defaultSafetyRequirements: prev.defaultSafetyRequirements.includes(id)
@@ -89,6 +91,7 @@ const ManagerOnboarding: React.FC = () => {
       if (!companyData.companyName.trim()) {
         return; // Validation handled by required attribute
       }
+      hapticFeedback('light');
       setStep(2);
     } else if (step === 2) {
       // Save and proceed
@@ -135,8 +138,12 @@ const ManagerOnboarding: React.FC = () => {
 
         localStorage.setItem('jobproof_onboarding_v4', 'true');
         setStep(3);
+
+        // PhD-Level Delight: Celebrate onboarding completion!
+        celebrateSuccess();
       } catch (err) {
         console.error('Failed to save onboarding:', err);
+        showToast('Failed to save settings. Please try again.', 'error');
       } finally {
         setSaving(false);
       }

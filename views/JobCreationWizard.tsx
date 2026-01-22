@@ -5,6 +5,7 @@ import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink } from '../lib/db';
 import { getMagicLinkUrl } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
+import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
 
 /**
  * Job Creation Wizard - UX Spec Compliant
@@ -139,12 +140,14 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
   const handleNext = () => {
     if (canProceed() && step < 5) {
+      hapticFeedback('light');
       setStep(step + 1);
     }
   };
 
   const handleBack = () => {
     if (step > 1) {
+      hapticFeedback('light');
       setStep(step - 1);
     }
   };
@@ -220,9 +223,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
       onAddJob(createdJob);
       setShowSuccessModal(true);
+
+      // PhD-Level Delight: Celebrate successful dispatch!
+      celebrateSuccess();
     } catch (error) {
       console.error('Failed to create job:', error);
-      alert('Failed to create job. Please try again.');
+      showToast('Failed to create job. Please try again.', 'error');
     } finally {
       setIsCreating(false);
     }
@@ -230,7 +236,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
   const copyMagicLink = () => {
     navigator.clipboard.writeText(magicLinkUrl || getMagicLinkUrl(createdJobId));
-    alert('Magic link copied!');
+    hapticFeedback('success');
+    showToast('Magic link copied to clipboard!', 'success');
   };
 
   const selectedClient = clients.find(c => c.id === formData.clientId);
