@@ -224,8 +224,20 @@ serve(async (req) => {
         throw new Error('Failed to sign with RSA key');
       }
     } else {
-      // DEV/FALLBACK: Use HMAC-SHA256
-      const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION';
+      // HMAC Fallback (Legacy seals only - requires explicit SEAL_SECRET_KEY)
+      const secretKey = Deno.env.get('SEAL_SECRET_KEY');
+
+      if (!secretKey) {
+        console.error('CRITICAL: Neither SEAL_PRIVATE_KEY nor SEAL_SECRET_KEY configured');
+        throw new Error(
+          'Cryptographic sealing not configured. ' +
+          'Set SEAL_PRIVATE_KEY for RSA-2048 production sealing. ' +
+          'HMAC fallback has been disabled for security.'
+        );
+      }
+
+      console.warn('Using HMAC-SHA256 fallback - RSA-2048 recommended for production');
+
       const keyData = encoder.encode(secretKey);
       const cryptoKey = await crypto.subtle.importKey(
         'raw',

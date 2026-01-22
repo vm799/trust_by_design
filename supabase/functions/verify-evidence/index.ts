@@ -140,8 +140,20 @@ serve(async (req) => {
         isSignatureValid = false;
       }
     } else {
-      // HMAC Fallback (Legacy/Dev)
-      const secretKey = Deno.env.get('SEAL_SECRET_KEY') || 'default-secret-key-CHANGE-IN-PRODUCTION';
+      // HMAC Fallback (Legacy seals only - requires explicit SEAL_SECRET_KEY)
+      const secretKey = Deno.env.get('SEAL_SECRET_KEY');
+
+      if (!secretKey) {
+        console.error('CRITICAL: SEAL_SECRET_KEY not configured for HMAC verification');
+        throw new Error(
+          'Cannot verify HMAC seal: SEAL_SECRET_KEY not configured. ' +
+          'Legacy HMAC seals require explicit secret key. ' +
+          'RSA-2048 seals recommended for production.'
+        );
+      }
+
+      console.warn('Verifying HMAC-SHA256 seal - RSA-2048 recommended for production');
+
       const keyData = encoder.encode(secretKey);
       const cryptoKey = await crypto.subtle.importKey(
         'raw',
