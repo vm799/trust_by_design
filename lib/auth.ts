@@ -158,16 +158,35 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
 };
 
 /**
- * Sign in with Magic Link
+ * V1 MVP: Sign in with Magic Link
+ *
+ * This is the PRIMARY authentication method for V1.
+ * NO passwords, NO Google OAuth - Magic Link only.
+ *
+ * @param email - User's email address
+ * @param signupData - Optional workspace data for signup flow
  */
-export const signInWithMagicLink = async (email: string): Promise<AuthResult> => {
+export const signInWithMagicLink = async (
+  email: string,
+  signupData?: { workspaceName?: string; fullName?: string }
+): Promise<AuthResult> => {
   const supabase = getSupabase();
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
+
+  // Build redirect URL with signup data if provided
+  let redirectUrl = getAuthRedirectUrl('/');
+  if (signupData?.workspaceName) {
+    const params = new URLSearchParams();
+    params.set('workspace', signupData.workspaceName);
+    if (signupData.fullName) params.set('name', signupData.fullName);
+    params.set('signup', 'true');
+    redirectUrl = getAuthRedirectUrl(`/auth/setup?${params.toString()}`);
+  }
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getAuthRedirectUrl('/'), // Let router decide destination
+      emailRedirectTo: redirectUrl,
     },
   });
 
@@ -177,6 +196,10 @@ export const signInWithMagicLink = async (email: string): Promise<AuthResult> =>
 
 /**
  * Sign in with Google OAuth
+ *
+ * @deprecated V2 FEATURE ONLY - Not used in V1 MVP
+ * V1 uses Magic Link authentication exclusively.
+ * This function is preserved for V2 implementation.
  */
 export const signInWithGoogle = async (): Promise<AuthResult> => {
   const supabase = getSupabase();

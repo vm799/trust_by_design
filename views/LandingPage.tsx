@@ -27,11 +27,11 @@ const LandingPage: React.FC = () => {
             Operational Verification Engine v2.0
           </div>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
-            Verifiable Field Evidence<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-400">You Can Trust</span>
+            Get Proof.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-400">Get Paid.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Capture, timestamp, and cryptographically seal on-site work with mobile-first offline support. Eliminate payment disputes forever.
+            Capture timestamped, geo-verified evidence of completed work. Eliminate payment disputes. Magic link access — no app install required.
           </p>
 
           {/* Benefits Grid */}
