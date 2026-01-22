@@ -74,6 +74,30 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
       items: job.photos.filter(p => p.type === type)
    })).filter(g => g.items.length > 0);
 
+   // Chain-of-Custody Timeline Data
+   const firstPhotoTimestamp = job.photos.length > 0
+      ? job.photos.reduce((earliest, photo) => {
+         const photoTime = new Date(photo.timestamp).getTime();
+         return photoTime < new Date(earliest).getTime() ? photo.timestamp : earliest;
+      }, job.photos[0].timestamp)
+      : null;
+
+   const formatTimestamp = (timestamp: string | undefined) => {
+      if (!timestamp) return null;
+      const date = new Date(timestamp);
+      return {
+         date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+         time: date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      };
+   };
+
+   const timelineEvents = {
+      created: formatTimestamp(job.date),
+      firstCapture: formatTimestamp(firstPhotoTimestamp || undefined),
+      sealed: formatTimestamp(job.sealedAt),
+      verified: job.status === 'Submitted' ? formatTimestamp(job.completedAt) : null,
+   };
+
    const handleGenerateInvoice = () => {
       if (!onGenerateInvoice) return;
       const inv: Invoice = {
@@ -127,18 +151,46 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                   </div>
                </div>
 
-               {/* Protocol Timeline */}
+               {/* Protocol Timeline - Enhanced Chain of Custody */}
                <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 space-y-6 relative z-10">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Chain of Custody</h3>
-                  <div className="flex justify-between items-start gap-4">
-                     <TimelineStep label="Dispatch" time={job.date} status="Verified" icon="send" />
-                     <div className="flex-1 h-px bg-slate-200 mt-4"></div>
-                     <TimelineStep label="Safety" time="On-Site" status="Pass" icon="security" />
-                     <div className="flex-1 h-px bg-slate-200 mt-4"></div>
-                     <TimelineStep label="Evidence" time={`${job.photos.length} items`} status="Stored" icon="photo_library" />
-                     <div className="flex-1 h-px bg-slate-200 mt-4"></div>
-                     <TimelineStep label="Sign-off" time={job.completedAt ? "Authenticated" : "Pending"} status={job.completedAt ? "Sealed" : "Waiting"} icon="verified" active={!!job.completedAt} />
+                  <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Chain of Custody</h3>
+                     <span className="text-[8px] font-bold text-slate-300 uppercase">Operational Spine</span>
                   </div>
+                  <div className="flex justify-between items-start gap-4">
+                     <TimelineStep
+                        label="Dispatched"
+                        time={timelineEvents.created ? `${timelineEvents.created.date}` : job.date}
+                        status={timelineEvents.created ? timelineEvents.created.time : 'Created'}
+                        icon="send"
+                        active={true}
+                     />
+                     <div className={`flex-1 h-px mt-4 ${timelineEvents.firstCapture ? 'bg-primary' : 'bg-slate-200'}`}></div>
+                     <TimelineStep
+                        label="Capture"
+                        time={timelineEvents.firstCapture ? `${timelineEvents.firstCapture.date}` : 'Pending'}
+                        status={timelineEvents.firstCapture ? `${timelineEvents.firstCapture.time} • ${job.photos.length} items` : 'Awaiting'}
+                        icon="photo_camera"
+                        active={!!timelineEvents.firstCapture}
+                     />
+                     <div className={`flex-1 h-px mt-4 ${timelineEvents.sealed ? 'bg-primary' : 'bg-slate-200'}`}></div>
+                     <TimelineStep
+                        label="Sealed"
+                        time={timelineEvents.sealed ? `${timelineEvents.sealed.date}` : 'Pending'}
+                        status={timelineEvents.sealed ? timelineEvents.sealed.time : 'Awaiting'}
+                        icon="lock"
+                        active={!!timelineEvents.sealed}
+                     />
+                     <div className={`flex-1 h-px mt-4 ${timelineEvents.verified ? 'bg-success' : 'bg-slate-200'}`}></div>
+                     <TimelineStep
+                        label="Verified"
+                        time={timelineEvents.verified ? `${timelineEvents.verified.date}` : 'Pending'}
+                        status={timelineEvents.verified ? timelineEvents.verified.time : 'Awaiting'}
+                        icon="verified"
+                        active={!!timelineEvents.verified}
+                     />
+                  </div>
+                  {/* TODO: Add delivery/client signoff when JobDispatch data available */}
                </div>
 
                {/* Phase C.3: Cryptographic Seal Badge */}
