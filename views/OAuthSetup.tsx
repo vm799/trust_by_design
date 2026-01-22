@@ -65,8 +65,9 @@ const OAuthSetup: React.FC = () => {
                 .single();
 
             if (profile) {
-                window.location.href = '/#/admin';
-                window.location.reload();
+                // CRITICAL FIX: Use navigate instead of window.location.reload
+                // Hard reload resets auth state and causes redirect loops
+                navigate('/admin', { replace: true });
                 return;
             }
 
@@ -122,9 +123,9 @@ const OAuthSetup: React.FC = () => {
                 throw new Error(workspaceError.message || 'Workspace creation failed');
             }
 
-            // Success - reload app state or navigate
-            window.location.href = '/#/admin';
-            window.location.reload();
+            // CRITICAL FIX: Use navigate instead of hard reload
+            // This preserves auth state and prevents redirect loops
+            navigate('/admin', { replace: true });
         } catch (err) {
             console.error('Setup error:', err);
             setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');

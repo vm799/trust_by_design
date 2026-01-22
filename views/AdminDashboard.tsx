@@ -116,13 +116,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
 
   // PERFORMANCE FIX: Use AuthContext for email verification check
   const { session } = useAuth();
+
+  // CRITICAL FIX: Extract primitive value to prevent re-renders on token refresh
+  // The session object changes reference every 10-50 minutes on token refresh
+  // Using a primitive (string | undefined) only triggers effect on actual change
+  const emailConfirmedAt = session?.user?.email_confirmed_at || session?.user?.confirmed_at;
+
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   useEffect(() => {
-    // PERFORMANCE FIX: Use session from AuthContext instead of getUser()
-    if (session?.user) {
-      setIsEmailVerified(!!(session.user.email_confirmed_at || session.user.confirmed_at));
-    }
-  }, [session]);
+    setIsEmailVerified(!!emailConfirmedAt);
+  }, [emailConfirmedAt]); // Primitive dependency, not object
 
   // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
   // Uses memoized job IDs to prevent unnecessary reloads
