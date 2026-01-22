@@ -1,31 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { signInWithMagicLink } from '../lib/auth';
-
-interface AuthViewProps {
-  type: 'login' | 'signup';
-  onAuth: () => void;
-}
 
 /**
  * V1 MVP Auth View - Magic Link Only
  *
- * NO Google OAuth (V2 feature)
- * NO passwords (Magic Link only for V1)
+ * Simplified unified flow:
+ * - User enters email, receives magic link
+ * - Backend auto-creates workspace for new users
+ * - No separate "signup" vs "login" complexity
+ *
  * British English throughout
  */
-const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
-  const navigate = useNavigate();
+const AuthView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Form state
   const [email, setEmail] = useState('');
-  const [workspaceName, setWorkspaceName] = useState('');
-  const [fullName, setFullName] = useState('');
 
-  // Auto-focus refs
   const emailRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus email on mount
@@ -40,21 +32,13 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
     setSuccessMessage(null);
 
     try {
-      // For signup, we still send magic link but with workspace context
-      const result = await signInWithMagicLink(email, type === 'signup' ? {
-        workspaceName,
-        fullName
-      } : undefined);
+      const result = await signInWithMagicLink(email);
 
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to send magic link');
       }
 
-      setSuccessMessage(
-        type === 'signup'
-          ? `Magic link sent to ${email}! Click the link to create your workspace.`
-          : `Magic link sent to ${email}! Check your inbox to sign in.`
-      );
+      setSuccessMessage(`Magic link sent to ${email}! Check your inbox.`);
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send magic link');
@@ -117,7 +101,7 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
                 <div>
                   <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Start Working</h3>
                   <p className="text-slate-400 text-xs font-medium leading-relaxed">
-                    {type === 'signup' ? 'Your workspace will be ready to dispatch jobs.' : 'Access your operations hub instantly.'}
+                    Access your operations hub instantly.
                   </p>
                 </div>
               </div>
@@ -156,12 +140,10 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-              {type === 'signup' ? 'Create Workspace' : 'Sign In'}
+              Manager Sign In
             </h2>
             <p className="text-slate-300 text-sm font-medium">
-              {type === 'signup'
-                ? 'Set up your operations hub with magic link access.'
-                : 'Enter your email to receive a secure sign-in link.'}
+              Enter your email to receive a secure sign-in link.
             </p>
           </div>
         </div>
@@ -185,35 +167,9 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             </div>
           </div>
 
-          {type === 'signup' && (
-            <>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Organisation Name *</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Sterling Field Ops"
-                  className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
-                  value={workspaceName}
-                  onChange={e => setWorkspaceName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Your Full Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Alex Sterling"
-                  className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-              {type === 'signup' ? 'Admin Email *' : 'Email Address *'}
+              Email Address *
             </label>
             <input
               ref={emailRef}
@@ -224,11 +180,14 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
+            <p className="text-slate-500 text-[10px] font-medium">
+              New users will have a workspace created automatically.
+            </p>
           </div>
 
           <button
             type="submit"
-            disabled={loading || !email || (type === 'signup' && !workspaceName)}
+            disabled={loading || !email}
             className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[52px]"
           >
             {loading ? (
@@ -236,17 +195,14 @@ const AuthView: React.FC<AuthViewProps> = ({ type, onAuth }) => {
             ) : (
               <>
                 <span className="material-symbols-outlined text-lg">send</span>
-                {type === 'signup' ? 'Create Workspace' : 'Send Magic Link'}
+                Send Magic Link
               </>
             )}
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-300 font-black uppercase tracking-widest">
-          {type === 'login' ? "Need a workspace?" : "Already have an account?"}
-          <Link to={type === 'login' ? '/auth/signup' : '/auth/login'} className="text-primary font-black ml-2 hover:underline">
-            {type === 'login' ? 'Create One' : 'Sign In'}
-          </Link>
+        <p className="text-center text-xs text-slate-400 font-medium">
+          Technician? Use the link sent by your manager to access jobs.
         </p>
 
         {/* Legal Disclaimer */}

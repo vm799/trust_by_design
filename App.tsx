@@ -494,7 +494,7 @@ const AppContent: React.FC = () => {
         <Route path="/track-lookup" element={<TrackLookup />} />
 
         {/* V1 MVP: Magic Link Only Authentication */}
-        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
@@ -516,9 +516,9 @@ const AppContent: React.FC = () => {
           ) : <Navigate to="/auth" replace />
         } />
 
-        {/* V1 MVP: Magic Link Auth Routes */}
-        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
-        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="signup" onAuth={handleLogin} />} />
+        {/* V1 MVP: Magic Link Auth Routes - All redirect to unified auth */}
+        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
 
         {/* Onboarding & Setup */}
         <Route path="/setup" element={
