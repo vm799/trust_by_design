@@ -421,10 +421,9 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <AuthProvider workspaceId={user?.workspace?.id || null}>
-      <HashRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+    <HashRouter>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
           <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
         <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
@@ -538,9 +537,9 @@ const AppContent: React.FC = () => {
 
         {/* Fallbacks */}
         <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </HashRouter>
+        </Routes>
+      </Suspense>
+    </HashRouter>
   );
 };
 

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 import { getSupabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -106,20 +107,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     return localStorage.getItem('jobproof_checklist_dismissed') === 'true';
   });
 
-  // Check email verification status
+  // PERFORMANCE FIX: Use AuthContext for email verification check
+  const { session } = useAuth();
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   useEffect(() => {
-    const checkEmailVerification = async () => {
-      const supabase = getSupabase();
-      if (!supabase) return;
-
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setIsEmailVerified(!!(authUser.email_confirmed_at || authUser.confirmed_at));
-      }
-    };
-    checkEmailVerification();
-  }, [user]);
+    // PERFORMANCE FIX: Use session from AuthContext instead of getUser()
+    if (session?.user) {
+      setIsEmailVerified(!!(session.user.email_confirmed_at || session.user.confirmed_at));
+    }
+  }, [session]);
 
   // Load photo thumbnails from IndexedDB
   useEffect(() => {
