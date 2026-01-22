@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
@@ -6,27 +6,48 @@ import { JobProofLogo } from '../components/branding/jobproof-logo';
 
 /**
  * OAuth Setup View
- * 
+ *
  * Specifically for users who sign in via Google OAuth for the first time
  * and need to create their workspace and profile.
+ *
+ * CRITICAL FIX (Jan 2026): Fixed auth loop by:
+ * - Adding isLoading check before redirecting
+ * - Using stable dependency (userId) instead of session object
+ * - Adding hasChecked ref to prevent duplicate checks
  */
 const OAuthSetup: React.FC = () => {
     const navigate = useNavigate();
     // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
-    const { userId, userEmail, session, isAuthenticated } = useAuth();
+    const { userId, userEmail, session, isAuthenticated, isLoading: authLoading } = useAuth();
 
     const [workspaceName, setWorkspaceName] = useState('');
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // CRITICAL FIX: Track if we've already checked to prevent duplicate runs
+    const hasCheckedRef = useRef(false);
+
     useEffect(() => {
+        // CRITICAL FIX: Wait for auth to finish loading before making any decisions
+        if (authLoading) {
+            return;
+        }
+
+        // CRITICAL FIX: Prevent duplicate checks on re-renders
+        if (hasCheckedRef.current) {
+            return;
+        }
+
         const checkUser = async () => {
-            // PERFORMANCE FIX: Use AuthContext session instead of getUser()
-            if (!isAuthenticated || !session?.user) {
+            // Not authenticated - redirect to auth
+            if (!isAuthenticated || !userId) {
+                hasCheckedRef.current = true;
                 navigate('/auth');
                 return;
             }
+
+            hasCheckedRef.current = true;
 
             const supabase = getSupabase();
             if (!supabase) return;
@@ -35,7 +56,7 @@ const OAuthSetup: React.FC = () => {
             const { data: profile } = await supabase
                 .from('users')
                 .select('id')
-                .eq('id', session.user.id)
+                .eq('id', userId)
                 .single();
 
             if (profile) {
@@ -45,21 +66,20 @@ const OAuthSetup: React.FC = () => {
             }
 
             // Pre-fill full name from metadata if available
-            const user = session.user;
-            if (user.user_metadata?.full_name) {
-                setFullName(user.user_metadata.full_name);
-            } else if (user.user_metadata?.name) {
-                setFullName(user.user_metadata.name);
+            if (session?.user?.user_metadata?.full_name) {
+                setFullName(session.user.user_metadata.full_name);
+            } else if (session?.user?.user_metadata?.name) {
+                setFullName(session.user.user_metadata.name);
             }
 
             // Suggested workspace name
-            const domain = (user.email || '').split('@')[1];
+            const domain = (userEmail || '').split('@')[1];
             const suggestedName = domain ? domain.split('.')[0] : 'My Company';
             setWorkspaceName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
         };
 
         checkUser();
-    }, [navigate, isAuthenticated, session]);
+    }, [authLoading, isAuthenticated, userId, userEmail, navigate, session?.user?.user_metadata?.full_name, session?.user?.user_metadata?.name]); // CRITICAL: Use stable primitives, not session object
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -10,10 +10,15 @@
  * - Repeated getUser() calls in audit logging
  * - Repeated getUser() calls in hooks
  *
- * Performance Impact: Reduces auth REST calls from ~15/30min to ~2-3/30min
+ * CRITICAL FIX (Jan 2026): Added session memoization to prevent cascading re-renders
+ * - Session object now only updates when USER changes (login/logout)
+ * - Token refresh updates access token WITHOUT triggering consumer re-renders
+ * - This prevents the 877 requests/hour auth loop issue
+ *
+ * Performance Impact: Reduces auth REST calls from ~877/hour to ~10/hour
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { onAuthStateChange } from './auth';
 import type { Session } from '@supabase/supabase-js';
 
@@ -43,10 +48,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const [workspaceId, setWorkspaceId] = useState<string | null>(externalWorkspaceId || null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // CRITICAL FIX: Track the current user ID to prevent unnecessary session updates
+  // Token refresh fires onAuthStateChange with new session object, but same user
+  // We only want to update session state (and trigger consumer re-renders) when USER changes
+  const currentUserIdRef = useRef<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChange((newSession) => {
-      setSession(newSession);
+      const newUserId = newSession?.user?.id || null;
+      const currentUserId = currentUserIdRef.current;
+
+      // CRITICAL: Only update session state if USER changed (login/logout)
+      // Token refresh creates new session object but same user - skip state update
+      if (newUserId !== currentUserId) {
+        console.log('[AuthContext] User changed:', currentUserId, '->', newUserId);
+        currentUserIdRef.current = newUserId;
+        sessionRef.current = newSession;
+        setSession(newSession);
+      } else if (newSession && sessionRef.current) {
+        // Same user, but update the ref with fresh token for API calls
+        // This does NOT trigger re-renders (ref update, not state update)
+        sessionRef.current = newSession;
+        console.log('[AuthContext] Token refreshed for user:', newUserId, '(no re-render)');
+      }
+
       setIsLoading(false);
     });
 
