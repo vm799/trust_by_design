@@ -249,9 +249,9 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
  * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getJobs = async (workspaceId: string): Promise<DbResult<Job[]>> => {
-  // Use request deduplication with 10 second cache
+  // Use request deduplication with 60 second cache to reduce API calls
   const cacheKey = generateCacheKey('getJobs', workspaceId);
-  return requestCache.dedupe(cacheKey, () => _getJobsImpl(workspaceId), 10000);
+  return requestCache.dedupe(cacheKey, () => _getJobsImpl(workspaceId), 60000);
 };
 
 /**
@@ -339,9 +339,9 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
  * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getJob = async (jobId: string, workspaceId: string): Promise<DbResult<Job>> => {
-  // Use request deduplication with 5 second cache
+  // Use request deduplication with 30 second cache to reduce API calls
   const cacheKey = generateCacheKey('getJob', jobId, workspaceId);
-  return requestCache.dedupe(cacheKey, () => _getJobImpl(jobId, workspaceId), 5000);
+  return requestCache.dedupe(cacheKey, () => _getJobImpl(jobId, workspaceId), 30000);
 };
 
 /**
@@ -916,9 +916,9 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
  * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getClients = async (workspaceId: string): Promise<DbResult<Client[]>> => {
-  // Use request deduplication with 10 second cache
+  // Use request deduplication with 60 second cache to reduce API calls
   const cacheKey = generateCacheKey('getClients', workspaceId);
-  return requestCache.dedupe(cacheKey, () => _getClientsImpl(workspaceId), 10000);
+  return requestCache.dedupe(cacheKey, () => _getClientsImpl(workspaceId), 60000);
 };
 
 /**
@@ -1158,9 +1158,9 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
  * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getTechnicians = async (workspaceId: string): Promise<DbResult<Technician[]>> => {
-  // Use request deduplication with 10 second cache
+  // Use request deduplication with 60 second cache to reduce API calls
   const cacheKey = generateCacheKey('getTechnicians', workspaceId);
-  return requestCache.dedupe(cacheKey, () => _getTechniciansImpl(workspaceId), 10000);
+  return requestCache.dedupe(cacheKey, () => _getTechniciansImpl(workspaceId), 60000);
 };
 
 /**

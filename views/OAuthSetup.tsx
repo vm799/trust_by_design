@@ -20,6 +20,11 @@ const OAuthSetup: React.FC = () => {
     // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
     const { userId, userEmail, session, isAuthenticated, isLoading: authLoading } = useAuth();
 
+    // CRITICAL FIX: Extract metadata values to stable primitives OUTSIDE useEffect
+    // This prevents re-renders when session object reference changes on token refresh
+    const metadataFullName = session?.user?.user_metadata?.full_name || '';
+    const metadataName = session?.user?.user_metadata?.name || '';
+
     const [workspaceName, setWorkspaceName] = useState('');
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -65,11 +70,11 @@ const OAuthSetup: React.FC = () => {
                 return;
             }
 
-            // Pre-fill full name from metadata if available
-            if (session?.user?.user_metadata?.full_name) {
-                setFullName(session.user.user_metadata.full_name);
-            } else if (session?.user?.user_metadata?.name) {
-                setFullName(session.user.user_metadata.name);
+            // Pre-fill full name from metadata if available (use stable primitives)
+            if (metadataFullName) {
+                setFullName(metadataFullName);
+            } else if (metadataName) {
+                setFullName(metadataName);
             }
 
             // Suggested workspace name
@@ -79,7 +84,8 @@ const OAuthSetup: React.FC = () => {
         };
 
         checkUser();
-    }, [authLoading, isAuthenticated, userId, userEmail, navigate, session?.user?.user_metadata?.full_name, session?.user?.user_metadata?.name]); // CRITICAL: Use stable primitives, not session object
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading, isAuthenticated, userId]); // CRITICAL: Only stable primitives - no session object or metadata
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
