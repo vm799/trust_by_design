@@ -19,7 +19,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   // Token-based access (Phase C.2)
   const [job, setJob] = useState<Job | undefined>(undefined);
   const [tokenError, setTokenError] = useState<string | null>(null);
+  const [tokenErrorType, setTokenErrorType] = useState<'expired' | 'sealed' | 'invalid' | 'not_found' | null>(null);
   const [isLoadingJob, setIsLoadingJob] = useState(true);
+  const [jobDateWarning, setJobDateWarning] = useState<'future' | 'overdue' | null>(null);
+  const [overdueByDays, setOverdueByDays] = useState<number>(0);
 
   // Load job via token or legacy jobId
   useEffect(() => {
@@ -51,6 +54,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               // Verify jobId from URL matches the token's job_id
               if (job_id !== jobIdFromUrl) {
                 setTokenError('Token does not match the requested job');
+                setTokenErrorType('invalid');
                 setIsLoadingJob(false);
                 return;
               }
@@ -72,7 +76,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 }
               }
             } else {
-              setTokenError(validation.error || 'Invalid or expired link');
+              // Determine error type from validation error message
+              const errorMsg = validation.error || 'Invalid or expired link';
+              if (errorMsg.toLowerCase().includes('expired')) {
+                setTokenErrorType('expired');
+              } else {
+                setTokenErrorType('invalid');
+              }
+              setTokenError(errorMsg);
             }
           }
         } else if (token) {
@@ -136,9 +147,28 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         }
 
         if (loadedJob) {
+          // DATE VALIDATION: Check if job is scheduled for today, future, or overdue
+          if (loadedJob.date) {
+            const jobDate = new Date(loadedJob.date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            jobDate.setHours(0, 0, 0, 0);
+
+            const daysDiff = Math.floor((today.getTime() - jobDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (daysDiff < 0) {
+              // Job is scheduled for future
+              setJobDateWarning('future');
+            } else if (daysDiff > 0 && loadedJob.status !== 'Submitted') {
+              // Job is overdue (past date, not yet submitted)
+              setJobDateWarning('overdue');
+              setOverdueByDays(daysDiff);
+            }
+          }
           setJob(loadedJob);
         } else if (!tokenError) { // Only set 'not found' if we haven't already set a token error
           setTokenError('Job not found locally or remotely');
+          setTokenErrorType('not_found');
         }
 
       } catch (error) {
@@ -222,7 +252,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const [checklist, setChecklist] = useState<SafetyCheck[]>([
     { id: 'sc1', label: 'PPE (Hard Hat, Gloves, Hi-Vis) Worn', checked: false, required: true },
     { id: 'sc2', label: 'Site Hazards Identified & Controlled', checked: false, required: true },
-    { id: 'sc3', label: 'Required Permits/Authorizations Checked', checked: false, required: true },
+    { id: 'sc3', label: 'Required Permits/Authorisations Checked', checked: false, required: true },
     { id: 'sc4', label: 'Area Clear of Bystanders', checked: false, required: true }
   ]);
   const [notes, setNotes] = useState('');
@@ -690,27 +720,55 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     );
   }
 
-  // Token validation error
+  // Token validation error - Explicit error messages by type
   if (tokenError) {
+    const errorConfig = {
+      expired: {
+        icon: 'schedule',
+        title: 'Link Expired',
+        message: 'This job link has expired. Magic links are valid for 7 days.',
+        action: 'Contact your manager for a new link.',
+        colour: 'warning'
+      },
+      sealed: {
+        icon: 'lock',
+        title: 'Job Already Sealed',
+        message: 'This job has been completed and sealed. Evidence is now immutable.',
+        action: 'Contact your manager if you need to view the sealed report.',
+        colour: 'success'
+      },
+      invalid: {
+        icon: 'link_off',
+        title: 'Invalid Link',
+        message: 'This link is invalid or has been corrupted.',
+        action: 'Please request a new magic link from your manager.',
+        colour: 'danger'
+      },
+      not_found: {
+        icon: 'search_off',
+        title: 'Job Not Found',
+        message: 'The job associated with this link could not be found.',
+        action: 'The job may have been deleted. Contact your manager.',
+        colour: 'danger'
+      }
+    };
+
+    const config = errorConfig[tokenErrorType || 'invalid'];
+
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/5 shadow-2xl relative">
-            <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
+          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-white/5 shadow-2xl relative`}>
+            <span className={`material-symbols-outlined text-7xl font-black text-${config.colour}`}>{config.icon}</span>
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Access Denied</h2>
-            <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{tokenError}</p>
+            <h2 className={`text-4xl font-black text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
+            <p className="text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 mt-4">
-              <p className="text-xs text-slate-300 font-medium">Common reasons:</p>
-              <ul className="text-xs text-slate-400 mt-2 space-y-1 text-left max-w-xs mx-auto">
-                <li>• Link has expired (7 day limit)</li>
-                <li>• Job has been sealed</li>
-                <li>• Invalid or corrupted link</li>
-              </ul>
+              <p className="text-xs text-primary font-bold uppercase tracking-wide">{config.action}</p>
             </div>
           </div>
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
         </div>
       </Layout>
     );
@@ -761,6 +819,57 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       </div>
 
       <div className="space-y-8 pb-32 max-w-2xl mx-auto">
+        {/* Job Date Warning Banner */}
+        {jobDateWarning === 'future' && (
+          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-start gap-3 animate-in">
+            <span className="material-symbols-outlined text-primary text-xl">event</span>
+            <div>
+              <p className="text-sm font-bold text-primary">Scheduled for a Future Date</p>
+              <p className="text-xs text-slate-400 mt-1">This job is scheduled for a future date. You can review details now, but consider waiting until the scheduled time.</p>
+            </div>
+          </div>
+        )}
+        {jobDateWarning === 'overdue' && (
+          <div className="bg-warning/10 border border-warning/30 rounded-2xl p-4 flex items-start gap-3 animate-in">
+            <span className="material-symbols-outlined text-warning text-xl">warning</span>
+            <div>
+              <p className="text-sm font-bold text-warning">Job Overdue ({overdueByDays} {overdueByDays === 1 ? 'day' : 'days'} late)</p>
+              <p className="text-xs text-slate-400 mt-1">This job was scheduled for an earlier date. You can still complete it, but please submit as soon as possible.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Visual Sync Queue Status */}
+        {photos.some(p => p.syncStatus === 'pending') && (
+          <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 animate-in">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="size-3 bg-primary rounded-full animate-pulse"></div>
+                <p className="text-xs font-bold text-white uppercase tracking-wide">Photo Upload Queue</p>
+              </div>
+              <span className="text-[10px] text-slate-400">
+                {photos.filter(p => p.syncStatus === 'synced' || !p.isIndexedDBRef).length}/{photos.length} synced
+              </span>
+            </div>
+            <div className="flex gap-1">
+              {photos.map(p => (
+                <div
+                  key={p.id}
+                  className={`flex-1 h-2 rounded-full transition-all ${
+                    p.syncStatus === 'synced' || !p.isIndexedDBRef
+                      ? 'bg-success'
+                      : p.syncStatus === 'syncing'
+                      ? 'bg-primary animate-pulse'
+                      : 'bg-slate-700'
+                  }`}
+                  title={`${p.type}: ${p.syncStatus || 'pending'}`}
+                />
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-2">Photos saved locally and uploading in background</p>
+          </div>
+        )}
+
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
@@ -1033,7 +1142,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 onClick={() => setStep(3)}
                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Authorize Seal
+                Authorise Seal
               </button>
             </div>
           </div>
@@ -1114,7 +1223,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorization Role</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorisation Role</label>
                 <select
                   value={signerRole}
                   onChange={e => setSignerRole(e.target.value)}
@@ -1122,7 +1231,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 >
                   <option value="Client">Client / Property Owner</option>
                   <option value="Manager">On-Site Manager</option>
-                  <option value="Agent">Authorized Third-Party Agent</option>
+                  <option value="Agent">Authorised Third-Party Agent</option>
                 </select>
               </div>
             </div>
