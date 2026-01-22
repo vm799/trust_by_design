@@ -280,16 +280,17 @@ export const getSyncQueueStatus = (): { pending: number; failed: number } => {
 
 /**
  * Start background sync worker (call once on app load)
+ * PERFORMANCE FIX: Reduced interval from 60s to 5 minutes to minimize API calls
  */
 export const startSyncWorker = (): void => {
   if (!isSupabaseAvailable()) return;
 
-  // Retry failed syncs every 60 seconds
+  // Retry failed syncs every 5 minutes (reduced from 60s to minimize API load)
   setInterval(() => {
     if (navigator.onLine) {
       retryFailedSyncs();
     }
-  }, 60000);
+  }, 300000); // 5 minutes
 
   // Also retry on network reconnection
   window.addEventListener('online', () => {

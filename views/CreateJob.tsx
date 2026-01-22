@@ -87,7 +87,15 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       };
 
       // Create job in database
-      const result = await createJob(jobData);
+      // PERFORMANCE FIX: Pass workspaceId to avoid getUser() API call
+      const workspaceId = user?.workspace?.id;
+      if (!workspaceId) {
+        alert('Workspace not found. Please try logging in again.');
+        setIsCreating(false);
+        return;
+      }
+
+      const result = await createJob(jobData, workspaceId);
 
       if (!result.success) {
         // Fallback to localStorage if Supabase not configured

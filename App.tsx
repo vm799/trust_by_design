@@ -8,6 +8,7 @@ import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { pushQueue, pullJobs } from './lib/offline/sync';
+import { AuthProvider } from './lib/AuthContext';
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -95,9 +96,10 @@ const App: React.FC = () => {
   });
 
   // Offline Sync Engine - Optimized with throttling
+  // PERFORMANCE FIX: Reduced from 60s/90s to 5 minutes to minimize Supabase API calls
   useEffect(() => {
     let lastSyncTime = 0;
-    const MIN_SYNC_INTERVAL = 60000; // Throttle: minimum 60s between syncs
+    const MIN_SYNC_INTERVAL = 300000; // Throttle: minimum 5 minutes (300s) between syncs
 
     const performSync = () => {
       const now = Date.now();
@@ -118,11 +120,11 @@ const App: React.FC = () => {
       lastSyncTime = Date.now();
     }
 
-    // Consolidated Background Sync Interval (every 90s, with throttle check)
-    // This replaces both the 30s interval here and 60s interval in syncQueue
+    // Consolidated Background Sync Interval (every 5 minutes, with throttle check)
+    // Reduced from 90s to minimize Supabase REST API usage
     const interval = setInterval(() => {
       performSync();
-    }, 90000);
+    }, 300000); // 5 minutes
 
     // Online Listener with throttle
     const handleOnline = () => {
@@ -432,9 +434,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <HashRouter>
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
+    <AuthProvider workspaceId={user?.workspace?.id || null}>
+      <HashRouter>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
           <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
         <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
@@ -548,9 +551,10 @@ const App: React.FC = () => {
 
         {/* Fallbacks */}
         <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </HashRouter>
+          </Routes>
+        </Suspense>
+      </HashRouter>
+    </AuthProvider>
   );
 };
 
