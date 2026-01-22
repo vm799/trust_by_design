@@ -26,6 +26,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(221, 83%, 45%)", // Darker primary for hover
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -50,6 +51,34 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Construction Industry Colors - UX Spec Compliant
+        "safety-orange": {
+          DEFAULT: "hsl(14, 91%, 54%)", // Safety Orange - CTAs only
+          50: "hsl(14, 91%, 95%)",
+          100: "hsl(14, 91%, 90%)",
+          200: "hsl(14, 91%, 80%)",
+          300: "hsl(14, 91%, 70%)",
+          400: "hsl(14, 91%, 62%)",
+          500: "hsl(14, 91%, 54%)",
+          600: "hsl(14, 91%, 46%)",
+          700: "hsl(14, 91%, 38%)",
+        },
+        "industrial-blue": {
+          DEFAULT: "hsl(221, 83%, 53%)", // Industrial Blue - Primary
+          50: "hsl(221, 83%, 95%)",
+          100: "hsl(221, 83%, 90%)",
+          500: "hsl(221, 83%, 53%)",
+          600: "hsl(221, 83%, 45%)",
+          700: "hsl(221, 83%, 37%)",
+        },
+        success: {
+          DEFAULT: "hsl(142, 71%, 45%)", // Muted Green
+          foreground: "hsl(0, 0%, 100%)",
+        },
+        danger: {
+          DEFAULT: "hsl(0, 84%, 60%)", // High-contrast Red
+          foreground: "hsl(0, 0%, 100%)",
         },
       },
       borderRadius: {
