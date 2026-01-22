@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 import { getJobs, getClients, getTechnicians } from '../lib/db';
 import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '../lib/onboarding';
 import PersonaCard from '../components/PersonaCard';
@@ -11,27 +12,28 @@ import PersonaCard from '../components/PersonaCard';
  */
 const CompleteOnboarding: React.FC = () => {
     const navigate = useNavigate();
+    // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
+    const { userId, session, isAuthenticated } = useAuth();
+
     const [loading, setLoading] = useState(true);
     const [selecting, setSelecting] = useState(false);
-    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
         const checkState = async () => {
-            const supabase = getSupabase();
-            if (!supabase) return;
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            // PERFORMANCE FIX: Use AuthContext session instead of getUser()
+            if (!isAuthenticated || !userId) {
                 navigate('/auth');
                 return;
             }
-            setUser(user);
+
+            const supabase = getSupabase();
+            if (!supabase) return;
 
             // Check if already has persona
             const { data: personas } = await supabase
                 .from('user_personas')
                 .select('*')
-                .eq('user_id', user.id)
+                .eq('user_id', userId)
                 .eq('is_active', true)
                 .limit(1);
 
@@ -40,7 +42,7 @@ const CompleteOnboarding: React.FC = () => {
                     navigate('/admin');
                     return;
                 }
-                // If has incomplete persona, we'd normally resume, 
+                // If has incomplete persona, we'd normally resume,
                 // but for now we'll just show the selection or stay here
             }
 
@@ -48,7 +50,7 @@ const CompleteOnboarding: React.FC = () => {
         };
 
         checkState();
-    }, [navigate]);
+    }, [navigate, isAuthenticated, userId]);
 
     const handlePersonaSelect = async (persona: PersonaType) => {
         if (selecting) return;
@@ -56,13 +58,14 @@ const CompleteOnboarding: React.FC = () => {
 
         try {
             const supabase = getSupabase();
-            if (!supabase || !user) throw new Error('Not authenticated');
+            // PERFORMANCE FIX: Use userId from AuthContext
+            if (!supabase || !userId) throw new Error('Not authenticated');
 
             // Get user profile to get workspace_id
             const { data: profile } = await supabase
                 .from('users')
                 .select('workspace_id')
-                .eq('id', user.id)
+                .eq('id', userId)
                 .single();
 
             if (!profile) throw new Error('Profile not found. Please complete workspace setup.');
@@ -75,7 +78,7 @@ const CompleteOnboarding: React.FC = () => {
             const { error: personaError } = await supabase
                 .from('user_personas')
                 .upsert({
-                    user_id: user.id,
+                    user_id: userId,
                     workspace_id: profile.workspace_id,
                     persona_type: persona,
                     is_active: true,

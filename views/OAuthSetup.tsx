@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
 
 /**
@@ -11,29 +12,30 @@ import { JobProofLogo } from '../components/branding/jobproof-logo';
  */
 const OAuthSetup: React.FC = () => {
     const navigate = useNavigate();
+    // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
+    const { userId, userEmail, session, isAuthenticated } = useAuth();
+
     const [workspaceName, setWorkspaceName] = useState('');
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [userEmail, setUserEmail] = useState('');
-    const [userId, setUserId] = useState('');
 
     useEffect(() => {
         const checkUser = async () => {
-            const supabase = getSupabase();
-            if (!supabase) return;
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            // PERFORMANCE FIX: Use AuthContext session instead of getUser()
+            if (!isAuthenticated || !session?.user) {
                 navigate('/auth');
                 return;
             }
+
+            const supabase = getSupabase();
+            if (!supabase) return;
 
             // Check if profile already exists - if so, skip setup
             const { data: profile } = await supabase
                 .from('users')
                 .select('id')
-                .eq('id', user.id)
+                .eq('id', session.user.id)
                 .single();
 
             if (profile) {
@@ -42,10 +44,8 @@ const OAuthSetup: React.FC = () => {
                 return;
             }
 
-            setUserEmail(user.email || '');
-            setUserId(user.id);
-
             // Pre-fill full name from metadata if available
+            const user = session.user;
             if (user.user_metadata?.full_name) {
                 setFullName(user.user_metadata.full_name);
             } else if (user.user_metadata?.name) {
@@ -59,7 +59,7 @@ const OAuthSetup: React.FC = () => {
         };
 
         checkUser();
-    }, [navigate]);
+    }, [navigate, isAuthenticated, session]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
