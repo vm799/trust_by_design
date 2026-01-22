@@ -282,6 +282,41 @@ npm run test:e2e:ui
 npm run test:e2e:debug
 ```
 
+### Security & Performance Auditing
+
+Automated audit scripts implementing [JOBPROOF_AUDIT_SPECIFICATION.md](./JOBPROOF_AUDIT_SPECIFICATION.md):
+
+```bash
+# Security audit (RLS policies, cryptographic sealing, data integrity)
+npm run audit:security
+
+# Detailed security audit with verbose output
+npm run audit:security:verbose
+
+# Performance audit (query benchmarks, load testing)
+npm run audit:performance
+
+# Production monitoring (daily checks, real-time alerts)
+npm run audit:monitor
+
+# Run all audits
+npm run audit:all
+
+# Deployment verification
+npm run verify:deployment
+```
+
+**Audit Scripts Features:**
+- ✅ RLS policy verification (workspace isolation)
+- ✅ Cryptographic sealing audit (100% RSA-2048 required)
+- ✅ Data integrity checks (GPS, signatures, timestamps)
+- ✅ Performance benchmarking (p50, p95, p99 percentiles)
+- ✅ Production monitoring with webhook alerts
+- ✅ CI/CD integration ready
+- ✅ Exit codes for deployment gates (0=pass, 1=critical, 2=high, 3=medium)
+
+See [scripts/README.md](./scripts/README.md) for detailed documentation.
+
 ### Build & Deploy
 
 ```bash
