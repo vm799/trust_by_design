@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
@@ -9,25 +9,49 @@ import PersonaCard from '../components/PersonaCard';
 /**
  * Complete Onboarding - Persona Selection View
  * Ported from Next.js implementation to work with Vite/React Router
+ *
+ * CRITICAL FIX (Jan 2026): Fixed auth loop by:
+ * - Adding isLoading check before redirecting
+ * - Using hasChecked ref to prevent duplicate checks
+ * - Removed navigate from dependencies
  */
 const CompleteOnboarding: React.FC = () => {
     const navigate = useNavigate();
     // PERFORMANCE FIX: Use AuthContext instead of calling getUser()
-    const { userId, session, isAuthenticated } = useAuth();
+    const { userId, isAuthenticated, isLoading: authLoading } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [selecting, setSelecting] = useState(false);
 
+    // CRITICAL FIX: Track if we've already checked to prevent duplicate runs
+    const hasCheckedRef = useRef(false);
+
     useEffect(() => {
+        // CRITICAL FIX: Wait for auth to finish loading before making any decisions
+        if (authLoading) {
+            return;
+        }
+
+        // CRITICAL FIX: Prevent duplicate checks on re-renders
+        if (hasCheckedRef.current) {
+            return;
+        }
+
         const checkState = async () => {
-            // PERFORMANCE FIX: Use AuthContext session instead of getUser()
+            // Not authenticated - redirect to auth
             if (!isAuthenticated || !userId) {
+                hasCheckedRef.current = true;
                 navigate('/auth');
                 return;
             }
 
+            hasCheckedRef.current = true;
+
             const supabase = getSupabase();
-            if (!supabase) return;
+            if (!supabase) {
+                setLoading(false);
+                return;
+            }
 
             // Check if already has persona
             const { data: personas } = await supabase
@@ -50,7 +74,7 @@ const CompleteOnboarding: React.FC = () => {
         };
 
         checkState();
-    }, [navigate, isAuthenticated, userId]);
+    }, [authLoading, isAuthenticated, userId, navigate]); // CRITICAL: Added authLoading check
 
     const handlePersonaSelect = async (persona: PersonaType) => {
         if (selecting) return;

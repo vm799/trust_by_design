@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signIn, signInWithGoogle, signUp } from '../lib/auth';
 import { getSupabase } from '../lib/supabase';
 import { validatePassword } from '../lib/validation';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
+import { useAuth } from '../lib/AuthContext';
 
 /**
  * Email-First Authentication Flow
@@ -12,6 +13,11 @@ import { JobProofLogo } from '../components/branding/jobproof-logo';
  * 1. Enter email → Auto-detect new vs existing user
  * 2. Branch to password (existing) or signup (new)
  * 3. Minimal friction, clear guidance
+ *
+ * CRITICAL FIX (Jan 2026): Fixed auth loop by:
+ * - Using AuthContext instead of direct getSession() call
+ * - Adding loading guard before redirecting
+ * - Using hasRedirected ref to prevent duplicate redirects
  */
 
 type AuthStep = 'email' | 'password' | 'signup';
@@ -19,6 +25,9 @@ type UserStatus = 'existing' | 'new' | 'checking';
 
 const EmailFirstAuth: React.FC = () => {
   const navigate = useNavigate();
+
+  // CRITICAL FIX: Use AuthContext instead of calling getSession() directly
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Current step in the flow
   const [step, setStep] = useState<AuthStep>('email');
@@ -34,18 +43,24 @@ const EmailFirstAuth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // CRITICAL FIX: Track if we've already redirected to prevent duplicate redirects
+  const hasRedirectedRef = useRef(false);
+
   // Auto-redirect if session is detected (e.g. after Google OAuth return)
-  React.useEffect(() => {
-    const checkSession = async () => {
-      const supabase = getSupabase();
-      if (!supabase) return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/admin');
-      }
-    };
-    checkSession();
-  }, [navigate]);
+  // CRITICAL FIX: Use AuthContext state instead of direct getSession() call
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    // Already redirected - skip
+    if (hasRedirectedRef.current) return;
+
+    // Authenticated - redirect to admin
+    if (isAuthenticated) {
+      hasRedirectedRef.current = true;
+      navigate('/admin');
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   /**
    * Step 1: Check if email exists in system

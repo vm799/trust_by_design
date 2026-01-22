@@ -410,6 +410,11 @@ class ErrorSubagent {
 // MAIN AUTH FLOW MANAGER
 // ============================================================================
 // Orchestrates all subagents to handle complete auth flow
+//
+// CRITICAL FIX (Jan 2026): Added caching and request deduplication
+// - Caches user profile to prevent redundant database queries
+// - Deduplicates concurrent calls to prevent API storms
+// - Skips full flow on token refresh (same user, just update session)
 
 export class AuthFlowManager {
   private authSubagent = new AuthSubagent();
@@ -417,13 +422,47 @@ export class AuthFlowManager {
   private workspaceSubagent = new WorkspaceSubagent();
   private errorSubagent = new ErrorSubagent();
 
+  // CRITICAL FIX: Caching to prevent redundant API calls
+  private lastUserId: string | null = null;
+  private cachedResult: AuthFlowResult | null = null;
+  private initPromise: Promise<AuthFlowResult> | null = null;
+  private cacheTimestamp: number = 0;
+  private readonly CACHE_TTL = 60000; // 1 minute cache TTL
+
   /**
    * Initialize auth flow on page load
    * Returns complete auth state with user profile or error
    *
    * This is the main entry point for the landing page / sign-in flow
+   *
+   * CRITICAL FIX: Now includes:
+   * - Request deduplication (concurrent calls share same promise)
+   * - Result caching (same user within TTL returns cached result)
    */
   async initializeAuthFlow(): Promise<AuthFlowResult> {
+    // CRITICAL FIX: Deduplicate concurrent calls
+    // If there's already an init in progress, return that promise
+    if (this.initPromise) {
+      console.log('[AuthFlowManager] Returning existing init promise (deduplication)');
+      return this.initPromise;
+    }
+
+    // Start new initialization
+    this.initPromise = this._doInitializeAuthFlow();
+
+    try {
+      const result = await this.initPromise;
+      return result;
+    } finally {
+      // Clear the promise after completion to allow future calls
+      this.initPromise = null;
+    }
+  }
+
+  /**
+   * Internal implementation of auth flow initialization
+   */
+  private async _doInitializeAuthFlow(): Promise<AuthFlowResult> {
     console.log('[AuthFlowManager] Initializing auth flow...');
 
     // STEP 1: Get current auth session (AuthSubagent)
@@ -431,6 +470,7 @@ export class AuthFlowManager {
 
     if (sessionError) {
       this.errorSubagent.logError('Session fetch failed', sessionError);
+      this.clearCache();
       return {
         success: false,
         session: null,
@@ -442,6 +482,7 @@ export class AuthFlowManager {
     // No session = user not logged in (this is OK, not an error)
     if (!session || !session.user) {
       console.log('[AuthFlowManager] No active session');
+      this.clearCache();
       return {
         success: true,
         session: null,
@@ -449,7 +490,27 @@ export class AuthFlowManager {
       };
     }
 
-    console.log('[AuthFlowManager] Active session found for user:', session.user.id);
+    const currentUserId = session.user.id;
+    console.log('[AuthFlowManager] Active session found for user:', currentUserId);
+
+    // CRITICAL FIX: Check cache before making database calls
+    // If same user and cache is fresh, return cached result with updated session
+    const now = Date.now();
+    if (
+      this.cachedResult &&
+      this.lastUserId === currentUserId &&
+      this.cachedResult.user &&
+      now - this.cacheTimestamp < this.CACHE_TTL
+    ) {
+      console.log('[AuthFlowManager] Returning cached result for user:', currentUserId);
+      // Return cached user but with fresh session (has updated tokens)
+      return {
+        ...this.cachedResult,
+        session, // Use fresh session with updated access token
+      };
+    }
+
+    console.log('[AuthFlowManager] Cache miss or expired, fetching fresh profile');
 
     // STEP 2: Ensure user row exists in users table (UserSubagent)
     const userCreated = await this.userSubagent.ensureUserExists(session.user);
@@ -494,17 +555,45 @@ export class AuthFlowManager {
 
     // SUCCESS: Complete profile loaded
     console.log('[AuthFlowManager] Auth flow complete, user fully loaded');
-    return {
+
+    const result: AuthFlowResult = {
       success: true,
       session,
       user: userProfile,
       needsSetup: false,
     };
+
+    // CRITICAL FIX: Cache the successful result
+    this.updateCache(session.user.id, result);
+
+    return result;
+  }
+
+  /**
+   * Update the cache with a new result
+   */
+  private updateCache(userId: string, result: AuthFlowResult): void {
+    this.lastUserId = userId;
+    this.cachedResult = result;
+    this.cacheTimestamp = Date.now();
+    console.log('[AuthFlowManager] Cache updated for user:', userId);
+  }
+
+  /**
+   * Clear the cache (on logout or error)
+   */
+  private clearCache(): void {
+    this.lastUserId = null;
+    this.cachedResult = null;
+    this.cacheTimestamp = 0;
   }
 
   /**
    * Listen to auth state changes and invoke callback with updated auth flow result
    * Use this in React components to reactively update auth state
+   *
+   * CRITICAL FIX: Now checks for user change before running full flow
+   * Token refresh (same user) returns cached result with updated session
    *
    * Returns unsubscribe function
    */
@@ -512,6 +601,7 @@ export class AuthFlowManager {
     return this.authSubagent.onAuthStateChange(async (session) => {
       if (!session) {
         // User logged out
+        this.clearCache();
         callback({
           success: true,
           session: null,
@@ -520,7 +610,25 @@ export class AuthFlowManager {
         return;
       }
 
-      // User logged in - run full flow
+      // CRITICAL FIX: Check if this is a token refresh (same user)
+      // If so, return cached result with updated session to avoid API calls
+      const newUserId = session.user?.id;
+      if (
+        newUserId &&
+        this.lastUserId === newUserId &&
+        this.cachedResult &&
+        this.cachedResult.user
+      ) {
+        console.log('[AuthFlowManager] Token refresh detected, using cached profile');
+        callback({
+          ...this.cachedResult,
+          session, // Fresh session with updated tokens
+        });
+        return;
+      }
+
+      // Different user or no cache - run full flow
+      console.log('[AuthFlowManager] User changed or no cache, running full flow');
       const result = await this.initializeAuthFlow();
       callback(result);
     });
@@ -528,9 +636,20 @@ export class AuthFlowManager {
 
   /**
    * Manually refresh auth flow (useful after user completes setup)
+   * CRITICAL FIX: Clears cache to force fresh fetch
    */
   async refreshAuthFlow(): Promise<AuthFlowResult> {
+    console.log('[AuthFlowManager] Manual refresh requested, clearing cache');
+    this.clearCache();
     return await this.initializeAuthFlow();
+  }
+
+  /**
+   * Invalidate cache (call when user profile changes)
+   */
+  invalidateCache(): void {
+    console.log('[AuthFlowManager] Cache invalidated');
+    this.clearCache();
   }
 }
 

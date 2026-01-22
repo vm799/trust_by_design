@@ -178,6 +178,8 @@ export const canSealJob = (job: any): CanSealResult => {
 // SEAL EVIDENCE
 // ============================================================================
 
+import type { Session } from '@supabase/supabase-js';
+
 /**
  * Seal a job's evidence bundle
  *
@@ -190,9 +192,14 @@ export const canSealJob = (job: any): CanSealResult => {
  * - Invalidates magic link tokens
  *
  * @param jobId - UUID of the job to seal
+ * @param providedSession - Optional session to use (avoids getSession() call)
  * @returns SealResult with hash, signature, and timestamp
+ *
+ * CRITICAL FIX (Jan 2026): Added optional session parameter
+ * - Callers can pass existing session from AuthContext to avoid redundant getSession() calls
+ * - Falls back to getSession() if no session provided
  */
-export const sealEvidence = async (jobId: string): Promise<SealResult> => {
+export const sealEvidence = async (jobId: string, providedSession?: Session | null): Promise<SealResult> => {
   if (shouldUseMockSealing()) {
     // Mock implementation for testing
     const { getJobs } = await import('./db');
@@ -305,7 +312,13 @@ export const sealEvidence = async (jobId: string): Promise<SealResult> => {
   }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    // CRITICAL FIX: Use provided session if available, otherwise fetch
+    // This avoids redundant getSession() calls when caller has session from AuthContext
+    let session = providedSession;
+    if (!session) {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+    }
 
     if (!session) {
       return {

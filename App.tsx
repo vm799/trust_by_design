@@ -161,12 +161,23 @@ const AppContent: React.FC = () => {
     ];
   });
 
-  // CRITICAL FIX: Load user profile when AuthContext session changes
-  // This replaces the duplicate onAuthStateChange listener
+  // CRITICAL FIX: Use STABLE primitive values instead of session object
+  // The session object changes reference on EVERY token refresh (every ~10-50 minutes)
+  // This was causing 9+ database calls per token refresh = ~877 requests/hour
+  // By using session.user.id (a primitive string), we only trigger on actual login/logout
+  const sessionUserId = session?.user?.id;
+  const sessionUserEmail = session?.user?.email;
+  const sessionUserMetadata = session?.user?.user_metadata;
+
+  // Track if profile has been loaded to prevent duplicate loads
+  const profileLoadedRef = useRef<string | null>(null);
+
   useEffect(() => {
     const loadProfile = async () => {
-      if (!session?.user) {
+      // No user = logged out
+      if (!sessionUserId) {
         setUser(null);
+        profileLoadedRef.current = null;
         // Clear user data from localStorage on logout
         localStorage.removeItem('jobproof_user_v2');
         // Fallback to localStorage if not authenticated
@@ -174,12 +185,20 @@ const AppContent: React.FC = () => {
         return;
       }
 
+      // Skip if we already loaded this user's profile (prevents duplicate loads)
+      if (profileLoadedRef.current === sessionUserId) {
+        console.log('[App] Profile already loaded for user, skipping:', sessionUserId);
+        return;
+      }
+
+      console.log('[App] Loading profile for user:', sessionUserId);
+
       // Load user profile from database
-      let profile = await getUserProfile(session.user.id);
+      let profile = await getUserProfile(sessionUserId);
 
       // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
-      if (!profile && session.user.user_metadata?.workspace_name) {
-        const meta = session.user.user_metadata;
+      if (!profile && sessionUserMetadata?.workspace_name) {
+        const meta = sessionUserMetadata;
         const workspaceSlug = (meta.workspace_name as string)
           .toLowerCase()
           .trim()
@@ -191,8 +210,8 @@ const AppContent: React.FC = () => {
         if (supabase) {
           try {
             const { error } = await supabase.rpc('create_workspace_with_owner', {
-              p_user_id: session.user.id,
-              p_email: session.user.email,
+              p_user_id: sessionUserId,
+              p_email: sessionUserEmail,
               p_workspace_name: meta.workspace_name,
               p_workspace_slug: finalSlug,
               p_full_name: meta.full_name || null
@@ -201,7 +220,7 @@ const AppContent: React.FC = () => {
               console.error('[App] Auto-heal workspace creation failed:', error);
             } else {
               // Try fetching again after creation
-              profile = await getUserProfile(session.user.id);
+              profile = await getUserProfile(sessionUserId);
             }
           } catch (err) {
             console.error('[App] Auto-heal exception:', err);
@@ -225,6 +244,7 @@ const AppContent: React.FC = () => {
           } : undefined
         };
         setUser(userProfile);
+        profileLoadedRef.current = sessionUserId;
 
         // Phase C.2: Load workspace data from Supabase
         loadWorkspaceData(profile.workspace_id);
@@ -234,18 +254,19 @@ const AppContent: React.FC = () => {
 
         // Create minimal user profile from session data for routing
         const fallbackProfile: UserProfile = {
-          name: session.user.email || 'User',
-          email: session.user.email || '',
+          name: sessionUserEmail || 'User',
+          email: sessionUserEmail || '',
           role: 'member',
           workspaceName: 'Setup Required',
           persona: undefined
         };
         setUser(fallbackProfile);
+        profileLoadedRef.current = sessionUserId;
       }
     };
 
     loadProfile();
-  }, [session]);
+  }, [sessionUserId]); // FIXED: Only depends on primitive userId, not session object
 
   // Phase C.2: Load data from Supabase
   const loadWorkspaceData = async (workspaceId: string) => {
