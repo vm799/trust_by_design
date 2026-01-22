@@ -30,7 +30,7 @@ export const getSupabase = (): SupabaseClient | null => {
       auth: {
         persistSession: true, // Phase C.1: Real authentication with sessions
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: false, // CRITICAL FIX: Prevent auth checks on public pages (stops 403 spam)
         storage: window.localStorage
       },
       db: {
