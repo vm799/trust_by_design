@@ -116,9 +116,10 @@ const CompleteOnboarding: React.FC = () => {
             // Finish onboarding selection
             localStorage.setItem('jobproof_onboarding_v4', 'true');
 
-            // Special handling for Agency Owners - send to pricing/billing
-            if (persona === 'agency_owner') {
-                navigate('/pricing');
+            // UX Spec: Route to role-specific onboarding wizard
+            // Agency Owners and Managers get the full step-by-step wizard
+            if (persona === 'agency_owner' || persona === 'site_supervisor' || persona === 'safety_manager') {
+                navigate('/manager-onboarding');
             } else {
                 navigate('/admin');
             }

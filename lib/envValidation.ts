@@ -9,6 +9,10 @@ interface EnvConfig {
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_ANON_KEY?: string;
   VITE_STRIPE_PUBLISHABLE_KEY?: string;
+  VITE_STRIPE_PRICE_TEAM_MONTHLY?: string;
+  VITE_STRIPE_PRICE_TEAM_ANNUAL?: string;
+  VITE_STRIPE_PRICE_AGENCY_MONTHLY?: string;
+  VITE_STRIPE_PRICE_AGENCY_ANNUAL?: string;
   VITE_W3W_API_KEY?: string;
 }
 
@@ -30,6 +34,10 @@ export function validateEnvironment(): ValidationResult {
     VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
     VITE_STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+    VITE_STRIPE_PRICE_TEAM_MONTHLY: import.meta.env.VITE_STRIPE_PRICE_TEAM_MONTHLY,
+    VITE_STRIPE_PRICE_TEAM_ANNUAL: import.meta.env.VITE_STRIPE_PRICE_TEAM_ANNUAL,
+    VITE_STRIPE_PRICE_AGENCY_MONTHLY: import.meta.env.VITE_STRIPE_PRICE_AGENCY_MONTHLY,
+    VITE_STRIPE_PRICE_AGENCY_ANNUAL: import.meta.env.VITE_STRIPE_PRICE_AGENCY_ANNUAL,
     VITE_W3W_API_KEY: import.meta.env.VITE_W3W_API_KEY,
   };
 
@@ -56,8 +64,29 @@ export function validateEnvironment(): ValidationResult {
   // Optional: Stripe configuration (for payments)
   if (!env.VITE_STRIPE_PUBLISHABLE_KEY) {
     warnings.push('Stripe not configured. Payment features will be disabled.');
-  } else if (!env.VITE_STRIPE_PUBLISHABLE_KEY.startsWith('pk_')) {
-    warnings.push('VITE_STRIPE_PUBLISHABLE_KEY format appears invalid (should start with pk_).');
+  } else {
+    if (!env.VITE_STRIPE_PUBLISHABLE_KEY.startsWith('pk_')) {
+      warnings.push('VITE_STRIPE_PUBLISHABLE_KEY format appears invalid (should start with pk_).');
+    }
+
+    // Check Stripe price IDs
+    const priceIds = [
+      { key: 'VITE_STRIPE_PRICE_TEAM_MONTHLY', value: env.VITE_STRIPE_PRICE_TEAM_MONTHLY },
+      { key: 'VITE_STRIPE_PRICE_TEAM_ANNUAL', value: env.VITE_STRIPE_PRICE_TEAM_ANNUAL },
+      { key: 'VITE_STRIPE_PRICE_AGENCY_MONTHLY', value: env.VITE_STRIPE_PRICE_AGENCY_MONTHLY },
+      { key: 'VITE_STRIPE_PRICE_AGENCY_ANNUAL', value: env.VITE_STRIPE_PRICE_AGENCY_ANNUAL },
+    ];
+
+    const missingPriceIds = priceIds.filter(p => !p.value);
+    const invalidPriceIds = priceIds.filter(p => p.value && !p.value.startsWith('price_'));
+
+    if (missingPriceIds.length > 0) {
+      warnings.push(`Missing Stripe price IDs: ${missingPriceIds.map(p => p.key).join(', ')}. Paid plans will show errors.`);
+    }
+
+    if (invalidPriceIds.length > 0) {
+      warnings.push(`Invalid Stripe price ID format: ${invalidPriceIds.map(p => p.key).join(', ')} (should start with price_).`);
+    }
   }
 
   // Optional: What3Words API (for location addressing)

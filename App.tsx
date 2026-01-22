@@ -44,6 +44,8 @@ const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
 const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
 const CompleteOnboarding = lazy(() => import('./views/CompleteOnboarding'));
 const OAuthSetup = lazy(() => import('./views/OAuthSetup'));
+const ManagerOnboarding = lazy(() => import('./views/ManagerOnboarding'));
+const JobCreationWizard = lazy(() => import('./views/JobCreationWizard'));
 const InvoicesView = lazy(() => import('./views/InvoicesView'));
 const RoadmapView = lazy(() => import('./views/RoadmapView'));
 const TrackLookup = lazy(() => import('./views/TrackLookup'));
@@ -495,6 +497,8 @@ const AppContent: React.FC = () => {
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding/:persona/:step" element={isAuthenticated ? <OnboardingStepLoader /> : <Navigate to="/auth" replace />} />
+        {/* Manager Onboarding Wizard - UX Spec Compliant */}
+        <Route path="/manager-onboarding" element={isAuthenticated ? <ManagerOnboarding /> : <Navigate to="/auth" replace />} />
 
         {/* Legacy Auth Routes (Fallback) */}
         <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
@@ -575,7 +579,10 @@ const AppContent: React.FC = () => {
             )
           ) : <Navigate to="/auth" replace />
         } />
-        <Route path="/admin/create" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
+        {/* Job Creation - UX Spec: 5-Step Guided Wizard */}
+        <Route path="/admin/create" element={isAuthenticated ? <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} /> : <Navigate to="/auth" replace />} />
+        {/* Legacy Job Creation (kept for backwards compatibility) */}
+        <Route path="/admin/create-quick" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/clients" element={isAuthenticated ? <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView user={user} /> : <Navigate to="/auth" replace />} />
