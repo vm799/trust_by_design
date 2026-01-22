@@ -416,7 +416,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     </td>
                   </tr>
                 ) : (
-                  jobs.map(job => (
+                  jobs.map(job => {
+                    const lifecycle = getJobLifecycle(job);
+                    return (
                     <tr key={job.id} className="hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
                         <div className="font-bold text-white tracking-tighter uppercase group-hover:text-primary transition-colors">{job.title}</div>
@@ -429,10 +431,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${job.status === 'Submitted' ? 'bg-success/10 text-success border-success/20' :
-                          job.status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-800 text-slate-300 border-slate-700'
-                          }`}>
-                          {job.status}
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
+                          <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
+                          {lifecycle.label}
                         </div>
                       </td>
                       <td className="px-8 py-6">
@@ -478,7 +479,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -489,6 +491,81 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   </div>
     </Layout>
   );
+};
+
+/**
+ * Job Lifecycle Stage Determination
+ * Maps job state to operational spine: DISPATCH → CAPTURE → SEAL → VERIFY → DELIVER
+ */
+type LifecycleStage = 'dispatched' | 'capture' | 'awaiting_seal' | 'sealed' | 'verified';
+
+interface LifecycleInfo {
+  stage: LifecycleStage;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+const getJobLifecycle = (job: Job): LifecycleInfo => {
+  // VERIFIED: Submitted status (already sealed and verified)
+  if (job.status === 'Submitted') {
+    return {
+      stage: 'verified',
+      label: 'Verified',
+      icon: 'verified',
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
+    };
+  }
+
+  // SEALED: Has sealedAt timestamp
+  if (job.sealedAt || job.isSealed) {
+    return {
+      stage: 'sealed',
+      label: 'Sealed',
+      icon: 'lock',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // AWAITING SEAL: Has evidence and signature, ready to seal
+  if (job.photos.length > 0 && job.signature) {
+    return {
+      stage: 'awaiting_seal',
+      label: 'Awaiting Seal',
+      icon: 'signature',
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/20',
+    };
+  }
+
+  // CAPTURE: In progress with photos
+  if (job.status === 'In Progress' && job.photos.length > 0) {
+    return {
+      stage: 'capture',
+      label: 'Capturing',
+      icon: 'photo_camera',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+    };
+  }
+
+  // DISPATCHED: Created but not yet started or no evidence
+  return {
+    stage: 'dispatched',
+    label: 'Dispatched',
+    icon: 'send',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-800',
+    borderColor: 'border-slate-700',
+  };
 };
 
 /**
