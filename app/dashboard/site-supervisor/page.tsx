@@ -91,7 +91,7 @@ export default function SiteSupervisorDashboard() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="size-16 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto mb-4" />
+          <div className="size-16 border-4 border-safety-orange/30 border-t-safety-orange rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-400 text-sm">Loading dashboard...</p>
         </div>
       </div>
@@ -105,8 +105,8 @@ export default function SiteSupervisorDashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <div className="size-12 rounded-xl bg-safety-orange/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-safety-orange text-2xl">
                   engineering
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function SiteSupervisorDashboard() {
 
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-2">
-              <span className="material-symbols-outlined text-orange-500 text-2xl">
+              <span className="material-symbols-outlined text-safety-orange text-2xl">
                 health_and_safety
               </span>
               <p className="text-slate-400 text-xs font-bold uppercase">Safety Score</p>
@@ -178,7 +178,7 @@ export default function SiteSupervisorDashboard() {
         <div className="grid grid-cols-4 gap-4 mb-8">
           <button
             onClick={() => router.push('/admin/create')}
-            className="bg-orange-500 hover:bg-orange-600 rounded-2xl p-6 text-left transition-all group"
+            className="bg-safety-orange hover:bg-safety-orange-dark rounded-2xl p-6 text-left transition-all group"
           >
             <span className="material-symbols-outlined text-white text-3xl mb-3 block group-hover:scale-110 transition-transform">
               add_circle
@@ -190,7 +190,7 @@ export default function SiteSupervisorDashboard() {
             onClick={() => alert('Material tracking feature')}
             className="bg-slate-800 hover:bg-slate-700 rounded-2xl p-6 text-left transition-all group"
           >
-            <span className="material-symbols-outlined text-orange-500 text-3xl mb-3 block group-hover:scale-110 transition-transform">
+            <span className="material-symbols-outlined text-safety-orange text-3xl mb-3 block group-hover:scale-110 transition-transform">
               inventory_2
             </span>
             <p className="text-white font-black text-sm uppercase">Log Materials</p>
@@ -200,7 +200,7 @@ export default function SiteSupervisorDashboard() {
             onClick={() => alert('Safety rounds feature')}
             className="bg-slate-800 hover:bg-slate-700 rounded-2xl p-6 text-left transition-all group"
           >
-            <span className="material-symbols-outlined text-orange-500 text-3xl mb-3 block group-hover:scale-110 transition-transform">
+            <span className="material-symbols-outlined text-safety-orange text-3xl mb-3 block group-hover:scale-110 transition-transform">
               health_and_safety
             </span>
             <p className="text-white font-black text-sm uppercase">Safety Round</p>
@@ -210,7 +210,7 @@ export default function SiteSupervisorDashboard() {
             onClick={() => alert('Daily report feature')}
             className="bg-slate-800 hover:bg-slate-700 rounded-2xl p-6 text-left transition-all group"
           >
-            <span className="material-symbols-outlined text-orange-500 text-3xl mb-3 block group-hover:scale-110 transition-transform">
+            <span className="material-symbols-outlined text-safety-orange text-3xl mb-3 block group-hover:scale-110 transition-transform">
               summarize
             </span>
             <p className="text-white font-black text-sm uppercase">Day Report</p>
@@ -223,7 +223,7 @@ export default function SiteSupervisorDashboard() {
             <h2 className="text-white font-black text-xl uppercase">Active Jobs</h2>
             <button
               onClick={() => router.push('/admin')}
-              className="text-orange-500 text-xs font-bold uppercase hover:underline"
+              className="text-safety-orange text-xs font-bold uppercase hover:underline"
             >
               View All →
             </button>

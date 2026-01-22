@@ -4,7 +4,7 @@ import { getSupabase } from '../lib/supabase';
 
 const PricingView: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-950 selection:bg-primary/30 py-24 px-6">
+    <div className="min-h-screen bg-slate-950 selection:bg-primary/30 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12">
       <div className="max-w-7xl mx-auto space-y-16">
         <header className="text-center space-y-4">
           <Link

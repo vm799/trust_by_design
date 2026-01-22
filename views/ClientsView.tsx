@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Client, UserProfile } from '../types';
+import { navigateToNextStep } from '../lib/onboarding';
 
 interface ClientsViewProps {
   user: UserProfile | null;
@@ -11,6 +13,7 @@ interface ClientsViewProps {
 }
 
 const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelete }) => {
+  const navigate = useNavigate();
   const [showAdd, setShowAdd] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '', address: '' });
 
@@ -23,6 +26,9 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
     });
     setNewClient({ name: '', email: '', address: '' });
     setShowAdd(false);
+
+    // Trigger guided flow auto-navigation
+    navigateToNextStep('CREATE_CLIENT', user?.persona, navigate);
   };
 
   return (
@@ -61,9 +67,9 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Organization</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Service Asset</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Action</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Organization</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Service Asset</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -71,13 +77,13 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                   <tr key={client.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-6 py-4">
                       <p className="font-bold text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{client.name}</p>
-                      <p className="text-xs text-slate-500 font-mono">{client.email}</p>
+                      <p className="text-xs text-slate-300 font-mono">{client.email}</p>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-400 font-medium">{client.address}</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => onDelete(client.id)}
-                        className="material-symbols-outlined text-slate-600 hover:text-red-500 transition-colors font-black"
+                        className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors font-black"
                       >
                         delete
                       </button>

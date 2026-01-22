@@ -9,7 +9,7 @@ const LegalPage: React.FC = () => {
                 type === 'privacy' ? 'Privacy Policy' : 'Legal Document';
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 lg:p-12 selection:bg-primary/30">
+    <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 selection:bg-primary/30">
       <div className="max-w-4xl mx-auto space-y-12 bg-white text-slate-900 p-12 lg:p-20 rounded-[3rem] shadow-2xl">
         <header className="border-b border-slate-100 pb-12 flex justify-between items-start">
            <div>

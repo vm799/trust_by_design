@@ -8,6 +8,7 @@ import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction }
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
+import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
   const { token, jobId } = useParams();
@@ -501,6 +502,64 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         onUpdateJob(updatedJob);
       }
 
+      // CRITICAL FIX: Wait for photo sync before sealing
+      const unsyncedPhotos = getUnsyncedPhotos(photos);
+
+      if (unsyncedPhotos.length > 0) {
+        console.log(`[Seal] Waiting for ${unsyncedPhotos.length} photos to sync before sealing...`);
+
+        // Show sync modal
+        const syncModal = createSyncStatusModal(unsyncedPhotos.length);
+
+        setIsSyncing(true);
+
+        // Wait for sync with timeout (2 minutes)
+        const syncTimeout = 120000; // 2 minutes
+        const unsyncedPhotoIds = unsyncedPhotos.map(p => p.id);
+
+        const syncPromise = waitForPhotoSync(unsyncedPhotoIds, job.id);
+        const timeoutPromise = new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error('Sync timeout')), syncTimeout)
+        );
+
+        try {
+          // Poll for progress updates
+          const progressInterval = setInterval(async () => {
+            const currentJob = await getJobLocal(job.id);
+            if (currentJob) {
+              const syncedCount = unsyncedPhotoIds.filter(photoId => {
+                const photo = currentJob.photos.find(p => p.id === photoId);
+                return photo && photo.syncStatus === 'synced' && !photo.isIndexedDBRef;
+              }).length;
+              syncModal.update(syncedCount);
+            }
+          }, 1000);
+
+          await Promise.race([syncPromise, timeoutPromise]);
+
+          clearInterval(progressInterval);
+          syncModal.close();
+          setIsSyncing(false);
+
+          console.log('[Seal] All photos synced successfully. Proceeding with seal.');
+        } catch (error) {
+          console.error('[Seal] Sync timeout or error:', error);
+          syncModal.close();
+          setIsSyncing(false);
+          setIsSubmitting(false);
+
+          alert(
+            'Photos are still syncing to the cloud. This may be due to poor network connection.\n\n' +
+            'Please wait for sync to complete before sealing the job. Your data is saved locally.\n\n' +
+            'You can:\n' +
+            '• Wait and try again in a few moments\n' +
+            '• Move to an area with better signal\n' +
+            '• Contact support if the issue persists'
+          );
+          return;
+        }
+      }
+
       // Phase C.3: Call server-side cryptographic sealing
       const sealResult = await sealEvidence(job.id);
 
@@ -557,7 +616,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Access Denied</h2>
             <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{tokenError}</p>
             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 mt-4">
-              <p className="text-xs text-slate-500 font-medium">Common reasons:</p>
+              <p className="text-xs text-slate-300 font-medium">Common reasons:</p>
               <ul className="text-xs text-slate-400 mt-2 space-y-1 text-left max-w-xs mx-auto">
                 <li>• Link has expired (7 day limit)</li>
                 <li>• Job has been sealed</li>
@@ -622,7 +681,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               PROTOCOL REF: {job.id}
             </h2>
             <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{job.title}</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
+            <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
           </div>
           <div className="text-right">
             <div className="flex items-center gap-2 justify-end">
@@ -637,7 +696,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
               <div key={label} className="flex-1 space-y-2">
                 <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
-                <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-600'}`}>{label}</p>
+                <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-400'}`}>{label}</p>
               </div>
             ))}
           </div>
@@ -655,27 +714,27 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
             <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
               <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Protocol Details</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Protocol Details</p>
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Service Description</p>
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Service Description</p>
                   <p className="text-2xl font-black text-white uppercase tracking-tight">{job.title}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Client</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
                     <p className="text-sm font-bold text-white uppercase">{job.client}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reference</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Reference</p>
                     <p className="text-sm font-mono text-primary font-black">{job.id}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Location</p>
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
                   <div className="bg-slate-800 p-4 rounded-2xl border border-white/5">
                     <p className="text-sm font-bold text-white uppercase tracking-tight leading-relaxed">{job.address}</p>
                   </div>
@@ -683,7 +742,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
                 {job.notes && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Special Instructions</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Special Instructions</p>
                     <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
                       <p className="text-sm text-white uppercase tracking-tight leading-relaxed">{job.notes}</p>
                     </div>
@@ -695,7 +754,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8">
               <div className="flex items-center gap-4 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Requirements</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Protocol Requirements</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
@@ -763,7 +822,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                         </p>
                       </div>
                       {locationStatus === 'captured' && coords.lat && (
-                        <p className="text-[8px] font-mono text-slate-500 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                        <p className="text-[8px] font-mono text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
                       )}
                     </div>
                   </div>
@@ -794,7 +853,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               )}
 
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Risk Check-off</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Risk Check-off</p>
                 {checklist.map((item, idx) => (
                   <button
                     key={item.id}
@@ -804,7 +863,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                       setChecklist(next);
                       writeLocalDraft({ safetyChecklist: next });
                     }}
-                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-500'}`}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-300'}`}
                   >
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}
@@ -839,7 +898,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 <button
                   key={type}
                   onClick={() => setActivePhotoType(type)}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-600 hover:text-white'}`}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'}`}
                 >
                   {type}
                 </button>
@@ -850,10 +909,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={onFileSelect} />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 transition-all"
+                className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 transition-all min-h-[44px]"
+                aria-label={`Capture ${activePhotoType} photo`}
               >
                 <div className="size-14 bg-primary/10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                  <span className="material-symbols-outlined text-4xl font-black">add_a_photo</span>
+                  <span className="material-symbols-outlined text-4xl font-black" aria-hidden="true">add_a_photo</span>
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center px-4 leading-none">Capture Phase: {activePhotoType}</span>
               </button>
@@ -867,7 +927,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                       <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
-                      <button onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }} className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">Delete Capture</button>
+                      <button
+                        onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }}
+                        className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Delete photo capture"
+                      >
+                        Delete Capture
+                      </button>
                     </div>
                   </div>
                 );
@@ -896,17 +962,17 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
             <div className="space-y-6">
               <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] space-y-4 shadow-2xl">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Narrative</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Operational Narrative</p>
                 <textarea
                   value={notes}
                   onChange={(e) => { setNotes(e.target.value); writeLocalDraft({ notes: e.target.value }); }}
                   placeholder="Summarize the work completed for the client's review..."
-                  className="w-full bg-slate-800 border-slate-700 rounded-[1.5rem] p-6 text-white text-sm min-h-[160px] focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600"
+                  className="w-full bg-slate-800 border-slate-700 rounded-[1.5rem] p-6 text-white text-sm min-h-[160px] focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-400"
                 />
               </div>
 
               <div className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] space-y-4">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evidence Distribution</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Evidence Distribution</p>
                 <div className="grid grid-cols-2 gap-4">
                   {['Before', 'During', 'After', 'Evidence'].map(type => (
                     <div key={type} className="flex justify-between items-center text-[10px] font-black uppercase tracking-tight text-slate-400">
@@ -952,7 +1018,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Signatory Identification</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
                 <input
                   type="text"
                   placeholder="Full Legal Name"
@@ -962,7 +1028,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Authorization Role</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorization Role</label>
                 <select
                   value={signerRole}
                   onChange={e => setSignerRole(e.target.value)}
@@ -1053,7 +1119,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 </>
               )}
             </button>
-            <button onClick={() => setStep(3)} className="w-full py-4 text-slate-600 font-black uppercase text-[10px] tracking-widest">Back to Summary</button>
+            <button onClick={() => setStep(3)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest">Back to Summary</button>
           </div>
         )}
       </div>

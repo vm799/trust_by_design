@@ -70,7 +70,7 @@ const LandingPage: React.FC = () => {
             </Link>
           </div>
 
-          <p className="text-xs text-slate-500 uppercase tracking-widest pt-4">
+          <p className="text-xs text-slate-300 uppercase tracking-widest pt-4">
             Technicians: Click "I Have a Link" to access your dispatch
           </p>
         </div>
@@ -143,7 +143,7 @@ const LandingPage: React.FC = () => {
           <div className="bg-slate-800 size-8 rounded-lg flex items-center justify-center"><span className="material-symbols-outlined text-sm font-black">verified</span></div>
           <span className="font-black text-white tracking-tighter uppercase">JobProof</span>
         </div>
-        <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">&copy; 2024 JobProof Technologies. Precision Field Service Infrastructure.</p>
+        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">&copy; 2024 JobProof Technologies. Precision Field Service Infrastructure.</p>
       </footer>
     </div>
   );
@@ -154,7 +154,7 @@ const PriceCard = ({ tier, price, features, active }: any) => (
     <h3 className={`text-xl font-black uppercase tracking-tighter mb-2 ${active ? 'text-white' : 'text-slate-400'}`}>{tier}</h3>
     <div className="flex items-baseline gap-1 mb-8">
       <span className={`text-4xl font-black ${active ? 'text-white' : 'text-white'}`}>£{price}</span>
-      <span className={`text-sm font-bold ${active ? 'text-blue-200' : 'text-slate-500'}`}>/mo</span>
+      <span className={`text-sm font-bold ${active ? 'text-blue-200' : 'text-slate-300'}`}>/mo</span>
     </div>
     <ul className="space-y-4 mb-10">
       {features.map((f: string) => (

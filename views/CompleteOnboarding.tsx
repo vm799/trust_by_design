@@ -110,7 +110,7 @@ const CompleteOnboarding: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 py-12 px-6 overflow-y-auto">
+        <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 overflow-y-auto">
             <div className="max-w-6xl mx-auto space-y-12">
                 <div className="text-center space-y-4">
                     <div className="bg-primary/10 size-20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">

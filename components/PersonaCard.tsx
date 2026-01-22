@@ -1,8 +1,10 @@
 /**
  * PersonaCard - Reusable persona selection card
  * Used in /complete-onboarding page
+ * Memoized to prevent unnecessary re-renders
  */
 
+import React from 'react';
 import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '../lib/onboarding';
 
 interface PersonaCardProps {
@@ -11,7 +13,7 @@ interface PersonaCardProps {
   disabled?: boolean;
 }
 
-export default function PersonaCard({ persona, onSelect, disabled = false }: PersonaCardProps) {
+const PersonaCard = React.memo(function PersonaCard({ persona, onSelect, disabled = false }: PersonaCardProps) {
   const meta = PERSONA_METADATA[persona];
   const steps = PERSONA_STEPS[persona];
 
@@ -124,4 +126,6 @@ export default function PersonaCard({ persona, onSelect, disabled = false }: Per
       </div>
     </button>
   );
-}
+});
+
+export default PersonaCard;

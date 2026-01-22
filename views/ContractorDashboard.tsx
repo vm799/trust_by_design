@@ -48,7 +48,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                 {myJobs.length === 0 ? (
                     <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-10 text-center space-y-6 animate-in">
                         <div className="bg-slate-800 size-24 rounded-full flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-slate-600 text-5xl">assignment_turned_in</span>
+                            <span className="material-symbols-outlined text-slate-400 text-5xl">assignment_turned_in</span>
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-xl font-black text-white uppercase">All Caught Up!</h3>
@@ -68,7 +68,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                             <>
                                 <div className="py-4 flex items-center gap-4">
                                     <div className="h-px bg-white/10 flex-1"></div>
-                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Completed History</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Completed History</span>
                                     <div className="h-px bg-white/10 flex-1"></div>
                                 </div>
                                 {completedJobs.map(job => (
@@ -83,7 +83,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
     );
 };
 
-const JobCard = ({ job, onClick, completed = false }: { job: Job; onClick: () => void; completed?: boolean }) => (
+const JobCard = React.memo(({ job, onClick, completed = false }: { job: Job; onClick: () => void; completed?: boolean }) => (
     <button
         onClick={onClick}
         className={`w-full text-left group relative overflow-hidden transition-all duration-300 ${completed ? 'bg-slate-900/50 border border-white/5 opacity-70 hover:opacity-100' : 'bg-slate-900 border border-white/10 shadow-2xl hover:border-primary/50 hover:shadow-primary/10'
@@ -108,15 +108,17 @@ const JobCard = ({ job, onClick, completed = false }: { job: Job; onClick: () =>
 
         <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Client</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
                 <p className="text-xs font-bold text-slate-300 uppercase">{job.client}</p>
             </div>
             <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Location</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
                 <p className="text-xs font-bold text-slate-300 uppercase truncate">{job.address}</p>
             </div>
         </div>
     </button>
-);
+));
+
+JobCard.displayName = 'ContractorJobCard';
 
 export default ContractorDashboard;

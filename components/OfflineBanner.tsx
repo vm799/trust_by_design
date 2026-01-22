@@ -17,7 +17,7 @@ export const useOnlineStatus = () => {
     return isOnline;
 };
 
-export const OfflineBanner: React.FC = () => {
+export const OfflineBanner: React.FC = React.memo(() => {
     const isOnline = useOnlineStatus();
     if (isOnline) return null;
     return (
@@ -30,4 +30,6 @@ export const OfflineBanner: React.FC = () => {
             </div>
         </div>
     );
-};
+});
+
+OfflineBanner.displayName = 'OfflineBanner';

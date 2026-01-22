@@ -138,7 +138,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                     ? 'bg-success/20 text-success'
                     : step.status === 'in_progress'
                       ? 'bg-primary/20 text-primary'
-                      : 'bg-slate-700 text-slate-500'
+                      : 'bg-slate-700 text-slate-300'
                   }
                 `}>
                   {step.status === 'completed' ? (
@@ -159,7 +159,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                         ? 'text-success'
                         : step.status === 'in_progress'
                           ? 'text-white'
-                          : 'text-slate-500'
+                          : 'text-slate-300'
                       }
                     `}>
                       {step.label}
@@ -174,7 +174,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                       ? 'text-success/60'
                       : step.status === 'in_progress'
                         ? 'text-slate-400'
-                        : 'text-slate-600'
+                        : 'text-slate-400'
                     }
                   `}>
                     {step.description}
@@ -183,7 +183,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
 
                 {/* Arrow */}
                 {step.status !== 'locked' && step.status !== 'completed' && (
-                  <span className="material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors text-sm">
+                  <span className="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors text-sm">
                     chevron_right
                   </span>
                 )}

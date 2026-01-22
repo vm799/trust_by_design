@@ -18,8 +18,9 @@ interface JobCardProps {
  * - Status badges and sync indicators
  * - Photo thumbnails
  * - Retry action for failed syncs
+ * - Memoized to prevent unnecessary re-renders
  */
-const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls }) => {
+const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, photoDataUrls }) => {
   return (
     <button
       onClick={onClick}
@@ -31,7 +32,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
           <h3 className="font-black text-white tracking-tighter uppercase group-hover:text-primary transition-colors truncate">
             {job.title}
           </h3>
-          <p className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">
+          <p className="text-[10px] text-slate-300 font-mono mt-0.5 truncate">
             {job.id}
           </p>
         </div>
@@ -42,7 +43,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
             ? 'bg-success/10 text-success border-success/20'
             : job.status === 'In Progress'
               ? 'bg-primary/10 text-primary border-primary/20'
-              : 'bg-slate-800 text-slate-500 border-slate-700'
+              : 'bg-slate-800 text-slate-300 border-slate-700'
           }
         `}>
           {job.status}
@@ -51,7 +52,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
 
       {/* Client Info */}
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/5">
-        <span className="material-symbols-outlined text-slate-500 text-sm">business</span>
+        <span className="material-symbols-outlined text-slate-300 text-sm">business</span>
         <span className="text-xs text-slate-300 font-bold truncate">{job.client}</span>
       </div>
 
@@ -67,8 +68,8 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
       {job.photos.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="material-symbols-outlined text-slate-500 text-xs">photo_library</span>
-            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+            <span className="material-symbols-outlined text-slate-300 text-xs">photo_library</span>
+            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
               {job.photos.length} Photo{job.photos.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -85,14 +86,14 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[10px] text-slate-600">image</span>
+                      <span className="material-symbols-outlined text-[10px] text-slate-400">image</span>
                     </div>
                   )}
                 </div>
               );
             })}
             {job.photos.length > 4 && (
-              <div className="size-8 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-500">
+              <div className="size-8 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-300">
                 +{job.photos.length - 4}
               </div>
             )}
@@ -144,6 +145,20 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onRetry, photoDataUrls 
       </div>
     </button>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for optimal memoization
+  // Only re-render if job data, onClick, onRetry, or photoDataUrls actually changed
+  return (
+    prevProps.job.id === nextProps.job.id &&
+    prevProps.job.status === nextProps.job.status &&
+    prevProps.job.syncStatus === nextProps.job.syncStatus &&
+    prevProps.job.photos.length === nextProps.job.photos.length &&
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onRetry === nextProps.onRetry &&
+    prevProps.photoDataUrls === nextProps.photoDataUrls
+  );
+});
+
+JobCard.displayName = 'JobCard';
 
 export default JobCard;

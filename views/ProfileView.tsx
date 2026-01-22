@@ -34,7 +34,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
            <section className="space-y-6 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Full Name</label>
+                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Full Name</label>
                     <input 
                       type="text" 
                       className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 
@@ -43,17 +43,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                     />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Role</label>
+                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">System Role</label>
                     <input 
                       type="text" 
                       readOnly
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-500 outline-none cursor-not-allowed uppercase font-black text-xs" 
+                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs" 
                       value={formData.role} 
                     />
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorised Email</label>
+                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Authorised Email</label>
                  <input 
                    type="email" 
                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 

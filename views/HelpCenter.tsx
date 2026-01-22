@@ -336,7 +336,7 @@ const HelpCard = ({ icon, title, desc, onClick, isExpanded }: any) => (
       `}>
         <span className="material-symbols-outlined text-primary text-2xl sm:text-3xl font-black">{icon}</span>
       </div>
-      <span className={`material-symbols-outlined transition-transform ${isExpanded ? 'rotate-180 text-primary' : 'text-slate-600'}`}>
+      <span className={`material-symbols-outlined transition-transform ${isExpanded ? 'rotate-180 text-primary' : 'text-slate-400'}`}>
         expand_more
       </span>
     </div>
@@ -362,7 +362,7 @@ const ExpandableFAQItem = ({ q, a, isExpanded, onToggle }: any) => (
       <div className="flex-1 min-w-0 space-y-2">
         <p className="font-bold text-white text-sm sm:text-base uppercase tracking-tight flex items-center justify-between gap-2">
           <span>{q}</span>
-          <span className={`material-symbols-outlined text-sm text-slate-500 group-hover:text-primary transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+          <span className={`material-symbols-outlined text-sm text-slate-300 group-hover:text-primary transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
             expand_more
           </span>
         </p>

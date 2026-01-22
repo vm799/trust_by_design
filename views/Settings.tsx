@@ -68,7 +68,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                </div>
                <div className="p-6 sm:p-10 space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Workspace Name</label>
+                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Workspace Name</label>
                     <input
                       type="text"
                       className="w-full bg-slate-800 border-slate-700 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
@@ -93,14 +93,14 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                         </div>
                         <div>
                            <p className="text-sm font-bold text-white">{user?.fullName || user?.email || 'Admin User'}</p>
-                           <p className="text-[10px] text-slate-500 uppercase font-black">Admin</p>
+                           <p className="text-[10px] text-slate-300 uppercase font-black">Admin</p>
                         </div>
                      </div>
                      <span className="text-[10px] font-black text-success uppercase">Active</span>
                   </div>
                   <button
                     onClick={() => setShowInviteModal(true)}
-                    className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-primary/50 rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:text-primary transition-all flex items-center justify-center gap-2 group"
+                    className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-primary/50 rounded-2xl text-[10px] font-black uppercase text-slate-300 hover:text-primary transition-all flex items-center justify-center gap-2 group"
                   >
                     <span className="material-symbols-outlined text-base group-hover:scale-110 transition-transform">person_add</span>
                     Invite Team Member
@@ -145,7 +145,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Device Policies</h3>
                <div className="space-y-4">
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Local Retention</p>
+                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Local Retention</p>
                      <select
                        value={deviceSettings.localRetention}
                        onChange={(e) => updateDeviceSetting('localRetention', e.target.value)}
@@ -157,7 +157,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                      </select>
                   </div>
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Photo Quality</p>
+                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Photo Quality</p>
                      <select
                        value={deviceSettings.photoQuality}
                        onChange={(e) => updateDeviceSetting('photoQuality', e.target.value)}
@@ -185,7 +185,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   <span className="material-symbols-outlined text-base">refresh</span>
                   Restart Onboarding Tour
                </button>
-               <p className="text-[10px] text-slate-500 leading-relaxed">
+               <p className="text-[10px] text-slate-300 leading-relaxed">
                   Launch the interactive walkthrough again to review key features and workflows.
                </p>
             </div>
@@ -226,7 +226,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email Address</label>
                 <input
                   type="email"
                   placeholder="teammate@example.com"
@@ -235,7 +235,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Role</label>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
                 <select className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
                   <option>Admin</option>
                   <option>Manager</option>

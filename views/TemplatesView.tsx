@@ -39,7 +39,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
               </div>
               <div className="space-y-2">
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">{tpl.name}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed font-medium">{tpl.description}</p>
+                <p className="text-sm text-slate-300 leading-relaxed font-medium">{tpl.description}</p>
               </div>
               <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tpl.tasks} Data Points</span>
