@@ -74,7 +74,8 @@ const CompleteOnboarding: React.FC = () => {
         };
 
         checkState();
-    }, [authLoading, isAuthenticated, userId, navigate]); // CRITICAL: Added authLoading check
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading, isAuthenticated, userId]); // CRITICAL: Only stable primitives - navigate excluded to prevent re-runs
 
     const handlePersonaSelect = async (persona: PersonaType) => {
         if (selecting) return;

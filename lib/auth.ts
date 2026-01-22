@@ -15,6 +15,17 @@ export interface AuthResult {
   error?: AuthError | Error;
 }
 
+// CRITICAL FIX: Profile cache to prevent repeated fetches
+// This reduces 3 queries per profile load when navigating between routes
+interface ProfileCache {
+  data: any;
+  timestamp: number;
+  userId: string;
+}
+let profileCache: ProfileCache | null = null;
+let profileFetchPromise: Promise<any> | null = null;
+const PROFILE_CACHE_TTL = 60000; // 60 seconds
+
 export interface SignUpData {
   email: string;
   password: string;
@@ -265,46 +276,91 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 /**
  * Get user profile with workspace info
+ *
+ * CRITICAL FIX (Jan 2026): Added caching and request deduplication
+ * - Caches profile for 60 seconds to prevent repeated fetches
+ * - Deduplicates concurrent requests using in-flight promise
+ * - Reduces 3 API calls per navigation to 0 when cache is warm
  */
 export const getUserProfile = async (userId: string) => {
   const supabase = getSupabase();
   if (!supabase) return null;
 
-  try {
-    // Fetch user profile first
-    // Use maybeSingle() instead of single() to avoid 406 error when user doesn't exist
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (userError) throw userError;
-    if (!userData) return null;
-
-    // Fetch workspace separately
-    const { data: workspaceData } = await supabase
-      .from('workspaces')
-      .select('*')
-      .eq('id', userData.workspace_id)
-      .maybeSingle();
-
-    // Fetch personas separately
-    const { data: personasData } = await supabase
-      .from('user_personas')
-      .select('*')
-      .eq('user_id', userId);
-
-    // Combine results
-    return {
-      ...userData,
-      workspace: workspaceData || null,
-      personas: personasData || []
-    };
-  } catch (error) {
-    console.error('Failed to get user profile:', error);
-    return null;
+  // CRITICAL FIX: Return cached data if still valid
+  if (profileCache && profileCache.userId === userId) {
+    const age = Date.now() - profileCache.timestamp;
+    if (age < PROFILE_CACHE_TTL) {
+      console.log('[Auth] getUserProfile: returning cached profile (age:', Math.round(age / 1000), 's)');
+      return profileCache.data;
+    }
   }
+
+  // CRITICAL FIX: Reuse in-flight promise to deduplicate concurrent requests
+  if (profileFetchPromise) {
+    console.log('[Auth] getUserProfile: reusing in-flight request');
+    return profileFetchPromise;
+  }
+
+  // Create the fetch promise
+  profileFetchPromise = (async () => {
+    try {
+      // Fetch user profile first
+      // Use maybeSingle() instead of single() to avoid 406 error when user doesn't exist
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (userError) throw userError;
+      if (!userData) return null;
+
+      // Fetch workspace separately
+      const { data: workspaceData } = await supabase
+        .from('workspaces')
+        .select('*')
+        .eq('id', userData.workspace_id)
+        .maybeSingle();
+
+      // Fetch personas separately
+      const { data: personasData } = await supabase
+        .from('user_personas')
+        .select('*')
+        .eq('user_id', userId);
+
+      // Combine results
+      const profile = {
+        ...userData,
+        workspace: workspaceData || null,
+        personas: personasData || []
+      };
+
+      // CRITICAL FIX: Cache the result
+      profileCache = {
+        data: profile,
+        timestamp: Date.now(),
+        userId
+      };
+
+      return profile;
+    } catch (error) {
+      console.error('Failed to get user profile:', error);
+      return null;
+    } finally {
+      // Clear the in-flight promise
+      profileFetchPromise = null;
+    }
+  })();
+
+  return profileFetchPromise;
+};
+
+/**
+ * Clear the profile cache (call when user logs out or profile changes)
+ */
+export const clearProfileCache = () => {
+  profileCache = null;
+  profileFetchPromise = null;
 };
 
 /**
