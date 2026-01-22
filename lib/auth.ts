@@ -200,8 +200,19 @@ export const signInWithMagicLink = async (
  * @deprecated V2 FEATURE ONLY - Not used in V1 MVP
  * V1 uses Magic Link authentication exclusively.
  * This function is preserved for V2 implementation.
+ *
+ * DO NOT USE IN V1 - Magic Link only
  */
 export const signInWithGoogle = async (): Promise<AuthResult> => {
+  // V1 MVP: Block Google OAuth
+  console.warn('[Auth] signInWithGoogle is disabled in V1 MVP. Use signInWithMagicLink instead.');
+  return {
+    success: false,
+    error: new Error('Google OAuth is not available in V1. Please use Magic Link authentication.')
+  };
+
+  // V2 Implementation (preserved for reference)
+  /*
   const supabase = getSupabase();
   if (!supabase) {
     return {
@@ -230,6 +241,7 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
       error: error as Error
     };
   }
+  */
 };
 
 /**

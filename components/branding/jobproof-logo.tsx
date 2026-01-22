@@ -98,7 +98,7 @@ export function JobProofLogo({
       <JobProofMark size={size} aria-hidden />
 
       <div className="flex flex-col justify-center">
-        <span className={cn('font-bold leading-none text-slate-900 dark:text-slate-50', sizes.text)}>
+        <span className={cn('font-bold leading-none text-slate-900 dark:text-white', sizes.text)}>
           JobProof
         </span>
         {showTagline && (

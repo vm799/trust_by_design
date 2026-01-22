@@ -166,7 +166,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   return (
     <Layout user={user}>
       <div className="max-w-2xl mx-auto space-y-6 pb-20">
-        <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Initialize Dispatch</h2>
+        <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Initialise Dispatch</h2>
 
         <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
           <div className="space-y-4">

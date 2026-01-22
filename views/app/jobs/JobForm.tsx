@@ -6,7 +6,7 @@
  * Phase E: Job Lifecycle
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
@@ -48,6 +48,20 @@ const JobForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+
+  // Auto-focus refs for improved UX flow
+  const titleRef = useRef<HTMLInputElement>(null);
+  const clientRef = useRef<HTMLSelectElement>(null);
+  const technicianRef = useRef<HTMLSelectElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus title field on mount
+  useEffect(() => {
+    if (!loading && titleRef.current) {
+      titleRef.current.focus();
+    }
+  }, [loading]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -204,15 +218,17 @@ const JobForm: React.FC = () => {
                   Job Title <span className="text-red-400">*</span>
                 </label>
                 <input
+                  ref={titleRef}
                   id="title"
                   type="text"
                   value={formData.title}
                   onChange={handleChange('title')}
+                  onKeyDown={(e) => e.key === 'Enter' && clientRef.current?.focus()}
                   placeholder="e.g. Lawn Mowing, Electrical Inspection"
                   className={`
-                    w-full px-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500
-                    focus:outline-none focus:border-primary/50
-                    ${errors.title ? 'border-red-500' : 'border-white/10'}
+                    w-full px-5 py-4 bg-slate-800 border rounded-xl text-white placeholder-slate-500
+                    focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                    ${errors.title ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
                   `}
                 />
                 {errors.title && (
@@ -226,13 +242,17 @@ const JobForm: React.FC = () => {
                   Client <span className="text-red-400">*</span>
                 </label>
                 <select
+                  ref={clientRef}
                   id="clientId"
                   value={formData.clientId}
-                  onChange={(e) => handleClientChange(e.target.value)}
+                  onChange={(e) => {
+                    handleClientChange(e.target.value);
+                    if (e.target.value) technicianRef.current?.focus();
+                  }}
                   className={`
-                    w-full px-4 py-3 bg-slate-800 border rounded-xl text-white
-                    focus:outline-none focus:border-primary/50
-                    ${errors.clientId ? 'border-red-500' : 'border-white/10'}
+                    w-full px-5 py-4 bg-slate-800 border rounded-xl text-white
+                    focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                    ${errors.clientId ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
                   `}
                 >
                   <option value="">Select a client...</option>
@@ -253,10 +273,14 @@ const JobForm: React.FC = () => {
                   Assign Technician
                 </label>
                 <select
+                  ref={technicianRef}
                   id="technicianId"
                   value={formData.technicianId}
-                  onChange={handleChange('technicianId')}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50"
+                  onChange={(e) => {
+                    handleChange('technicianId')(e);
+                    dateRef.current?.focus();
+                  }}
+                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Assign later...</option>
                   {technicians.map(tech => (
@@ -274,14 +298,15 @@ const JobForm: React.FC = () => {
                     Date <span className="text-red-400">*</span>
                   </label>
                   <input
+                    ref={dateRef}
                     id="date"
                     type="date"
                     value={formData.date}
                     onChange={handleChange('date')}
                     className={`
-                      w-full px-4 py-3 bg-slate-800 border rounded-xl text-white
-                      focus:outline-none focus:border-primary/50
-                      ${errors.date ? 'border-red-500' : 'border-white/10'}
+                      w-full px-5 py-4 bg-slate-800 border rounded-xl text-white
+                      focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                      ${errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
                     `}
                   />
                   {errors.date && (
@@ -296,8 +321,11 @@ const JobForm: React.FC = () => {
                     id="time"
                     type="time"
                     value={formData.time}
-                    onChange={handleChange('time')}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50"
+                    onChange={(e) => {
+                      handleChange('time')(e);
+                      addressRef.current?.focus();
+                    }}
+                    className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -308,12 +336,13 @@ const JobForm: React.FC = () => {
                   Address
                 </label>
                 <input
+                  ref={addressRef}
                   id="address"
                   type="text"
                   value={formData.address}
                   onChange={handleChange('address')}
                   placeholder="Job location address"
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50"
+                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -327,8 +356,8 @@ const JobForm: React.FC = () => {
                   value={formData.description}
                   onChange={handleChange('description')}
                   placeholder="Job details, scope of work, special instructions..."
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 resize-none"
+                  rows={4}
+                  className="w-full px-5 py-4 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 resize-none"
                 />
               </div>
 
@@ -338,7 +367,7 @@ const JobForm: React.FC = () => {
                   Total Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">£</span>
                   <input
                     id="total"
                     type="text"
@@ -346,9 +375,9 @@ const JobForm: React.FC = () => {
                     onChange={handleChange('total')}
                     placeholder="0.00"
                     className={`
-                      w-full pl-8 pr-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500
-                      focus:outline-none focus:border-primary/50
-                      ${errors.total ? 'border-red-500' : 'border-white/10'}
+                      w-full pl-10 pr-5 py-4 bg-slate-800 border rounded-xl text-white placeholder-slate-500
+                      focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                      ${errors.total ? 'border-red-500 bg-red-500/5' : 'border-white/10'}
                     `}
                   />
                 </div>
