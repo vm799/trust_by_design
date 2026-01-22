@@ -499,11 +499,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             <table className="w-full text-left">
               <thead className="bg-slate-950/50">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Service Details</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Field Agent</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Evidence</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Hub Sync</th>
+                  <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-white">Service Details</th>
+                  <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-white">Field Agent</th>
+                  <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-white">Lifecycle Stage</th>
+                  <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-white">Evidence</th>
+                  <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-white text-right">Integrity</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -524,11 +524,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 ) : (
                   jobs.map(job => {
                     const lifecycle = getJobLifecycle(job);
+                    const isOverdue = isJobOverdue(job);
+                    const syncIntegrity = getSyncIntegrityStatus(job);
                     return (
-                    <tr key={job.id} className="hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => navigate(`/admin/report/${job.id}`)}>
+                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
-                        <div className="font-bold text-white tracking-tighter uppercase group-hover:text-primary transition-colors">{job.title}</div>
-                        <div className="text-[10px] text-slate-300 font-mono mt-1">{job.id} • {job.client}</div>
+                        <div className="flex items-center gap-2">
+                          <div className={`font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors ${isOverdue ? 'text-danger' : 'text-white'}`}>{job.title}</div>
+                          {isOverdue && (
+                            <span className="px-2 py-0.5 bg-danger/20 border border-danger/30 text-danger text-[8px] font-black uppercase tracking-widest rounded">OVERDUE</span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-300 font-mono mt-1">{job.id} • {job.client}</div>
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
@@ -566,20 +573,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className={`inline-flex items-center gap-1.5 ${job.syncStatus === 'synced' ? 'text-success' : job.syncStatus === 'failed' ? 'text-danger' : 'text-primary'}`}>
-                            <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === 'pending' ? 'animate-spin' : ''}`}>
-                              {job.syncStatus === 'synced' ? 'cloud_done' : job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+                        <div className="flex items-center justify-end gap-3">
+                          {/* Sync Integrity Indicator */}
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncIntegrity.bgColor} ${syncIntegrity.color} ${syncIntegrity.borderColor}`}>
+                            <span className={`material-symbols-outlined text-sm font-black ${syncIntegrity.isAnimated ? 'animate-spin' : ''}`}>
+                              {syncIntegrity.icon}
                             </span>
-                            <span className="text-[10px] font-black uppercase tracking-widest">{job.syncStatus}</span>
+                            <span className="text-[11px]">{syncIntegrity.label}</span>
                           </div>
                           {job.syncStatus === 'failed' && (
                             <button
                               onClick={(e) => handleJobRetry(job, e)}
-                              className="px-2 py-1 bg-danger/10 hover:bg-danger/20 border border-danger/20 text-danger rounded-lg text-[8px] font-black uppercase tracking-widest transition-all"
+                              className="px-3 py-1.5 bg-danger/10 hover:bg-danger/20 border border-danger/20 text-danger rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                               title="Retry sync for this job"
                             >
-                              <span className="material-symbols-outlined text-xs">refresh</span>
+                              <span className="material-symbols-outlined text-sm">refresh</span>
                             </button>
                           )}
                         </div>
@@ -613,6 +621,88 @@ interface LifecycleInfo {
   bgColor: string;
   borderColor: string;
 }
+
+/**
+ * Sync Integrity Status
+ * Shows offline vs online status per job/photo with visual indicators
+ */
+interface SyncIntegrityInfo {
+  status: 'online' | 'offline' | 'syncing' | 'failed';
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  isAnimated: boolean;
+}
+
+/**
+ * Detect if a job is overdue based on scheduled date
+ */
+const isJobOverdue = (job: Job): boolean => {
+  if (!job.date || job.status === 'Submitted') return false;
+
+  const scheduledDate = new Date(job.date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Job is overdue if scheduled date is in the past and not completed
+  return scheduledDate < today && job.status !== 'Completed';
+};
+
+/**
+ * Get sync integrity status for a job
+ */
+const getSyncIntegrityStatus = (job: Job): SyncIntegrityInfo => {
+  const isOnline = navigator.onLine;
+
+  if (job.syncStatus === 'failed') {
+    return {
+      status: 'failed',
+      label: 'Sync Failed',
+      icon: 'sync_problem',
+      color: 'text-danger',
+      bgColor: 'bg-danger/10',
+      borderColor: 'border-danger/20',
+      isAnimated: false,
+    };
+  }
+
+  if (job.syncStatus === 'pending' || job.syncStatus === 'syncing') {
+    return {
+      status: 'syncing',
+      label: isOnline ? 'Syncing' : 'Offline Queue',
+      icon: 'sync',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
+      isAnimated: true,
+    };
+  }
+
+  if (job.syncStatus === 'synced') {
+    return {
+      status: isOnline ? 'online' : 'offline',
+      label: isOnline ? 'Cloud Synced' : 'Local Only',
+      icon: isOnline ? 'cloud_done' : 'cloud_off',
+      color: isOnline ? 'text-success' : 'text-warning',
+      bgColor: isOnline ? 'bg-success/10' : 'bg-warning/10',
+      borderColor: isOnline ? 'border-success/20' : 'border-warning/20',
+      isAnimated: false,
+    };
+  }
+
+  // Default to synced
+  return {
+    status: 'online',
+    label: 'Synced',
+    icon: 'cloud_done',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
+    borderColor: 'border-success/20',
+    isAnimated: false,
+  };
+};
 
 const getJobLifecycle = (job: Job): LifecycleInfo => {
   // VERIFIED: Submitted status (already sealed and verified)
