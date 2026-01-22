@@ -297,6 +297,57 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
 
+  // Auto-focus refs for progressive field highlighting
+  const checklistRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const signerNameRef = useRef<HTMLInputElement>(null);
+
+  // Backtracking prevention: track highest completed step
+  const [maxCompletedStep, setMaxCompletedStep] = useState(0);
+
+  // Update max completed step when advancing
+  useEffect(() => {
+    if (step > maxCompletedStep) {
+      setMaxCompletedStep(step);
+    }
+  }, [step, maxCompletedStep]);
+
+  // Auto-focus on step change
+  useEffect(() => {
+    const focusTimeout = setTimeout(() => {
+      if (step === 1) {
+        // Focus first unchecked checklist item
+        const firstUncheckedIdx = checklist.findIndex(item => !item.checked);
+        if (firstUncheckedIdx >= 0 && checklistRefs.current[firstUncheckedIdx]) {
+          checklistRefs.current[firstUncheckedIdx]?.focus();
+        }
+      } else if (step === 3) {
+        // Focus notes textarea
+        notesRef.current?.focus();
+      } else if (step === 4) {
+        // Focus signer name input
+        signerNameRef.current?.focus();
+      }
+    }, 300); // Delay to allow animation
+    return () => clearTimeout(focusTimeout);
+  }, [step]);
+
+  // Auto-advance focus in checklist when item is checked
+  const handleChecklistToggle = (idx: number) => {
+    const next = [...checklist];
+    next[idx].checked = !next[idx].checked;
+    setChecklist(next);
+    writeLocalDraft({ safetyChecklist: next });
+
+    // Auto-focus next unchecked item
+    if (next[idx].checked) {
+      const nextUncheckedIdx = next.findIndex((item, i) => i > idx && !item.checked);
+      if (nextUncheckedIdx >= 0 && checklistRefs.current[nextUncheckedIdx]) {
+        setTimeout(() => checklistRefs.current[nextUncheckedIdx]?.focus(), 100);
+      }
+    }
+  };
+
   // Auto-save progress: Save step to localStorage
   useEffect(() => {
     if (job?.id && step < 5) {
@@ -888,12 +939,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
         {step > 0 && (
           <div className="flex gap-2">
-            {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => (
-              <div key={label} className="flex-1 space-y-2">
-                <div className={`h-1.5 rounded-full transition-all duration-500 ${step > idx ? 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]' : 'bg-slate-800'}`} />
-                <p className={`text-[8px] font-black uppercase tracking-widest text-center ${step === idx + 1 ? 'text-primary' : 'text-slate-400'}`}>{label}</p>
-              </div>
-            ))}
+            {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => {
+              const stepNum = idx + 1;
+              const isCompleted = step > stepNum;
+              const isLocked = maxCompletedStep >= stepNum && step !== stepNum;
+              const isCurrent = step === stepNum;
+              return (
+                <div key={label} className="flex-1 space-y-2">
+                  <div className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? (isLocked ? 'bg-slate-500' : 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]') : 'bg-slate-800'}`} />
+                  <div className="flex items-center justify-center gap-1">
+                    {isLocked && <span className="material-symbols-outlined text-[8px] text-slate-500">lock</span>}
+                    <p className={`text-[8px] font-black uppercase tracking-widest text-center ${isCurrent ? 'text-primary' : isLocked ? 'text-slate-500' : 'text-slate-400'}`}>{label}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -1052,13 +1112,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 {checklist.map((item, idx) => (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      const next = [...checklist];
-                      next[idx].checked = !next[idx].checked;
-                      setChecklist(next);
-                      writeLocalDraft({ safetyChecklist: next });
-                    }}
-                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-300'}`}
+                    ref={(el) => { checklistRefs.current[idx] = el; }}
+                    onClick={() => handleChecklistToggle(idx)}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-300'}`}
                   >
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}
@@ -1136,7 +1192,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             </div>
 
             <div className="flex gap-4">
-              <button onClick={() => setStep(1)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+              <button
+                onClick={() => setStep(1)}
+                disabled={maxCompletedStep >= 2}
+                className={`flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${maxCompletedStep >= 2 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border border-white/10 text-white hover:bg-slate-800'}`}
+                title={maxCompletedStep >= 2 ? 'Cannot go back after progressing' : undefined}
+              >
+                {maxCompletedStep >= 2 ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-xs">lock</span>
+                    Locked
+                  </span>
+                ) : 'Back'}
+              </button>
               <button
                 disabled={photos.length === 0}
                 onClick={() => setStep(3)}
@@ -1159,10 +1227,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] space-y-4 shadow-2xl">
                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Operational Narrative</p>
                 <textarea
+                  ref={notesRef}
                   value={notes}
                   onChange={(e) => { setNotes(e.target.value); writeLocalDraft({ notes: e.target.value }); }}
                   placeholder="Summarize the work completed for the client's review..."
-                  className="w-full bg-slate-800 border-slate-700 rounded-[1.5rem] p-6 text-white text-sm min-h-[160px] focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-400"
+                  className="w-full bg-slate-800 border-slate-700 rounded-[1.5rem] p-6 text-white text-sm min-h-[160px] focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 outline-none transition-all placeholder:text-slate-400"
                 />
               </div>
 
@@ -1192,7 +1261,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             )}
 
             <div className="flex gap-4">
-              <button onClick={() => setStep(2)} className="flex-1 py-5 bg-slate-900 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white">Back</button>
+              <button
+                onClick={() => setStep(2)}
+                disabled={maxCompletedStep >= 3}
+                className={`flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${maxCompletedStep >= 3 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border border-white/10 text-white hover:bg-slate-800'}`}
+                title={maxCompletedStep >= 3 ? 'Cannot go back after progressing' : undefined}
+              >
+                {maxCompletedStep >= 3 ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-xs">lock</span>
+                    Locked
+                  </span>
+                ) : 'Back'}
+              </button>
               <button
                 disabled={photos.length === 0}
                 onClick={() => setStep(4)}
@@ -1215,11 +1296,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
                 <input
+                  ref={signerNameRef}
                   type="text"
                   placeholder="Full Legal Name"
                   value={signerName}
                   onChange={e => setSignerName(e.target.value)}
-                  className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary transition-all uppercase font-bold text-xs"
+                  className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 transition-all uppercase font-bold text-xs"
                 />
               </div>
               <div className="space-y-2">
@@ -1314,7 +1396,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 </>
               )}
             </button>
-            <button onClick={() => setStep(3)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest">Back to Summary</button>
+            <button
+              onClick={() => setStep(3)}
+              disabled={maxCompletedStep >= 4}
+              className={`w-full py-4 font-black uppercase text-[10px] tracking-widest transition-all ${maxCompletedStep >= 4 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
+              title={maxCompletedStep >= 4 ? 'Cannot go back after signing' : undefined}
+            >
+              {maxCompletedStep >= 4 ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-xs">lock</span>
+                  Signed — No Changes Allowed
+                </span>
+              ) : 'Back to Summary'}
+            </button>
           </div>
         )}
       </div>
