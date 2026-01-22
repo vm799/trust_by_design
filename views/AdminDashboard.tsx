@@ -50,6 +50,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     new Map(attentionItems.map(item => [item.job.id, item])).values()
   );
 
+  // WORKFORCE STATUS: Technician availability and current assignments
+  const technicianStatus = technicians.map(tech => {
+    const activeTechJobs = activeJobs.filter(j => j.techId === tech.id);
+    const hasActiveJobs = activeTechJobs.length > 0;
+
+    // Determine operational status
+    let operationalStatus: 'in_field' | 'available' | 'off_duty' | 'idle';
+    let statusLabel: string;
+    let statusColor: string;
+    let statusIcon: string;
+
+    if (hasActiveJobs) {
+      operationalStatus = 'in_field';
+      statusLabel = 'In Field';
+      statusColor = 'text-primary';
+      statusIcon = 'location_on';
+    } else if (tech.status === 'Available' || tech.status === 'Authorised') {
+      operationalStatus = 'available';
+      statusLabel = 'Available';
+      statusColor = 'text-success';
+      statusIcon = 'check_circle';
+    } else if (tech.status === 'Off Duty') {
+      operationalStatus = 'off_duty';
+      statusLabel = 'Off Duty';
+      statusColor = 'text-slate-400';
+      statusIcon = 'schedule';
+    } else {
+      operationalStatus = 'idle';
+      statusLabel = 'Idle';
+      statusColor = 'text-slate-400';
+      statusIcon = 'schedule';
+    }
+
+    return {
+      tech,
+      activeTechJobs,
+      hasActiveJobs,
+      operationalStatus,
+      statusLabel,
+      statusColor,
+      statusIcon,
+    };
+  });
+
   // State for IndexedDB photo previews
   const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
 
@@ -367,6 +411,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 color={syncIssues > 0 ? "text-danger" : "text-slate-300"}
               />
             </div>
+
+            {/* WORKFORCE STATUS PANEL */}
+            {technicians.length > 0 && (
+              <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-lg font-black">groups</span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Workforce Status</h3>
+                      <p className="text-[10px] text-slate-400">{technicians.length} technician{technicians.length > 1 ? 's' : ''} registered</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <span className="text-success">●</span>
+                    <span className="text-slate-400 font-medium">{technicianStatus.filter(t => t.operationalStatus === 'available').length} Available</span>
+                    <span className="text-primary ml-2">●</span>
+                    <span className="text-slate-400 font-medium">{technicianStatus.filter(t => t.operationalStatus === 'in_field').length} In Field</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {technicianStatus.map(({ tech, activeTechJobs, statusLabel, statusColor, statusIcon }) => (
+                    <div
+                      key={tech.id}
+                      className="bg-slate-950/50 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="size-10 rounded-lg bg-slate-800 flex items-center justify-center text-sm font-black text-slate-300 uppercase flex-shrink-0">
+                          {tech.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-black text-white truncate">{tech.name}</h4>
+                          <div className={`flex items-center gap-1.5 mt-1 ${statusColor}`}>
+                            <span className="material-symbols-outlined text-xs font-black">{statusIcon}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider">{statusLabel}</span>
+                          </div>
+                          {activeTechJobs.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <p className="text-[9px] text-slate-400 font-medium mb-1">Active Jobs:</p>
+                              {activeTechJobs.slice(0, 2).map(job => (
+                                <button
+                                  key={job.id}
+                                  onClick={() => navigate(`/admin/report/${job.id}`)}
+                                  className="block w-full text-left text-[10px] text-slate-300 hover:text-primary transition-colors truncate"
+                                >
+                                  • {job.title}
+                                </button>
+                              ))}
+                              {activeTechJobs.length > 2 && (
+                                <p className="text-[9px] text-slate-500 mt-1">+{activeTechJobs.length - 2} more</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile Job Cards (shown on mobile, hidden on desktop) */}
             {jobs.length > 0 && (
