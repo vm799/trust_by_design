@@ -283,6 +283,12 @@ const EmailFirstAuth: React.FC = () => {
                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !loading) {
+                      e.preventDefault();
+                      handleEmailSubmit(e as any);
+                    }
+                  }}
                   autoFocus
                   aria-invalid={!!error}
                   aria-describedby={error ? "auth-error" : undefined}
@@ -356,6 +362,12 @@ const EmailFirstAuth: React.FC = () => {
                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !loading) {
+                      e.preventDefault();
+                      handlePasswordSubmit(e as any);
+                    }
+                  }}
                   autoFocus
                 />
               </div>
@@ -436,6 +448,12 @@ const EmailFirstAuth: React.FC = () => {
                   className={`w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none ${password && !validatePassword(password).isValid ? 'border-warning/50' : 'border-slate-700'}`}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !loading && validatePassword(password).isValid) {
+                      e.preventDefault();
+                      handleSignupSubmit(e as any);
+                    }
+                  }}
                 />
                 <div className="space-y-3 mt-2">
                   <div className="flex flex-wrap gap-2">

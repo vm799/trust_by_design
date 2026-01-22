@@ -48,9 +48,11 @@ export const getAuthRedirectUrl = (path: string = ''): string => {
 /**
  * Get secure redirect URL for magic links
  * @param token - Magic link token
+ * @param jobId - Optional job ID to include as query parameter for deep-linking
  */
-export const getMagicLinkUrl = (token: string): string => {
-  return `${getSecureOrigin()}/#/track/${token}`;
+export const getMagicLinkUrl = (token: string, jobId?: string): string => {
+  const baseUrl = `${getSecureOrigin()}/#/track/${token}`;
+  return jobId ? `${baseUrl}?jobId=${jobId}` : baseUrl;
 };
 
 /**

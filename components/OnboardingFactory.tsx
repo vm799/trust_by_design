@@ -9,7 +9,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getSupabase } from '../lib/supabase';
 import {
   PersonaType,
@@ -109,6 +109,25 @@ export default function OnboardingFactory({
     }
   };
 
+  // Keyboard shortcuts for better UX
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to continue to next step
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !completing) {
+        e.preventDefault();
+        handleComplete();
+      }
+      // Escape to go back to persona selection
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        navigate('/complete-onboarding');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [completing, navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -147,7 +166,7 @@ export default function OnboardingFactory({
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
             <div
-              className={`h-full bg-gradient-to-r ${colors.gradient} transition-all duration-500 ease-out shadow-md`}
+              className={`h-full bg-gradient-to-r ${colors.gradient} transition-all duration-700 ease-out shadow-md animate-pulse`}
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
@@ -159,7 +178,7 @@ export default function OnboardingFactory({
         </div>
 
         {/* Step Content */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
+        <div className="bg-white rounded-3xl shadow-xl p-8 mb-8 transition-all duration-500 ease-in-out animate-in">
           {children}
         </div>
 
@@ -227,6 +246,20 @@ export default function OnboardingFactory({
                 </>
               )}
             </button>
+          </div>
+
+          {/* Keyboard Shortcuts Hint */}
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-[10px] font-semibold">ESC</kbd>
+              <span>Back to personas</span>
+            </div>
+            <div className="size-1 bg-gray-300 rounded-full"></div>
+            <div className="flex items-center gap-1.5">
+              <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-[10px] font-semibold">⌘</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-[10px] font-semibold">Enter</kbd>
+              <span>Continue</span>
+            </div>
           </div>
         </div>
 

@@ -115,20 +115,48 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
   const actualStepIndex = Math.min(currentStep, steps.length - 1);
   const step = steps[actualStepIndex];
 
-  // Highlight target element
+  // Highlight target element with enhanced pulse animation
   React.useEffect(() => {
     if (!step) return;
     const target = document.getElementById(step.targetId);
     if (target) {
-      target.classList.add('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative');
+      target.classList.add('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative', 'transition-all', 'duration-300');
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     return () => {
       if (target) {
-        target.classList.remove('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative');
+        target.classList.remove('ring-4', 'ring-primary', 'ring-offset-4', 'ring-offset-slate-950', 'animate-pulse', 'z-[101]', 'relative', 'transition-all', 'duration-300');
       }
     };
   }, [actualStepIndex, step?.targetId]);
+
+  // Keyboard shortcuts for better UX
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to continue (if step is completed)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && step?.isCompleted) {
+        e.preventDefault();
+        next();
+      }
+      // Escape to skip tour
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleSkip();
+      }
+      // Arrow keys for navigation
+      if (e.key === 'ArrowRight' && step?.isCompleted) {
+        e.preventDefault();
+        next();
+      }
+      if (e.key === 'ArrowLeft' && currentStep > 0) {
+        e.preventDefault();
+        setCurrentStep(currentStep - 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentStep, step?.isCompleted]);
 
   const next = () => {
     if (currentStep < steps.length - 1) {
@@ -149,9 +177,9 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
   if (!step) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-white/10 p-10 rounded-[3rem] max-w-lg w-full shadow-2xl space-y-8 animate-in relative overflow-hidden">
-        <div className="absolute top-0 left-0 h-1 bg-primary transition-all duration-300" style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}></div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300">
+      <div className="bg-slate-900 border border-white/10 p-10 rounded-[3rem] max-w-lg w-full shadow-2xl space-y-8 animate-in relative overflow-hidden transition-all duration-500 ease-in-out">
+        <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-primary to-primary-hover transition-all duration-500 ease-out shadow-lg shadow-primary/50" style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}></div>
 
         <button
           onClick={handleSkip}
@@ -189,6 +217,42 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
           >
             {!step.isCompleted ? "Complete Action" : (currentStep === steps.length - 1 ? "Initialise Hub" : "Continue")}
           </button>
+        </div>
+
+        {/* Keyboard Shortcuts Hint */}
+        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-400 font-medium border-t border-white/5 pt-6">
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded text-[9px] font-black">ESC</kbd>
+            <span>Skip</span>
+          </div>
+          {step.isCompleted && (
+            <>
+              <div className="size-1 bg-slate-700 rounded-full"></div>
+              <div className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded text-[9px] font-black">⌘</kbd>
+                <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded text-[9px] font-black">Enter</kbd>
+                <span>Continue</span>
+              </div>
+            </>
+          )}
+          {currentStep > 0 && (
+            <>
+              <div className="size-1 bg-slate-700 rounded-full"></div>
+              <div className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded text-[9px] font-black">←</kbd>
+                <span>Back</span>
+              </div>
+            </>
+          )}
+          {step.isCompleted && (
+            <>
+              <div className="size-1 bg-slate-700 rounded-full"></div>
+              <div className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded text-[9px] font-black">→</kbd>
+                <span>Next</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

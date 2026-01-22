@@ -2,6 +2,7 @@ import { getSupabase } from './supabase';
 import { getMagicLinkUrl } from './redirects';
 import type { Job, Client, Technician } from '../types';
 import { mockJobs } from '../tests/mocks/mockData';
+import { requestCache, generateCacheKey } from './performanceUtils';
 
 /**
  * Database Helper Library
@@ -231,6 +232,9 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
       isSealed: !!data.sealed_at
     };
 
+    // Invalidate cache for jobs list
+    requestCache.clearKey(generateCacheKey('getJobs', workspaceId));
+
     return { success: true, data: job };
   } catch (error) {
     return {
@@ -242,8 +246,18 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
 
 /**
  * Get all jobs for a workspace
+ * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getJobs = async (workspaceId: string): Promise<DbResult<Job[]>> => {
+  // Use request deduplication with 10 second cache
+  const cacheKey = generateCacheKey('getJobs', workspaceId);
+  return requestCache.dedupe(cacheKey, () => _getJobsImpl(workspaceId), 10000);
+};
+
+/**
+ * Internal implementation of getJobs
+ */
+const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
   if (shouldUseMockDB()) {
     if (!workspaceId) {
       return {
@@ -316,6 +330,102 @@ export const getJobs = async (workspaceId: string): Promise<DbResult<Job[]>> => 
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch jobs'
+    };
+  }
+};
+
+/**
+ * Get a single job by ID
+ * Uses request deduplication to prevent duplicate concurrent requests
+ */
+export const getJob = async (jobId: string, workspaceId: string): Promise<DbResult<Job>> => {
+  // Use request deduplication with 5 second cache
+  const cacheKey = generateCacheKey('getJob', jobId, workspaceId);
+  return requestCache.dedupe(cacheKey, () => _getJobImpl(jobId, workspaceId), 5000);
+};
+
+/**
+ * Internal implementation of getJob
+ */
+const _getJobImpl = async (jobId: string, workspaceId: string): Promise<DbResult<Job>> => {
+  if (shouldUseMockDB()) {
+    const job = mockDatabase.jobs.get(jobId);
+
+    if (!job) {
+      return {
+        success: false,
+        error: 'Job not found'
+      };
+    }
+
+    if (job.workspaceId !== workspaceId) {
+      return {
+        success: false,
+        error: 'Job not found'
+      };
+    }
+
+    return { success: true, data: job };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      success: false,
+      error: 'Supabase not configured. Running in offline-only mode.'
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('id', jobId)
+      .eq('workspace_id', workspaceId)
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const job: Job = {
+      id: data.id,
+      title: data.title,
+      client: data.client_name,
+      clientId: data.client_id,
+      technician: data.technician_name,
+      techId: data.technician_id,
+      status: data.status,
+      date: data.scheduled_date,
+      address: data.address,
+      lat: data.lat,
+      lng: data.lng,
+      w3w: data.w3w,
+      notes: data.notes,
+      workSummary: data.work_summary,
+      photos: data.photos || [],
+      signature: data.signature_url,
+      signerName: data.signer_name,
+      signerRole: data.signer_role,
+      safetyChecklist: data.safety_checklist || [],
+      siteHazards: data.site_hazards || [],
+      completedAt: data.completed_at,
+      templateId: data.template_id,
+      syncStatus: data.sync_status || 'synced',
+      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
+      price: data.price,
+      workspaceId: data.workspace_id,
+      sealedAt: data.sealed_at,
+      sealedBy: data.sealed_by,
+      evidenceHash: data.evidence_hash,
+      isSealed: !!data.sealed_at
+    };
+
+    return { success: true, data: job };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch job'
     };
   }
 };
@@ -453,6 +563,10 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
       isSealed: !!data.sealed_at
     };
 
+    // Invalidate cache for jobs list and individual job
+    requestCache.clearKey(generateCacheKey('getJobs', data.workspace_id));
+    requestCache.clearKey(generateCacheKey('getJob', jobId, data.workspace_id));
+
     return { success: true, data: job };
   } catch (error) {
     return {
@@ -496,6 +610,13 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
   }
 
   try {
+    // Fetch job first to get workspace_id for cache invalidation
+    const { data: jobData } = await supabase
+      .from('jobs')
+      .select('workspace_id')
+      .eq('id', jobId)
+      .single();
+
     const { error } = await supabase
       .from('jobs')
       .delete()
@@ -503,6 +624,12 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Invalidate cache if we have workspace_id
+    if (jobData?.workspace_id) {
+      requestCache.clearKey(generateCacheKey('getJobs', jobData.workspace_id));
+      requestCache.clearKey(generateCacheKey('getJob', jobId, jobData.workspace_id));
     }
 
     return { success: true };
@@ -534,7 +661,7 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
 
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const url = getMagicLinkUrl(token);
+    const url = getMagicLinkUrl(token, jobId);
 
     mockDatabase.magicLinks.set(token, {
       job_id: jobId,
@@ -575,7 +702,7 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
       return { success: false, error: 'Failed to generate token' };
     }
 
-    const url = getMagicLinkUrl(data.token);
+    const url = getMagicLinkUrl(data.token, jobId);
 
     return {
       success: true,
@@ -786,8 +913,18 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
 
 /**
  * Get all clients for a workspace
+ * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getClients = async (workspaceId: string): Promise<DbResult<Client[]>> => {
+  // Use request deduplication with 10 second cache
+  const cacheKey = generateCacheKey('getClients', workspaceId);
+  return requestCache.dedupe(cacheKey, () => _getClientsImpl(workspaceId), 10000);
+};
+
+/**
+ * Internal implementation of getClients
+ */
+const _getClientsImpl = async (workspaceId: string): Promise<DbResult<Client[]>> => {
   if (shouldUseMockDB()) {
     const clients = Array.from(mockDatabase.clients.values())
       .filter(client => (client as any).workspaceId === workspaceId);
@@ -887,6 +1024,9 @@ export const createClient = async (clientData: Partial<Client>, workspaceId: str
       totalJobs: 0
     };
 
+    // Invalidate cache for clients list
+    requestCache.clearKey(generateCacheKey('getClients', workspaceId));
+
     return { success: true, data: client };
   } catch (error) {
     return {
@@ -928,7 +1068,7 @@ export const updateClient = async (clientId: string, updates: Partial<Client>): 
       .from('clients')
       .update(updateData)
       .eq('id', clientId)
-      .select()
+      .select('*, workspace_id')
       .single();
 
     if (error) {
@@ -942,6 +1082,11 @@ export const updateClient = async (clientId: string, updates: Partial<Client>): 
       address: data.address,
       totalJobs: 0
     };
+
+    // Invalidate cache for clients list
+    if (data.workspace_id) {
+      requestCache.clearKey(generateCacheKey('getClients', data.workspace_id));
+    }
 
     return { success: true, data: client };
   } catch (error) {
@@ -974,6 +1119,13 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
   }
 
   try {
+    // Fetch client first to get workspace_id for cache invalidation
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('workspace_id')
+      .eq('id', clientId)
+      .single();
+
     const { error } = await supabase
       .from('clients')
       .delete()
@@ -981,6 +1133,11 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Invalidate cache if we have workspace_id
+    if (clientData?.workspace_id) {
+      requestCache.clearKey(generateCacheKey('getClients', clientData.workspace_id));
     }
 
     return { success: true };
@@ -998,8 +1155,18 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
 
 /**
  * Get all technicians for a workspace
+ * Uses request deduplication to prevent duplicate concurrent requests
  */
 export const getTechnicians = async (workspaceId: string): Promise<DbResult<Technician[]>> => {
+  // Use request deduplication with 10 second cache
+  const cacheKey = generateCacheKey('getTechnicians', workspaceId);
+  return requestCache.dedupe(cacheKey, () => _getTechniciansImpl(workspaceId), 10000);
+};
+
+/**
+ * Internal implementation of getTechnicians
+ */
+const _getTechniciansImpl = async (workspaceId: string): Promise<DbResult<Technician[]>> => {
   if (shouldUseMockDB()) {
     const technicians = Array.from(mockDatabase.technicians.values())
       .filter(tech => (tech as any).workspaceId === workspaceId);
@@ -1104,6 +1271,9 @@ export const createTechnician = async (techData: Partial<Technician>, workspaceI
       jobsCompleted: data.jobs_completed || 0
     };
 
+    // Invalidate cache for technicians list
+    requestCache.clearKey(generateCacheKey('getTechnicians', workspaceId));
+
     return { success: true, data: technician };
   } catch (error) {
     return {
@@ -1147,7 +1317,7 @@ export const updateTechnician = async (techId: string, updates: Partial<Technici
       .from('technicians')
       .update(updateData)
       .eq('id', techId)
-      .select()
+      .select('*, workspace_id')
       .single();
 
     if (error) {
@@ -1162,6 +1332,11 @@ export const updateTechnician = async (techId: string, updates: Partial<Technici
       rating: data.rating || 0,
       jobsCompleted: data.jobs_completed || 0
     };
+
+    // Invalidate cache for technicians list
+    if (data.workspace_id) {
+      requestCache.clearKey(generateCacheKey('getTechnicians', data.workspace_id));
+    }
 
     return { success: true, data: technician };
   } catch (error) {
@@ -1194,6 +1369,13 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
   }
 
   try {
+    // Fetch technician first to get workspace_id for cache invalidation
+    const { data: technicianData } = await supabase
+      .from('technicians')
+      .select('workspace_id')
+      .eq('id', techId)
+      .single();
+
     const { error } = await supabase
       .from('technicians')
       .delete()
@@ -1201,6 +1383,11 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Invalidate cache if we have workspace_id
+    if (technicianData?.workspace_id) {
+      requestCache.clearKey(generateCacheKey('getTechnicians', technicianData.workspace_id));
     }
 
     return { success: true };
