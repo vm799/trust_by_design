@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 
 const PricingView: React.FC = () => {
   return (
@@ -84,6 +85,10 @@ const PriceCard = ({
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  // CRITICAL FIX: Use useAuth hook instead of direct getSession() API call
+  // This prevents unnecessary auth API requests on every button click
+  const { session } = useAuth();
+
   const handleSubscribe = async () => {
     if (tier === 'Solo') {
       navigate('/auth');
@@ -96,7 +101,7 @@ const PriceCard = ({
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // CRITICAL FIX: Use session from AuthContext instead of calling getSession()
     if (!session) {
       navigate('/auth');
       return;

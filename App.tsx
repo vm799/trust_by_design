@@ -151,6 +151,10 @@ const AppContent: React.FC = () => {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
+  // CRITICAL FIX: Track profile loading separately from auth loading
+  // This prevents premature redirects that cause the /admin ↔ /auth/setup loop
+  const [profileLoading, setProfileLoading] = useState(true);
+
   // Templates still in localStorage (Phase D.6 will migrate to Protocols)
   const [templates, setTemplates] = useState<JobTemplate[]>(() => {
     const saved = localStorage.getItem('jobproof_templates_v2');
@@ -174,10 +178,14 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
+      // CRITICAL FIX: Always set profileLoading to true at start
+      setProfileLoading(true);
+
       // No user = logged out
       if (!sessionUserId) {
         setUser(null);
         profileLoadedRef.current = null;
+        setProfileLoading(false); // Done loading (no profile to load)
         // Clear user data from localStorage on logout
         localStorage.removeItem('jobproof_user_v2');
         // Fallback to localStorage if not authenticated
@@ -188,6 +196,7 @@ const AppContent: React.FC = () => {
       // Skip if we already loaded this user's profile (prevents duplicate loads)
       if (profileLoadedRef.current === sessionUserId) {
         console.log('[App] Profile already loaded for user, skipping:', sessionUserId);
+        setProfileLoading(false); // Ensure loading state is cleared
         return;
       }
 
@@ -245,6 +254,7 @@ const AppContent: React.FC = () => {
         };
         setUser(userProfile);
         profileLoadedRef.current = sessionUserId;
+        setProfileLoading(false); // CRITICAL: Profile loaded successfully
 
         // Phase C.2: Load workspace data from Supabase
         loadWorkspaceData(profile.workspace_id);
@@ -253,15 +263,10 @@ const AppContent: React.FC = () => {
         console.warn('[App] Session exists but profile missing. Redirecting to setup.');
 
         // Create minimal user profile from session data for routing
-        const fallbackProfile: UserProfile = {
-          name: sessionUserEmail || 'User',
-          email: sessionUserEmail || '',
-          role: 'member',
-          workspaceName: 'Setup Required',
-          persona: undefined
-        };
-        setUser(fallbackProfile);
+        // Setting user to null indicates setup is needed (not just loading)
+        setUser(null);
         profileLoadedRef.current = sessionUserId;
+        setProfileLoading(false); // CRITICAL: Done loading, profile truly missing
       }
     };
 
@@ -427,8 +432,9 @@ const AppContent: React.FC = () => {
     // AuthContext will automatically update session state
   };
 
-  // Show loading spinner while checking auth state
-  if (authLoading) {
+  // CRITICAL FIX: Show loading spinner while checking auth state OR loading profile
+  // This prevents the redirect loop where routes fire before profile is loaded
+  if (authLoading || (isAuthenticated && profileLoading)) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -440,10 +446,12 @@ const AppContent: React.FC = () => {
   }
 
   // Helper for Persona-Aware Routing
+  // CRITICAL FIX: This component only renders AFTER profileLoading is false (blocked at top level)
+  // So if user is null here, it means the profile is truly missing, not just loading
   const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
-    // CRITICAL FIX: Handle missing profile gracefully
+    // Profile truly missing (not loading) - redirect to setup
     if (!user) {
-      console.warn('[PersonaRedirect] No user profile, redirecting to setup');
+      console.log('[PersonaRedirect] Profile missing (load complete), redirecting to setup');
       return <Navigate to="/auth/setup" replace />;
     }
 
@@ -536,6 +544,10 @@ const AppContent: React.FC = () => {
         } />
 
         {/* Admin Hub - Protected by real session */}
+        {/* CRITICAL FIX: Profile loading is now blocked at the top level, so if we reach here:
+            - isAuthenticated=true means user is logged in
+            - user=null means profile is truly missing (not loading), redirect to setup
+            - user exists means profile loaded successfully */}
         <Route path="/admin" element={
           isAuthenticated ? (
             user ? (
