@@ -60,9 +60,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 const result = await getJob(jobIdFromUrl, workspace_id);
                 if (result.success && result.data) {
                   loadedJob = result.data;
-                  // Cache to Local DB
-                  // @ts-ignore - LocalJob needs number lastUpdated
-                  await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+                  // Cache to Local DB with proper LocalJob type
+                  await saveJobLocal({
+                    ...loadedJob,
+                    syncStatus: loadedJob.syncStatus || 'synced',
+                    lastUpdated: Date.now()
+                  });
                   console.log('[TechnicianPortal] Job loaded from database via deep-link');
                 } else {
                   setTokenError(result.error || 'Job not found');
@@ -87,9 +90,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             const result = await getJobByToken(token);
             if (result.success && result.data) {
               loadedJob = result.data;
-              // Cache to Local DB immediately
-              // @ts-ignore - LocalJob needs number lastUpdated
-              await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+              // Cache to Local DB immediately with proper LocalJob type
+              await saveJobLocal({
+                ...loadedJob,
+                syncStatus: loadedJob.syncStatus || 'synced',
+                lastUpdated: Date.now()
+              });
             } else {
               // Token validation failed - check if it's actually a job ID (fallback for offline/legacy URLs)
               if (token.startsWith('JP-')) {
@@ -104,7 +110,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 }
 
                 if (loadedJob) {
-                  await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+                  await saveJobLocal({
+                    ...loadedJob,
+                    syncStatus: loadedJob.syncStatus || 'synced',
+                    lastUpdated: Date.now()
+                  });
                 } else {
                   setTokenError(result.error as string || 'Invalid or expired link');
                 }
@@ -117,7 +127,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
           // Fallback to props/legacy (no token)
           loadedJob = jobs.find(j => j.id === jobId);
           if (loadedJob) {
-            await saveJobLocal({ ...loadedJob, lastUpdated: Date.now() });
+            await saveJobLocal({
+              ...loadedJob,
+              syncStatus: loadedJob.syncStatus || 'synced',
+              lastUpdated: Date.now()
+            });
           }
         }
 
@@ -331,9 +345,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     setLocalSyncStatus('pending');
     setJob(prev => prev ? ({ ...prev, ...fields }) : undefined); // Local state update
 
-    // Persist to Local DB
-    // @ts-ignore
-    await saveJobLocal(updatedJob);
+    // Persist to Local DB with proper LocalJob type
+    await saveJobLocal({
+      ...updatedJob,
+      syncStatus: updatedJob.syncStatus || 'pending',
+      lastUpdated: Date.now()
+    });
 
     // Queue for Background Sync
     // We send { id, ...fields } to patch

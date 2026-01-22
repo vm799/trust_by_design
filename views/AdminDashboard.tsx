@@ -656,8 +656,8 @@ const isJobOverdue = (job: Job): boolean => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Job is overdue if scheduled date is in the past and not completed
-  return scheduledDate < today && job.status !== 'Completed';
+  // Job is overdue if scheduled date is in the past and not archived or in progress
+  return scheduledDate < today && job.status !== 'Archived' && job.status !== 'In Progress';
 };
 
 /**

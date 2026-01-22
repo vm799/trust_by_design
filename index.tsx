@@ -4,7 +4,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ThemeProvider } from './lib/theme';
 import ErrorBoundary from './components/ErrorBoundary';
+import { validateAndLog } from './lib/envValidation';
 import './src/styles/theme.css';
+
+// Validate environment configuration at startup
+validateAndLog(false); // Don't throw on errors, just log warnings
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

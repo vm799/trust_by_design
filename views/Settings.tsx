@@ -89,10 +89,10 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/5">
                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className="size-10 bg-primary rounded-xl flex items-center justify-center font-black text-sm sm:text-base">
-                          {user?.fullName?.[0] || user?.email?.[0] || 'A'}
+                          {user?.name?.[0] || user?.email?.[0] || 'A'}
                         </div>
                         <div>
-                           <p className="text-sm font-bold text-white">{user?.fullName || user?.email || 'Admin User'}</p>
+                           <p className="text-sm font-bold text-white">{user?.name || user?.email || 'Admin User'}</p>
                            <p className="text-[10px] text-slate-300 uppercase font-black">Admin</p>
                         </div>
                      </div>
