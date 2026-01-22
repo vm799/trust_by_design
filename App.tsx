@@ -40,7 +40,8 @@ const LegalPage = lazy(() => import('./views/LegalPage'));
 const PricingView = lazy(() => import('./views/PricingView'));
 const ProfileView = lazy(() => import('./views/ProfileView'));
 const AuthView = lazy(() => import('./views/AuthView'));
-const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
+// V1 MVP: EmailFirstAuth removed - Magic Link only via AuthView
+// const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
 const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
 const CompleteOnboarding = lazy(() => import('./views/CompleteOnboarding'));
 const OAuthSetup = lazy(() => import('./views/OAuthSetup'));
@@ -492,8 +493,8 @@ const AppContent: React.FC = () => {
         {/* Technician Entry Point - Public */}
         <Route path="/track-lookup" element={<TrackLookup />} />
 
-        {/* Email-First Authentication (Primary) */}
-        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <EmailFirstAuth />} />
+        {/* V1 MVP: Magic Link Only Authentication */}
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
@@ -515,7 +516,7 @@ const AppContent: React.FC = () => {
           ) : <Navigate to="/auth" replace />
         } />
 
-        {/* Legacy Auth Routes (Fallback) */}
+        {/* V1 MVP: Magic Link Auth Routes */}
         <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="login" onAuth={handleLogin} />} />
         <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView type="signup" onAuth={handleLogin} />} />
 
