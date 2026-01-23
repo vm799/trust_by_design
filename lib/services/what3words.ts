@@ -208,6 +208,9 @@ export function getW3WCacheStats() {
 /**
  * Generate mock W3W for offline/testing
  * Returns random 3-word address in W3W format
+ *
+ * CRITICAL: This is NOT a real W3W address and should be flagged in reports
+ * as unverified location data.
  */
 export function generateMockW3W(): string {
   const words = [
@@ -218,6 +221,76 @@ export function generateMockW3W(): string {
   ];
   const pick = () => words[Math.floor(Math.random() * words.length)];
   return `///${pick()}.${pick()}.${pick()}`;
+}
+
+/**
+ * Location result with verification status
+ * Used to distinguish real W3W from mock/unverified locations
+ */
+export interface VerifiedLocationResult {
+  w3w: string;
+  isVerified: boolean;
+  verificationSource: 'w3w_api' | 'mock' | 'manual' | 'cached';
+  coordinates: {
+    lat: number;
+    lng: number;
+    accuracy?: number;
+  };
+  warning?: string;
+}
+
+/**
+ * Convert coordinates to W3W with verification status
+ * This is the primary function that should be used for evidence capture
+ *
+ * @returns Location result with verification flag for audit trail
+ */
+export async function getVerifiedLocation(
+  lat: number,
+  lng: number,
+  accuracy?: number
+): Promise<VerifiedLocationResult> {
+  // Try to get real W3W from API
+  const w3wResult = await convertToW3WCached(lat, lng);
+
+  if (w3wResult) {
+    return {
+      w3w: `///${w3wResult.words}`,
+      isVerified: true,
+      verificationSource: 'w3w_api',
+      coordinates: { lat, lng, accuracy },
+    };
+  }
+
+  // W3W API failed - return mock with UNVERIFIED flag
+  const mockW3w = generateMockW3W();
+  console.warn('[W3W] API failed - using mock location (UNVERIFIED)');
+
+  return {
+    w3w: mockW3w,
+    isVerified: false,
+    verificationSource: 'mock',
+    coordinates: { lat, lng, accuracy },
+    warning: 'UNVERIFIED: W3W address is mock - API unavailable. GPS coordinates are real but W3W is NOT verified.',
+  };
+}
+
+/**
+ * Create a manual location entry result
+ * Should be flagged as unverified in audit trail
+ */
+export function createManualLocationResult(
+  lat: number,
+  lng: number,
+  manualW3w?: string
+): VerifiedLocationResult {
+  return {
+    w3w: manualW3w || generateMockW3W(),
+    isVerified: false,
+    verificationSource: 'manual',
+    coordinates: { lat, lng },
+    warning: 'UNVERIFIED: Location manually entered by technician - not captured from GPS.',
+  };
 }
 
 /**

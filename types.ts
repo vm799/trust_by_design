@@ -62,14 +62,19 @@ export interface Job {
   lat?: number;
   lng?: number;
   w3w?: string;
+  locationVerified?: boolean; // True if W3W was verified via API, false if mock/manual
+  locationSource?: 'gps' | 'manual' | 'cached' | 'unknown'; // Source of location data
   notes: string;
   description?: string;
   workSummary?: string;
   photos: Photo[];
   signature: string | null; // IndexedDB key reference (e.g., "sig_jobId") when offline
   signatureIsIndexedDBRef?: boolean; // Indicates if signature is a reference key
+  signatureHash?: string; // SHA-256 hash of signature for tamper detection
+  signatureTimestamp?: string; // ISO timestamp when signature was captured
   signerName?: string;
   signerRole?: string;
+  signerPhotoId?: string; // ID of photo capturing signer's identity (optional verification)
   safetyChecklist: SafetyCheck[];
   siteHazards?: string[];
   completedAt?: string;

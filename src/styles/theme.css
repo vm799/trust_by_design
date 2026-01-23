@@ -212,6 +212,59 @@
 }
 
 /* ============================================
+   TOUCH TARGET ACCESSIBILITY (WCAG 2.5.5)
+   Minimum 44x44px touch targets for mobile
+   ============================================ */
+
+/* Mobile-first touch targets for buttons and interactive elements */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Larger touch targets for critical actions */
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Extra large for primary CTAs in field conditions */
+  .touch-target-xl {
+    min-height: 56px;
+    min-width: 56px;
+  }
+}
+
+/* Ensure adequate spacing between touch targets */
+.touch-safe {
+  margin: 8px;
+}
+
+/* Field worker optimized button - gloved hands friendly */
+.btn-field {
+  min-height: 56px;
+  min-width: 56px;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* High contrast mode for outdoor visibility */
+@media (prefers-contrast: more) {
+  .btn-field {
+    border-width: 3px;
+  }
+}
+
+/* ============================================
    MICRO-INTERACTIONS & ANIMATIONS
    CSS-only animations for delightful UX
    ============================================ */

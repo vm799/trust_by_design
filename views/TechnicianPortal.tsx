@@ -5,11 +5,21 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { validateMagicLink, getJobByToken, updateJob, getJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
-import { sealEvidence, canSealJob } from '../lib/sealing';
+import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
-import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
+import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualLocationResult, VerifiedLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import QuickJobForm from '../components/QuickJobForm';
+import {
+  logAuditEvent,
+  logPhotoCapture,
+  logPhotoDeletion,
+  logSignatureCapture,
+  logSignatureCleared,
+  logLocationCapture,
+  logMockLocationFallback,
+  logJobSealed,
+} from '../lib/auditLog';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, onAddJob?: (j: Job) => void }> = ({ jobs, onUpdateJob, onAddJob }) => {
   const { token, jobId } = useParams();
@@ -475,6 +485,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   }, [job, onUpdateJob]);
 
+  // Track location verification status for legal defensibility
+  const [locationVerified, setLocationVerified] = useState<boolean>(true);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
+
   const captureLocation = () => {
     setLocationStatus('capturing');
     navigator.geolocation.getCurrentPosition(
@@ -483,36 +497,70 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         const lng = pos.coords.longitude;
         const accuracy = pos.coords.accuracy;
 
-        // Real what3words API call with caching
-        let w3wAddress = null;
-        try {
-          const w3wResult = await convertToW3WCached(lat, lng);
-          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
-          console.log('W3W API result:', w3wResult);
-        } catch (error) {
-          console.warn('W3W API failed, using mock fallback:', error);
-        }
-
-        // Fallback to mock if API failed or not configured
-        if (!w3wAddress) {
-          console.warn('Using mock W3W - configure VITE_W3W_API_KEY for real data');
-          w3wAddress = generateMockW3W();
-        }
+        // CRITICAL FIX: Use verified location system with audit trail
+        const locationResult = await getVerifiedLocation(lat, lng, accuracy);
 
         setCoords({ lat, lng });
-        setW3w(w3wAddress);
+        setW3w(locationResult.w3w);
+        setLocationVerified(locationResult.isVerified);
+        setLocationWarning(locationResult.warning || null);
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: w3wAddress, lat, lng });
+        writeLocalDraft({
+          w3w: locationResult.w3w,
+          lat,
+          lng,
+          locationVerified: locationResult.isVerified,
+          locationSource: locationResult.verificationSource,
+        });
+
+        // Log location capture with verification status
+        if (job) {
+          if (locationResult.isVerified) {
+            logLocationCapture(
+              job.id,
+              { lat, lng, accuracy },
+              'gps',
+              locationResult.w3w,
+              true,
+              { technicianId: job.techId, technicianName: job.technician }
+            );
+          } else {
+            // Log mock fallback as a warning
+            logMockLocationFallback(
+              job.id,
+              locationResult.w3w,
+              { lat, lng },
+              { technicianId: job.techId, technicianName: job.technician }
+            );
+          }
+        }
       },
       (error) => {
         console.error('Geolocation error:', error);
         setLocationStatus('denied');
+        if (job) {
+          logAuditEvent('LOCATION_DENIED', job.id, {
+            error: error.message,
+            code: error.code,
+          });
+        }
       },
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      // Extended timeout for better GPS accuracy in field conditions
+      { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
     );
   };
 
   const manualLocationEntry = async () => {
+    // CRITICAL: Show warning about unverified location
+    const confirmed = window.confirm(
+      'IMPORTANT: Manual location entry is UNVERIFIED.\n\n' +
+      'This will be flagged in the audit trail and may reduce ' +
+      'the legal defensibility of this evidence.\n\n' +
+      'Only proceed if GPS is unavailable.'
+    );
+
+    if (!confirmed) return;
+
     const manualLat = prompt('Enter latitude (e.g., 51.505):');
     const manualLng = prompt('Enter longitude (e.g., -0.09):');
 
@@ -521,35 +569,70 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const lng = parseFloat(manualLng);
 
       if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-        // Real what3words API call for manual entry
-        let w3wAddress = null;
-        try {
-          const w3wResult = await convertToW3WCached(lat, lng);
-          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
-          console.log('W3W API result (manual):', w3wResult);
-        } catch (error) {
-          console.warn('W3W API failed for manual entry, using mock:', error);
-        }
-
-        // Fallback to mock if API failed
-        if (!w3wAddress) {
-          console.warn('Using mock W3W for manual entry');
-          w3wAddress = generateMockW3W();
-        }
+        // Create manual location result (flagged as unverified)
+        const locationResult = createManualLocationResult(lat, lng);
 
         setCoords({ lat, lng });
-        setW3w(w3wAddress);
+        setW3w(locationResult.w3w);
+        setLocationVerified(false);
+        setLocationWarning(locationResult.warning || 'Manual entry - unverified');
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: w3wAddress, lat, lng });
+        writeLocalDraft({
+          w3w: locationResult.w3w,
+          lat,
+          lng,
+          locationVerified: false,
+          locationSource: 'manual',
+        });
+
+        // Log manual location entry
+        if (job) {
+          logLocationCapture(
+            job.id,
+            { lat, lng },
+            'manual',
+            locationResult.w3w,
+            false,
+            { technicianId: job.techId, technicianName: job.technician }
+          );
+        }
       } else {
         alert('Invalid coordinates. Latitude must be -90 to 90, longitude must be -180 to 180.');
       }
     }
   };
 
-  const clearSignature = () => {
+  // Track previous signature hash for audit trail
+  const [previousSignatureHash, setPreviousSignatureHash] = useState<string | null>(null);
+
+  const clearSignature = async () => {
+    // CRITICAL FIX: Require confirmation before clearing signature
+    const confirmed = window.confirm(
+      'Are you sure you want to clear the signature?\n\n' +
+      'This action will be logged in the audit trail. ' +
+      'The customer will need to sign again.'
+    );
+
+    if (!confirmed) return;
+
     const canvas = canvasRef.current;
     if (canvas) {
+      // Calculate hash of current signature before clearing (for audit trail)
+      const currentSignatureData = canvas.toDataURL();
+      const currentHash = await calculateDataUrlHash(currentSignatureData);
+
+      // Log signature clearing event
+      if (job) {
+        logSignatureCleared(
+          job.id,
+          currentHash,
+          'User requested signature clear',
+          { technicianId: job.techId, technicianName: job.technician }
+        );
+      }
+
+      setPreviousSignatureHash(currentHash);
+
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -595,16 +678,27 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           id: photoId,
           url: mediaKey, // Key reference
           timestamp: new Date().toISOString(),
-          verified: true,
+          verified: locationVerified, // Track if location was verified
           syncStatus: 'pending',
           type: activePhotoType,
           w3w: w3w || undefined,
+          w3w_verified: locationVerified, // Track W3W verification status
           lat: coords.lat,
           lng: coords.lng,
           isIndexedDBRef: true,
           photo_hash: photoHash,
           photo_hash_algorithm: 'SHA-256'
         };
+
+        // CRITICAL: Log photo capture with hash for audit trail
+        logPhotoCapture(
+          job.id,
+          photoId,
+          photoHash,
+          activePhotoType,
+          { lat: coords.lat, lng: coords.lng },
+          { technicianId: job.techId, technicianName: job.technician }
+        );
 
         const nextPhotos = [...photos, newPhoto];
         setPhotos(nextPhotos);
@@ -668,6 +762,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
     const signatureKey = signatureData ? `sig_${job?.id}` : null;
 
+    // CRITICAL FIX: Calculate signature hash for tamper detection
+    let signatureHash: string | undefined;
+    if (signatureData) {
+      signatureHash = await calculateDataUrlHash(signatureData);
+      console.log('[Signature] Hash calculated:', signatureHash.substring(0, 16) + '...');
+
+      // Log signature capture with hash for audit trail
+      logSignatureCapture(
+        job.id,
+        signatureHash,
+        signerName,
+        signerRole,
+        { technicianId: job.techId, technicianName: job.technician }
+      );
+    }
+
     // Store full signature Base64 in IndexedDB
     if (signatureData && signatureKey) {
       try {
@@ -688,10 +798,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       notes,
       signature: signatureKey,
       signatureIsIndexedDBRef: !!signatureKey,
+      signatureHash, // CRITICAL: Store signature hash for tamper detection
       signerName,
       signerRole,
       safetyChecklist: checklist,
       completedAt: new Date().toISOString(),
+      locationVerified, // Track if location was verified by W3W API
       syncStatus: 'pending',
       lastUpdated: Date.now()
     };
@@ -716,8 +828,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
         setIsSyncing(true);
 
-        // Wait for sync with timeout (2 minutes)
-        const syncTimeout = 120000; // 2 minutes
+        // Wait for sync with extended timeout (5 minutes for field conditions)
+        // CRITICAL FIX: Extended from 2 minutes to 5 minutes for poor network conditions
+        const syncTimeout = 300000; // 5 minutes
         const unsyncedPhotoIds = unsyncedPhotos.map(p => p.id);
 
         const syncPromise = waitForPhotoSync(unsyncedPhotoIds, job.id);
@@ -1355,8 +1468,30 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       <button
-                        onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }}
-                        className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={async () => {
+                          // CRITICAL FIX: Require confirmation and log deletion
+                          const confirmed = window.confirm(
+                            'Are you sure you want to delete this photo?\n\n' +
+                            'This action will be logged in the audit trail ' +
+                            'and cannot be undone.'
+                          );
+
+                          if (!confirmed) return;
+
+                          // Log photo deletion with hash for audit trail
+                          if (job) {
+                            logPhotoDeletion(
+                              job.id,
+                              p.id,
+                              p.photo_hash || 'unknown',
+                              'User requested deletion',
+                              { technicianId: job.techId, technicianName: job.technician }
+                            );
+                          }
+
+                          setPhotos(photos.filter(item => item.id !== p.id));
+                        }}
+                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
                         aria-label="Delete photo capture"
                       >
                         Delete Capture

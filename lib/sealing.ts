@@ -50,6 +50,7 @@ export interface VerificationResult {
 export interface CanSealResult {
   canSeal: boolean;
   reasons: string[];
+  warnings?: string[]; // Non-blocking warnings about evidence quality
 }
 
 export interface SealStatus {
@@ -92,29 +93,60 @@ const shouldUseMockSealing = () => {
 };
 
 // ============================================================================
-// DETERMINISTIC HASH FUNCTION (for testing)
+// CRYPTOGRAPHIC HASH FUNCTIONS
 // ============================================================================
 
 /**
- * Create a deterministic SHA-256 hash from evidence bundle
- * This is a simplified version for testing - production uses server-side crypto
+ * Create a REAL SHA-256 hash from evidence bundle
+ * Uses Web Crypto API for cryptographically secure hashing
+ *
+ * CRITICAL FIX: Replaced mock DJB2 hash with real SHA-256
+ * This provides tamper-evident evidence sealing
  */
 const createDeterministicHash = async (bundle: any): Promise<string> => {
-  // Sort object keys for deterministic serialization
-  const canonicalJSON = JSON.stringify(bundle, Object.keys(bundle).sort());
+  // Sort object keys recursively for deterministic serialization
+  const sortObjectKeys = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(sortObjectKeys);
+    }
+    const sorted: any = {};
+    Object.keys(obj).sort().forEach(key => {
+      sorted[key] = sortObjectKeys(obj[key]);
+    });
+    return sorted;
+  };
 
-  // Simple hash implementation for testing
-  // In production, this would be crypto.subtle.digest('SHA-256', ...)
-  let hash = 0;
-  for (let i = 0; i < canonicalJSON.length; i++) {
-    const char = canonicalJSON.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
+  const sortedBundle = sortObjectKeys(bundle);
+  const canonicalJSON = JSON.stringify(sortedBundle);
 
-  // Convert to hex string (64 characters to match SHA-256)
-  const hexHash = Math.abs(hash).toString(16).padStart(16, '0');
-  return hexHash.repeat(4); // Make it 64 chars like real SHA-256
+  // Use Web Crypto API for real SHA-256
+  const msgBuffer = new TextEncoder().encode(canonicalJSON);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  return hashHex; // 64-character hex string (256 bits)
+};
+
+/**
+ * Calculate SHA-256 hash of a data URL (for photos and signatures)
+ */
+export const calculateDataUrlHash = async (dataUrl: string): Promise<string> => {
+  const msgBuffer = new TextEncoder().encode(dataUrl);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Verify that a hash matches expected data
+ */
+export const verifyHash = async (data: string, expectedHash: string): Promise<boolean> => {
+  const actualHash = await calculateDataUrlHash(data);
+  return actualHash === expectedHash;
 };
 
 // ============================================================================
@@ -131,12 +163,15 @@ const createDeterministicHash = async (bundle: any): Promise<string> => {
  * - Signature must have a signer name
  * - Job must not already be sealed
  * - All photos must be synced to cloud storage
+ * - Signature must have a hash (tamper detection)
+ * - Location must be captured (with verification warning if mock)
  *
  * @param job - Job object to check
  * @returns Object with canSeal boolean and array of failure reasons
  */
 export const canSealJob = (job: any): CanSealResult => {
   const reasons: string[] = [];
+  const warnings: string[] = [];
 
   // Check if already sealed
   if (job.sealedAt) {
@@ -158,6 +193,11 @@ export const canSealJob = (job: any): CanSealResult => {
     reasons.push('All photos must be synced to cloud storage');
   }
 
+  // Check photo hashes exist (tamper detection)
+  if (job.photos && job.photos.some((photo: any) => !photo.photo_hash)) {
+    warnings.push('Some photos do not have integrity hashes');
+  }
+
   // Check signature
   if (!job.signature) {
     reasons.push('Job must have a signature');
@@ -168,9 +208,36 @@ export const canSealJob = (job: any): CanSealResult => {
     reasons.push('Signature must have signer name');
   }
 
+  // CRITICAL: Check signature hash exists (tamper detection)
+  if (job.signature && !job.signatureHash) {
+    warnings.push('Signature does not have integrity hash - recommend re-capturing');
+  }
+
+  // Check location verification status
+  if (job.locationVerified === false) {
+    warnings.push('Location is UNVERIFIED - W3W address is mock/manual');
+  }
+
+  // Check coordinates are present and valid
+  if (!job.lat || !job.lng) {
+    warnings.push('GPS coordinates not captured');
+  } else if (job.lat < -90 || job.lat > 90 || job.lng < -180 || job.lng > 180) {
+    reasons.push('Invalid GPS coordinates');
+  }
+
+  // Check safety checklist completion
+  if (job.safetyChecklist) {
+    const requiredItems = job.safetyChecklist.filter((item: any) => item.required);
+    const uncheckedRequired = requiredItems.filter((item: any) => !item.checked);
+    if (uncheckedRequired.length > 0) {
+      reasons.push(`${uncheckedRequired.length} required safety items not checked`);
+    }
+  }
+
   return {
     canSeal: reasons.length === 0,
-    reasons
+    reasons,
+    warnings, // New: non-blocking warnings
   };
 };
 
