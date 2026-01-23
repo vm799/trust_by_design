@@ -46,6 +46,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
   const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted'), [jobs]);
   const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const urgentJobs = useMemo(() => jobs.filter(j => j.priority === 'urgent'), [jobs]);
+
+  // Sort jobs with urgent jobs first, then by lastUpdated (most recent first)
+  const sortedJobs = useMemo(() => {
+    return [...jobs].sort((a, b) => {
+      // Urgent jobs come first
+      const aUrgent = a.priority === 'urgent' ? 1 : 0;
+      const bUrgent = b.priority === 'urgent' ? 1 : 0;
+      if (bUrgent !== aUrgent) return bUrgent - aUrgent;
+      // Then by lastUpdated (most recent first)
+      return (b.lastUpdated || 0) - (a.lastUpdated || 0);
+    });
+  }, [jobs]);
   const syncIssues = useMemo(() => failedJobs.length, [failedJobs]);
   const pendingSignatures = useMemo(() => activeJobs.filter(j => !j.signature).length, [activeJobs]);
 
@@ -60,7 +73,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
       return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
     });
 
+    // Add urgent jobs that need immediate attention
+    const urgentActiveJobs = activeJobs.filter(j => j.priority === 'urgent');
+
     const attentionItems = [
+      ...urgentActiveJobs.map(j => ({ job: j, reason: 'urgent', label: 'Urgent', icon: 'priority_high', color: 'danger' as const })),
       ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
       ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
       ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
@@ -442,9 +459,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             )}
 
             {/* Mobile Job Cards (shown on mobile, hidden on desktop) */}
-            {jobs.length > 0 && (
+            {sortedJobs.length > 0 && (
               <div className="lg:hidden space-y-3">
-                {jobs.map(job => (
+                {sortedJobs.map(job => (
                   <JobCard
                     key={job.id}
                     job={job}
@@ -474,7 +491,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {jobs.length === 0 ? (
+                {sortedJobs.length === 0 ? (
                   <tr>
                     <td colSpan={5}>
                       <EmptyState
@@ -487,16 +504,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     </td>
                   </tr>
                 ) : (
-                  jobs.map(job => {
+                  sortedJobs.map(job => {
                     const lifecycle = getJobLifecycle(job);
                     const isOverdue = isJobOverdue(job);
                     const syncIntegrity = getSyncIntegrityStatus(job);
+                    const isUrgent = job.priority === 'urgent';
                     return (
-                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
+                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isUrgent ? 'bg-danger/5 border-l-4 border-l-danger' : isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
-                          <div className={`font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors ${isOverdue ? 'text-danger' : 'text-white'}`}>{job.title}</div>
-                          {isOverdue && (
+                          {isUrgent && (
+                            <span className="material-symbols-outlined text-danger text-sm animate-pulse">priority_high</span>
+                          )}
+                          <div className={`font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors ${isUrgent ? 'text-danger' : isOverdue ? 'text-danger' : 'text-white'}`}>{job.title}</div>
+                          {isUrgent && (
+                            <span className="px-2 py-0.5 bg-danger/20 border border-danger/30 text-danger text-[8px] font-black uppercase tracking-widest rounded">URGENT</span>
+                          )}
+                          {isOverdue && !isUrgent && (
                             <span className="px-2 py-0.5 bg-danger/20 border border-danger/30 text-danger text-[8px] font-black uppercase tracking-widest rounded">OVERDUE</span>
                           )}
                         </div>

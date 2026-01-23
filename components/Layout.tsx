@@ -118,20 +118,40 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             >
               <span className="material-symbols-outlined" aria-hidden="true">menu</span>
             </button>
-            <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
-              {location.pathname === '/admin' ? 'Dashboard' :
-                location.pathname === '/admin/clients' ? 'Registry' :
-                  location.pathname === '/admin/technicians' ? 'Workforce' :
-                    location.pathname === '/admin/templates' ? 'Protocols' :
-                      location.pathname === '/admin/invoices' ? 'Invoices' :
-                        location.pathname === '/admin/profile' ? 'Profile' :
-                          location.pathname === '/admin/help' ? 'Support' : 'Settings'}
-            </h1>
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2">
+              {location.pathname !== '/admin' && (
+                <>
+                  <Link
+                    to="/admin"
+                    className="text-sm lg:text-base font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors uppercase tracking-tight"
+                  >
+                    Hub
+                  </Link>
+                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-sm" aria-hidden="true">chevron_right</span>
+                </>
+              )}
+              <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                {location.pathname === '/admin' ? 'Dashboard' :
+                  location.pathname === '/admin/create' ? 'Create Job' :
+                    location.pathname === '/admin/clients' ? 'Registry' :
+                      location.pathname === '/admin/technicians' ? 'Workforce' :
+                        location.pathname === '/admin/templates' ? 'Protocols' :
+                          location.pathname === '/admin/invoices' ? 'Invoices' :
+                            location.pathname === '/admin/profile' ? 'Profile' :
+                              location.pathname === '/admin/help' ? 'Support' :
+                                location.pathname.startsWith('/admin/report/') ? 'Job Report' : 'Settings'}
+              </h1>
+            </nav>
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link to="/admin/create" id="btn-dispatch" className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95">
-              <span className="material-symbols-outlined text-base font-black">add</span>
+            <Link
+              to="/admin/create"
+              id="btn-dispatch"
+              className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black min-h-[44px] min-w-[44px] px-4 lg:px-5 py-2.5 lg:py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-95"
+              aria-label="Create new job"
+            >
+              <span className="material-symbols-outlined text-base font-black" aria-hidden="true">add</span>
               <span className="hidden sm:inline tracking-widest uppercase">New Job</span>
             </Link>
           </div>
