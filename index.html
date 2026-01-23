@@ -14,101 +14,54 @@
   <meta name="theme-color" content="#2563EB">
   <meta name="description" content="Track jobs, prove delivery, win repeat business. Professional field evidence management for contractors.">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts only - CSS is bundled by Vite -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: { DEFAULT: '#2563eb', hover: '#1d4ed8' },
-            success: '#10b981',
-            warning: '#f59e0b',
-            danger: '#ef4444',
-            slate: { 950: '#020617' },
-            'safety-orange': {
-              DEFAULT: '#FF6B35',
-              light: '#FF8A5C',
-              dark: '#E65A2B'
-            },
-            'deep-blue': {
-              DEFAULT: '#2563EB',
-              light: '#3B82F6',
-              dark: '#1D4ED8'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-        },
-      },
-    }
-  </script>
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      overflow-x: hidden; 
-      font-style: normal !important; /* Global italic suppression */
+    /* Critical CSS for instant dark theme - prevents white flash */
+    html, body, #root {
+      background-color: #020617; /* slate-950 */
+      min-height: 100vh;
     }
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      color: #f1f5f9; /* slate-100 */
+    }
+
+    /* Loading spinner shown before React mounts */
+    #root:empty::after {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(37, 99, 235, 0.3);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* Additional styles */
     .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .animate-in { animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* Strict No-Italics Rule */
     * { font-style: normal !important; }
-    
-    /* Mobile-first fixes */
     input, select, textarea { font-size: 16px !important; }
     canvas { touch-action: none; }
 
-    /* Print Optimization - Hide Hub Controls */
+    /* Print styles */
     @media print {
-      .no-print,
-      aside,
-      nav,
-      button:not(.print-allow),
-      .material-symbols-outlined.close,
-      header > *:not(.report-header) {
-        display: none !important;
-      }
-
-      body {
-        background: white !important;
-      }
-
-      .main-content-area {
-        max-width: 100% !important;
-        padding: 0 !important;
-      }
-
-      /* Ensure report content fills page */
-      .print-optimized {
-        page-break-inside: avoid;
-      }
-
-      /* High contrast for printed photos */
-      img {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-      }
+      .no-print, aside, nav, button:not(.print-allow) { display: none !important; }
+      body { background: white !important; color: black !important; }
+      img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     }
   </style>
-  <script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@18.2.0",
-      "react/": "https://esm.sh/react@18.2.0/",
-      "react-dom": "https://esm.sh/react-dom@18.2.0",
-      "react-dom/": "https://esm.sh/react-dom@18.2.0/",
-      "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?external=react,react-dom"
-    }
-  }
-  </script>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors">
+<body class="antialiased">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
