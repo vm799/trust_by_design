@@ -54,6 +54,9 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showClientList, setShowClientList] = useState(false);
+  // UAT Fix #15: Success state for proper feedback after job creation
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createdJob, setCreatedJob] = useState<Job | null>(null);
 
   // Load work mode from settings
   useEffect(() => {
@@ -193,23 +196,173 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         (jobWithMetadata as any).selfEmployedMode = true;
       }
 
+      // UAT Fix #15: Show success state with job details and next steps
+      setCreatedJob(jobWithMetadata);
+      setShowSuccess(true);
+
       // Call parent callback
       onJobCreated(jobWithMetadata);
-
-      // Clear form
-      setTitle('');
-      setClientName('');
-      setClientAddress('');
-      setDescription('');
-      setPrice('');
 
     } catch (error) {
       console.error('Failed to create job:', error);
       alert('Failed to create job. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
+
+  // UAT Fix #15: Handle continue to work on job
+  const handleStartWorking = () => {
+    setShowSuccess(false);
+    onCancel(); // This will close the form and show the job
+  };
+
+  // UAT Fix #15: Handle view dashboard
+  const handleViewDashboard = () => {
+    window.location.href = '/dashboard';
+  };
+
+  // UAT Fix #15: Handle share magic link
+  const handleShareLink = async () => {
+    if (!createdJob) return;
+    const magicLinkUrl = (createdJob as any).magicLinkUrl;
+
+    if (typeof navigator !== 'undefined' && 'share' in navigator && magicLinkUrl) {
+      try {
+        await navigator.share({
+          title: `Job: ${createdJob.title}`,
+          text: 'Access job details and evidence capture:',
+          url: magicLinkUrl,
+        });
+      } catch (err) {
+        // Fallback to copy
+        if (magicLinkUrl) {
+          navigator.clipboard.writeText(magicLinkUrl);
+          alert('Link copied to clipboard!');
+        }
+      }
+    } else if (magicLinkUrl) {
+      navigator.clipboard.writeText(magicLinkUrl);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  // UAT Fix #15: Send link via email
+  const handleEmailLink = () => {
+    if (!createdJob) return;
+    const magicLinkUrl = (createdJob as any).magicLinkUrl;
+    const emailSubject = encodeURIComponent(`Job Assignment: ${createdJob.title}`);
+    const emailBody = encodeURIComponent(
+      `A new job has been created.\n\n` +
+      `Job: ${createdJob.title}\n` +
+      `Client: ${createdJob.client}\n` +
+      `Location: ${createdJob.address}\n\n` +
+      `Access the job here:\n${magicLinkUrl}`
+    );
+    window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+  };
+
+  // UAT Fix #15: Success modal after job creation
+  if (showSuccess && createdJob) {
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full space-y-6">
+            {/* Success Icon */}
+            <div className="text-center space-y-4">
+              <div className="size-20 rounded-[2rem] bg-success/20 flex items-center justify-center mx-auto animate-[bounce_0.5s_ease-out]">
+                <span className="material-symbols-outlined text-success text-5xl">check_circle</span>
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Job Created!</h2>
+                <p className="text-slate-400 text-sm mt-1">{createdJob.title}</p>
+              </div>
+            </div>
+
+            {/* Manager Notification Status */}
+            {workMode === 'employed' && (
+              <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">notifications_active</span>
+                <div>
+                  <p className="text-sm font-bold text-white">Manager Notified</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Your manager will see this job in their dashboard and can review, approve, or assign it.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {workMode === 'self_employed' && (
+              <div className="bg-success/10 border border-success/30 rounded-2xl p-4 flex items-start gap-3">
+                <span className="material-symbols-outlined text-success text-xl">receipt</span>
+                <div>
+                  <p className="text-sm font-bold text-white">Ready for Evidence</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Complete the job and seal evidence. A client receipt will be generated for payment.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Job Summary */}
+            <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Job ID</span>
+                <span className="text-xs font-mono text-primary">{createdJob.id}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</span>
+                <span className="text-xs text-white font-bold">{createdJob.client}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</span>
+                <span className="text-xs text-white font-bold truncate max-w-[60%]">{createdJob.address}</span>
+              </div>
+            </div>
+
+            {/* Share Options */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Share Job Link</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleShareLink}
+                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wide transition-all press-spring"
+                  title="Share via your phone's native share menu"
+                >
+                  <span className="material-symbols-outlined text-sm">share</span>
+                  Share
+                </button>
+                <button
+                  onClick={handleEmailLink}
+                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wide transition-all press-spring"
+                >
+                  <span className="material-symbols-outlined text-sm">email</span>
+                  Email
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleStartWorking}
+                className="w-full py-5 bg-primary rounded-2xl font-black text-white text-sm uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center justify-center gap-3 transition-all active:scale-98 press-spring"
+              >
+                <span className="material-symbols-outlined text-lg">play_arrow</span>
+                Start Working on Job
+              </button>
+              <button
+                onClick={handleViewDashboard}
+                className="w-full py-4 bg-white/5 rounded-2xl font-bold text-slate-400 text-xs uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">dashboard</span>
+                View Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">

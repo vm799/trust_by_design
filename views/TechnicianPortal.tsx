@@ -930,17 +930,106 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     );
   }
 
+  // UAT Fix #12: Job sealed success screen with email/PDF options
   if (step === 5) {
+    // Generate report URL for sharing
+    const reportUrl = job ? `${window.location.origin}/#/admin/report/${job.id}` : '';
+
+    // Email the report
+    const handleEmailReport = () => {
+      if (!job) return;
+      const subject = encodeURIComponent(`Job Completion Report: ${job.title}`);
+      const body = encodeURIComponent(
+        `Job Completion Report\n\n` +
+        `Job: ${job.title}\n` +
+        `Client: ${job.client}\n` +
+        `Address: ${job.address}\n` +
+        `Status: Sealed & Complete\n` +
+        `Completed: ${job.completedAt ? new Date(job.completedAt).toLocaleDateString() : 'N/A'}\n\n` +
+        `Evidence Hash: ${job.evidenceHash || 'N/A'}\n\n` +
+        `View full report:\n${reportUrl}\n\n` +
+        `---\n` +
+        `This job has been cryptographically sealed. Evidence is immutable and tamper-evident.`
+      );
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    };
+
+    // Print/PDF the report
+    const handlePrintReport = () => {
+      if (!job) return;
+      // Navigate to report page and trigger print
+      window.open(`/#/admin/report/${job.id}?print=true`, '_blank');
+    };
+
+    // Share the report
+    const handleShareReport = async () => {
+      if (!job) return;
+      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        try {
+          await navigator.share({
+            title: `Job Report: ${job.title}`,
+            text: `Completed job report for ${job.client}`,
+            url: reportUrl,
+          });
+        } catch (err) {
+          // Fallback to copy
+          navigator.clipboard.writeText(reportUrl);
+          alert('Report link copied to clipboard!');
+        }
+      } else {
+        navigator.clipboard.writeText(reportUrl);
+        alert('Report link copied to clipboard!');
+      }
+    };
+
     return (
       <Layout isAdmin={false}>
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in px-4">
           <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/5 shadow-2xl relative animate-success-pop">
             <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
           <div className="space-y-3">
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
             <p className="text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
+            {job?.evidenceHash && (
+              <div className="bg-slate-900 border border-white/10 rounded-xl p-3 mt-4">
+                <p className="text-[9px] text-slate-400 uppercase tracking-wide">Evidence Hash</p>
+                <p className="text-[10px] font-mono text-success truncate">{job.evidenceHash}</p>
+              </div>
+            )}
           </div>
+
+          {/* UAT Fix #12: Report sharing options */}
+          <div className="w-full max-w-xs space-y-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Share Report</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={handleEmailReport}
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                title="Send report via email"
+              >
+                <span className="material-symbols-outlined text-primary text-xl">email</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Email</span>
+              </button>
+              <button
+                onClick={handlePrintReport}
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                title="Print or save as PDF"
+              >
+                <span className="material-symbols-outlined text-primary text-xl">print</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase">PDF</span>
+              </button>
+              <button
+                onClick={handleShareReport}
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                title="Share report link"
+              >
+                <span className="material-symbols-outlined text-primary text-xl">share</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Share</span>
+              </button>
+            </div>
+          </div>
+
           <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
       </Layout>
