@@ -9,10 +9,17 @@
 /**
  * Allowlist of permitted redirect origins
  * Only these domains are allowed for OAuth redirects
+ * UAT Fix #14: Extended allowlist for development and various ports
  */
 export const REDIRECT_ALLOWLIST = [
   'https://jobproof.pro',
   'http://localhost:3000',
+  'http://localhost:5173',  // Vite default
+  'http://localhost:5174',  // Vite alternate
+  'http://localhost:4173',  // Vite preview
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
 ] as const;
 
 /**

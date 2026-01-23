@@ -115,12 +115,23 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const clientRef = useRef<HTMLSelectElement>(null);
 
-  // Auto-focus on step change
+  // UAT Fix #10: Auto-focus AND auto-scroll on step change
   useEffect(() => {
     const refs = [titleRef, addressRef, descriptionRef, clientRef];
     const currentRef = refs[step - 1];
     if (currentRef?.current) {
-      setTimeout(() => currentRef.current?.focus(), 100);
+      // First scroll to element, then focus
+      setTimeout(() => {
+        currentRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        // Focus after scroll completes
+        setTimeout(() => currentRef.current?.focus(), 300);
+      }, 100);
+    } else {
+      // If no specific ref, scroll to top of form
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [step]);
 
@@ -377,6 +388,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </div>
               </div>
 
+              {/* UAT Fix #5: Normal/Urgent buttons with distinct colors */}
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Priority
@@ -384,22 +396,29 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, priority: 'normal' })}
-                    className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all ${
+                    onClick={() => {
+                      hapticFeedback('light');
+                      setFormData({ ...formData, priority: 'normal' });
+                    }}
+                    className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'normal'
-                        ? 'bg-slate-700 border-slate-600 text-white'
-                        : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
+                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
                     }`}
                   >
+                    <span className="material-symbols-outlined text-lg">schedule</span>
                     Normal
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, priority: 'urgent' })}
-                    className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2 ${
+                    onClick={() => {
+                      hapticFeedback('medium');
+                      setFormData({ ...formData, priority: 'urgent' });
+                    }}
+                    className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'urgent'
-                        ? 'bg-safety-orange/20 border-safety-orange text-safety-orange'
-                        : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                        ? 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
+                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-red-500/50 hover:text-red-400'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">priority_high</span>
@@ -448,15 +467,39 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 />
               </div>
 
+              {/* UAT Fix #8: Location preview with clickable map link */}
               {formData.address && (
                 <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                    Location Preview
-                  </p>
-                  <div className="bg-slate-700 rounded-lg h-40 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-slate-500 text-5xl">map</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Location Preview
+                    </p>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(formData.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[9px] font-bold text-primary uppercase tracking-wide flex items-center gap-1 hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-sm">open_in_new</span>
+                      Open in Maps
+                    </a>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">{formData.address}</p>
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(formData.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block bg-slate-700 rounded-lg h-40 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:bg-slate-600 transition-colors"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10" />
+                    <span className="material-symbols-outlined text-slate-400 text-5xl group-hover:text-primary transition-colors z-20">map</span>
+                    <div className="absolute bottom-3 left-3 right-3 z-20">
+                      <p className="text-[10px] text-white font-bold uppercase tracking-tight truncate">{formData.address}</p>
+                      <p className="text-[8px] text-slate-300 uppercase tracking-wide mt-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[10px]">touch_app</span>
+                        Tap to view in Google Maps
+                      </p>
+                    </div>
+                  </a>
                 </div>
               )}
             </div>
@@ -556,7 +599,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
             </div>
           )}
 
-          {/* Step 4: Assign Contractor */}
+          {/* Step 4: Assign Contractor - UAT Fix #4, #9 */}
           {step === 4 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
@@ -566,6 +609,45 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </h3>
               </div>
 
+              {/* UAT Fix #4: Warning if no clients/technicians exist */}
+              {clients.length === 0 && (
+                <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 animate-in">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-warning text-xl">warning</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-warning">No Clients Found</p>
+                      <p className="text-xs text-slate-400 mt-1">You need to create a client first before creating a job.</p>
+                      <a
+                        href="/admin/clients/new"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
+                      >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                        Create Client First
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {technicians.length === 0 && (
+                <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 animate-in">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-warning text-xl">warning</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-warning">No Technicians Found</p>
+                      <p className="text-xs text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
+                      <a
+                        href="/admin/technicians/new"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
+                      >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                        Add Technician First
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Client *
@@ -574,13 +656,23 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   ref={clientRef}
                   required
                   value={formData.clientId}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  onChange={(e) => {
+                    if (e.target.value === '__add_new__') {
+                      // Navigate to client creation - UAT Fix #9
+                      window.location.href = '/admin/clients/new?returnTo=/admin/jobs/new';
+                    } else {
+                      setFormData({ ...formData, clientId: e.target.value });
+                    }
+                  }}
+                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                    clients.length === 0 ? 'border-warning/50' : 'border-slate-700 focus:border-primary'
+                  }`}
                 >
                   <option value="">Select Client...</option>
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
+                  <option value="__add_new__" className="text-primary font-bold">+ Add New Client</option>
                 </select>
               </div>
 
@@ -591,18 +683,28 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 <select
                   required
                   value={formData.techId}
-                  onChange={(e) => setFormData({ ...formData, techId: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  onChange={(e) => {
+                    if (e.target.value === '__add_new__') {
+                      // Navigate to technician creation - UAT Fix #9
+                      window.location.href = '/admin/technicians/new?returnTo=/admin/jobs/new';
+                    } else {
+                      setFormData({ ...formData, techId: e.target.value });
+                    }
+                  }}
+                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                    technicians.length === 0 ? 'border-warning/50' : 'border-slate-700 focus:border-primary'
+                  }`}
                 >
                   <option value="">Select Technician...</option>
                   {technicians.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
+                  <option value="__add_new__" className="text-primary font-bold">+ Add New Technician</option>
                 </select>
               </div>
 
               {selectedTech && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5 animate-in">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
                     Selected Technician
                   </p>
@@ -731,12 +833,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           </div>
         </div>
 
-        {/* Success Modal */}
+        {/* Success Modal - UAT Fix #11, #13 */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
             <div className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] max-w-lg w-full shadow-2xl space-y-6">
               <div className="text-center space-y-3">
-                <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto">
+                <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto animate-success-pop">
                   <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
                 </div>
                 <h3 className="text-2xl font-black text-white uppercase tracking-tight">Job Dispatched!</h3>
@@ -752,14 +854,71 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </p>
               </div>
 
+              {/* UAT Fix #11, #13: Multiple share options with tooltips */}
               <div className="space-y-3">
-                <button
-                  onClick={copyMagicLink}
-                  className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined">content_copy</span>
-                  Copy Link
-                </button>
+                {/* Primary action: Native share or copy */}
+                {typeof navigator !== 'undefined' && 'share' in navigator ? (
+                  <div className="relative group">
+                    <button
+                      onClick={async () => {
+                        const shareData = {
+                          title: `Job Assignment: ${formData.title}`,
+                          text: `You have been assigned a new job. Click to start:`,
+                          url: magicLinkUrl
+                        };
+                        try {
+                          await navigator.share(shareData);
+                          if (magicLinkToken) markLinkAsSent(magicLinkToken, 'share');
+                          showToast('Link shared successfully!', 'success');
+                        } catch (err) {
+                          if ((err as Error).name !== 'AbortError') {
+                            copyMagicLink();
+                          }
+                        }
+                      }}
+                      className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
+                      title="Share via your phone's native share menu (WhatsApp, SMS, Email, etc.)"
+                    >
+                      <span className="material-symbols-outlined">share</span>
+                      Share Link
+                    </button>
+                    {/* UAT Fix #13: Tooltip for share icon */}
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-900 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                      Use native share (WhatsApp, SMS, Email)
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-amber-500" />
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={copyMagicLink}
+                    className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">content_copy</span>
+                    Copy Link
+                  </button>
+                )}
+
+                {/* UAT Fix #11: Send via Email option */}
+                <div className="grid grid-cols-2 gap-3">
+                  <a
+                    href={`mailto:${selectedTech?.email || ''}?subject=${encodeURIComponent(`Job Assignment: ${formData.title}`)}&body=${encodeURIComponent(`You have been assigned a new job.\n\nJob: ${formData.title}\nClient: ${clients.find(c => c.id === formData.clientId)?.name || ''}\nAddress: ${formData.address}\n\nClick the link below to start:\n${magicLinkUrl}`)}`}
+                    onClick={() => {
+                      if (magicLinkToken) markLinkAsSent(magicLinkToken, 'email');
+                    }}
+                    className="py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                  >
+                    <span className="material-symbols-outlined text-sm">email</span>
+                    Email
+                  </a>
+                  <button
+                    onClick={copyMagicLink}
+                    className="py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                  >
+                    <span className="material-symbols-outlined text-sm">content_copy</span>
+                    Copy
+                  </button>
+                </div>
+
                 <button
                   onClick={() => {
                     navigateToNextStep('CREATE_JOB', user?.persona, navigate);
