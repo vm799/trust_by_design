@@ -294,6 +294,7 @@ const EmailFirstAuth: React.FC = () => {
                 <input
                   required
                   type="email"
+                  pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                   placeholder="contractor@company.com"
                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                   value={email}
@@ -308,6 +309,7 @@ const EmailFirstAuth: React.FC = () => {
                   aria-invalid={!!error}
                   aria-describedby={error ? "auth-error" : undefined}
                   id="email-input"
+                  title="Enter a valid email address (e.g., name@domain.co.uk)"
                 />
               </div>
 
