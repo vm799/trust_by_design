@@ -31,14 +31,31 @@ const AuthView: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
 
+    // Normalize email (trim whitespace, lowercase)
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
-      const result = await signInWithMagicLink(email);
+      const result = await signInWithMagicLink(normalizedEmail);
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to send magic link');
+        const errorMsg = result.error?.message || 'Failed to send magic link';
+
+        // Handle specific Supabase errors with user-friendly messages
+        if (errorMsg.toLowerCase().includes('invalid') && errorMsg.toLowerCase().includes('email')) {
+          throw new Error(
+            'Unable to send to this email address. This may be due to email provider restrictions. ' +
+            'Please try a different email address (Gmail, Outlook, or work email recommended).'
+          );
+        }
+
+        if (errorMsg.includes('rate limit') || errorMsg.includes('too many')) {
+          throw new Error('Too many requests. Please wait a few minutes and try again.');
+        }
+
+        throw new Error(errorMsg);
       }
 
-      setSuccessMessage(`Magic link sent to ${email}! Check your inbox.`);
+      setSuccessMessage(`Magic link sent to ${normalizedEmail}! Check your inbox.`);
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send magic link');
@@ -151,9 +168,12 @@ const AuthView: React.FC = () => {
         <form onSubmit={handleMagicLinkSubmit} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
           {error && (
             <div className="bg-danger/10 border border-danger/20 rounded-xl p-4">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-danger text-sm">error</span>
-                <p className="text-danger text-xs font-bold uppercase">{error}</p>
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-danger text-sm mt-0.5">error</span>
+                <div>
+                  <p className="text-danger text-xs font-bold uppercase">Error</p>
+                  <p className="text-danger text-xs font-medium mt-1">{error}</p>
+                </div>
               </div>
             </div>
           )}
