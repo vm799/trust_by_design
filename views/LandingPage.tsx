@@ -127,26 +127,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-8 px-6 border-y border-white/5">
-        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-8 text-center">
-          <div>
-            <p className="text-3xl font-black text-white">10K+</p>
-            <p className="text-xs text-slate-500 uppercase tracking-widest">Jobs Sealed</p>
-          </div>
-          <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
-          <div>
-            <p className="text-3xl font-black text-white">£2M+</p>
-            <p className="text-xs text-slate-500 uppercase tracking-widest">Disputes Prevented</p>
-          </div>
-          <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
-          <div>
-            <p className="text-3xl font-black text-white">99.9%</p>
-            <p className="text-xs text-slate-500 uppercase tracking-widest">Uptime</p>
-          </div>
-        </div>
-      </section>
-
       {/* Features */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
