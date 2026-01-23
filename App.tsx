@@ -8,6 +8,7 @@ import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
 import { pushQueue, pullJobs } from './lib/offline/sync';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { generateSecureSlugSuffix } from './lib/secureId';
 
 // PERFORMANCE: Custom debounce utility to batch localStorage writes
 function debounce<T extends (...args: any[]) => any>(
@@ -218,7 +219,7 @@ const AppContent: React.FC = () => {
           .trim()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, '');
-        const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 5)}`;
+        const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
         const supabase = getSupabase();
         if (supabase) {

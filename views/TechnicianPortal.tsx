@@ -11,6 +11,7 @@ import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualL
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import { notifyJobSealed, notifyLinkOpened } from '../lib/notificationService';
 import { hapticTap, hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
+import { secureRandomString } from '../lib/secureId';
 import QuickJobForm from '../components/QuickJobForm';
 import TechnicianOnboarding, { useShouldShowOnboarding } from '../components/TechnicianOnboarding';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -778,7 +779,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     reader.onloadend = async () => {
       try {
         const dataUrl = reader.result as string;
-        const photoId = Math.random().toString(36).substr(2, 9);
+        const photoId = secureRandomString(9);
         const mediaKey = `media_${photoId}`;
 
         // 1. Calculate SHA-256 hash of photo data
@@ -1014,8 +1015,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       onUpdateJob(sealedJob);
 
       // Generate client receipt for self-employed mode
-      const techMetadata = (job as any).techMetadata;
-      const isSelfEmployed = (job as any).selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
+      const techMetadata = job.techMetadata;
+      const isSelfEmployed = job.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
       if (isSelfEmployed) {
         const receipt = generateClientReceipt(sealedJob);
         console.log(`[TechnicianPortal] Client receipt generated: ${receipt.id}`);

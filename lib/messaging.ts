@@ -10,6 +10,8 @@
  * - Attachment support (photos, voice notes)
  */
 
+import { generateSecureLocalId } from './secureId';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -122,7 +124,7 @@ function saveMessageQueue(queue: QueuedMessage[]): void {
 }
 
 function generateLocalId(): string {
-  return `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return generateSecureLocalId('local');
 }
 
 // ============================================================================
@@ -231,7 +233,7 @@ async function deliverMessage(
   // For now, simulate with localStorage for development
   const sentMessage: Message = {
     ...message,
-    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureLocalId('msg'),
     status: 'sent',
     syncStatus: 'synced',
     attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
@@ -259,7 +261,7 @@ async function uploadAttachments(files: File[]): Promise<MessageAttachment[]> {
     const url = URL.createObjectURL(file);
 
     const attachment: MessageAttachment = {
-      id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: generateSecureLocalId('att'),
       type: file.type.startsWith('image/') ? 'image'
            : file.type.startsWith('audio/') ? 'voice'
            : 'document',
@@ -603,7 +605,7 @@ export function createSystemMessage(
   metadata?: Record<string, any>
 ): Message {
   const message: Message = {
-    id: `sys_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureLocalId('sys'),
     threadId,
     senderId: 'system',
     senderName: 'System',

@@ -8,6 +8,7 @@ import {
   generateClientReceipt
 } from '../lib/db';
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
+import { generateSecureJobId } from '../lib/secureId';
 
 interface QuickJobFormProps {
   techId: string;
@@ -125,7 +126,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
     try {
       // Generate job ID
-      const jobId = `JP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const jobId = generateSecureJobId();
 
       // Create tech job metadata
       const techMetadata: TechJobMetadata = {
@@ -174,8 +175,8 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
       // Generate magic link for this job
       const magicLink = storeMagicLinkLocal(jobId, workspaceId);
-      (jobWithMetadata as any).magicLinkToken = magicLink.token;
-      (jobWithMetadata as any).magicLinkUrl = magicLink.url;
+      jobWithMetadata.magicLinkToken = magicLink.token;
+      jobWithMetadata.magicLinkUrl = magicLink.url;
 
       // Notify manager if in employed mode
       if (workMode === 'employed') {
@@ -193,7 +194,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
       if (workMode === 'self_employed') {
         // Receipt will be fully generated after job is sealed
         // For now, just mark the intent
-        (jobWithMetadata as any).selfEmployedMode = true;
+        jobWithMetadata.selfEmployedMode = true;
       }
 
       // UAT Fix #15: Show success state with job details and next steps
@@ -224,7 +225,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   // UAT Fix #15: Handle share magic link
   const handleShareLink = async () => {
     if (!createdJob) return;
-    const magicLinkUrl = (createdJob as any).magicLinkUrl;
+    const magicLinkUrl = createdJob.magicLinkUrl;
 
     if (typeof navigator !== 'undefined' && 'share' in navigator && magicLinkUrl) {
       try {
@@ -249,7 +250,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   // UAT Fix #15: Send link via email
   const handleEmailLink = () => {
     if (!createdJob) return;
-    const magicLinkUrl = (createdJob as any).magicLinkUrl;
+    const magicLinkUrl = createdJob.magicLinkUrl;
     const emailSubject = encodeURIComponent(`Job Assignment: ${createdJob.title}`);
     const emailBody = encodeURIComponent(
       `A new job has been created.\n\n` +

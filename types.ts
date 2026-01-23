@@ -86,6 +86,8 @@ export interface Job {
   magicLinkToken?: string; // Magic link token for technician access
   magicLinkUrl?: string; // Full URL for sharing
   workspaceId?: string; // Workspace ID (from database)
+  selfEmployedMode?: boolean; // Self-employed mode flag
+  techMetadata?: TechJobMetadata; // Technician job creation metadata
   // Phase C.3: Cryptographic sealing
   sealedAt?: string; // ISO timestamp when evidence was sealed
   sealedBy?: string; // Email of user who sealed the evidence

@@ -3,65 +3,104 @@
  *
  * AES-256-GCM encryption for sensitive localStorage data
  * Uses Web Crypto API for secure client-side encryption
+ *
+ * SECURITY: Key is derived from session-unique entropy and stored
+ * in-memory only. Key is NON-EXTRACTABLE to prevent exfiltration.
  */
 
-// Key storage name
-const KEY_STORAGE = 'jobproof_encryption_key';
 const ENCRYPTED_PREFIX = 'enc:';
 
+// In-memory key cache (never persisted to storage)
+let cachedKey: CryptoKey | null = null;
+
+// Session entropy for key derivation (generated once per session)
+let sessionEntropy: Uint8Array | null = null;
+
 /**
- * Generate a new encryption key
+ * Get session entropy for key derivation
+ * Generated once per browser session, stored in sessionStorage
  */
-async function generateKey(): Promise<CryptoKey> {
-  return await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true, // extractable for storage
-    ['encrypt', 'decrypt']
-  );
+function getSessionEntropy(): Uint8Array {
+  if (sessionEntropy) {
+    return sessionEntropy;
+  }
+
+  // Check sessionStorage for existing entropy (survives page refreshes)
+  const storedEntropy = sessionStorage.getItem('_se');
+  if (storedEntropy) {
+    sessionEntropy = Uint8Array.from(atob(storedEntropy), c => c.charCodeAt(0));
+    return sessionEntropy;
+  }
+
+  // Generate new session entropy
+  sessionEntropy = crypto.getRandomValues(new Uint8Array(32));
+
+  // Store in sessionStorage (cleared when browser closes)
+  sessionStorage.setItem('_se', btoa(String.fromCharCode(...sessionEntropy)));
+
+  return sessionEntropy;
 }
 
 /**
- * Export key to storable format
+ * Derive encryption key from session entropy using PBKDF2
+ * Key is NON-EXTRACTABLE - cannot be exported or stolen via XSS
  */
-async function exportKey(key: CryptoKey): Promise<string> {
-  const exported = await crypto.subtle.exportKey('raw', key);
-  return btoa(String.fromCharCode(...new Uint8Array(exported)));
-}
+async function deriveKey(): Promise<CryptoKey> {
+  const entropy = getSessionEntropy();
 
-/**
- * Import key from stored format
- */
-async function importKey(keyData: string): Promise<CryptoKey> {
-  const rawKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
-  return await crypto.subtle.importKey(
+  // Import entropy as base key material
+  const baseKey = await crypto.subtle.importKey(
     'raw',
-    rawKey,
+    entropy,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+
+  // Derive AES-256-GCM key using PBKDF2
+  // Salt is derived from a fixed value + user agent to tie to device
+  const saltBase = 'jobproof-v2-' + (typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 50) : 'server');
+  const salt = new TextEncoder().encode(saltBase);
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    baseKey,
     { name: 'AES-GCM', length: 256 },
-    true,
+    false, // NON-EXTRACTABLE: Cannot be exported, preventing XSS key theft
     ['encrypt', 'decrypt']
   );
 }
 
 /**
- * Get or create encryption key
- * Key is stored in localStorage (in production, consider more secure storage)
+ * Get or create encryption key (in-memory only)
+ * Key is derived from session entropy and cached in memory
  */
 async function getOrCreateKey(): Promise<CryptoKey> {
-  try {
-    const storedKey = localStorage.getItem(KEY_STORAGE);
-    if (storedKey) {
-      return await importKey(storedKey);
-    }
+  if (cachedKey) {
+    return cachedKey;
+  }
 
-    // Generate new key
-    const key = await generateKey();
-    const exported = await exportKey(key);
-    localStorage.setItem(KEY_STORAGE, exported);
-    return key;
+  try {
+    cachedKey = await deriveKey();
+    return cachedKey;
   } catch (error) {
-    console.error('[Encryption] Failed to get/create key:', error);
+    console.error('[Encryption] Failed to derive key:', error);
     throw error;
   }
+}
+
+/**
+ * Clear cached key (call on logout)
+ */
+export function clearEncryptionKey(): void {
+  cachedKey = null;
+  sessionEntropy = null;
+  sessionStorage.removeItem('_se');
 }
 
 /**

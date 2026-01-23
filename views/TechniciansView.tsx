@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Technician, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
+import { secureRandomString } from '../lib/secureId';
 
 interface TechniciansViewProps {
   user: UserProfile | null;
@@ -20,7 +21,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd({
-      id: Math.random().toString(36).substr(2, 9),
+      id: secureRandomString(9),
       name: newTech.name,
       email: newTech.email,
       status: 'Authorised',
