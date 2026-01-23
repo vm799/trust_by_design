@@ -217,8 +217,15 @@ const PriceCard = ({
     // Get the price ID for this tier/period
     const priceId = getPriceId();
     if (!priceId) {
-      setError('Pricing not configured. Please contact support.');
+      // Debug: Show which env vars are missing
       console.error(`Missing Stripe price ID for ${tier} ${billingPeriod}`);
+      console.error('Available env vars:', {
+        TEAM_MONTHLY: !!import.meta.env.VITE_STRIPE_PRICE_TEAM_MONTHLY,
+        TEAM_ANNUAL: !!import.meta.env.VITE_STRIPE_PRICE_TEAM_ANNUAL,
+        AGENCY_MONTHLY: !!import.meta.env.VITE_STRIPE_PRICE_AGENCY_MONTHLY,
+        AGENCY_ANNUAL: !!import.meta.env.VITE_STRIPE_PRICE_AGENCY_ANNUAL,
+      });
+      setError('Stripe pricing not configured. Check environment variables.');
       return;
     }
 
@@ -229,6 +236,8 @@ const PriceCard = ({
       if (!supabaseUrl) {
         throw new Error('Service not configured');
       }
+
+      console.log('Initiating Stripe checkout:', { tier, billingPeriod, priceId: priceId.substring(0, 10) + '...' });
 
       const res = await fetch(
         `${supabaseUrl}/functions/v1/stripe-checkout`,
@@ -246,9 +255,17 @@ const PriceCard = ({
         }
       );
 
+      console.log('Stripe checkout response status:', res.status);
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server error: ${res.status}`);
+        const errorText = await res.text();
+        console.error('Stripe checkout error response:', errorText);
+        let errorMessage = `Server error: ${res.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();
