@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 py-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
             Management
           </span>
         </div>
@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
 
         <div className="px-3 py-2 mt-6">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
             Settings
           </span>
         </div>
@@ -110,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">{userEmail}</p>
-            <p className="text-xs text-slate-500">Manage account</p>
+            <p className="text-xs text-slate-300">Manage account</p>
           </div>
         </Link>
       </div>
@@ -127,11 +127,12 @@ const NavLink: React.FC<NavLinkProps> = ({ to, icon, label, badge, active, onCli
   <Link
     to={to}
     onClick={onClick}
+    aria-current={active ? 'page' : undefined}
     className={`
       flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
       ${active
         ? 'bg-primary/10 text-primary border border-primary/20'
-        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+        : 'text-slate-300 hover:bg-white/5 hover:text-white'
       }
     `}
   >
