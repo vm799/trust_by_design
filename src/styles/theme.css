@@ -4,6 +4,11 @@
  * Professional industry aesthetic with high contrast
  */
 
+/* CRITICAL: Tailwind CSS directives - these inject all Tailwind utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Light Mode Colors - Professional Blue/Charcoal Theme */
   /* UAT Fix #7: Improved contrast for light mode */
