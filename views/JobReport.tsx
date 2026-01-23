@@ -218,7 +218,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      </div>
                   </div>
                   <div className="space-y-3">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Service Operator</h3>
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</h3>
                      <p className="text-xl font-black uppercase tracking-tight">{job.technician}</p>
                      <div className="flex flex-col gap-2">
                         <div className="flex flex-col gap-1">
@@ -337,7 +337,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                      <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                      <span className="material-symbols-outlined text-6xl mb-3 text-primary font-black relative z-10">verified</span>
                      <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Verified Record</p>
-                     <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Protocol Authenticated</p>
+                     <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Job Verified</p>
                   </div>
                </div>
 
@@ -362,7 +362,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                            {job.status === 'Submitted' && !existingInvoice && (
                               <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
                                  <span className="material-symbols-outlined text-sm font-black group-hover:rotate-12 transition-transform">receipt</span>
-                                 Initialise Billing
+                                 Create Invoice
                               </button>
                            )}
                            <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">

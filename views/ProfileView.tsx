@@ -22,7 +22,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="flex justify-between items-end border-b border-white/5 pb-8">
           <div className="space-y-1">
-             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Operator Identity</h2>
+             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Your Profile</h2>
              <p className="text-slate-400">Manage your administrative credentials.</p>
           </div>
           <div className="bg-gradient-to-br from-primary to-blue-600 size-20 rounded-[2rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-primary/20">
@@ -53,7 +53,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Authorised Email</label>
+                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</label>
                  <input 
                    type="email" 
                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 
@@ -66,7 +66,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                   onClick={handleSave}
                   className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95"
                  >
-                    Commit Identity
+                    Save Changes
                  </button>
               </div>
            </section>
@@ -77,7 +77,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                 className="w-full py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl font-black text-sm uppercase tracking-widest border border-red-500/20 transition-all flex items-center justify-center gap-3"
               >
                 <span className="material-symbols-outlined font-black">logout</span>
-                Terminate Session
+                Sign Out
               </button>
            </div>
         </div>

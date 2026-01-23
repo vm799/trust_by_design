@@ -215,21 +215,21 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
       <footer className="p-4 border-t border-white/5">
         <div className="flex items-center justify-center gap-8 max-w-lg mx-auto">
           <button
-            onClick={() => navigate('/admin/profile')}
+            onClick={() => navigate('/admin')}
             className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">person</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
           </button>
           <button
-            onClick={() => navigate('/admin/settings')}
+            onClick={() => navigate('/admin')}
             className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">settings</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Settings</span>
           </button>
           <button
-            onClick={() => navigate('/admin/help')}
+            onClick={() => navigate('/home')}
             className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">help</span>

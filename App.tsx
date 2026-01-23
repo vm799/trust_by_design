@@ -51,6 +51,7 @@ const InvoicesView = lazy(() => import('./views/InvoicesView'));
 const RoadmapView = lazy(() => import('./views/RoadmapView'));
 const TrackLookup = lazy(() => import('./views/TrackLookup'));
 const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector'));
+const JobsList = lazy(() => import('./views/app/jobs/JobsList'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -595,6 +596,8 @@ const AppContent: React.FC = () => {
             )
           ) : <Navigate to="/auth" replace />
         } />
+        {/* Jobs List - Filterable list of all jobs */}
+        <Route path="/admin/jobs" element={isAuthenticated ? <JobsList jobs={jobs} user={user} /> : <Navigate to="/auth" replace />} />
         {/* Job Creation - UX Spec: 5-Step Guided Wizard */}
         <Route path="/admin/create" element={isAuthenticated ? <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} /> : <Navigate to="/auth" replace />} />
         {/* Legacy Job Creation (kept for backwards compatibility) */}

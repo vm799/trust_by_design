@@ -20,14 +20,14 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
       <div className="space-y-8">
         <header className="flex justify-between items-end">
           <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Service Protocols</h2>
-            <p className="text-slate-400">Standardise field capture sequences for organisational precision.</p>
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Templates</h2>
+            <p className="text-slate-400">Reusable job templates for your team.</p>
           </div>
           <button
             onClick={() => navigate('/admin/create')}
             className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
           >
-            New Protocol
+            New Template
           </button>
         </header>
 
@@ -47,7 +47,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
                   onClick={() => navigate(`/admin/create?template=${tpl.id}&title=${encodeURIComponent(tpl.name)}`)}
                   className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline"
                 >
-                  Deploy
+                  Use Template
                 </button>
               </div>
             </div>
@@ -57,7 +57,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
             className="border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-8 gap-3 opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
           >
             <span className="material-symbols-outlined text-4xl font-black">add</span>
-            <span className="font-black text-xs uppercase tracking-widest">Initialise Blueprint</span>
+            <span className="font-black text-xs uppercase tracking-widest">Create Template</span>
           </div>
         </div>
       </div>
