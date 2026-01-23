@@ -175,10 +175,12 @@ const AuthView: React.FC = () => {
               ref={emailRef}
               required
               type="email"
+              pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
               placeholder="alex@company.com"
               className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              title="Enter a valid email address (e.g., name@domain.co.uk)"
             />
             <p className="text-slate-500 text-[10px] font-medium">
               New users will have a workspace created automatically.
