@@ -18,8 +18,10 @@ interface SyncQueueItem {
   lastAttempt: number;
 }
 
-export const RETRY_DELAYS = [2000, 5000, 10000, 30000]; // Exponential backoff: 2s, 5s, 10s, 30s
-const MAX_RETRIES = 4;
+// FIELD-OPTIMIZED: Extended retry window for spotty connectivity
+// Total window: 2s + 5s + 15s + 30s + 60s + 120s + 180s + 300s = 712s (~12 minutes)
+export const RETRY_DELAYS = [2000, 5000, 15000, 30000, 60000, 120000, 180000, 300000];
+const MAX_RETRIES = 8;
 
 /**
  * Sync a complete job to Supabase
