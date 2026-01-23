@@ -234,7 +234,12 @@ export function isTimestampValid(
   return true;
 }
 
-// Auto-sync on module load
+// Auto-sync on module load - DEFERRED to not block app startup
 if (typeof window !== 'undefined') {
-  syncServerTime();
+  // Delay sync to not block initial render
+  setTimeout(() => {
+    syncServerTime().catch(() => {
+      // Silently fail - timestamp sync is not critical for app startup
+    });
+  }, 3000);
 }

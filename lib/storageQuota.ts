@@ -196,9 +196,14 @@ export async function checkAndNotify(): Promise<void> {
 }
 
 // Auto-check storage periodically (every 5 minutes)
+// DEFERRED: Don't block app startup
 if (typeof window !== 'undefined') {
-  setInterval(checkAndNotify, 5 * 60 * 1000);
-
-  // Initial check after a short delay
-  setTimeout(checkAndNotify, 5000);
+  // Delay initial setup to not interfere with app startup
+  setTimeout(() => {
+    setInterval(checkAndNotify, 5 * 60 * 1000);
+    // Initial check after app has loaded
+    checkAndNotify().catch(() => {
+      // Silently fail - storage check is not critical
+    });
+  }, 10000); // 10 second delay before first check
 }
