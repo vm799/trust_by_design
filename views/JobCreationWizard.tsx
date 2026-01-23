@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
-import { createJob, generateMagicLink, storeMagicLinkLocal } from '../lib/db';
+import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
@@ -94,6 +94,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState('');
   const [magicLinkUrl, setMagicLinkUrl] = useState('');
+  const [magicLinkToken, setMagicLinkToken] = useState(''); // Track token for lifecycle
 
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
@@ -220,6 +221,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         // Generate proper magic link with token
         const localMagicLink = storeMagicLinkLocal(newId, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
         console.log(`[JobCreationWizard] Generated local magic link: ${localMagicLink.url}`);
 
         setShowSuccessModal(true);
@@ -233,11 +235,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       const magicLinkResult = await generateMagicLink(createdJob.id);
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
+        setMagicLinkToken(magicLinkResult.data.token);
         console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation
         const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
         console.log(`[JobCreationWizard] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
@@ -257,12 +261,20 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   const copyMagicLink = () => {
     // magicLinkUrl should always be set by now, but generate one if somehow not
     let urlToCopy = magicLinkUrl;
+    let tokenToTrack = magicLinkToken;
     if (!urlToCopy && createdJobId) {
       console.warn('[JobCreationWizard] magicLinkUrl was not set, generating emergency local link');
       const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
       urlToCopy = emergencyLink.url;
+      tokenToTrack = emergencyLink.token;
     }
     navigator.clipboard.writeText(urlToCopy);
+
+    // Track that the link was sent via copy
+    if (tokenToTrack) {
+      markLinkAsSent(tokenToTrack, 'copy');
+    }
+
     hapticFeedback('success');
     showToast('Magic link copied to clipboard!', 'success');
   };

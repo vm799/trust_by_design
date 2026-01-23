@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
-import { createJob, generateMagicLink, storeMagicLinkLocal } from '../lib/db';
+import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 
@@ -36,6 +36,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState<string>('');
   const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
+  const [magicLinkToken, setMagicLinkToken] = useState<string>(''); // Track token for lifecycle
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
@@ -383,6 +384,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         // Generate a proper magic link with token for local jobs
         const localMagicLink = storeMagicLinkLocal(newId, user?.workspace?.id || 'local');
         setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
         console.log(`[CreateJob] Generated local magic link: ${localMagicLink.url}`);
 
         clearDraft();
@@ -400,11 +402,13 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
+        setMagicLinkToken(magicLinkResult.data.token);
         console.log(`[CreateJob] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation if DB token generation fails
         const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
         console.log(`[CreateJob] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
@@ -425,33 +429,49 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
   // getMagicLink should always return the properly generated URL
   // The fallback generates a new local token if somehow magicLinkUrl wasn't set
-  const getMagicLink = () => {
-    if (magicLinkUrl) {
-      return magicLinkUrl;
+  const getMagicLinkWithToken = (): { url: string; token: string } => {
+    if (magicLinkUrl && magicLinkToken) {
+      return { url: magicLinkUrl, token: magicLinkToken };
     }
     // Emergency fallback: generate a local magic link on the fly
     console.warn('[CreateJob] magicLinkUrl was not set, generating emergency local link');
     const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
-    return emergencyLink.url;
+    return { url: emergencyLink.url, token: emergencyLink.token };
   };
 
+  const getMagicLink = () => getMagicLinkWithToken().url;
+
   const copyMagicLink = () => {
-    navigator.clipboard.writeText(getMagicLink());
+    const { url, token } = getMagicLinkWithToken();
+    navigator.clipboard.writeText(url);
+
+    // Track that link was sent via copy
+    if (token) {
+      markLinkAsSent(token, 'copy');
+    }
+
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 3000);
   };
 
   // Native share API with fallback to clipboard
   const shareMagicLink = async () => {
+    const { url, token } = getMagicLinkWithToken();
     const shareData = {
       title: `Job Assignment: ${formData.title}`,
       text: `You have been assigned a new job. Click the link to start: `,
-      url: getMagicLink()
+      url: url
     };
 
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
+
+        // Track that link was sent via native share
+        if (token) {
+          markLinkAsSent(token, 'share');
+        }
+
         setShareSuccess(true);
         setTimeout(() => setShareSuccess(false), 3000);
       } catch (err) {

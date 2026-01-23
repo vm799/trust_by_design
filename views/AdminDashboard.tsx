@@ -12,6 +12,7 @@ import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
+import { getLinksNeedingAttention, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -155,6 +156,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   useEffect(() => {
     setIsEmailVerified(!!emailConfirmedAt);
   }, [emailConfirmedAt]); // Primitive dependency, not object
+
+  // State for links needing attention (unopened for 2+ hours)
+  const [linksNeedingAttention, setLinksNeedingAttention] = useState<MagicLinkInfo[]>([]);
+
+  // Check for unopened links periodically
+  useEffect(() => {
+    const checkUnopenedLinks = () => {
+      const flaggedLinks = getLinksNeedingAttention();
+      setLinksNeedingAttention(flaggedLinks);
+    };
+
+    // Check immediately
+    checkUnopenedLinks();
+
+    // Check every 5 minutes
+    const interval = setInterval(checkUnopenedLinks, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [jobs]); // Re-check when jobs change
 
   // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
   // Uses memoized job IDs to prevent unnecessary reloads
@@ -308,6 +328,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             </button>
           </div>
         )}
+
+            {/* UNOPENED LINK ALERTS */}
+            {linksNeedingAttention.length > 0 && (
+              <div className="bg-gradient-to-br from-warning/10 to-orange-500/10 border-2 border-warning/40 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-warning text-xl font-black animate-pulse">notifications_active</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician Links Unopened</h3>
+                    <p className="text-xs text-slate-300">{linksNeedingAttention.length} link{linksNeedingAttention.length > 1 ? 's' : ''} not accessed after 2+ hours</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {linksNeedingAttention.map(link => {
+                    const linkedJob = jobs.find(j => j.id === link.job_id);
+                    if (!linkedJob) return null;
+
+                    const sentAge = link.sent_at
+                      ? Math.floor((Date.now() - new Date(link.sent_at).getTime()) / (1000 * 60 * 60))
+                      : 0;
+                    const isUrgent = sentAge >= 4;
+
+                    return (
+                      <div
+                        key={link.token}
+                        className={`bg-slate-900/80 border rounded-xl p-4 transition-all ${
+                          isUrgent ? 'border-danger/40' : 'border-warning/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`material-symbols-outlined text-xs ${isUrgent ? 'text-danger' : 'text-warning'}`}>
+                                schedule
+                              </span>
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${isUrgent ? 'text-danger' : 'text-warning'}`}>
+                                {sentAge}h since sent {isUrgent ? '- URGENT' : ''}
+                              </span>
+                            </div>
+                            <h4 className="font-black text-white text-sm uppercase tracking-tight truncate">
+                              {linkedJob.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              Tech: <span className="text-slate-300 font-bold">{linkedJob.technician}</span>
+                              {link.sent_via && (
+                                <span className="ml-2 text-slate-500">via {link.sent_via}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => navigate(`/admin/report/${link.job_id}`)}
+                              className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => {
+                                acknowledgeLinkFlag(link.token);
+                                setLinksNeedingAttention(prev => prev.filter(l => l.token !== link.token));
+                              }}
+                              className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                              title="Dismiss alert"
+                            >
+                              <span className="material-symbols-outlined text-xs">close</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] text-slate-400 italic">
+                    Consider calling technicians directly if links remain unopened
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* ATTENTION REQUIRED PANEL */}
             {uniqueAttentionJobs.length > 0 && (

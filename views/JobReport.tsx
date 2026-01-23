@@ -12,8 +12,13 @@ import {
   regenerateMagicLink,
   extendMagicLinkExpiration,
   revokeMagicLink,
+  markLinkAsSent,
+  getLinkLifecycleSummary,
+  acknowledgeLinkFlag,
   LINK_EXPIRATION,
-  type MagicLinkInfo
+  LINK_ALERT_THRESHOLDS,
+  type MagicLinkInfo,
+  type LinkLifecycleStage
 } from '../lib/db';
 
 interface JobReportProps {
@@ -44,6 +49,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    const [showReassignModal, setShowReassignModal] = useState(false);
    const [linkActionLoading, setLinkActionLoading] = useState(false);
    const [linkActionMessage, setLinkActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+   const [lifecycleSummary, setLifecycleSummary] = useState<ReturnType<typeof getLinkLifecycleSummary>>(null);
 
    // Load photos and signature from IndexedDB
    useEffect(() => {
@@ -81,10 +87,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       if (!job || publicView) return;
 
       const links = getMagicLinksForJob(job.id);
+      let tokenToUse: string | null = null;
+
       if (links.length > 0) {
          // Get the most recent active link
          const activeLink = links.find(l => l.status === 'active') || links[0];
          setMagicLinkInfo(activeLink);
+         tokenToUse = activeLink.token;
       } else if (job.magicLinkToken) {
          // Fallback to token stored on job
          setMagicLinkInfo({
@@ -94,6 +103,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
             expires_at: new Date(Date.now() + LINK_EXPIRATION.STANDARD).toISOString(),
             status: 'active'
          });
+         tokenToUse = job.magicLinkToken;
+      }
+
+      // Load lifecycle summary for the token
+      if (tokenToUse) {
+         const summary = getLinkLifecycleSummary(tokenToUse);
+         setLifecycleSummary(summary);
       }
    }, [job, publicView]);
 
@@ -203,6 +219,10 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
       const url = getMagicLinkUrl(magicLinkInfo.token, magicLinkInfo.job_id);
       navigator.clipboard.writeText(url);
+
+      // Track that link was sent via copy
+      markLinkAsSent(magicLinkInfo.token, 'copy');
+
       setLinkActionMessage({ type: 'success', text: 'Link copied to clipboard!' });
    }, [magicLinkInfo]);
 
@@ -643,6 +663,75 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 text-center">
                                        <span className="material-symbols-outlined text-slate-500 text-2xl mb-2">link_off</span>
                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">No active link</p>
+                                    </div>
+                                 )}
+
+                                 {/* Link Lifecycle Timeline */}
+                                 {lifecycleSummary && (
+                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+                                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Link Lifecycle</p>
+                                       <div className="flex items-center justify-between gap-1">
+                                          {[
+                                             { stage: 'sent' as LinkLifecycleStage, icon: 'send', label: 'Sent' },
+                                             { stage: 'opened' as LinkLifecycleStage, icon: 'visibility', label: 'Opened' },
+                                             { stage: 'job_started' as LinkLifecycleStage, icon: 'photo_camera', label: 'Started' },
+                                             { stage: 'job_completed' as LinkLifecycleStage, icon: 'verified', label: 'Done' },
+                                          ].map((item, idx) => {
+                                             const stageData = lifecycleSummary.stages.find(s => s.stage === item.stage);
+                                             const isCompleted = stageData?.completed;
+                                             const isCurrent = lifecycleSummary.currentStage === item.stage;
+                                             return (
+                                                <React.Fragment key={item.stage}>
+                                                   <div className={`flex flex-col items-center gap-1 ${isCompleted ? 'opacity-100' : 'opacity-30'}`}>
+                                                      <div className={`size-7 rounded-lg flex items-center justify-center ${
+                                                         isCompleted
+                                                            ? isCurrent
+                                                               ? 'bg-primary text-white'
+                                                               : 'bg-success/20 text-success'
+                                                            : 'bg-slate-700 text-slate-500'
+                                                      }`}>
+                                                         <span className="material-symbols-outlined text-xs">{item.icon}</span>
+                                                      </div>
+                                                      <span className="text-[7px] font-bold uppercase tracking-widest text-slate-400">{item.label}</span>
+                                                   </div>
+                                                   {idx < 3 && (
+                                                      <div className={`flex-1 h-px ${
+                                                         lifecycleSummary.stages.findIndex(s => s.stage === item.stage && s.completed) <
+                                                         lifecycleSummary.stages.findIndex(s => s.stage === lifecycleSummary.currentStage)
+                                                            ? 'bg-success/50'
+                                                            : 'bg-slate-700'
+                                                      }`} />
+                                                   )}
+                                                </React.Fragment>
+                                             );
+                                          })}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Alert Banner for Unopened Links */}
+                                 {lifecycleSummary?.needsAttention && (
+                                    <div className="bg-warning/10 border border-warning/30 rounded-xl p-3">
+                                       <div className="flex items-start gap-2">
+                                          <span className="material-symbols-outlined text-warning text-sm animate-pulse">warning</span>
+                                          <div className="flex-1">
+                                             <p className="text-[9px] font-black text-warning uppercase tracking-widest">Needs Attention</p>
+                                             <p className="text-[10px] text-slate-300 mt-1">
+                                                {lifecycleSummary.flagReason || 'Link has not been opened by technician'}
+                                             </p>
+                                          </div>
+                                          <button
+                                             onClick={() => {
+                                                if (magicLinkInfo) {
+                                                   acknowledgeLinkFlag(magicLinkInfo.token);
+                                                   setLifecycleSummary(prev => prev ? { ...prev, needsAttention: false } : null);
+                                                }
+                                             }}
+                                             className="text-[8px] font-bold text-warning hover:text-white uppercase tracking-widest px-2 py-1 rounded-lg bg-warning/20 hover:bg-warning/30 transition-all"
+                                          >
+                                             Dismiss
+                                          </button>
+                                       </div>
                                     </div>
                                  )}
 

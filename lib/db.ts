@@ -903,6 +903,18 @@ export const LINK_EXPIRATION = {
 
 export type LinkStatus = 'active' | 'expired' | 'revoked' | 'used' | 'sealed';
 
+/**
+ * Link Lifecycle Stages for tracking/notifications
+ * SENT → DELIVERED → OPENED → JOB_STARTED → JOB_COMPLETED → REPORT_SENT
+ */
+export type LinkLifecycleStage =
+  | 'sent'           // Link created and shared
+  | 'delivered'      // Confirmed delivered (SMS/email callback)
+  | 'opened'         // Technician clicked the link
+  | 'job_started'    // Technician started working (photos added)
+  | 'job_completed'  // Job sealed/submitted
+  | 'report_sent';   // Report shared with client
+
 export interface MagicLinkInfo {
   token: string;
   job_id: string;
@@ -913,7 +925,29 @@ export interface MagicLinkInfo {
   first_accessed_at?: string;
   revoked_at?: string;
   assigned_to_tech_id?: string;
+
+  // Lifecycle tracking (Phase: Link Notifications)
+  lifecycle_stage?: LinkLifecycleStage;
+  sent_at?: string;              // When link was shared/dispatched
+  sent_via?: 'sms' | 'email' | 'qr' | 'copy' | 'share';  // How it was sent
+  delivered_at?: string;         // Delivery confirmation (if available)
+  job_started_at?: string;       // When first photo was added
+  job_completed_at?: string;     // When job was sealed/submitted
+  report_sent_at?: string;       // When report was shared with client
+
+  // Alert tracking
+  flagged_at?: string;           // When flagged for attention (e.g., 2hr threshold)
+  flag_reason?: string;          // Why it was flagged
+  flag_acknowledged_at?: string; // When manager acknowledged the flag
+  creator_user_id?: string;      // Who created the job (for notifications)
 }
+
+// Alert threshold constants
+export const LINK_ALERT_THRESHOLDS = {
+  UNOPENED_WARNING: 2 * 60 * 60 * 1000,    // 2 hours - flag if not opened
+  UNOPENED_URGENT: 4 * 60 * 60 * 1000,     // 4 hours - urgent flag
+  STALE_JOB: 24 * 60 * 60 * 1000,          // 24 hours - job started but not completed
+} as const;
 
 /**
  * Revoke a specific magic link token
@@ -1214,9 +1248,13 @@ export const recordMagicLinkAccess = (token: string): void => {
   let linkData = mockDatabase.magicLinks.get(token);
 
   if (linkData && !(linkData as any).first_accessed_at) {
+    const now = new Date().toISOString();
     const updatedData = {
       ...linkData,
-      first_accessed_at: new Date().toISOString(),
+      first_accessed_at: now,
+      lifecycle_stage: 'opened' as LinkLifecycleStage,
+      // Clear any flags since link was opened
+      flag_acknowledged_at: (linkData as any).flagged_at ? now : undefined,
     };
     mockDatabase.magicLinks.set(token, updatedData);
 
@@ -1233,6 +1271,302 @@ export const recordMagicLinkAccess = (token: string): void => {
 
     console.log(`[MagicLink] Recorded first access for token ${token.substring(0, 8)}...`);
   }
+};
+
+// ============================================================================
+// LINK LIFECYCLE TRACKING & ALERTS
+// ============================================================================
+
+/**
+ * Update the lifecycle stage of a magic link
+ */
+export const updateLinkLifecycle = (
+  token: string,
+  stage: LinkLifecycleStage,
+  metadata?: { sent_via?: string }
+): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  // Also check localStorage
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const now = new Date().toISOString();
+  const updates: Record<string, any> = {
+    lifecycle_stage: stage,
+  };
+
+  // Set timestamp based on stage
+  switch (stage) {
+    case 'sent':
+      updates.sent_at = now;
+      if (metadata?.sent_via) updates.sent_via = metadata.sent_via;
+      break;
+    case 'delivered':
+      updates.delivered_at = now;
+      break;
+    case 'opened':
+      updates.first_accessed_at = now;
+      break;
+    case 'job_started':
+      updates.job_started_at = now;
+      break;
+    case 'job_completed':
+      updates.job_completed_at = now;
+      break;
+    case 'report_sent':
+      updates.report_sent_at = now;
+      break;
+  }
+
+  const updatedData = { ...linkData, ...updates };
+
+  // Update mockDatabase
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  // Update localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    console.warn('Failed to update localStorage:', e);
+  }
+
+  console.log(`[MagicLink] Updated lifecycle to ${stage} for token ${token.substring(0, 8)}...`);
+  return { success: true };
+};
+
+/**
+ * Mark a link as sent (after sharing via SMS, email, copy, etc.)
+ */
+export const markLinkAsSent = (
+  token: string,
+  sentVia: 'sms' | 'email' | 'qr' | 'copy' | 'share'
+): DbResult<void> => {
+  return updateLinkLifecycle(token, 'sent', { sent_via: sentVia });
+};
+
+/**
+ * Check for links that need attention (unopened after threshold)
+ * Returns links that should be flagged to the job creator
+ */
+export const getLinksNeedingAttention = (): MagicLinkInfo[] => {
+  const now = Date.now();
+  const needsAttention: MagicLinkInfo[] = [];
+
+  // Helper to check a link
+  const checkLink = (token: string, data: any) => {
+    // Skip if already opened, revoked, or job is complete
+    if (data.first_accessed_at || data.is_sealed || data.lifecycle_stage === 'job_completed') {
+      return;
+    }
+
+    // Skip if already acknowledged
+    if (data.flag_acknowledged_at) {
+      return;
+    }
+
+    // Check if sent_at or created_at exists to calculate age
+    const sentAt = data.sent_at || data.created_at;
+    if (!sentAt) return;
+
+    const ageMs = now - new Date(sentAt).getTime();
+
+    // Check if past the 2-hour threshold and not expired
+    const expiresAt = new Date(data.expires_at).getTime();
+    if (ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_WARNING && now < expiresAt) {
+      const isUrgent = ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_URGENT;
+
+      needsAttention.push({
+        token,
+        job_id: data.job_id,
+        workspace_id: data.workspace_id,
+        expires_at: data.expires_at,
+        status: 'active',
+        created_at: data.created_at,
+        sent_at: data.sent_at,
+        sent_via: data.sent_via,
+        lifecycle_stage: data.lifecycle_stage || 'sent',
+        flagged_at: data.flagged_at || new Date().toISOString(),
+        flag_reason: isUrgent
+          ? `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours - URGENT`
+          : `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours`,
+        assigned_to_tech_id: data.assigned_to_tech_id,
+        creator_user_id: data.creator_user_id,
+      });
+    }
+  };
+
+  // Check mockDatabase
+  mockDatabase.magicLinks.forEach((data, token) => checkLink(token, data));
+
+  // Check localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      // Avoid duplicates
+      if (!needsAttention.find(l => l.token === token)) {
+        checkLink(token, data);
+      }
+    });
+  } catch (e) {
+    // Ignore
+  }
+
+  // Sort by age (oldest first - most urgent)
+  return needsAttention.sort((a, b) => {
+    const aTime = new Date(a.sent_at || a.created_at || 0).getTime();
+    const bTime = new Date(b.sent_at || b.created_at || 0).getTime();
+    return aTime - bTime;
+  });
+};
+
+/**
+ * Flag a link for manager attention
+ */
+export const flagLinkForAttention = (token: string, reason: string): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const updatedData = {
+    ...linkData,
+    flagged_at: new Date().toISOString(),
+    flag_reason: reason,
+  };
+
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    // Ignore
+  }
+
+  console.log(`[MagicLink] Flagged token ${token.substring(0, 8)}... for attention: ${reason}`);
+  return { success: true };
+};
+
+/**
+ * Acknowledge a flag (manager has seen it)
+ */
+export const acknowledgeLinkFlag = (token: string): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const updatedData = {
+    ...linkData,
+    flag_acknowledged_at: new Date().toISOString(),
+  };
+
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    // Ignore
+  }
+
+  return { success: true };
+};
+
+/**
+ * Get full lifecycle status summary for display
+ */
+export const getLinkLifecycleSummary = (token: string): {
+  stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[];
+  currentStage: LinkLifecycleStage;
+  needsAttention: boolean;
+  flagReason?: string;
+} | null => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) return null;
+
+  const data = linkData as any;
+
+  const stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[] = [
+    { stage: 'sent', timestamp: data.sent_at || data.created_at, completed: !!(data.sent_at || data.created_at) },
+    { stage: 'delivered', timestamp: data.delivered_at, completed: !!data.delivered_at },
+    { stage: 'opened', timestamp: data.first_accessed_at, completed: !!data.first_accessed_at },
+    { stage: 'job_started', timestamp: data.job_started_at, completed: !!data.job_started_at },
+    { stage: 'job_completed', timestamp: data.job_completed_at, completed: !!data.job_completed_at },
+    { stage: 'report_sent', timestamp: data.report_sent_at, completed: !!data.report_sent_at },
+  ];
+
+  // Determine current stage
+  let currentStage: LinkLifecycleStage = 'sent';
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (stages[i].completed) {
+      currentStage = stages[i].stage;
+      break;
+    }
+  }
+
+  // Check if needs attention
+  const needsAttention = !!data.flagged_at && !data.flag_acknowledged_at && !data.first_accessed_at;
+
+  return {
+    stages,
+    currentStage,
+    needsAttention,
+    flagReason: data.flag_reason,
+  };
 };
 
 /**
