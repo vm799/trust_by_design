@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
-import { validateMagicLink, getJobByToken, updateJob, getJob } from '../lib/db';
+import { validateMagicLink, getJobByToken, updateJob, getJob, recordMagicLinkAccess } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
@@ -166,6 +166,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             }
           }
           setJob(loadedJob);
+
+          // Record magic link access for tracking (only if accessed via token)
+          if (token && !token.startsWith('JP-')) {
+            recordMagicLinkAccess(token);
+          }
         } else if (!tokenError) { // Only set 'not found' if we haven't already set a token error
           setTokenError('Job not found locally or remotely');
           setTokenErrorType('not_found');
