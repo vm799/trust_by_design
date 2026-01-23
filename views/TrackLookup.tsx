@@ -63,7 +63,7 @@ const TrackLookup: React.FC = () => {
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase">
-              Access Your Dispatch
+              Access Your Job
             </h1>
             <p className="text-slate-400 text-base sm:text-lg max-w-md mx-auto">
               Enter the link you received via SMS, email, or QR code
@@ -76,7 +76,7 @@ const TrackLookup: React.FC = () => {
           <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4">
             <label className="block">
               <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">
-                Dispatch Link or Token
+                Job Link or Token
               </span>
               <input
                 type="text"
@@ -128,7 +128,7 @@ const TrackLookup: React.FC = () => {
         {/* Footer Links */}
         <div className="text-center space-y-3">
           <p className="text-slate-300 text-sm">
-            Don't have a dispatch link?
+            Don't have a job link?
           </p>
           <button
             onClick={() => navigate('/auth')}

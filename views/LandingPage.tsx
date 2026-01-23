@@ -81,7 +81,7 @@ const LandingPage: React.FC = () => {
             <Link to="/pricing" className="text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors">
               Pricing
             </Link>
-            <Link to="/auth" className="text-white bg-primary hover:bg-primary-hover px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all active:scale-95">
+            <Link to="/auth" className="text-white bg-primary hover:bg-primary-hover px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all active:scale-95 press-spring">
               Sign In
             </Link>
           </div>
@@ -107,14 +107,14 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link
               to="/auth"
-              className="w-full sm:w-auto px-10 py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-base shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95"
+              className="w-full sm:w-auto px-10 py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-base shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95 press-spring"
             >
               <span className="material-symbols-outlined text-xl">rocket_launch</span>
               Start Free Trial
             </Link>
             <Link
               to="/track-lookup"
-              className="w-full sm:w-auto px-10 py-5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95"
+              className="w-full sm:w-auto px-10 py-5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95 press-spring"
             >
               <span className="material-symbols-outlined text-xl">engineering</span>
               Technician Portal
@@ -202,7 +202,7 @@ const LandingPage: React.FC = () => {
           <div className="flex items-center gap-6 text-sm text-slate-500">
             <Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link to="/help" className="hover:text-white transition-colors">Help</Link>
-            <span>© 2024 JobProof</span>
+            <span>© {new Date().getFullYear()} JobProof</span>
           </div>
         </div>
       </footer>

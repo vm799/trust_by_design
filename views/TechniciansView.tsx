@@ -40,22 +40,22 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
         <div className="flex justify-between items-end">
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Workforce</h2>
-            <p className="text-slate-400">Authorised field operators linked to the verification hub.</p>
+            <p className="text-slate-400">Your team of technicians.</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-widest"
           >
             <span className="material-symbols-outlined text-lg font-black">{showAdd ? 'close' : 'add'}</span>
-            {showAdd ? 'Cancel' : 'Authorise Tech'}
+            {showAdd ? 'Cancel' : 'Add Technician'}
           </button>
         </div>
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
-            <input required placeholder="Operator Full Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
-            <input required type="email" placeholder="Operator Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
-            <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Commit Authorisation</button>
+            <input required placeholder="Technician Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
+            <input required type="email" placeholder="Technician Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
+            <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Add Technician</button>
           </form>
         )}
 

@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { JobProofLogo } from './branding/jobproof-logo';
 import { UserProfile } from '../types';
-import { ThemeToggle } from './ThemeToggle';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -119,20 +118,19 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
               <span className="material-symbols-outlined" aria-hidden="true">menu</span>
             </button>
             <h1 className="text-lg lg:text-xl font-black text-white tracking-tight uppercase">
-              {location.pathname === '/admin' ? 'Operations Control' :
+              {location.pathname === '/admin' ? 'Dashboard' :
                 location.pathname === '/admin/clients' ? 'Registry' :
                   location.pathname === '/admin/technicians' ? 'Workforce' :
                     location.pathname === '/admin/templates' ? 'Protocols' :
-                      location.pathname === '/admin/invoices' ? 'Invoicing Hub' :
+                      location.pathname === '/admin/invoices' ? 'Invoices' :
                         location.pathname === '/admin/profile' ? 'Profile' :
-                          location.pathname === '/admin/help' ? 'Support' : 'System Hub'}
+                          location.pathname === '/admin/help' ? 'Support' : 'Settings'}
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <Link to="/admin/create" id="btn-dispatch" className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95">
               <span className="material-symbols-outlined text-base font-black">add</span>
-              <span className="hidden sm:inline tracking-widest uppercase">Dispatch</span>
+              <span className="hidden sm:inline tracking-widest uppercase">New Job</span>
             </Link>
           </div>
         </header>

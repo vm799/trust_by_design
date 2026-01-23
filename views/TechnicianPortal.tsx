@@ -847,7 +847,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/5 shadow-2xl relative">
+          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/5 shadow-2xl relative animate-success-pop">
             <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
           <div className="space-y-3">
@@ -924,7 +924,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
-              PROTOCOL REF: {job.id}
+              JOB REF: {job.id}
             </h2>
             <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{job.title}</h3>
             <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
@@ -964,12 +964,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
               </div>
               <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-white">Job Assignment</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review job details before starting the verification protocol.</p>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
             </header>
 
             <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
               <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Protocol Details</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Job Details</p>
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
@@ -1009,7 +1009,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8">
               <div className="flex items-center gap-4 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Protocol Requirements</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">What You Need To Do</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
@@ -1033,10 +1033,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
             <button
               onClick={() => setStep(1)}
-              className="w-full py-7 bg-primary rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase"
+              className="w-full py-7 bg-primary rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 press-spring uppercase"
             >
               <span className="material-symbols-outlined text-3xl font-black">play_arrow</span>
-              Start Protocol
+              Start Job
             </button>
           </div>
         )}
@@ -1044,8 +1044,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Baseline Security</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verified pre-work assessment and location telemetry capture.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Safety Check</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verify your location and complete the safety checklist.</p>
             </header>
 
             <div className="space-y-4">
@@ -1066,14 +1066,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                     </span>
                   </div>
                   <div className="text-left">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Geo-Verification</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Location</p>
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
                         {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
                         <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
                             locationStatus === 'capturing' ? 'Acquiring Signal...' :
-                              locationStatus === 'denied' ? 'Permission Denied' : 'Authorise Location Hub'}
+                              locationStatus === 'denied' ? 'Permission Denied' : 'Tap to Get Location'}
                         </p>
                       </div>
                       {locationStatus === 'captured' && coords.lat && (
@@ -1108,7 +1108,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               )}
 
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Risk Check-off</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Safety Checklist</p>
                 {checklist.map((item, idx) => (
                   <button
                     key={item.id}
@@ -1131,7 +1131,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               onClick={() => setStep(2)}
               className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
             >
-              Start Protocol
+              Continue
               <span className="material-symbols-outlined font-black">arrow_forward</span>
             </button>
           </div>
@@ -1140,8 +1140,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 2 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Evidence Collection</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Categorized evidence for dispute-free verification.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Photos</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Take photos before, during, and after the work.</p>
             </header>
 
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
@@ -1160,7 +1160,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={onFileSelect} />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 transition-all min-h-[44px]"
+                className="aspect-square rounded-[2.5rem] border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-4 text-primary group active:scale-95 press-spring transition-all min-h-[44px]"
                 aria-label={`Capture ${activePhotoType} photo`}
               >
                 <div className="size-14 bg-primary/10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
@@ -1210,7 +1210,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 onClick={() => setStep(3)}
                 className="flex-[2] py-5 bg-primary rounded-3xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl shadow-primary/30 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Authorise Seal
+                Continue
               </button>
             </div>
           </div>
@@ -1254,7 +1254,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                   <span className="material-symbols-outlined text-warning text-xl font-black">warning</span>
                   <div>
                     <p className="text-[11px] font-black text-warning uppercase tracking-tight">Evidence Required</p>
-                    <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">Return to Evidence Collection to capture at least one photo before proceeding to sign-off.</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">Return to Photos to capture at least one photo before proceeding to sign-off.</p>
                   </div>
                 </div>
               </div>
@@ -1288,8 +1288,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
         {step === 4 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Authentication</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Client attestation to verify service satisfaction.</p>
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Sign Off</h2>
+              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Get the client to sign and confirm the work is complete.</p>
             </header>
 
             <div className="space-y-4">
@@ -1313,7 +1313,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
                 >
                   <option value="Client">Client / Property Owner</option>
                   <option value="Manager">On-Site Manager</option>
-                  <option value="Agent">Authorised Third-Party Agent</option>
+                  <option value="Agent">Authorized Representative</option>
                 </select>
               </div>
             </div>
@@ -1375,7 +1375,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
               <button
                 onClick={clearSignature}
-                className="w-full py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm font-black">backspace</span>
                 Clear Signature & Re-Sign
@@ -1385,7 +1385,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <button
               onClick={handleFinalSeal}
               disabled={isSubmitting || !signerName || photos.length === 0}
-              className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 press-spring uppercase disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <div className="size-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>

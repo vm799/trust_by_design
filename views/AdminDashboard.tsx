@@ -1,9 +1,11 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Layout from '../components/Layout';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import JobCard from '../components/JobCard';
 import OfflineIndicator from '../components/OfflineIndicator';
+import EmptyState from '../components/EmptyState';
+import { DashboardSkeleton } from '../components/SkeletonLoader';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
@@ -22,6 +24,23 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], technicians = [], user, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
+
+  // Loading state with 300ms delay to prevent flash of skeleton on fast loads
+  const [isLoading, setIsLoading] = useState(true);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Set minimum loading time of 300ms to prevent flash
+    loadingTimerRef.current = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
+  }, []);
 
   // PERFORMANCE OPTIMIZATION: Memoize job filtering to prevent recalculation on every render
   const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
@@ -198,6 +217,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     }
   }, []);
 
+  // Show skeleton while loading
+  if (isLoading) {
+    return (
+      <Layout user={user}>
+        <div className="pb-20">
+          <DashboardSkeleton />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout user={user}>
       <div className="space-y-6 pb-20">
@@ -224,10 +254,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 <button
                   id="btn-dispatch"
                   onClick={() => navigate('/admin/create')}
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined font-black">send</span>
-                  Initialise Dispatch
+                  New Job
                 </button>
               </header>
             </div>
@@ -280,7 +310,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     <button
                       key={item.job.id}
                       onClick={() => navigate(`/admin/report/${item.job.id}`)}
-                      className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3"
+                      className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3 hover-lift press-spring"
                     >
                       <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         item.color === 'danger' ? 'bg-danger/20' : 'bg-warning/20'
@@ -317,31 +347,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               </div>
             )}
 
-            {/* Compact Metrics - Mobile First */}
+            {/* Compact Metrics - Mobile First - All Clickable */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <CompactMetricCard
                 label="Active"
                 value={activeJobs.length.toString()}
                 icon="send"
                 color="text-primary"
+                onClick={() => navigate('/admin/jobs?filter=active')}
               />
               <CompactMetricCard
                 label="Awaiting Seal"
                 value={pendingSignatures.toString()}
                 icon="signature"
                 color="text-warning"
+                onClick={() => navigate('/admin/jobs?filter=awaiting_seal')}
               />
               <CompactMetricCard
                 label="Sealed"
                 value={sealedJobs.length.toString()}
                 icon="verified"
                 color="text-success"
+                onClick={() => navigate('/admin/jobs?filter=sealed')}
               />
               <CompactMetricCard
                 label="Sync Issues"
                 value={syncIssues.toString()}
                 icon="sync_problem"
                 color={syncIssues > 0 ? "text-danger" : "text-slate-300"}
+                onClick={() => navigate('/admin/jobs?filter=sync_issues')}
               />
             </div>
 
@@ -442,16 +476,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               <tbody className="divide-y divide-white/5">
                 {jobs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-24 text-center">
-                      <div className="max-w-md mx-auto space-y-8 animate-in">
-                        <div className="bg-primary/10 size-20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">
-                          <span className="material-symbols-outlined text-primary text-4xl">rocket_launch</span>
-                        </div>
-                        <div className="space-y-4">
-                          <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Your Hub is Ready</h4>
-                          <p className="text-slate-400 text-sm font-medium">Start by completing the onboarding checklist to initialise your operations.</p>
-                        </div>
-                      </div>
+                    <td colSpan={5}>
+                      <EmptyState
+                        icon="rocket_launch"
+                        title="No Jobs Yet"
+                        description="Create your first job to start capturing verifiable evidence."
+                        actionLabel="Create First Job"
+                        actionLink="/admin/create"
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -698,13 +730,18 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
 /**
  * Compact Metric Card - Mobile-First Design
  * Reduced padding and text size for better space efficiency
+ * Now clickable with navigation support
  */
-const CompactMetricCard = ({ label, value, icon, color = "text-white" }: any) => (
-  <div className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 transition-all">
+const CompactMetricCard = ({ label, value, icon, color = "text-white", onClick }: { label: string; value: string; icon: string; color?: string; onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 hover:bg-slate-800/50 transition-all text-left w-full active:scale-95 press-spring hover-lift cursor-pointer"
+  >
     <span className={`material-symbols-outlined absolute -top-1 -right-1 text-5xl opacity-5 transition-transform group-hover:scale-110 font-black ${color.replace('text-', 'text-')}`}>{icon}</span>
     <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 relative z-10">{label}</p>
     <p className={`text-2xl sm:text-3xl font-black tracking-tighter ${color} relative z-10`}>{value}</p>
-  </div>
+    <span className="material-symbols-outlined absolute bottom-2 right-2 text-sm text-slate-600 group-hover:text-slate-400 transition-colors">arrow_forward</span>
+  </button>
 );
 
 // PERFORMANCE OPTIMIZATION: Wrap in React.memo to prevent unnecessary re-renders

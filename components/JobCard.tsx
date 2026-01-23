@@ -101,7 +101,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
   return (
     <button
       onClick={onClick}
-      className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 hover:border-primary/30 transition-all text-left group"
+      className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 hover:border-primary/30 transition-all text-left group hover-lift"
     >
       {/* Header: Title + Lifecycle Status */}
       <div className="flex items-start justify-between gap-3 mb-3">

@@ -60,7 +60,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-xl font-black text-white uppercase">All Caught Up!</h3>
-                            <p className="text-slate-400 text-sm max-w-xs mx-auto">You have no active protocols assigned. Enjoy your downtime!</p>
+                            <p className="text-slate-400 text-sm max-w-xs mx-auto">You have no active jobs assigned. Enjoy your downtime!</p>
                         </div>
                         <button onClick={() => window.location.reload()} className="text-primary text-xs font-black uppercase tracking-widest hover:underline">
                             Check for updates
@@ -108,7 +108,7 @@ const JobCard = React.memo(({ job, onNavigate, completed = false }: { job: Job; 
                 <div className="space-y-1">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
                         }`}>
-                        {completed ? 'Sealed Proof' : 'Active Protocol'}
+                        {completed ? 'Completed' : 'Active Job'}
                     </span>
                     <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors">
                         {job.title}

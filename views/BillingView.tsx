@@ -38,7 +38,7 @@ const BillingView: React.FC = () => {
 
           <aside className="space-y-6">
              <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-6">
-                <h3 className="font-black text-white uppercase text-xs tracking-widest">Protocol Usage</h3>
+                <h3 className="font-black text-white uppercase text-xs tracking-widest">Usage</h3>
                 <div className="space-y-4 text-center py-6">
                    <p className="text-slate-500 text-sm font-medium">Usage tracking will be available when billing is implemented</p>
                    <p className="text-slate-600 text-xs uppercase tracking-widest">(Phase E.1 - Subscriptions)</p>
