@@ -13,10 +13,12 @@ interface ProfileViewProps {
 const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState(user);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSave = () => {
     setUser(formData);
-    alert('Identity updated.');
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   return (
@@ -72,10 +74,16 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                    onChange={e => setFormData({...formData, email: e.target.value})}
                  />
               </div>
-              <div className="pt-4">
-                 <button 
+              <div className="pt-4 space-y-4">
+                 {saveSuccess && (
+                   <div className="bg-success/10 border border-success/20 rounded-xl p-4 flex items-center gap-3 animate-in">
+                     <span className="material-symbols-outlined text-success">check_circle</span>
+                     <span className="text-success text-sm font-bold">Profile updated successfully</span>
+                   </div>
+                 )}
+                 <button
                   onClick={handleSave}
-                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95"
+                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95 press-spring"
                  >
                     Save Changes
                  </button>
