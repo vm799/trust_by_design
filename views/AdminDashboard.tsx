@@ -12,7 +12,7 @@ import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { getLinksNeedingAttention, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
+import { getLinksNeedingAttention, acknowledgeLinkFlag, getTechJobNotifications, markTechNotificationRead, actionTechNotification, type MagicLinkInfo, type TechJobNotification } from '../lib/db';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -160,6 +160,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   // State for links needing attention (unopened for 2+ hours)
   const [linksNeedingAttention, setLinksNeedingAttention] = useState<MagicLinkInfo[]>([]);
 
+  // State for technician-created job notifications
+  const [techNotifications, setTechNotifications] = useState<TechJobNotification[]>([]);
+
   // Check for unopened links periodically
   useEffect(() => {
     const checkUnopenedLinks = () => {
@@ -175,6 +178,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
 
     return () => clearInterval(interval);
   }, [jobs]); // Re-check when jobs change
+
+  // Load technician-created job notifications
+  useEffect(() => {
+    const workspaceId = user?.workspace?.id || 'local';
+    const notifications = getTechJobNotifications(workspaceId, false);
+    setTechNotifications(notifications);
+  }, [user?.workspace?.id, jobs]); // Re-check when jobs change
+
+  // Handle tech notification actions
+  const handleTechNotificationAction = useCallback((notificationId: string, action: 'approved' | 'rejected' | 'reassigned') => {
+    const managerEmail = user?.email || 'Manager';
+    actionTechNotification(notificationId, action, managerEmail);
+    setTechNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, [user?.email]);
+
+  const handleTechNotificationDismiss = useCallback((notificationId: string) => {
+    markTechNotificationRead(notificationId);
+    setTechNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, []);
 
   // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
   // Uses memoized job IDs to prevent unnecessary reloads
@@ -406,6 +428,96 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 <div className="mt-3 pt-3 border-t border-white/5">
                   <p className="text-[10px] text-slate-400 italic">
                     Consider calling technicians directly if links remain unopened
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* TECHNICIAN-CREATED JOBS NOTIFICATIONS */}
+            {techNotifications.length > 0 && (
+              <div className="bg-gradient-to-br from-primary/10 to-blue-500/10 border-2 border-primary/40 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-xl font-black">person_add</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician-Created Jobs</h3>
+                    <p className="text-xs text-slate-300">{techNotifications.length} job{techNotifications.length > 1 ? 's' : ''} created by field technicians</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {techNotifications.map(notification => {
+                    const linkedJob = jobs.find(j => j.id === notification.job_id);
+                    const createdAgo = Math.floor((Date.now() - new Date(notification.created_at).getTime()) / (1000 * 60));
+                    const createdAgoText = createdAgo < 60
+                      ? `${createdAgo}m ago`
+                      : createdAgo < 1440
+                        ? `${Math.floor(createdAgo / 60)}h ago`
+                        : `${Math.floor(createdAgo / 1440)}d ago`;
+
+                    return (
+                      <div
+                        key={notification.id}
+                        className="bg-slate-900/80 border border-primary/30 rounded-xl p-4 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`material-symbols-outlined text-xs ${
+                                notification.type === 'tech_job_completed' ? 'text-success' : 'text-primary'
+                              }`}>
+                                {notification.type === 'tech_job_completed' ? 'check_circle' : 'add_circle'}
+                              </span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                {notification.type === 'tech_job_completed' ? 'Completed' : 'New Job'} - {createdAgoText}
+                              </span>
+                            </div>
+                            <h4 className="font-black text-white text-sm uppercase tracking-tight truncate">
+                              {notification.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              By: <span className="text-slate-300 font-bold">{notification.created_by_tech_name}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-1">
+                              {linkedJob && (
+                                <button
+                                  onClick={() => navigate(`/admin/report/${notification.job_id}`)}
+                                  className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                                >
+                                  View
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleTechNotificationAction(notification.id, 'approved')}
+                                className="px-2 py-2 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg transition-all"
+                                title="Approve"
+                              >
+                                <span className="material-symbols-outlined text-xs">check</span>
+                              </button>
+                              <button
+                                onClick={() => handleTechNotificationDismiss(notification.id)}
+                                className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                                title="Dismiss"
+                              >
+                                <span className="material-symbols-outlined text-xs">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] text-slate-400 italic">
+                    Review and approve technician-created jobs for proper tracking
                   </p>
                 </div>
               </div>

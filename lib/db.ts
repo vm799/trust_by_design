@@ -2171,6 +2171,274 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
   }
 };
 
+// ============================================================================
+// TECHNICIAN-INITIATED JOBS & NOTIFICATIONS
+// ============================================================================
+
+import type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';
+
+// Re-export types for convenience
+export type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';
+
+// In-memory notification storage (would be Supabase in production)
+const techNotifications: Map<string, TechJobNotification> = new Map();
+
+/**
+ * Create a notification for managers when technician creates a job
+ */
+export const notifyManagerOfTechJob = (
+  workspaceId: string,
+  jobId: string,
+  jobTitle: string,
+  techId: string,
+  techName: string,
+  notificationType: TechJobNotification['type'] = 'tech_job_created'
+): TechJobNotification => {
+  const notification: TechJobNotification = {
+    id: crypto.randomUUID(),
+    workspace_id: workspaceId,
+    job_id: jobId,
+    type: notificationType,
+    title: notificationType === 'tech_job_created'
+      ? `New Job Created by ${techName}`
+      : notificationType === 'tech_job_completed'
+        ? `Job Completed by ${techName}`
+        : `Job Needs Review`,
+    message: notificationType === 'tech_job_created'
+      ? `${techName} created a new job: "${jobTitle}". Review and approve if appropriate.`
+      : notificationType === 'tech_job_completed'
+        ? `${techName} has completed and sealed job: "${jobTitle}".`
+        : `Job "${jobTitle}" requires your attention.`,
+    created_by_tech_id: techId,
+    created_by_tech_name: techName,
+    created_at: new Date().toISOString(),
+    is_read: false,
+  };
+
+  // Store in memory
+  techNotifications.set(notification.id, notification);
+
+  // Persist to localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    storedNotifs.push(notification);
+    localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+  } catch (e) {
+    console.warn('Failed to persist notification to localStorage:', e);
+  }
+
+  console.log(`[Notification] Manager notified: ${notification.title}`);
+  return notification;
+};
+
+/**
+ * Get all unread tech job notifications for a workspace
+ */
+export const getTechJobNotifications = (workspaceId: string, includeRead = false): TechJobNotification[] => {
+  const notifications: TechJobNotification[] = [];
+
+  // Load from localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    storedNotifs.forEach((notif: TechJobNotification) => {
+      if (notif.workspace_id === workspaceId) {
+        if (includeRead || !notif.is_read) {
+          notifications.push(notif);
+          // Also add to in-memory map for consistency
+          techNotifications.set(notif.id, notif);
+        }
+      }
+    });
+  } catch (e) {
+    console.warn('Failed to load notifications from localStorage:', e);
+  }
+
+  // Also check in-memory (may have notifications not yet persisted)
+  techNotifications.forEach((notif) => {
+    if (notif.workspace_id === workspaceId) {
+      if ((includeRead || !notif.is_read) && !notifications.find(n => n.id === notif.id)) {
+        notifications.push(notif);
+      }
+    }
+  });
+
+  // Sort by created_at descending (newest first)
+  return notifications.sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+};
+
+/**
+ * Mark a tech job notification as read
+ */
+export const markTechNotificationRead = (notificationId: string): DbResult<void> => {
+  const notif = techNotifications.get(notificationId);
+
+  // Also check localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
+    if (idx >= 0) {
+      storedNotifs[idx].is_read = true;
+      storedNotifs[idx].read_at = new Date().toISOString();
+      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+
+      // Update in-memory too
+      if (notif) {
+        notif.is_read = true;
+        notif.read_at = storedNotifs[idx].read_at;
+      }
+
+      return { success: true };
+    }
+  } catch (e) {
+    console.warn('Failed to update notification in localStorage:', e);
+  }
+
+  if (!notif) {
+    return { success: false, error: 'Notification not found' };
+  }
+
+  notif.is_read = true;
+  notif.read_at = new Date().toISOString();
+  return { success: true };
+};
+
+/**
+ * Take action on a tech job notification (approve, reject, reassign)
+ */
+export const actionTechNotification = (
+  notificationId: string,
+  action: 'approved' | 'rejected' | 'reassigned',
+  actionBy: string
+): DbResult<void> => {
+  // Update in localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
+    if (idx >= 0) {
+      storedNotifs[idx].action_taken = action;
+      storedNotifs[idx].action_at = new Date().toISOString();
+      storedNotifs[idx].action_by = actionBy;
+      storedNotifs[idx].is_read = true;
+      storedNotifs[idx].read_at = storedNotifs[idx].read_at || new Date().toISOString();
+      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+
+      // Update in-memory
+      const notif = techNotifications.get(notificationId);
+      if (notif) {
+        notif.action_taken = action;
+        notif.action_at = storedNotifs[idx].action_at;
+        notif.action_by = actionBy;
+        notif.is_read = true;
+      }
+
+      console.log(`[Notification] Action ${action} taken on notification ${notificationId}`);
+      return { success: true };
+    }
+  } catch (e) {
+    console.warn('Failed to update notification action:', e);
+  }
+
+  return { success: false, error: 'Notification not found' };
+};
+
+/**
+ * Generate a client receipt for a completed job (self-employed mode)
+ */
+export const generateClientReceipt = (job: Job): ClientReceipt => {
+  const receipt: ClientReceipt = {
+    id: crypto.randomUUID(),
+    job_id: job.id,
+    workspace_id: job.workspaceId || 'local',
+
+    client_name: job.client,
+    client_address: job.address,
+
+    job_title: job.title,
+    job_description: job.description || job.notes,
+    work_date: job.date,
+    work_location: job.address,
+    work_location_w3w: job.w3w,
+
+    photos_count: job.photos.length,
+    has_signature: !!job.signature,
+    signer_name: job.signerName,
+    sealed_at: job.sealedAt,
+    evidence_hash: job.evidenceHash,
+
+    amount: job.price,
+    currency: 'GBP',
+    payment_status: 'pending',
+
+    generated_at: new Date().toISOString(),
+  };
+
+  // Store locally
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    receipts.push(receipt);
+    localStorage.setItem('jobproof_client_receipts', JSON.stringify(receipts));
+  } catch (e) {
+    console.warn('Failed to persist receipt:', e);
+  }
+
+  return receipt;
+};
+
+/**
+ * Get client receipt for a job
+ */
+export const getClientReceipt = (jobId: string): ClientReceipt | null => {
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    return receipts.find((r: ClientReceipt) => r.job_id === jobId) || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Mark a client receipt as sent
+ */
+export const markReceiptSent = (
+  receiptId: string,
+  sentVia: 'email' | 'sms' | 'copy' | 'share'
+): DbResult<void> => {
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    const idx = receipts.findIndex((r: ClientReceipt) => r.id === receiptId);
+    if (idx >= 0) {
+      receipts[idx].sent_at = new Date().toISOString();
+      receipts[idx].sent_via = sentVia;
+      localStorage.setItem('jobproof_client_receipts', JSON.stringify(receipts));
+      return { success: true };
+    }
+    return { success: false, error: 'Receipt not found' };
+  } catch (e) {
+    return { success: false, error: 'Failed to update receipt' };
+  }
+};
+
+/**
+ * Get technician work mode from localStorage settings
+ */
+export const getTechnicianWorkMode = (): 'employed' | 'self_employed' => {
+  try {
+    return (localStorage.getItem('jobproof_work_mode') as 'employed' | 'self_employed') || 'employed';
+  } catch {
+    return 'employed';
+  }
+};
+
+/**
+ * Set technician work mode
+ */
+export const setTechnicianWorkMode = (mode: 'employed' | 'self_employed'): void => {
+  localStorage.setItem('jobproof_work_mode', mode);
+  console.log(`[WorkMode] Set to ${mode}`);
+};
+
 // Auto-init mock database if in test environment
 if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
   initMockDatabase();

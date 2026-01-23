@@ -6,6 +6,7 @@ import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
 import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
 import LegalDisclaimer from '../components/LegalDisclaimer';
+import ClientReceiptView from '../components/ClientReceiptView';
 import { getReportUrl, getMagicLinkUrl } from '../lib/redirects';
 import {
   getMagicLinksForJob,
@@ -42,6 +43,11 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
    const [isLoadingMedia, setIsLoadingMedia] = useState(true);
    const [showShareModal, setShowShareModal] = useState(false);
+   const [showClientReceipt, setShowClientReceipt] = useState(false);
+
+   // Check if job was created in self-employed mode
+   const techMetadata = (job as any)?.techMetadata;
+   const isSelfEmployedJob = (job as any)?.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
 
    // Magic Link Management State
    const [magicLinkInfo, setMagicLinkInfo] = useState<MagicLinkInfo | null>(null);
@@ -605,6 +611,15 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                  Create Invoice
                               </button>
                            )}
+                           {job.status === 'Submitted' && (
+                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
+                                 <span className="material-symbols-outlined text-sm font-black">receipt_long</span>
+                                 Client Receipt
+                                 {isSelfEmployedJob && (
+                                    <span className="bg-success/20 text-success text-[8px] px-2 py-0.5 rounded-full ml-1">Self-Emp</span>
+                                 )}
+                              </button>
+                           )}
                            <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
                               <span className="material-symbols-outlined text-sm font-black">print</span>
                               Print / Export PDF
@@ -942,6 +957,14 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </button>
                </div>
             </div>
+         )}
+
+         {/* Client Receipt Modal */}
+         {showClientReceipt && job && (
+            <ClientReceiptView
+               job={job}
+               onClose={() => setShowClientReceipt(false)}
+            />
          )}
       </Layout>
    );
