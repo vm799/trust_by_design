@@ -364,46 +364,86 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
    return (
       <Layout user={user} isAdmin={!publicView}>
-         <div className={`max-w-5xl mx-auto flex flex-col ${publicView ? '' : 'lg:flex-row'} gap-8 main-content-area animate-in`}>
-            <div className="flex-1 space-y-8 bg-white text-slate-900 p-8 lg:p-14 rounded-[3rem] shadow-2xl border border-slate-200 relative overflow-hidden">
+         <div className={`max-w-5xl mx-auto flex flex-col ${publicView ? '' : 'lg:flex-row'} gap-4 sm:gap-8 main-content-area animate-in`}>
+            <div className="flex-1 space-y-6 sm:space-y-8 bg-white text-slate-900 p-4 sm:p-8 lg:p-14 rounded-2xl sm:rounded-[3rem] shadow-2xl border border-slate-200 relative overflow-hidden">
                {/* Watermark */}
                <div className="absolute top-10 -right-20 rotate-45 text-[120px] font-black text-slate-50 pointer-events-none uppercase tracking-tighter select-none opacity-5">
                   CERTIFIED
                </div>
 
-               <div className="flex justify-between items-start border-b border-slate-100 pb-10 relative z-10">
-                  <div className="space-y-4">
-                     <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
-                     <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
-                     <div className="flex flex-wrap items-center gap-4">
-                        <p className="text-slate-300 font-bold uppercase text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
-                        <div className="size-1 bg-slate-200 rounded-full"></div>
-                        <p className="text-slate-300 font-bold uppercase text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0, 8)}</span></p>
+               <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-100 pb-6 sm:pb-10 relative z-10">
+                  <div className="space-y-3 sm:space-y-4">
+                     <div className="bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
+                     <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
+                     <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                        <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
+                        <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
+                        <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0, 8)}</span></p>
                         {job.w3w && (
                            <>
-                              <div className="size-1 bg-slate-200 rounded-full"></div>
-                              <div className="flex items-center gap-1">
-                                 <span className="text-red-500 font-black text-[10px]">///</span>
-                                 <p className="text-slate-900 font-black uppercase text-[10px] tracking-widest">{job.w3w.replace('///', '')}</p>
+                              <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
+                              <div className="flex items-center gap-1 w-full sm:w-auto">
+                                 <span className="text-red-500 font-black text-[9px] sm:text-[10px]">///</span>
+                                 <p className="text-slate-900 font-black uppercase text-[9px] sm:text-[10px] tracking-widest">{job.w3w.replace('///', '')}</p>
                               </div>
                            </>
                         )}
                      </div>
                   </div>
-                  <div className="text-right">
-                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorisation</p>
-                     <p className="text-xl font-black uppercase leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{job.completedAt ? new Date(job.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                  <div className="text-left sm:text-right mt-2 sm:mt-0 flex-shrink-0">
+                     <p className="text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorisation</p>
+                     <p className="text-lg sm:text-xl font-black uppercase leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
+                     <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mt-1">{job.completedAt ? new Date(job.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                   </div>
                </div>
 
                {/* Protocol Timeline - Enhanced Chain of Custody */}
-               <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 space-y-6 relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Chain of Custody</h3>
-                     <span className="text-[8px] font-bold text-slate-300 uppercase">Operational Spine</span>
+               <div className="bg-slate-50 rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-100 space-y-4 sm:space-y-6 relative z-10">
+                  <div className="flex items-center justify-between mb-2 sm:mb-4">
+                     <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Chain of Custody</h3>
+                     <span className="text-[8px] font-bold text-slate-300 uppercase hidden sm:block">Operational Spine</span>
                   </div>
-                  <div className="flex justify-between items-start gap-4">
+                  {/* Mobile: Vertical timeline */}
+                  <div className="flex flex-col sm:hidden gap-4">
+                     <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${true ? 'bg-primary/10' : 'bg-slate-200'}`}>
+                           <span className={`material-symbols-outlined text-sm ${true ? 'text-primary' : 'text-slate-400'}`}>send</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-slate-900 uppercase">Dispatched</p>
+                           <p className="text-[9px] text-slate-500">{timelineEvents.created ? `${timelineEvents.created.date} • ${timelineEvents.created.time}` : job.date}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${timelineEvents.firstCapture ? 'bg-primary/10' : 'bg-slate-200'}`}>
+                           <span className={`material-symbols-outlined text-sm ${timelineEvents.firstCapture ? 'text-primary' : 'text-slate-400'}`}>photo_camera</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-slate-900 uppercase">Capture</p>
+                           <p className="text-[9px] text-slate-500">{timelineEvents.firstCapture ? `${timelineEvents.firstCapture.date} • ${job.photos.length} items` : 'Pending'}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${timelineEvents.sealed ? 'bg-primary/10' : 'bg-slate-200'}`}>
+                           <span className={`material-symbols-outlined text-sm ${timelineEvents.sealed ? 'text-primary' : 'text-slate-400'}`}>lock</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-slate-900 uppercase">Sealed</p>
+                           <p className="text-[9px] text-slate-500">{timelineEvents.sealed ? `${timelineEvents.sealed.date} • ${timelineEvents.sealed.time}` : 'Pending'}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${timelineEvents.verified ? 'bg-success/10' : 'bg-slate-200'}`}>
+                           <span className={`material-symbols-outlined text-sm ${timelineEvents.verified ? 'text-success' : 'text-slate-400'}`}>verified</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-slate-900 uppercase">Verified</p>
+                           <p className="text-[9px] text-slate-500">{timelineEvents.verified ? `${timelineEvents.verified.date} • ${timelineEvents.verified.time}` : 'Pending'}</p>
+                        </div>
+                     </div>
+                  </div>
+                  {/* Desktop: Horizontal timeline */}
+                  <div className="hidden sm:flex justify-between items-start gap-4">
                      <TimelineStep
                         label="Dispatched"
                         time={timelineEvents.created ? `${timelineEvents.created.date}` : job.date}
@@ -446,17 +486,17 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
                )}
 
-               <div className="grid grid-cols-2 gap-12 relative z-10">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 relative z-10">
                   <div className="space-y-3">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
-                     <p className="text-xl font-black uppercase tracking-tight">{job.client}</p>
-                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 shadow-inner">
-                        <p className="text-slate-300 text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
+                     <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
+                     <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.client}</p>
+                     <div className="p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 space-y-2 shadow-inner">
+                        <p className="text-slate-300 text-[10px] sm:text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
                         {job.lat && (
                            <div className="border-t border-slate-200 pt-2 space-y-1">
                               <div className="flex items-center gap-1.5">
                                  <span className="text-red-500 font-black text-[9px]">///</span>
-                                 <span className="text-[9px] font-black uppercase text-slate-900 tracking-widest">{job.w3w?.replace('///', '')}</span>
+                                 <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-900 tracking-widest">{job.w3w?.replace('///', '')}</span>
                               </div>
                               <p className="text-slate-400 text-[8px] font-mono uppercase">GPS: {job.lat.toFixed(6)}, {job.lng?.toFixed(6)}</p>
                            </div>
@@ -464,13 +504,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      </div>
                   </div>
                   <div className="space-y-3">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</h3>
-                     <p className="text-xl font-black uppercase tracking-tight">{job.technician}</p>
+                     <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</h3>
+                     <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.technician}</p>
                      <div className="flex flex-col gap-2">
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
                            </div>
                            <p className="text-[8px] text-slate-300 italic pl-6">
                               (GPS coordinates recorded, not verified against address)
@@ -479,7 +519,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Account Verified (Email)</p>
+                              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Account Verified (Email)</p>
                            </div>
                            <p className="text-[8px] text-slate-300 italic pl-6">
                               (Account-based identity, not legally verified)

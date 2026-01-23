@@ -543,7 +543,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
               />
               {fieldErrors.title && <span className="text-danger text-xs font-bold">Required field</span>}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client *</label>
                 <select
@@ -896,12 +896,12 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         )}
 
         {showSuccessModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/90 backdrop-blur-md animate-in overflow-y-auto">
             <div
               role="dialog"
               aria-modal="true"
               aria-labelledby="success-modal-title"
-              className="bg-slate-900 border border-white/10 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-2xl w-full shadow-2xl space-y-8"
+              className="bg-slate-900 border border-white/10 p-4 sm:p-6 md:p-8 lg:p-12 rounded-2xl sm:rounded-[3.5rem] max-w-2xl w-full shadow-2xl space-y-6 sm:space-y-8 my-4"
             >
               <div className="text-center space-y-4">
                 <div className="bg-success/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
@@ -929,22 +929,22 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 bg-slate-800/50 rounded-3xl p-6 space-y-4 border border-white/5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="md:col-span-2 bg-slate-800/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 border border-white/5">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician Magic Link</p>
                     <span className="material-symbols-outlined text-primary text-sm font-black">link</span>
                   </div>
-                  <div className="bg-slate-950 rounded-2xl p-4 border border-white/5">
-                    <p className="text-xs font-mono text-white break-all">{getMagicLink()}</p>
+                  <div className="bg-slate-950 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/5">
+                    <p className="text-[10px] sm:text-xs font-mono text-white break-all">{getMagicLink()}</p>
                   </div>
                   <p className="text-[9px] text-slate-300 uppercase tracking-tight">This link provides browser-based access. No app installation required.</p>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center space-y-3">
+                <div className="bg-slate-800/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 flex flex-col items-center justify-center space-y-3">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">QR Code</p>
-                  <div className="bg-white p-3 rounded-2xl">
-                    <img src={getQRCodeDataURL()} alt="QR Code" className="w-32 h-32" />
+                  <div className="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl">
+                    <img src={getQRCodeDataURL()} alt="QR Code" className="w-24 h-24 sm:w-32 sm:h-32" />
                   </div>
                   <p className="text-[8px] text-slate-300 uppercase tracking-tight text-center">Scan to access</p>
                 </div>
@@ -976,12 +976,12 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 </div>
               </div>
 
-              <div className="flex items-center justify-center gap-4 pt-4 border-t border-white/5">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 border-t border-white/5">
                 <div className="text-center">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned To</p>
                   <p className="text-xs font-bold text-white uppercase">{selectedTech?.name}</p>
                 </div>
-                <div className="size-1 bg-slate-700 rounded-full"></div>
+                <div className="hidden sm:block size-1 bg-slate-700 rounded-full"></div>
                 <div className="text-center">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
                   <p className="text-xs font-bold text-white uppercase">{selectedClient?.name}</p>
