@@ -721,34 +721,76 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
 };
 
 /**
+ * Store a magic link locally (for offline/local-only mode)
+ * This creates a token and stores the mapping directly in mockDatabase
+ * Use this when the database is unavailable but you need a working magic link
+ */
+export const storeMagicLinkLocal = (jobId: string, workspaceId: string = 'local'): MagicLinkData => {
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days for local links
+  const url = getMagicLinkUrl(token, jobId);
+
+  // Store in mockDatabase for later validation
+  mockDatabase.magicLinks.set(token, {
+    job_id: jobId,
+    workspace_id: workspaceId,
+    expires_at: expiresAt,
+    is_sealed: false
+  });
+
+  // Also persist to localStorage for survival across page refreshes
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = {
+      job_id: jobId,
+      workspace_id: workspaceId,
+      expires_at: expiresAt,
+      is_sealed: false
+    };
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    console.warn('Failed to persist magic link to localStorage:', e);
+  }
+
+  return { token, url, expiresAt };
+};
+
+/**
+ * Load magic links from localStorage into mockDatabase on startup
+ * Call this during app initialization
+ */
+export const loadMagicLinksFromStorage = (): void => {
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    const now = new Date();
+
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      // Only load non-expired links
+      if (new Date(data.expires_at) > now) {
+        mockDatabase.magicLinks.set(token, data);
+      }
+    });
+  } catch (e) {
+    console.warn('Failed to load magic links from localStorage:', e);
+  }
+};
+
+/**
  * Validate a magic link token
+ * Checks mockDatabase first, then localStorage, then Supabase
  */
 export const validateMagicLink = async (token: string): Promise<DbResult<TokenValidationData>> => {
-  if (shouldUseMockDB()) {
-    const linkData = mockDatabase.magicLinks.get(token);
-
-    if (!linkData) {
-      return {
-        success: false,
-        error: 'Invalid token'
-      };
-    }
-
+  // Helper function to validate link data
+  const validateLinkData = (linkData: { job_id: string; workspace_id: string; expires_at: string; is_sealed: boolean }): DbResult<TokenValidationData> => {
     const now = new Date();
     const expiresAt = new Date(linkData.expires_at);
 
     if (now > expiresAt) {
-      return {
-        success: false,
-        error: 'Token expired'
-      };
+      return { success: false, error: 'Token expired' };
     }
 
     if (linkData.is_sealed) {
-      return {
-        success: false,
-        error: 'This job has been sealed and can no longer be modified'
-      };
+      return { success: false, error: 'This job has been sealed and can no longer be modified' };
     }
 
     return {
@@ -759,13 +801,37 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
         is_valid: true
       }
     };
+  };
+
+  // 1. Check mockDatabase first (includes pre-loaded localStorage links)
+  let linkData = mockDatabase.magicLinks.get(token);
+  if (linkData) {
+    return validateLinkData(linkData);
   }
 
+  // 2. Check localStorage directly (in case not yet loaded into mockDatabase)
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    if (localLinks[token]) {
+      // Add to mockDatabase for faster subsequent lookups
+      mockDatabase.magicLinks.set(token, localLinks[token]);
+      return validateLinkData(localLinks[token]);
+    }
+  } catch (e) {
+    console.warn('Failed to check localStorage for magic link:', e);
+  }
+
+  // 3. If in mock mode and not found anywhere local, token is invalid
+  if (shouldUseMockDB()) {
+    return { success: false, error: 'Invalid token' };
+  }
+
+  // 4. Try Supabase
   const supabase = getSupabase();
   if (!supabase) {
     return {
       success: false,
-      error: 'Supabase not configured. Running in offline-only mode.'
+      error: 'Token not found locally and Supabase not configured.'
     };
   }
 
@@ -822,6 +888,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
 
 /**
  * Get job by magic link token
+ * Checks multiple sources: mockDatabase, localStorage, and Supabase
  */
 export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
   const validation = await validateMagicLink(token);
@@ -833,24 +900,46 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
     };
   }
 
-  if (shouldUseMockDB()) {
-    const job = mockDatabase.jobs.get(validation.data.job_id);
+  const jobId = validation.data.job_id;
 
-    if (!job) {
-      return {
-        success: false,
-        error: 'Job not found'
-      };
-    }
-
-    return { success: true, data: job };
+  // 1. Check mockDatabase first
+  const mockJob = mockDatabase.jobs.get(jobId);
+  if (mockJob) {
+    return { success: true, data: mockJob };
   }
 
+  // 2. Check localStorage (where App.tsx stores jobs)
+  // App.tsx uses 'jobproof_jobs_v2' as the key
+  try {
+    const storedJobs = localStorage.getItem('jobproof_jobs_v2');
+    if (storedJobs) {
+      const jobs: Job[] = JSON.parse(storedJobs);
+      const localJob = jobs.find(j => j.id === jobId);
+      if (localJob) {
+        // Add to mockDatabase for faster future lookups
+        mockDatabase.jobs.set(jobId, localJob);
+        console.log(`[getJobByToken] Found job ${jobId} in localStorage`);
+        return { success: true, data: localJob };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to check localStorage for job:', e);
+  }
+
+  // 3. If mock mode and not found locally, return error
+  if (shouldUseMockDB()) {
+    return {
+      success: false,
+      error: 'Job not found in local storage'
+    };
+  }
+
+  // 4. Try Supabase
   const supabase = getSupabase();
   if (!supabase) {
     return {
       success: false,
-      error: 'Supabase not configured. Running in offline-only mode.'
+      error: 'Job not found locally and Supabase not configured.'
     };
   }
 

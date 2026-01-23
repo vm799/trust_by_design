@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
-import { createJob, generateMagicLink } from '../lib/db';
-import { getMagicLinkUrl } from '../lib/redirects';
+import { createJob, generateMagicLink, storeMagicLinkLocal } from '../lib/db';
+import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 
 interface CreateJobProps {
@@ -364,9 +364,27 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         // Use UUID to prevent enumeration attacks (BACKEND_AUDIT.md Risk #5)
         const newId = `JP-${crypto.randomUUID()}`;
         const localJob: Job = { ...jobData, id: newId } as Job;
+
+        // CRITICAL: Immediately persist to localStorage so magic link works instantly
+        // Don't wait for debounced save - the tech may click the link right away
+        try {
+          const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+          existingJobs.unshift(localJob);
+          localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
+          console.log(`[CreateJob] Immediately persisted job ${newId} to localStorage`);
+        } catch (e) {
+          console.error('[CreateJob] Failed to persist job to localStorage:', e);
+        }
+
+        // Add to React state (will trigger debounced save later, but we already saved)
         onAddJob(localJob);
         setCreatedJobId(newId);
-        setMagicLinkUrl(getMagicLinkUrl(newId));
+
+        // Generate a proper magic link with token for local jobs
+        const localMagicLink = storeMagicLinkLocal(newId, user?.workspace?.id || 'local');
+        setMagicLinkUrl(localMagicLink.url);
+        console.log(`[CreateJob] Generated local magic link: ${localMagicLink.url}`);
+
         clearDraft();
         setShowConfirmModal(false);
         setShowSuccessModal(true);
@@ -382,9 +400,12 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
+        console.log(`[CreateJob] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
-        // Fallback to job ID link if token generation fails
-        setMagicLinkUrl(getMagicLinkUrl(createdJob.id));
+        // Fallback to local token generation if DB token generation fails
+        const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
+        setMagicLinkUrl(localMagicLink.url);
+        console.log(`[CreateJob] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       // Also add to local state via onAddJob for immediate UI update
@@ -402,7 +423,17 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     }
   };
 
-  const getMagicLink = () => magicLinkUrl || getMagicLinkUrl(createdJobId);
+  // getMagicLink should always return the properly generated URL
+  // The fallback generates a new local token if somehow magicLinkUrl wasn't set
+  const getMagicLink = () => {
+    if (magicLinkUrl) {
+      return magicLinkUrl;
+    }
+    // Emergency fallback: generate a local magic link on the fly
+    console.warn('[CreateJob] magicLinkUrl was not set, generating emergency local link');
+    const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
+    return emergencyLink.url;
+  };
 
   const copyMagicLink = () => {
     navigator.clipboard.writeText(getMagicLink());

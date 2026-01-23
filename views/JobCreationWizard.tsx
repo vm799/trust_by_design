@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
-import { createJob, generateMagicLink } from '../lib/db';
-import { getMagicLinkUrl } from '../lib/redirects';
+import { createJob, generateMagicLink, storeMagicLinkLocal } from '../lib/db';
+import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
 
@@ -203,9 +203,25 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         // Fallback to localStorage
         const newId = `JP-${crypto.randomUUID()}`;
         const localJob: Job = { ...jobData, id: newId } as Job;
+
+        // CRITICAL: Immediately persist to localStorage so magic link works instantly
+        try {
+          const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+          existingJobs.unshift(localJob);
+          localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
+          console.log(`[JobCreationWizard] Immediately persisted job ${newId} to localStorage`);
+        } catch (e) {
+          console.error('[JobCreationWizard] Failed to persist job to localStorage:', e);
+        }
+
         onAddJob(localJob);
         setCreatedJobId(newId);
-        setMagicLinkUrl(getMagicLinkUrl(newId));
+
+        // Generate proper magic link with token
+        const localMagicLink = storeMagicLinkLocal(newId, workspaceId);
+        setMagicLinkUrl(localMagicLink.url);
+        console.log(`[JobCreationWizard] Generated local magic link: ${localMagicLink.url}`);
+
         setShowSuccessModal(true);
         setIsCreating(false);
         return;
@@ -217,8 +233,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       const magicLinkResult = await generateMagicLink(createdJob.id);
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
+        console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
-        setMagicLinkUrl(getMagicLinkUrl(createdJob.id));
+        // Fallback to local token generation
+        const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
+        setMagicLinkUrl(localMagicLink.url);
+        console.log(`[JobCreationWizard] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       onAddJob(createdJob);
@@ -235,7 +255,14 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   };
 
   const copyMagicLink = () => {
-    navigator.clipboard.writeText(magicLinkUrl || getMagicLinkUrl(createdJobId));
+    // magicLinkUrl should always be set by now, but generate one if somehow not
+    let urlToCopy = magicLinkUrl;
+    if (!urlToCopy && createdJobId) {
+      console.warn('[JobCreationWizard] magicLinkUrl was not set, generating emergency local link');
+      const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
+      urlToCopy = emergencyLink.url;
+    }
+    navigator.clipboard.writeText(urlToCopy);
     hapticFeedback('success');
     showToast('Magic link copied to clipboard!', 'success');
   };
@@ -709,7 +736,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Magic Link</p>
                 <p className="text-xs font-mono text-white break-all bg-slate-950 p-3 rounded-lg">
-                  {magicLinkUrl || getMagicLinkUrl(createdJobId)}
+                  {magicLinkUrl || 'Generating link...'}
                 </p>
               </div>
 
