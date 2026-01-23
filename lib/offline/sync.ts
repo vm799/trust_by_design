@@ -21,7 +21,17 @@ export async function pullJobs(workspaceId: string) {
 }
 
 /**
- * Internal implementation of pullJobs
+ * Conflict resolution result for tracking
+ */
+export interface ConflictResult {
+    jobId: string;
+    resolution: 'local_preserved' | 'server_accepted' | 'merged';
+    localTimestamp: number;
+    serverTimestamp: number;
+}
+
+/**
+ * Internal implementation of pullJobs with conflict resolution
  */
 async function _pullJobsImpl(workspaceId: string) {
     const supabase = getSupabase();
@@ -36,7 +46,7 @@ async function _pullJobsImpl(workspaceId: string) {
         if (error) throw error;
 
         if (data) {
-            const jobs: LocalJob[] = data.map(row => ({
+            const serverJobs: LocalJob[] = data.map(row => ({
                 id: row.id,
                 title: row.title,
                 status: row.status,
@@ -51,13 +61,13 @@ async function _pullJobsImpl(workspaceId: string) {
                 w3w: row.w3w,
                 notes: row.notes,
                 workSummary: row.work_summary,
-                photos: row.photos || [], // These are just metadata references
+                photos: row.photos || [],
                 signature: row.signature_url,
                 safetyChecklist: row.safety_checklist || [],
                 siteHazards: row.site_hazards || [],
                 templateId: row.template_id,
                 price: row.price,
-                syncStatus: 'synced', // From server = synced
+                syncStatus: 'synced' as const,
                 lastUpdated: new Date(row.updated_at).getTime(),
                 workspaceId: row.workspace_id,
                 sealedAt: row.sealed_at,
@@ -65,14 +75,126 @@ async function _pullJobsImpl(workspaceId: string) {
                 evidenceHash: row.evidence_hash
             }));
 
-            // Bulk put (overwrites existing with latest server state)
-            // Note: We might need conflict resolution strategy if local hash is newer
-            await db.jobs.bulkPut(jobs);
-            console.log(`[Sync] Pulled ${jobs.length} jobs`);
+            // CONFLICT RESOLUTION: Compare local vs server for each job
+            const conflicts: ConflictResult[] = [];
+            const jobsToUpdate: LocalJob[] = [];
+
+            for (const serverJob of serverJobs) {
+                const localJob = await db.jobs.get(serverJob.id);
+
+                if (!localJob) {
+                    // No local job - accept server version
+                    jobsToUpdate.push(serverJob);
+                    continue;
+                }
+
+                const localHasPendingChanges = localJob.syncStatus === 'pending';
+                const localIsNewer = localJob.lastUpdated > serverJob.lastUpdated;
+                const serverIsSealed = serverJob.isSealed || serverJob.sealedAt;
+
+                // RULE 1: Sealed jobs ALWAYS win (immutable evidence)
+                if (serverIsSealed) {
+                    jobsToUpdate.push(serverJob);
+                    if (localHasPendingChanges && localIsNewer) {
+                        conflicts.push({
+                            jobId: serverJob.id,
+                            resolution: 'server_accepted',
+                            localTimestamp: localJob.lastUpdated,
+                            serverTimestamp: serverJob.lastUpdated
+                        });
+                        console.warn(`[Sync] Conflict: Job ${serverJob.id} was sealed on server. Local changes discarded.`);
+                    }
+                    continue;
+                }
+
+                // RULE 2: Local pending changes + local is newer = preserve local
+                if (localHasPendingChanges && localIsNewer) {
+                    // DON'T overwrite local - it has pending changes that are newer
+                    conflicts.push({
+                        jobId: serverJob.id,
+                        resolution: 'local_preserved',
+                        localTimestamp: localJob.lastUpdated,
+                        serverTimestamp: serverJob.lastUpdated
+                    });
+                    console.log(`[Sync] Preserved local job ${serverJob.id} (local: ${new Date(localJob.lastUpdated).toISOString()}, server: ${new Date(serverJob.lastUpdated).toISOString()})`);
+                    continue;
+                }
+
+                // RULE 3: Server is newer OR local has no pending changes = accept server
+                if (!localHasPendingChanges || !localIsNewer) {
+                    // Merge: Preserve local photos that aren't on server yet
+                    const mergedJob = mergeJobData(localJob, serverJob);
+                    jobsToUpdate.push(mergedJob);
+
+                    if (localHasPendingChanges) {
+                        conflicts.push({
+                            jobId: serverJob.id,
+                            resolution: 'merged',
+                            localTimestamp: localJob.lastUpdated,
+                            serverTimestamp: serverJob.lastUpdated
+                        });
+                    }
+                    continue;
+                }
+
+                // Default: accept server
+                jobsToUpdate.push(serverJob);
+            }
+
+            // Apply updates
+            if (jobsToUpdate.length > 0) {
+                await db.jobs.bulkPut(jobsToUpdate);
+            }
+
+            // Store conflicts for UI notification
+            if (conflicts.length > 0) {
+                const existingConflicts = JSON.parse(localStorage.getItem('jobproof_sync_conflicts') || '[]');
+                const allConflicts = [...existingConflicts, ...conflicts].slice(-50); // Keep last 50
+                localStorage.setItem('jobproof_sync_conflicts', JSON.stringify(allConflicts));
+            }
+
+            console.log(`[Sync] Pulled ${serverJobs.length} jobs, updated ${jobsToUpdate.length}, conflicts: ${conflicts.length}`);
         }
     } catch (error) {
         console.error('[Sync] Pull failed:', error);
     }
+}
+
+/**
+ * Merge local and server job data intelligently
+ * - Preserves local photos not yet synced
+ * - Uses server data for everything else
+ */
+function mergeJobData(local: LocalJob, server: LocalJob): LocalJob {
+    // Start with server data
+    const merged = { ...server };
+
+    // Preserve local photos that haven't synced yet
+    if (local.photos && local.photos.length > 0) {
+        const localUnsyncedPhotos = local.photos.filter(
+            (p: Photo) => p.syncStatus === 'pending' || p.isIndexedDBRef
+        );
+
+        if (localUnsyncedPhotos.length > 0) {
+            // Combine server photos with local unsynced photos
+            const serverPhotoIds = new Set((server.photos || []).map((p: Photo) => p.id));
+            const photosToAdd = localUnsyncedPhotos.filter((p: Photo) => !serverPhotoIds.has(p.id));
+
+            merged.photos = [...(server.photos || []), ...photosToAdd];
+            merged.syncStatus = 'pending'; // Mark as needing sync due to merged photos
+        }
+    }
+
+    // Preserve local signature if server doesn't have one and local does
+    if (!server.signature && local.signature) {
+        merged.signature = local.signature;
+        merged.signatureHash = local.signatureHash;
+        merged.signerName = local.signerName;
+        merged.signerRole = local.signerRole;
+        merged.syncStatus = 'pending';
+    }
+
+    return merged;
 }
 
 /**

@@ -328,20 +328,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
-        {/* Sync issues warning */}
+        {/* Sync issues warning - Mobile optimized */}
         {syncIssues > 0 && (
-          <div className="bg-warning/10 border border-warning/20 p-6 rounded-2xl flex items-center justify-between animate-in">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-warning text-3xl">sync_problem</span>
+          <div className="bg-warning/10 border border-warning/20 p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="material-symbols-outlined text-warning text-2xl sm:text-3xl flex-shrink-0">sync_problem</span>
               <div>
-                <p className="text-white font-bold">{syncIssues} job{syncIssues > 1 ? 's' : ''} failed to sync</p>
-                <p className="text-slate-400 text-sm">Click "Retry Sync" to attempt synchronization again.</p>
+                <p className="text-white font-bold text-sm sm:text-base">{syncIssues} job{syncIssues > 1 ? 's' : ''} failed to sync</p>
+                <p className="text-slate-400 text-xs sm:text-sm">Click "Retry Sync" to attempt synchronization again.</p>
               </div>
             </div>
             <button
               onClick={handleManualSync}
               disabled={isSyncing}
-              className="px-6 py-3 bg-warning/20 hover:bg-warning/30 border border-warning/30 text-warning rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 bg-warning/20 hover:bg-warning/30 border border-warning/30 text-warning rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <span className={`material-symbols-outlined text-sm ${isSyncing ? 'animate-spin' : ''}`}>
                 {isSyncing ? 'sync' : 'refresh'}
@@ -351,16 +351,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
-            {/* UNOPENED LINK ALERTS */}
+            {/* UNOPENED LINK ALERTS - Mobile optimized */}
             {linksNeedingAttention.length > 0 && (
-              <div className="bg-gradient-to-br from-warning/10 to-orange-500/10 border-2 border-warning/40 rounded-3xl p-6 shadow-2xl animate-in">
+              <div className="bg-gradient-to-br from-warning/10 to-orange-500/10 border-2 border-warning/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-warning text-xl font-black animate-pulse">notifications_active</span>
+                  <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-warning/20 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-warning text-lg sm:text-xl font-black animate-pulse">notifications_active</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician Links Unopened</h3>
-                    <p className="text-xs text-slate-300">{linksNeedingAttention.length} link{linksNeedingAttention.length > 1 ? 's' : ''} not accessed after 2+ hours</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight truncate">Technician Links Unopened</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-300">{linksNeedingAttention.length} link{linksNeedingAttention.length > 1 ? 's' : ''} not accessed after 2+ hours</p>
                   </div>
                 </div>
 
@@ -377,11 +377,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     return (
                       <div
                         key={link.token}
-                        className={`bg-slate-900/80 border rounded-xl p-4 transition-all ${
+                        className={`bg-slate-900/80 border rounded-xl p-3 sm:p-4 transition-all ${
                           isUrgent ? 'border-danger/40' : 'border-warning/30'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className={`material-symbols-outlined text-xs ${isUrgent ? 'text-danger' : 'text-warning'}`}>
@@ -401,10 +401,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                               )}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
                             <button
                               onClick={() => navigate(`/admin/report/${link.job_id}`)}
-                              className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                              className="flex-1 sm:flex-none px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                             >
                               View
                             </button>
@@ -433,16 +433,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               </div>
             )}
 
-            {/* TECHNICIAN-CREATED JOBS NOTIFICATIONS */}
+            {/* TECHNICIAN-CREATED JOBS NOTIFICATIONS - Mobile optimized */}
             {techNotifications.length > 0 && (
-              <div className="bg-gradient-to-br from-primary/10 to-blue-500/10 border-2 border-primary/40 rounded-3xl p-6 shadow-2xl animate-in">
+              <div className="bg-gradient-to-br from-primary/10 to-blue-500/10 border-2 border-primary/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-xl font-black">person_add</span>
+                  <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-primary text-lg sm:text-xl font-black">person_add</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician-Created Jobs</h3>
-                    <p className="text-xs text-slate-300">{techNotifications.length} job{techNotifications.length > 1 ? 's' : ''} created by field technicians</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight truncate">Technician-Created Jobs</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-300">{techNotifications.length} job{techNotifications.length > 1 ? 's' : ''} created by field technicians</p>
                   </div>
                 </div>
 
@@ -459,9 +459,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     return (
                       <div
                         key={notification.id}
-                        className="bg-slate-900/80 border border-primary/30 rounded-xl p-4 transition-all"
+                        className="bg-slate-900/80 border border-primary/30 rounded-xl p-3 sm:p-4 transition-all"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className={`material-symbols-outlined text-xs ${
@@ -483,31 +483,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                               {notification.message}
                             </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                            <div className="flex items-center gap-1">
-                              {linkedJob && (
-                                <button
-                                  onClick={() => navigate(`/admin/report/${notification.job_id}`)}
-                                  className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                                >
-                                  View
-                                </button>
-                              )}
+                          <div className="flex items-center gap-1 flex-shrink-0 self-end sm:self-start">
+                            {linkedJob && (
                               <button
-                                onClick={() => handleTechNotificationAction(notification.id, 'approved')}
-                                className="px-2 py-2 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg transition-all"
-                                title="Approve"
+                                onClick={() => navigate(`/admin/report/${notification.job_id}`)}
+                                className="flex-1 sm:flex-none px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                               >
-                                <span className="material-symbols-outlined text-xs">check</span>
+                                View
                               </button>
-                              <button
-                                onClick={() => handleTechNotificationDismiss(notification.id)}
-                                className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
-                                title="Dismiss"
-                              >
-                                <span className="material-symbols-outlined text-xs">close</span>
-                              </button>
-                            </div>
+                            )}
+                            <button
+                              onClick={() => handleTechNotificationAction(notification.id, 'approved')}
+                              className="px-2 py-2 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg transition-all"
+                              title="Approve"
+                            >
+                              <span className="material-symbols-outlined text-xs">check</span>
+                            </button>
+                            <button
+                              onClick={() => handleTechNotificationDismiss(notification.id)}
+                              className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                              title="Dismiss"
+                            >
+                              <span className="material-symbols-outlined text-xs">close</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -523,16 +521,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               </div>
             )}
 
-            {/* ATTENTION REQUIRED PANEL */}
+            {/* ATTENTION REQUIRED PANEL - Mobile optimized */}
             {uniqueAttentionJobs.length > 0 && (
-              <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-3xl p-6 shadow-2xl animate-in">
+              <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-warning text-xl font-black">priority_high</span>
+                  <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-warning/20 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-warning text-lg sm:text-xl font-black">priority_high</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Attention Required</h3>
-                    <p className="text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} need{uniqueAttentionJobs.length === 1 ? 's' : ''} immediate action</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">Attention Required</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} need{uniqueAttentionJobs.length === 1 ? 's' : ''} immediate action</p>
                   </div>
                 </div>
 
@@ -610,12 +608,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               />
             </div>
 
-            {/* WORKFORCE STATUS PANEL */}
+            {/* WORKFORCE STATUS PANEL - Mobile optimized */}
             {technicians.length > 0 && (
-              <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 sm:p-6 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                       <span className="material-symbols-outlined text-primary text-lg font-black">groups</span>
                     </div>
                     <div>
@@ -623,7 +621,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                       <p className="text-[10px] text-slate-400">{technicians.length} technician{technicians.length > 1 ? 's' : ''} registered</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px]">
+                  <div className="flex items-center gap-2 text-[10px] ml-11 sm:ml-0">
                     <span className="text-success">●</span>
                     <span className="text-slate-400 font-medium">{technicianStatus.filter(t => t.operationalStatus === 'available').length} Available</span>
                     <span className="text-primary ml-2">●</span>

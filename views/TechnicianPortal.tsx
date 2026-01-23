@@ -5,17 +5,58 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { validateMagicLink, getJobByToken, updateJob, getJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
-import { sealEvidence, canSealJob } from '../lib/sealing';
+import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
-import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
+import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualLocationResult, VerifiedLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
+import { notifyJobSealed, notifyLinkOpened } from '../lib/notificationService';
+import { hapticTap, hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
 import QuickJobForm from '../components/QuickJobForm';
+import TechnicianOnboarding, { useShouldShowOnboarding } from '../components/TechnicianOnboarding';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
+import ActionButton from '../components/ui/ActionButton';
+
+// Dialog state type for managing styled modals
+interface DialogState {
+  type: 'confirm' | 'alert' | 'prompt' | null;
+  title: string;
+  message: string;
+  variant?: 'danger' | 'warning' | 'info';
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  promptValue?: string;
+  promptPlaceholder?: string;
+}
+import {
+  logAuditEvent,
+  logPhotoCapture,
+  logPhotoDeletion,
+  logSignatureCapture,
+  logSignatureCleared,
+  logLocationCapture,
+  logMockLocationFallback,
+  logJobSealed,
+} from '../lib/auditLog';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, onAddJob?: (j: Job) => void }> = ({ jobs, onUpdateJob, onAddJob }) => {
   const { token, jobId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const jobIdFromUrl = searchParams.get('jobId');
+
+  // Onboarding state
+  const shouldShowOnboarding = useShouldShowOnboarding();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding on first visit
+  useEffect(() => {
+    if (shouldShowOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [shouldShowOnboarding]);
 
   // Token-based access (Phase C.2)
   const [job, setJob] = useState<Job | undefined>(undefined);
@@ -259,7 +300,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const getDraftState = () => {
     if (!job?.id) return null;
     try {
-      const saved = localStorage.getItem(`jobproof_draft_${job.id} `);
+      const saved = localStorage.getItem(`jobproof_draft_${job.id}`);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -269,7 +310,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const saveDraftState = (state: any) => {
     if (!job?.id) return;
     try {
-      localStorage.setItem(`jobproof_draft_${job.id} `, JSON.stringify(state));
+      localStorage.setItem(`jobproof_draft_${job.id}`, JSON.stringify(state));
     } catch (error) {
       console.error('Failed to save draft state:', error);
     }
@@ -277,8 +318,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   const clearDraftState = () => {
     if (!job?.id) return;
-    localStorage.removeItem(`jobproof_draft_${job.id} `);
-    localStorage.removeItem(`jobproof_progress_${job.id} `);
+    localStorage.removeItem(`jobproof_draft_${job.id}`);
+    localStorage.removeItem(`jobproof_progress_${job.id}`);
   };
 
   // State management (initialized with defaults, populated after job loads)
@@ -303,12 +344,90 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [w3w, setW3w] = useState('');
   const [coords, setCoords] = useState<{ lat?: number, lng?: number }>({});
 
+  // Dialog state for styled modals (replacing native alert/confirm/prompt)
+  const [dialog, setDialog] = useState<DialogState>({ type: null, title: '', message: '' });
+  const [promptInput, setPromptInput] = useState('');
+
+  // Helper to show styled alert
+  const showAlert = useCallback((title: string, message: string, variant: 'danger' | 'warning' | 'info' = 'info') => {
+    setDialog({ type: 'alert', title, message, variant });
+  }, []);
+
+  // Helper to show styled confirm dialog
+  const showConfirm = useCallback((
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    options?: { variant?: 'danger' | 'warning' | 'info'; confirmLabel?: string; cancelLabel?: string }
+  ) => {
+    setDialog({
+      type: 'confirm',
+      title,
+      message,
+      onConfirm,
+      variant: options?.variant || 'warning',
+      confirmLabel: options?.confirmLabel || 'Confirm',
+      cancelLabel: options?.cancelLabel || 'Cancel'
+    });
+  }, []);
+
+  // Helper to show styled prompt dialog
+  const showPrompt = useCallback((
+    title: string,
+    message: string,
+    onConfirm: (value: string) => void,
+    options?: { placeholder?: string; defaultValue?: string }
+  ) => {
+    setPromptInput(options?.defaultValue || '');
+    setDialog({
+      type: 'prompt',
+      title,
+      message,
+      promptPlaceholder: options?.placeholder,
+      onConfirm: () => onConfirm(promptInput)
+    });
+  }, [promptInput]);
+
+  // Close dialog
+  const closeDialog = useCallback(() => {
+    setDialog({ type: null, title: '', message: '' });
+    setPromptInput('');
+  }, []);
+
+  // Photo deletion state and handler
+  const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
+
+  // Help modal state
+  const [showHelp, setShowHelp] = useState(false);
+
+  const confirmDeletePhoto = useCallback((photo: Photo) => {
+    setPhotoToDelete(photo);
+  }, []);
+
+  const executeDeletePhoto = useCallback(() => {
+    if (!photoToDelete) return;
+
+    // Log photo deletion with hash for audit trail
+    if (job) {
+      logPhotoDeletion(
+        job.id,
+        photoToDelete.id,
+        photoToDelete.photo_hash || 'unknown',
+        'User requested deletion',
+        { technicianId: job.techId, technicianName: job.technician }
+      );
+    }
+
+    setPhotos(prev => prev.filter(item => item.id !== photoToDelete.id));
+    setPhotoToDelete(null);
+  }, [photoToDelete, job]);
+
   // Initialize state from job and draft once job is loaded
   useEffect(() => {
     if (!job?.id) return;
 
     const draft = getDraftState();
-    const savedProgress = localStorage.getItem(`jobproof_progress_${job.id} `);
+    const savedProgress = localStorage.getItem(`jobproof_progress_${job.id}`);
 
     // Restore step
     setStep(savedProgress ? parseInt(savedProgress) : (draft?.step || 0));
@@ -387,7 +506,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   // Auto-save progress: Save step to localStorage
   useEffect(() => {
     if (job?.id && step < 5) {
-      localStorage.setItem(`jobproof_progress_${job.id} `, step.toString());
+      localStorage.setItem(`jobproof_progress_${job.id}`, step.toString());
     } else if (job?.id && step === 5) {
       // Clear progress and draft on completion
       clearDraftState();
@@ -475,6 +594,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   }, [job, onUpdateJob]);
 
+  // Track location verification status for legal defensibility
+  const [locationVerified, setLocationVerified] = useState<boolean>(true);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
+
   const captureLocation = () => {
     setLocationStatus('capturing');
     navigator.geolocation.getCurrentPosition(
@@ -483,79 +606,153 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         const lng = pos.coords.longitude;
         const accuracy = pos.coords.accuracy;
 
-        // Real what3words API call with caching
-        let w3wAddress = null;
-        try {
-          const w3wResult = await convertToW3WCached(lat, lng);
-          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
-          console.log('W3W API result:', w3wResult);
-        } catch (error) {
-          console.warn('W3W API failed, using mock fallback:', error);
-        }
-
-        // Fallback to mock if API failed or not configured
-        if (!w3wAddress) {
-          console.warn('Using mock W3W - configure VITE_W3W_API_KEY for real data');
-          w3wAddress = generateMockW3W();
-        }
+        // CRITICAL FIX: Use verified location system with audit trail
+        const locationResult = await getVerifiedLocation(lat, lng, accuracy);
 
         setCoords({ lat, lng });
-        setW3w(w3wAddress);
+        setW3w(locationResult.w3w);
+        setLocationVerified(locationResult.isVerified);
+        setLocationWarning(locationResult.warning || null);
         setLocationStatus('captured');
-        writeLocalDraft({ w3w: w3wAddress, lat, lng });
+        writeLocalDraft({
+          w3w: locationResult.w3w,
+          lat,
+          lng,
+          locationVerified: locationResult.isVerified,
+          locationSource: locationResult.verificationSource,
+        });
+
+        // Log location capture with verification status
+        if (job) {
+          if (locationResult.isVerified) {
+            logLocationCapture(
+              job.id,
+              { lat, lng, accuracy },
+              'gps',
+              locationResult.w3w,
+              true,
+              { technicianId: job.techId, technicianName: job.technician }
+            );
+          } else {
+            // Log mock fallback as a warning
+            logMockLocationFallback(
+              job.id,
+              locationResult.w3w,
+              { lat, lng },
+              { technicianId: job.techId, technicianName: job.technician }
+            );
+          }
+        }
       },
       (error) => {
         console.error('Geolocation error:', error);
         setLocationStatus('denied');
+        if (job) {
+          logAuditEvent('LOCATION_DENIED', job.id, {
+            error: error.message,
+            code: error.code,
+          });
+        }
       },
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      // Extended timeout for better GPS accuracy in field conditions
+      { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
     );
   };
 
-  const manualLocationEntry = async () => {
-    const manualLat = prompt('Enter latitude (e.g., 51.505):');
-    const manualLng = prompt('Enter longitude (e.g., -0.09):');
+  // State for manual location modal
+  const [showManualLocationModal, setShowManualLocationModal] = useState(false);
+  const [manualLatInput, setManualLatInput] = useState('');
+  const [manualLngInput, setManualLngInput] = useState('');
 
-    if (manualLat && manualLng) {
-      const lat = parseFloat(manualLat);
-      const lng = parseFloat(manualLng);
+  const manualLocationEntry = () => {
+    // Show warning about unverified location using styled confirm
+    showConfirm(
+      'Manual Location Entry',
+      'Manual location entry is UNVERIFIED. This will be flagged in the audit trail and may reduce the legal defensibility of this evidence. Only proceed if GPS is unavailable.',
+      () => {
+        setManualLatInput('');
+        setManualLngInput('');
+        setShowManualLocationModal(true);
+      },
+      { variant: 'warning', confirmLabel: 'Enter Manually', cancelLabel: 'Cancel' }
+    );
+  };
 
-      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-        // Real what3words API call for manual entry
-        let w3wAddress = null;
-        try {
-          const w3wResult = await convertToW3WCached(lat, lng);
-          w3wAddress = w3wResult ? `///${w3wResult.words}` : null;
-          console.log('W3W API result (manual):', w3wResult);
-        } catch (error) {
-          console.warn('W3W API failed for manual entry, using mock:', error);
-        }
+  const submitManualLocation = () => {
+    const lat = parseFloat(manualLatInput);
+    const lng = parseFloat(manualLngInput);
 
-        // Fallback to mock if API failed
-        if (!w3wAddress) {
-          console.warn('Using mock W3W for manual entry');
-          w3wAddress = generateMockW3W();
-        }
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      // Create manual location result (flagged as unverified)
+      const locationResult = createManualLocationResult(lat, lng);
 
-        setCoords({ lat, lng });
-        setW3w(w3wAddress);
-        setLocationStatus('captured');
-        writeLocalDraft({ w3w: w3wAddress, lat, lng });
-      } else {
-        alert('Invalid coordinates. Latitude must be -90 to 90, longitude must be -180 to 180.');
+      setCoords({ lat, lng });
+      setW3w(locationResult.w3w);
+      setLocationVerified(false);
+      setLocationWarning(locationResult.warning || 'Manual entry - unverified');
+      setLocationStatus('captured');
+      writeLocalDraft({
+        w3w: locationResult.w3w,
+        lat,
+        lng,
+        locationVerified: false,
+        locationSource: 'manual',
+      });
+
+      // Log manual location entry
+      if (job) {
+        logLocationCapture(
+          job.id,
+          { lat, lng },
+          'manual',
+          locationResult.w3w,
+          false,
+          { technicianId: job.techId, technicianName: job.technician }
+        );
       }
+
+      setShowManualLocationModal(false);
+    } else {
+      showAlert('Invalid Coordinates', 'Latitude must be -90 to 90, longitude must be -180 to 180.', 'danger');
     }
   };
 
+  // Track previous signature hash for audit trail
+  const [previousSignatureHash, setPreviousSignatureHash] = useState<string | null>(null);
+
   const clearSignature = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-      }
-    }
+    // CRITICAL FIX: Require confirmation before clearing signature using styled dialog
+    showConfirm(
+      'Clear Signature?',
+      'This action will be logged in the audit trail. The customer will need to sign again.',
+      async () => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          // Calculate hash of current signature before clearing (for audit trail)
+          const currentSignatureData = canvas.toDataURL();
+          const currentHash = await calculateDataUrlHash(currentSignatureData);
+
+          // Log signature clearing event
+          if (job) {
+            logSignatureCleared(
+              job.id,
+              currentHash,
+              'User requested signature clear',
+              { technicianId: job.techId, technicianName: job.technician }
+            );
+          }
+
+          setPreviousSignatureHash(currentHash);
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+          }
+        }
+      },
+      { variant: 'warning', confirmLabel: 'Clear Signature', cancelLabel: 'Keep' }
+    );
   };
 
   const calculatePhotoHash = async (dataUrl: string): Promise<string> => {
@@ -595,10 +792,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           id: photoId,
           url: mediaKey, // Key reference
           timestamp: new Date().toISOString(),
-          verified: true,
+          verified: locationVerified, // Track if location was verified
           syncStatus: 'pending',
           type: activePhotoType,
           w3w: w3w || undefined,
+          w3w_verified: locationVerified, // Track W3W verification status
           lat: coords.lat,
           lng: coords.lng,
           isIndexedDBRef: true,
@@ -606,8 +804,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           photo_hash_algorithm: 'SHA-256'
         };
 
+        // CRITICAL: Log photo capture with hash for audit trail
+        logPhotoCapture(
+          job.id,
+          photoId,
+          photoHash,
+          activePhotoType,
+          { lat: coords.lat, lng: coords.lng },
+          { technicianId: job.techId, technicianName: job.technician }
+        );
+
         const nextPhotos = [...photos, newPhoto];
         setPhotos(nextPhotos);
+
+        // Haptic feedback for successful photo capture
+        hapticSuccess();
 
         // 4. Cache for display
         setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
@@ -668,6 +879,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
     const signatureKey = signatureData ? `sig_${job?.id}` : null;
 
+    // CRITICAL FIX: Calculate signature hash for tamper detection
+    let signatureHash: string | undefined;
+    if (signatureData) {
+      signatureHash = await calculateDataUrlHash(signatureData);
+      console.log('[Signature] Hash calculated:', signatureHash.substring(0, 16) + '...');
+
+      // Log signature capture with hash for audit trail
+      logSignatureCapture(
+        job.id,
+        signatureHash,
+        signerName,
+        signerRole,
+        { technicianId: job.techId, technicianName: job.technician }
+      );
+    }
+
     // Store full signature Base64 in IndexedDB
     if (signatureData && signatureKey) {
       try {
@@ -683,15 +910,17 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     // First, update job with final evidence data
     const updatedJob: Job = {
       ...job,
-      status: 'In Progress', // Will be set to 'Submitted' after seal
+      status: 'Submitted', // Set to Submitted for sealing validation
       photos,
       notes,
       signature: signatureKey,
       signatureIsIndexedDBRef: !!signatureKey,
+      signatureHash, // CRITICAL: Store signature hash for tamper detection
       signerName,
       signerRole,
       safetyChecklist: checklist,
       completedAt: new Date().toISOString(),
+      locationVerified, // Track if location was verified by W3W API
       syncStatus: 'pending',
       lastUpdated: Date.now()
     };
@@ -716,8 +945,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
         setIsSyncing(true);
 
-        // Wait for sync with timeout (2 minutes)
-        const syncTimeout = 120000; // 2 minutes
+        // Wait for sync with extended timeout (5 minutes for field conditions)
+        // CRITICAL FIX: Extended from 2 minutes to 5 minutes for poor network conditions
+        const syncTimeout = 300000; // 5 minutes
         const unsyncedPhotoIds = unsyncedPhotos.map(p => p.id);
 
         const syncPromise = waitForPhotoSync(unsyncedPhotoIds, job.id);
@@ -791,7 +1021,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         console.log(`[TechnicianPortal] Client receipt generated: ${receipt.id}`);
       }
 
-      // Notify manager if technician-initiated and employed mode
+      // Notify manager of sealed job via unified notification service
+      notifyJobSealed(
+        job.workspaceId || 'local',
+        job.id,
+        job.title,
+        job.technician || 'Technician',
+        job.client || 'Client'
+      );
+
+      // Legacy notification for technician-initiated jobs
       if (techMetadata?.creationOrigin === 'technician') {
         notifyManagerOfTechJob(
           job.workspaceId || 'local',
@@ -803,17 +1042,29 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         );
       }
 
-      // Show success
+      // Show success with haptic feedback
+      hapticConfirm();
       setTimeout(() => {
         setIsSubmitting(false);
         setStep(5);
       }, 1000);
     } catch (error) {
       console.error('Sealing error:', error);
-      alert('Failed to seal evidence. Please try again or contact support.');
+      hapticWarning();
+      showAlert('Sealing Failed', 'Failed to seal evidence. Please try again or contact support.', 'danger');
       setIsSubmitting(false);
     }
   };
+
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return (
+      <TechnicianOnboarding
+        onComplete={() => setShowOnboarding(false)}
+        onSkip={() => setShowOnboarding(false)}
+      />
+    );
+  }
 
   // Quick Job Form Modal
   if (showQuickJobForm) {
@@ -1105,8 +1356,26 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{job.title}</h3>
             <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 justify-end">
+          <div className="text-right flex items-center gap-3">
+            <button
+              onClick={() => {
+                saveDraftState({ step, photos, checklist, notes, signerName, signerRole, w3w, coords, locationStatus, locationVerified });
+                showAlert('Progress Saved', 'Your work has been saved locally. You can close this page and return via the same link to continue.', 'info');
+              }}
+              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              aria-label="Save Progress"
+              title="Save & Exit Later"
+            >
+              <span className="material-symbols-outlined text-lg">save</span>
+            </button>
+            <button
+              onClick={() => setShowHelp(true)}
+              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              aria-label="Help"
+            >
+              <span className="material-symbols-outlined text-lg">help</span>
+            </button>
+            <div className="flex items-center gap-2">
               <span className={`size-2 rounded-full ${isOnline ? 'bg-success animate-pulse' : 'bg-warning'}`}></span>
               <p className={`text-[10px] font-black uppercase tracking-widest ${isOnline ? 'text-success' : 'text-warning'}`}>{isOnline ? 'Online' : 'Offline'}</p>
             </div>
@@ -1242,7 +1511,18 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     </span>
                   </div>
                   <div className="text-left">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Location</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                      Location
+                      {locationStatus === 'captured' && (
+                        <span className={`text-[8px] px-2 py-0.5 rounded-full font-bold ${
+                          locationVerified
+                            ? 'bg-success/20 text-success'
+                            : 'bg-warning/20 text-warning'
+                        }`}>
+                          {locationVerified ? 'GPS Verified' : 'Manual/Unverified'}
+                        </span>
+                      )}
+                    </p>
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
                         {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
@@ -1254,6 +1534,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                       </div>
                       {locationStatus === 'captured' && coords.lat && (
                         <p className="text-[8px] font-mono text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                      )}
+                      {locationStatus === 'captured' && locationWarning && (
+                        <p className="text-[8px] text-warning mt-1">{locationWarning}</p>
                       )}
                     </div>
                   </div>
@@ -1355,8 +1638,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       <button
-                        onClick={() => { setPhotos(photos.filter(item => item.id !== p.id)); }}
-                        className="w-full py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => confirmDeletePhoto(p)}
+                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
                         aria-label="Delete photo capture"
                       >
                         Delete Capture
@@ -1502,44 +1785,65 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     ref={canvasRef}
                     width={600}
                     height={240}
-                    className="absolute inset-0 w-full h-full cursor-crosshair"
+                    className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
+                    style={{ touchAction: 'none' }}
                     onMouseDown={(e) => {
                       isDrawing.current = true;
-                      const ctx = canvasRef.current?.getContext('2d');
-                      if (ctx) {
+                      const canvas = canvasRef.current;
+                      const ctx = canvas?.getContext('2d');
+                      if (ctx && canvas) {
+                        const rect = canvas.getBoundingClientRect();
+                        const scaleX = canvas.width / rect.width;
+                        const scaleY = canvas.height / rect.height;
                         ctx.beginPath();
-                        ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        ctx.moveTo(e.nativeEvent.offsetX * scaleX, e.nativeEvent.offsetY * scaleY);
                       }
                     }}
                     onMouseMove={(e) => {
                       if (!isDrawing.current) return;
-                      const ctx = canvasRef.current?.getContext('2d');
-                      if (ctx) {
+                      const canvas = canvasRef.current;
+                      const ctx = canvas?.getContext('2d');
+                      if (ctx && canvas) {
+                        const rect = canvas.getBoundingClientRect();
+                        const scaleX = canvas.width / rect.width;
+                        const scaleY = canvas.height / rect.height;
                         ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-                        ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); ctx.stroke();
+                        ctx.lineTo(e.nativeEvent.offsetX * scaleX, e.nativeEvent.offsetY * scaleY); ctx.stroke();
                       }
                     }}
                     onMouseUp={() => (isDrawing.current = false)}
                     onMouseLeave={() => (isDrawing.current = false)}
                     onTouchStart={(e) => {
                       isDrawing.current = true;
-                      const rect = canvasRef.current?.getBoundingClientRect();
+                      const canvas = canvasRef.current;
+                      const rect = canvas?.getBoundingClientRect();
                       const touch = e.touches[0];
-                      const ctx = canvasRef.current?.getContext('2d');
-                      if (ctx && rect) {
+                      const ctx = canvas?.getContext('2d');
+                      if (ctx && rect && canvas) {
+                        // CRITICAL FIX: Scale touch coordinates to match canvas internal dimensions
+                        const scaleX = canvas.width / rect.width;
+                        const scaleY = canvas.height / rect.height;
+                        const x = (touch.clientX - rect.left) * scaleX;
+                        const y = (touch.clientY - rect.top) * scaleY;
                         ctx.beginPath();
                         ctx.strokeStyle = '#020617'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-                        ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                        ctx.moveTo(x, y);
                       }
                       e.preventDefault();
                     }}
                     onTouchMove={(e) => {
                       if (!isDrawing.current) return;
-                      const rect = canvasRef.current?.getBoundingClientRect();
+                      const canvas = canvasRef.current;
+                      const rect = canvas?.getBoundingClientRect();
                       const touch = e.touches[0];
-                      const ctx = canvasRef.current?.getContext('2d');
-                      if (ctx && rect) {
-                        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                      const ctx = canvas?.getContext('2d');
+                      if (ctx && rect && canvas) {
+                        // CRITICAL FIX: Scale touch coordinates to match canvas internal dimensions
+                        const scaleX = canvas.width / rect.width;
+                        const scaleY = canvas.height / rect.height;
+                        const x = (touch.clientX - rect.left) * scaleX;
+                        const y = (touch.clientY - rect.top) * scaleY;
+                        ctx.lineTo(x, y);
                         ctx.stroke();
                       }
                       e.preventDefault();
@@ -1556,6 +1860,55 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 <span className="material-symbols-outlined text-sm font-black">backspace</span>
                 Clear Signature & Re-Sign
               </button>
+            </div>
+
+            {/* Pre-Seal Validation Checklist */}
+            <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 space-y-3">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Pre-Seal Checklist</p>
+              <div className="space-y-2">
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${locationStatus === 'captured' ? 'bg-success/10' : 'bg-slate-800'}`}>
+                  <span className={`material-symbols-outlined text-lg ${locationStatus === 'captured' ? 'text-success' : 'text-slate-500'}`}>
+                    {locationStatus === 'captured' ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${locationStatus === 'captured' ? 'text-white' : 'text-slate-400'}`}>Location Captured</p>
+                    {locationStatus === 'captured' && (
+                      <p className="text-[10px] text-slate-400">{locationVerified ? 'GPS Verified' : 'Manual Entry'}</p>
+                    )}
+                  </div>
+                </div>
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${photos.length > 0 ? 'bg-success/10' : 'bg-slate-800'}`}>
+                  <span className={`material-symbols-outlined text-lg ${photos.length > 0 ? 'text-success' : 'text-slate-500'}`}>
+                    {photos.length > 0 ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${photos.length > 0 ? 'text-white' : 'text-slate-400'}`}>Photos Captured</p>
+                    {photos.length > 0 && (
+                      <p className="text-[10px] text-slate-400">{photos.length} photo{photos.length > 1 ? 's' : ''} ({photos.filter(p => p.syncStatus === 'synced' || !p.isIndexedDBRef).length} synced)</p>
+                    )}
+                  </div>
+                </div>
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${checklist.every(c => !c.required || c.checked) ? 'bg-success/10' : 'bg-slate-800'}`}>
+                  <span className={`material-symbols-outlined text-lg ${checklist.every(c => !c.required || c.checked) ? 'text-success' : 'text-slate-500'}`}>
+                    {checklist.every(c => !c.required || c.checked) ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${checklist.every(c => !c.required || c.checked) ? 'text-white' : 'text-slate-400'}`}>Safety Checks Complete</p>
+                    <p className="text-[10px] text-slate-400">{checklist.filter(c => c.checked).length}/{checklist.length} items checked</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${signerName && signerName.trim().length > 2 ? 'bg-success/10' : 'bg-slate-800'}`}>
+                  <span className={`material-symbols-outlined text-lg ${signerName && signerName.trim().length > 2 ? 'text-success' : 'text-slate-500'}`}>
+                    {signerName && signerName.trim().length > 2 ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${signerName && signerName.trim().length > 2 ? 'text-white' : 'text-slate-400'}`}>Signer Identified</p>
+                    {signerName && signerName.trim().length > 2 && (
+                      <p className="text-[10px] text-slate-400">{signerName} ({signerRole})</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <button
@@ -1588,6 +1941,192 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           </div>
         )}
       </div>
+
+      {/* Styled Dialogs - Replacing native alert/confirm */}
+      {dialog.type === 'alert' && (
+        <ConfirmDialog
+          isOpen={true}
+          onClose={closeDialog}
+          onConfirm={closeDialog}
+          title={dialog.title}
+          message={dialog.message}
+          variant={dialog.variant || 'info'}
+          confirmLabel="OK"
+          cancelLabel=""
+          icon={dialog.variant === 'danger' ? 'error' : dialog.variant === 'warning' ? 'warning' : 'info'}
+        />
+      )}
+
+      {dialog.type === 'confirm' && (
+        <ConfirmDialog
+          isOpen={true}
+          onClose={closeDialog}
+          onConfirm={() => {
+            if (dialog.onConfirm) dialog.onConfirm();
+            closeDialog();
+          }}
+          title={dialog.title}
+          message={dialog.message}
+          variant={dialog.variant || 'warning'}
+          confirmLabel={dialog.confirmLabel || 'Confirm'}
+          cancelLabel={dialog.cancelLabel || 'Cancel'}
+        />
+      )}
+
+      {dialog.type === 'prompt' && (
+        <Modal isOpen={true} onClose={closeDialog} title={dialog.title} size="sm">
+          <div className="space-y-4">
+            <p className="text-slate-400 text-sm">{dialog.message}</p>
+            <input
+              type="text"
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+              placeholder={dialog.promptPlaceholder}
+              className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <ActionButton variant="secondary" onClick={closeDialog} fullWidth>
+                Cancel
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                onClick={() => {
+                  if (dialog.onConfirm) (dialog.onConfirm as (value: string) => void)(promptInput);
+                  closeDialog();
+                }}
+                fullWidth
+              >
+                Confirm
+              </ActionButton>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Manual Location Entry Modal */}
+      {showManualLocationModal && (
+        <Modal isOpen={true} onClose={() => setShowManualLocationModal(false)} title="Enter Coordinates" size="sm">
+          <div className="space-y-4">
+            <p className="text-slate-400 text-sm">
+              Enter the GPS coordinates for this location. This will be flagged as unverified in the audit trail.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={manualLatInput}
+                  onChange={(e) => setManualLatInput(e.target.value)}
+                  placeholder="e.g., 51.505"
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={manualLngInput}
+                  onChange={(e) => setManualLngInput(e.target.value)}
+                  placeholder="e.g., -0.09"
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <ActionButton variant="secondary" onClick={() => setShowManualLocationModal(false)} fullWidth>
+                Cancel
+              </ActionButton>
+              <ActionButton variant="primary" onClick={submitManualLocation} fullWidth>
+                Save Location
+              </ActionButton>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Photo Deletion Confirmation */}
+      {photoToDelete && (
+        <ConfirmDialog
+          isOpen={true}
+          onClose={() => setPhotoToDelete(null)}
+          onConfirm={executeDeletePhoto}
+          title="Delete Photo?"
+          message="This action will be logged in the audit trail and cannot be undone. The photo will be permanently removed from this job."
+          variant="danger"
+          confirmLabel="Delete Photo"
+          cancelLabel="Keep"
+          icon="delete"
+        />
+      )}
+
+      {/* Technician Help Modal */}
+      {showHelp && (
+        <Modal isOpen={true} onClose={() => setShowHelp(false)} title="Help & Support" size="lg">
+          <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+            {/* Quick Tips */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">lightbulb</span>
+                Quick Tips
+              </h3>
+              <div className="grid gap-3">
+                <div className="bg-slate-800/50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-white">Working Offline?</p>
+                  <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you're back online. Keep working!</p>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-white">Photo Tips</p>
+                  <p className="text-xs text-slate-400 mt-1">Take clear photos of work done. Use Before/During/After categories. Each photo is GPS-tagged and timestamped.</p>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-white">Signature</p>
+                  <p className="text-xs text-slate-400 mt-1">The client signs to confirm work was completed. Make sure they sign clearly - it's legally binding evidence.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQs */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">quiz</span>
+                Common Questions
+              </h3>
+              <div className="space-y-2">
+                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                  <summary className="text-xs font-bold text-white">What if GPS doesn't work?</summary>
+                  <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as "unverified" in the report.</p>
+                </details>
+                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                  <summary className="text-xs font-bold text-white">Can I go back and change something?</summary>
+                  <p className="text-xs text-slate-400 mt-2">You can go back to previous steps until you sign. After signing, the evidence is locked for legal integrity.</p>
+                </details>
+                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                  <summary className="text-xs font-bold text-white">What happens when I seal the job?</summary>
+                  <p className="text-xs text-slate-400 mt-2">Sealing creates a tamper-proof evidence bundle with cryptographic proof. The client and manager receive a report.</p>
+                </details>
+                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                  <summary className="text-xs font-bold text-white">I see "Syncing" but nothing happens</summary>
+                  <p className="text-xs text-slate-400 mt-2">If sync seems stuck, your data is safe locally. Move to better signal area. Sync will auto-retry for up to 12 minutes.</p>
+                </details>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+              <p className="text-xs font-bold text-primary">Need More Help?</p>
+              <p className="text-xs text-slate-400 mt-1">Contact your manager or dispatcher. They can see your job status and assist remotely.</p>
+            </div>
+
+            <ActionButton variant="secondary" onClick={() => setShowHelp(false)} fullWidth>
+              Close Help
+            </ActionButton>
+          </div>
+        </Modal>
+      )}
     </Layout>
   );
 };
