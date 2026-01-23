@@ -10,7 +10,9 @@ import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity 
 import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualLocationResult, VerifiedLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import { notifyJobSealed, notifyLinkOpened } from '../lib/notificationService';
+import { hapticTap, hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
 import QuickJobForm from '../components/QuickJobForm';
+import TechnicianOnboarding, { useShouldShowOnboarding } from '../components/TechnicianOnboarding';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Modal from '../components/ui/Modal';
 import ActionButton from '../components/ui/ActionButton';
@@ -44,6 +46,17 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const jobIdFromUrl = searchParams.get('jobId');
+
+  // Onboarding state
+  const shouldShowOnboarding = useShouldShowOnboarding();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding on first visit
+  useEffect(() => {
+    if (shouldShowOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [shouldShowOnboarding]);
 
   // Token-based access (Phase C.2)
   const [job, setJob] = useState<Job | undefined>(undefined);
@@ -804,6 +817,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         const nextPhotos = [...photos, newPhoto];
         setPhotos(nextPhotos);
 
+        // Haptic feedback for successful photo capture
+        hapticSuccess();
+
         // 4. Cache for display
         setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
 
@@ -1026,17 +1042,29 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         );
       }
 
-      // Show success
+      // Show success with haptic feedback
+      hapticConfirm();
       setTimeout(() => {
         setIsSubmitting(false);
         setStep(5);
       }, 1000);
     } catch (error) {
       console.error('Sealing error:', error);
-      alert('Failed to seal evidence. Please try again or contact support.');
+      hapticWarning();
+      showAlert('Sealing Failed', 'Failed to seal evidence. Please try again or contact support.', 'danger');
       setIsSubmitting(false);
     }
   };
+
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return (
+      <TechnicianOnboarding
+        onComplete={() => setShowOnboarding(false)}
+        onSkip={() => setShowOnboarding(false)}
+      />
+    );
+  }
 
   // Quick Job Form Modal
   if (showQuickJobForm) {
