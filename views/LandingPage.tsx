@@ -1,15 +1,76 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
 
 /**
- * Landing Page - Clean, professional V1 MVP
- * Clear entry points for Manager vs Technician flows
+ * Landing Page - Commanding hero with clear CTAs
+ * PWA install prompt for mobile users
  */
 const LandingPage: React.FC = () => {
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // PWA Install prompt detection
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show prompt for mobile users
+      if (window.innerWidth < 768) {
+        setShowInstallPrompt(true);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallPrompt(false);
+    }
+    setDeferredPrompt(null);
+  };
+
+  const dismissInstallPrompt = () => {
+    setShowInstallPrompt(false);
+    sessionStorage.setItem('pwa_prompt_dismissed', 'true');
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 selection:bg-primary/30 selection:text-white">
+      {/* PWA Install Banner for Mobile */}
+      {showInstallPrompt && !sessionStorage.getItem('pwa_prompt_dismissed') && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-primary p-4 shadow-2xl animate-in slide-in-from-bottom">
+          <div className="max-w-md mx-auto flex items-center gap-4">
+            <div className="bg-white/20 size-12 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-white text-2xl">add_to_home_screen</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm">Add to Home Screen</p>
+              <p className="text-white/80 text-xs">Quick access to JobProof from your phone</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={dismissInstallPrompt}
+                className="text-white/60 hover:text-white text-xs font-bold px-2 py-1"
+              >
+                Later
+              </button>
+              <button
+                onClick={handleInstall}
+                className="bg-white text-primary font-bold text-xs px-4 py-2 rounded-lg active:scale-95 transition-transform"
+              >
+                Install
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav className="fixed w-full z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -20,76 +81,112 @@ const LandingPage: React.FC = () => {
             <Link to="/pricing" className="text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors">
               Pricing
             </Link>
-            <Link to="/auth" className="text-white bg-primary hover:bg-primary-hover px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all">
+            <Link to="/auth" className="text-white bg-primary hover:bg-primary-hover px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-widest transition-all active:scale-95">
               Sign In
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
+      {/* Hero - Commanding Headline */}
+      <section className="pt-28 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight text-white">
-            Evidence-First<br />
-            <span className="text-primary">Job Documentation</span>
+          {/* Main Headline */}
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] text-white uppercase">
+            Get Proof.<br />
+            <span className="text-primary">Get Paid.</span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+
+          {/* Subheadline */}
+          <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
             Capture timestamped, geo-verified evidence of completed work.
-            Eliminate payment disputes. Magic link access — no app install required.
+            <span className="text-white font-bold"> Eliminate payment disputes forever.</span>
           </p>
 
-          {/* Entry Points - Clear Manager vs Technician */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+          {/* Entry Points */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link
               to="/auth"
-              className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+              className="w-full sm:w-auto px-10 py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-base shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95"
             >
-              <span className="material-symbols-outlined">admin_panel_settings</span>
-              Manager Sign In
+              <span className="material-symbols-outlined text-xl">rocket_launch</span>
+              Start Free Trial
             </Link>
             <Link
               to="/track-lookup"
-              className="w-full sm:w-auto px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
+              className="w-full sm:w-auto px-10 py-5 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95"
             >
-              <span className="material-symbols-outlined">engineering</span>
-              Technician Access
+              <span className="material-symbols-outlined text-xl">engineering</span>
+              Technician Portal
             </Link>
           </div>
 
-          <p className="text-xs text-slate-500 pt-2">
-            Technicians: Use the link sent by your manager to access jobs
+          <p className="text-sm text-slate-500">
+            No credit card required • 14-day free trial • Cancel anytime
           </p>
         </div>
       </section>
 
-      {/* Features - Clean grid without heavy boxes */}
-      <section className="py-16 px-6">
+      {/* Social Proof */}
+      <section className="py-8 px-6 border-y border-white/5">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-8 text-center">
+          <div>
+            <p className="text-3xl font-black text-white">10K+</p>
+            <p className="text-xs text-slate-500 uppercase tracking-widest">Jobs Sealed</p>
+          </div>
+          <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
+          <div>
+            <p className="text-3xl font-black text-white">£2M+</p>
+            <p className="text-xs text-slate-500 uppercase tracking-widest">Disputes Prevented</p>
+          </div>
+          <div className="w-px h-10 bg-white/10 hidden sm:block"></div>
+          <div>
+            <p className="text-3xl font-black text-white">99.9%</p>
+            <p className="text-xs text-slate-500 uppercase tracking-widest">Uptime</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <Feature
             icon="verified"
             title="Immutable Proof"
-            desc="SHA-256 sealed evidence with timestamps and geolocation."
+            desc="SHA-256 sealed evidence with timestamps and GPS location. Legally defensible."
           />
           <Feature
             icon="wifi_off"
             title="Works Offline"
-            desc="Capture evidence anywhere. Auto-sync when connected."
+            desc="Capture evidence anywhere. Auto-sync when connected. Never lose data."
           />
           <Feature
-            icon="signature"
+            icon="draw"
             title="Client Signatures"
-            desc="Digital sign-off captured on completion."
+            desc="Digital sign-off captured on mobile. No paper, no disputes."
           />
         </div>
       </section>
 
-      {/* Pricing - Aligned with PricingView.tsx */}
-      <section id="pricing" className="py-16 px-6">
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-black text-white tracking-tight">Simple Pricing</h2>
-            <p className="text-slate-400">14-day free trial on all plans</p>
+      {/* How It Works */}
+      <section className="py-16 px-6 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <h2 className="text-3xl font-black text-white text-center uppercase tracking-tight">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Step num="1" title="Create Job" desc="Assign technician and send magic link" />
+            <Step num="2" title="Capture Evidence" desc="Photos, location, and notes on mobile" />
+            <Step num="3" title="Client Signs" desc="Digital signature confirms satisfaction" />
+            <Step num="4" title="Get Paid" desc="Sealed proof eliminates disputes" />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 px-6">
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl font-black text-white tracking-tight uppercase">Simple Pricing</h2>
+            <p className="text-slate-400 text-lg">Start free, upgrade when you're ready</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <PriceCard tier="Solo" price="Free" desc="5 jobs/month" features={['1 User', 'Email Support', 'Basic Reports']} />
@@ -99,66 +196,93 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Simple CTA */}
-      <section className="py-16 px-6">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-2xl font-black text-white">Ready to get started?</h2>
-          <p className="text-slate-400">Create your workspace and dispatch your first job in minutes.</p>
+      {/* CTA */}
+      <section className="py-20 px-6 bg-primary">
+        <div className="max-w-3xl mx-auto text-center space-y-8">
+          <h2 className="text-4xl font-black text-white uppercase tracking-tight">
+            Stop Losing Money to Disputes
+          </h2>
+          <p className="text-xl text-white/80">
+            Join thousands of contractors who get paid faster with sealed evidence.
+          </p>
           <Link
             to="/auth"
-            className="inline-block px-8 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+            className="inline-flex items-center gap-3 px-12 py-5 bg-white text-primary rounded-2xl font-black text-lg uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95"
           >
-            Get Started Free
+            <span className="material-symbols-outlined text-2xl">verified</span>
+            Start Your Free Trial
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-white/5 text-center">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <JobProofLogo variant="mark" size="xs" />
-          <span className="font-bold text-white">JobProof</span>
+      <footer className="py-12 px-6 border-t border-white/5">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <JobProofLogo variant="full" size="sm" />
+          <div className="flex items-center gap-6 text-sm text-slate-500">
+            <Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link to="/help" className="hover:text-white transition-colors">Help</Link>
+            <span>© 2024 JobProof</span>
+          </div>
         </div>
-        <p className="text-slate-500 text-xs">&copy; 2026 JobProof. All rights reserved.</p>
       </footer>
     </div>
   );
 };
 
+// Feature Card
 const Feature = ({ icon, title, desc }: { icon: string; title: string; desc: string }) => (
-  <div className="text-center space-y-3">
-    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 text-primary">
-      <span className="material-symbols-outlined text-2xl">{icon}</span>
+  <div className="text-center space-y-4 p-6">
+    <div className="inline-flex items-center justify-center size-16 rounded-2xl bg-primary/10">
+      <span className="material-symbols-outlined text-primary text-3xl">{icon}</span>
     </div>
-    <h3 className="text-lg font-bold text-white">{title}</h3>
-    <p className="text-slate-400 text-sm">{desc}</p>
+    <h3 className="text-lg font-black text-white uppercase tracking-tight">{title}</h3>
+    <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
   </div>
 );
 
-const PriceCard = ({ tier, price, desc, features, active }: { tier: string; price: string; desc: string; features: string[]; active?: boolean }) => (
-  <div className={`p-6 rounded-2xl border transition-all ${active ? 'bg-primary border-primary' : 'bg-slate-900 border-white/10'}`}>
-    <h3 className={`text-sm font-bold uppercase tracking-widest mb-1 ${active ? 'text-blue-200' : 'text-slate-400'}`}>{tier}</h3>
-    <div className="flex items-baseline gap-1 mb-1">
-      <span className="text-3xl font-black text-white">{price}</span>
-      {price !== 'Free' && <span className={`text-sm ${active ? 'text-blue-200' : 'text-slate-400'}`}>/mo</span>}
+// Step Card
+const Step = ({ num, title, desc }: { num: string; title: string; desc: string }) => (
+  <div className="text-center space-y-3">
+    <div className="inline-flex items-center justify-center size-12 rounded-full bg-primary text-white font-black text-lg">
+      {num}
     </div>
-    <p className={`text-sm mb-4 ${active ? 'text-blue-100' : 'text-slate-400'}`}>{desc}</p>
-    <ul className="space-y-2 mb-6">
-      {features.map((f) => (
-        <li key={f} className={`flex items-center gap-2 text-sm ${active ? 'text-white' : 'text-slate-300'}`}>
-          <span className={`material-symbols-outlined text-sm ${active ? 'text-white' : 'text-emerald-500'}`}>check</span>
-          {f}
-        </li>
-      ))}
-    </ul>
-    <Link
-      to="/auth"
-      className={`block w-full py-3 rounded-xl font-bold text-sm text-center uppercase tracking-widest transition-all ${
-        active ? 'bg-white text-primary hover:bg-blue-50' : 'bg-slate-800 text-white hover:bg-slate-700'
-      }`}
-    >
-      {price === 'Free' ? 'Start Free' : 'Start Trial'}
-    </Link>
+    <h3 className="text-base font-black text-white uppercase">{title}</h3>
+    <p className="text-slate-400 text-xs">{desc}</p>
+  </div>
+);
+
+// Price Card
+const PriceCard = ({ tier, price, desc, features, active }: { tier: string; price: string; desc: string; features: string[]; active?: boolean }) => (
+  <div className={`p-8 rounded-2xl border transition-all ${active ? 'bg-primary border-primary scale-105 shadow-2xl shadow-primary/30 relative' : 'bg-slate-900 border-white/10'}`}>
+    {active && (
+      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-primary text-xs font-black px-3 py-1 rounded-full uppercase">
+        Popular
+      </span>
+    )}
+    <div className="space-y-6">
+      <div>
+        <h3 className={`text-sm font-black uppercase tracking-widest ${active ? 'text-white/80' : 'text-slate-500'}`}>{tier}</h3>
+        <p className={`text-4xl font-black ${active ? 'text-white' : 'text-white'}`}>{price}<span className="text-lg font-normal">/mo</span></p>
+        <p className={`text-sm ${active ? 'text-white/80' : 'text-slate-500'}`}>{desc}</p>
+      </div>
+      <ul className="space-y-2">
+        {features.map((f, i) => (
+          <li key={i} className={`text-sm flex items-center gap-2 ${active ? 'text-white' : 'text-slate-400'}`}>
+            <span className={`material-symbols-outlined text-sm ${active ? 'text-white' : 'text-primary'}`}>check</span>
+            {f}
+          </li>
+        ))}
+      </ul>
+      <Link
+        to={tier === 'Solo' ? '/auth' : '/pricing'}
+        className={`block w-full py-3 rounded-xl font-bold text-sm text-center uppercase tracking-widest transition-all active:scale-95 ${
+          active ? 'bg-white text-primary hover:bg-white/90' : 'bg-primary text-white hover:bg-primary-hover'
+        }`}
+      >
+        {tier === 'Solo' ? 'Start Free' : 'Get Started'}
+      </Link>
+    </div>
   </div>
 );
 

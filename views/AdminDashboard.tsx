@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Layout from '../components/Layout';
-import OnboardingTour from '../components/OnboardingTour';
-import OnboardingChecklist, { OnboardingStep } from '../components/OnboardingChecklist';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import JobCard from '../components/JobCard';
 import OfflineIndicator from '../components/OfflineIndicator';
@@ -109,11 +107,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  // State for onboarding checklist
-  const [checklistDismissed, setChecklistDismissed] = useState(() => {
-    return localStorage.getItem('jobproof_checklist_dismissed') === 'true';
-  });
-
   // PERFORMANCE FIX: Use AuthContext for email verification check
   const { session } = useAuth();
 
@@ -205,55 +198,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
     }
   }, []);
 
-  // PERFORMANCE OPTIMIZATION: Memoize onboarding steps to prevent recalculation
-  const onboardingSteps: OnboardingStep[] = useMemo(() => [
-    {
-      id: 'verify-email',
-      label: 'Verify Email',
-      description: 'Confirm your email address',
-      status: isEmailVerified ? 'completed' : 'in_progress',
-      icon: 'mail',
-    },
-    {
-      id: 'add-client',
-      label: 'Add First Client',
-      description: 'Register a customer',
-      status: clients.length > 0 ? 'completed' : isEmailVerified ? 'in_progress' : 'locked',
-      icon: 'person_add',
-      path: '/admin/clients'
-    },
-    {
-      id: 'add-tech',
-      label: 'Add Technician',
-      description: 'Authorise a field agent',
-      status: technicians.length > 0 ? 'completed' : (clients.length > 0 ? 'in_progress' : 'locked'),
-      icon: 'engineering',
-      path: '/admin/technicians'
-    },
-    {
-      id: 'dispatch-job',
-      label: 'Dispatch First Job',
-      description: 'Create your first protocol',
-      status: jobs.length > 0 ? 'completed' : (technicians.length > 0 && clients.length > 0 ? 'in_progress' : 'locked'),
-      icon: 'send',
-      path: '/admin/create'
-    }
-  ], [isEmailVerified, clients.length, technicians.length, jobs.length]);
-
-  const handleDismissChecklist = useCallback(() => {
-    localStorage.setItem('jobproof_checklist_dismissed', 'true');
-    setChecklistDismissed(true);
-  }, []);
-
   return (
     <Layout user={user}>
-      {showOnboarding && (
-        <OnboardingTour
-          onComplete={onCloseOnboarding}
-          persona={user?.persona}
-          counts={{ clients: clients.length, techs: technicians.length, jobs: jobs.length }}
-        />
-      )}
       <div className="space-y-6 pb-20">
         {/* Email Verification Banner */}
         {!isEmailVerified && user && (
@@ -268,33 +214,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           }}
         />
 
-        {/* Mobile Onboarding Checklist - BEFORE grid to prevent overlap */}
-        {!checklistDismissed && (
-          <div className="lg:hidden">
-            <OnboardingChecklist
-              steps={onboardingSteps}
-              onDismiss={handleDismissChecklist}
-              user={user}
-            />
-          </div>
-        )}
-
-        {/* Main Content Grid - Sidebar + Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Onboarding Checklist (Desktop) */}
-          <aside className="hidden lg:block">
-            {!checklistDismissed && (
-              <OnboardingChecklist
-                steps={onboardingSteps}
-                onDismiss={handleDismissChecklist}
-                user={user}
-              />
-            )}
-          </aside>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Header with Sticky CTA (sticky only on desktop to prevent mobile overlap) */}
+        {/* Header with Sticky CTA */}
             <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
               <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div className="space-y-1">
@@ -614,8 +534,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         </div>
       </div>
-    </div>
-  </div>
     </Layout>
   );
 };

@@ -23,7 +23,7 @@ interface CompanyData {
 }
 
 const SAFETY_PRESETS = [
-  { id: 'ppe_hardhat', label: 'Hard Hat Required', icon: 'hard_hat' },
+  { id: 'ppe_hardhat', label: 'Hard Hat Required', icon: 'construction' },
   { id: 'ppe_hivis', label: 'Hi-Vis Vest Required', icon: 'visibility' },
   { id: 'ppe_gloves', label: 'Safety Gloves Required', icon: 'back_hand' },
   { id: 'ppe_boots', label: 'Steel-Toe Boots Required', icon: 'steps' },

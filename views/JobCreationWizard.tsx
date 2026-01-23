@@ -64,7 +64,7 @@ const SAFETY_REQUIREMENTS = [
 ];
 
 const PPE_OPTIONS = [
-  { id: 'hardhat', label: 'Hard Hat', icon: 'hard_hat' },
+  { id: 'hardhat', label: 'Hard Hat', icon: 'construction' },
   { id: 'hivis', label: 'Hi-Vis Vest', icon: 'visibility' },
   { id: 'gloves', label: 'Gloves', icon: 'back_hand' },
   { id: 'boots', label: 'Safety Boots', icon: 'steps' },
