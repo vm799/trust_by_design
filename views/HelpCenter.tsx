@@ -291,24 +291,27 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           </div>
         </section>
 
-        {/* Contact Support */}
+        {/* Help Tips */}
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 p-8 sm:p-10 rounded-[2rem] sm:rounded-[3rem] text-center space-y-4">
           <div className="size-14 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto">
-            <span className="material-symbols-outlined text-primary text-3xl">support_agent</span>
+            <span className="material-symbols-outlined text-primary text-3xl">tips_and_updates</span>
           </div>
           <div className="space-y-2">
-            <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">Still Need Help?</h3>
+            <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">Quick Tips</h3>
             <p className="text-slate-300 text-sm max-w-md mx-auto">
-              Our support team is here to help you get the most out of JobProof.
+              Get the most out of JobProof with these helpful tips.
             </p>
           </div>
-          <a
-            href="mailto:support@jobproof.pro"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary/20"
-          >
-            <span className="material-symbols-outlined text-sm">mail</span>
-            Contact Support
-          </a>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-lg mx-auto">
+            <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Bookmark the App</p>
+              <p className="text-xs text-slate-300">Add JobProof to your home screen for quick access. On mobile, tap the share button and select "Add to Home Screen".</p>
+            </div>
+            <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Offline Ready</p>
+              <p className="text-xs text-slate-300">Photos are saved locally first. Even without internet, your evidence is safe and will sync when you reconnect.</p>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

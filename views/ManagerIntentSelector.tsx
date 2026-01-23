@@ -28,6 +28,21 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
   const navigate = useNavigate();
   const displayName = user?.name?.split(' ')[0] || 'Manager';
 
+  // PWA tip banner - show once per session if not installed
+  const [showPwaTip, setShowPwaTip] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    // Don't show if already dismissed this session
+    if (sessionStorage.getItem('jobproof_pwa_tip_dismissed')) return false;
+    // Don't show if already installed as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) return false;
+    return true;
+  });
+
+  const dismissPwaTip = () => {
+    setShowPwaTip(false);
+    sessionStorage.setItem('jobproof_pwa_tip_dismissed', 'true');
+  };
+
   // Get current date formatted
   const today = new Date();
   const dateString = today.toLocaleDateString('en-GB', {
@@ -131,6 +146,28 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
               {dateString} • {timeString}
             </p>
           </div>
+
+          {/* PWA Tip Banner */}
+          {showPwaTip && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 animate-in relative">
+              <button
+                onClick={dismissPwaTip}
+                className="absolute top-2 right-2 text-slate-400 hover:text-white p-1"
+                aria-label="Dismiss tip"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+              <div className="flex items-start gap-3 pr-6">
+                <span className="material-symbols-outlined text-primary text-xl flex-shrink-0">add_to_home_screen</span>
+                <div>
+                  <p className="text-sm font-bold text-white">Add to Home Screen</p>
+                  <p className="text-xs text-slate-300 mt-1">
+                    For quick access, bookmark this app. On mobile, tap your browser's share button and select "Add to Home Screen".
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Intent Question */}
           <div className="text-center">

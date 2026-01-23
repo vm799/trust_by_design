@@ -39,6 +39,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [showShareTip, setShowShareTip] = useState(false);
 
   // Modal states for adding new client/technician
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -320,6 +322,36 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 3000);
   };
+
+  // Native share API with fallback to clipboard
+  const shareMagicLink = async () => {
+    const shareData = {
+      title: `Job Assignment: ${formData.title}`,
+      text: `You have been assigned a new job. Click the link to start: `,
+      url: getMagicLink()
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      } catch (err) {
+        // User cancelled or share failed - fall back to copy
+        if ((err as Error).name !== 'AbortError') {
+          copyMagicLink();
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard and show tip
+      copyMagicLink();
+      setShowShareTip(true);
+      setTimeout(() => setShowShareTip(false), 5000);
+    }
+  };
+
+  // Check if native share is available
+  const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   const getQRCodeDataURL = () => {
     // Generate QR code using Google Chart API (no library needed)
@@ -636,11 +668,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 <p className="text-slate-400 text-sm font-medium">Job <span className="font-mono text-primary">{createdJobId}</span> created. Send the magic link below to your technician.</p>
               </div>
 
-              {copySuccess && (
+              {(copySuccess || shareSuccess) && (
                 <div className="bg-success/10 border border-success/20 rounded-xl p-4 animate-in">
                   <p className="text-success text-sm font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">check_circle</span>
-                    Magic link copied to clipboard! Send this to your technician.
+                    {shareSuccess ? 'Share dialog opened! Select how to send the link.' : 'Magic link copied to clipboard! Send this to your technician.'}
+                  </p>
+                </div>
+              )}
+
+              {showShareTip && (
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 animate-in">
+                  <p className="text-primary text-sm font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">lightbulb</span>
+                    Tip: On mobile, use your phone's native share button to send via WhatsApp, SMS, or email.
                   </p>
                 </div>
               )}
@@ -667,16 +708,29 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
               </div>
 
               <div className="flex flex-col gap-3">
-                <button onClick={copyMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3" aria-label="Copy magic link to clipboard">
-                  <span className="material-symbols-outlined font-black" aria-hidden="true">content_copy</span>
-                  Copy Magic Link
-                </button>
-                <button onClick={() => {
-                  // Trigger guided flow for job creation
-                  navigateToNextStep('CREATE_JOB', user?.persona, navigate);
-                }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10">
-                  Return to Operations Hub
-                </button>
+                {canNativeShare ? (
+                  <button onClick={shareMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 press-spring" aria-label="Share magic link">
+                    <span className="material-symbols-outlined font-black" aria-hidden="true">share</span>
+                    Share Job Link
+                  </button>
+                ) : (
+                  <button onClick={copyMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 press-spring" aria-label="Copy magic link to clipboard">
+                    <span className="material-symbols-outlined font-black" aria-hidden="true">content_copy</span>
+                    Copy Magic Link
+                  </button>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={copyMagicLink} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs" aria-label="Copy to clipboard">
+                    <span className="material-symbols-outlined text-sm" aria-hidden="true">content_copy</span>
+                    Copy
+                  </button>
+                  <button onClick={() => {
+                    navigateToNextStep('CREATE_JOB', user?.persona, navigate);
+                  }} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs">
+                    <span className="material-symbols-outlined text-sm" aria-hidden="true">dashboard</span>
+                    Dashboard
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-center gap-4 pt-4 border-t border-white/5">
