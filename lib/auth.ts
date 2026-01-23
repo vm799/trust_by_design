@@ -51,7 +51,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: getAuthRedirectUrl('/'), // Let router decide destination
+        emailRedirectTo: getAuthRedirectUrl('/#/'), // HashRouter: route through PersonaRedirect
         data: {
           full_name: data.fullName,
           workspace_name: data.workspaceName
@@ -174,13 +174,15 @@ export const signInWithMagicLink = async (
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
 
   // Build redirect URL with signup data if provided
-  let redirectUrl = getAuthRedirectUrl('/');
+  // CRITICAL: Use /#/ for HashRouter to properly route through PersonaRedirect
+  // This ensures managers land on /manager/intent (Intent-First UX)
+  let redirectUrl = getAuthRedirectUrl('/#/');
   if (signupData?.workspaceName) {
     const params = new URLSearchParams();
     params.set('workspace', signupData.workspaceName);
     if (signupData.fullName) params.set('name', signupData.fullName);
     params.set('signup', 'true');
-    redirectUrl = getAuthRedirectUrl(`/auth/setup?${params.toString()}`);
+    redirectUrl = getAuthRedirectUrl(`/#/auth/setup?${params.toString()}`);
   }
 
   const { error } = await supabase.auth.signInWithOtp({
