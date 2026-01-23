@@ -12,6 +12,7 @@ import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
+import { getLinksNeedingAttention, acknowledgeLinkFlag, getTechJobNotifications, markTechNotificationRead, actionTechNotification, type MagicLinkInfo, type TechJobNotification } from '../lib/db';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -46,6 +47,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
   const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted'), [jobs]);
   const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const urgentJobs = useMemo(() => jobs.filter(j => j.priority === 'urgent'), [jobs]);
+
+  // Sort jobs with urgent jobs first, then by lastUpdated (most recent first)
+  const sortedJobs = useMemo(() => {
+    return [...jobs].sort((a, b) => {
+      // Urgent jobs come first
+      const aUrgent = a.priority === 'urgent' ? 1 : 0;
+      const bUrgent = b.priority === 'urgent' ? 1 : 0;
+      if (bUrgent !== aUrgent) return bUrgent - aUrgent;
+      // Then by lastUpdated (most recent first)
+      return (b.lastUpdated || 0) - (a.lastUpdated || 0);
+    });
+  }, [jobs]);
   const syncIssues = useMemo(() => failedJobs.length, [failedJobs]);
   const pendingSignatures = useMemo(() => activeJobs.filter(j => !j.signature).length, [activeJobs]);
 
@@ -60,7 +74,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
       return requiredChecks.length > 0 && completedRequired.length < requiredChecks.length;
     });
 
+    // Add urgent jobs that need immediate attention
+    const urgentActiveJobs = activeJobs.filter(j => j.priority === 'urgent');
+
     const attentionItems = [
+      ...urgentActiveJobs.map(j => ({ job: j, reason: 'urgent', label: 'Urgent', icon: 'priority_high', color: 'danger' as const })),
       ...jobsAwaitingSeal.map(j => ({ job: j, reason: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'warning' as const })),
       ...failedJobs.map(j => ({ job: j, reason: 'sync_failed', label: 'Sync Failed', icon: 'sync_problem', color: 'danger' as const })),
       ...jobsMissingEvidence.map(j => ({ job: j, reason: 'missing_evidence', label: 'No Evidence', icon: 'photo_library', color: 'danger' as const })),
@@ -138,6 +156,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   useEffect(() => {
     setIsEmailVerified(!!emailConfirmedAt);
   }, [emailConfirmedAt]); // Primitive dependency, not object
+
+  // State for links needing attention (unopened for 2+ hours)
+  const [linksNeedingAttention, setLinksNeedingAttention] = useState<MagicLinkInfo[]>([]);
+
+  // State for technician-created job notifications
+  const [techNotifications, setTechNotifications] = useState<TechJobNotification[]>([]);
+
+  // Check for unopened links periodically
+  useEffect(() => {
+    const checkUnopenedLinks = () => {
+      const flaggedLinks = getLinksNeedingAttention();
+      setLinksNeedingAttention(flaggedLinks);
+    };
+
+    // Check immediately
+    checkUnopenedLinks();
+
+    // Check every 5 minutes
+    const interval = setInterval(checkUnopenedLinks, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [jobs]); // Re-check when jobs change
+
+  // Load technician-created job notifications
+  useEffect(() => {
+    const workspaceId = user?.workspace?.id || 'local';
+    const notifications = getTechJobNotifications(workspaceId, false);
+    setTechNotifications(notifications);
+  }, [user?.workspace?.id, jobs]); // Re-check when jobs change
+
+  // Handle tech notification actions
+  const handleTechNotificationAction = useCallback((notificationId: string, action: 'approved' | 'rejected' | 'reassigned') => {
+    const managerEmail = user?.email || 'Manager';
+    actionTechNotification(notificationId, action, managerEmail);
+    setTechNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, [user?.email]);
+
+  const handleTechNotificationDismiss = useCallback((notificationId: string) => {
+    markTechNotificationRead(notificationId);
+    setTechNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, []);
 
   // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
   // Uses memoized job IDs to prevent unnecessary reloads
@@ -292,6 +351,178 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
+            {/* UNOPENED LINK ALERTS */}
+            {linksNeedingAttention.length > 0 && (
+              <div className="bg-gradient-to-br from-warning/10 to-orange-500/10 border-2 border-warning/40 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-warning/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-warning text-xl font-black animate-pulse">notifications_active</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician Links Unopened</h3>
+                    <p className="text-xs text-slate-300">{linksNeedingAttention.length} link{linksNeedingAttention.length > 1 ? 's' : ''} not accessed after 2+ hours</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {linksNeedingAttention.map(link => {
+                    const linkedJob = jobs.find(j => j.id === link.job_id);
+                    if (!linkedJob) return null;
+
+                    const sentAge = link.sent_at
+                      ? Math.floor((Date.now() - new Date(link.sent_at).getTime()) / (1000 * 60 * 60))
+                      : 0;
+                    const isUrgent = sentAge >= 4;
+
+                    return (
+                      <div
+                        key={link.token}
+                        className={`bg-slate-900/80 border rounded-xl p-4 transition-all ${
+                          isUrgent ? 'border-danger/40' : 'border-warning/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`material-symbols-outlined text-xs ${isUrgent ? 'text-danger' : 'text-warning'}`}>
+                                schedule
+                              </span>
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${isUrgent ? 'text-danger' : 'text-warning'}`}>
+                                {sentAge}h since sent {isUrgent ? '- URGENT' : ''}
+                              </span>
+                            </div>
+                            <h4 className="font-black text-white text-sm uppercase tracking-tight truncate">
+                              {linkedJob.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              Tech: <span className="text-slate-300 font-bold">{linkedJob.technician}</span>
+                              {link.sent_via && (
+                                <span className="ml-2 text-slate-500">via {link.sent_via}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => navigate(`/admin/report/${link.job_id}`)}
+                              className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => {
+                                acknowledgeLinkFlag(link.token);
+                                setLinksNeedingAttention(prev => prev.filter(l => l.token !== link.token));
+                              }}
+                              className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                              title="Dismiss alert"
+                            >
+                              <span className="material-symbols-outlined text-xs">close</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] text-slate-400 italic">
+                    Consider calling technicians directly if links remain unopened
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* TECHNICIAN-CREATED JOBS NOTIFICATIONS */}
+            {techNotifications.length > 0 && (
+              <div className="bg-gradient-to-br from-primary/10 to-blue-500/10 border-2 border-primary/40 rounded-3xl p-6 shadow-2xl animate-in">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-xl font-black">person_add</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Technician-Created Jobs</h3>
+                    <p className="text-xs text-slate-300">{techNotifications.length} job{techNotifications.length > 1 ? 's' : ''} created by field technicians</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {techNotifications.map(notification => {
+                    const linkedJob = jobs.find(j => j.id === notification.job_id);
+                    const createdAgo = Math.floor((Date.now() - new Date(notification.created_at).getTime()) / (1000 * 60));
+                    const createdAgoText = createdAgo < 60
+                      ? `${createdAgo}m ago`
+                      : createdAgo < 1440
+                        ? `${Math.floor(createdAgo / 60)}h ago`
+                        : `${Math.floor(createdAgo / 1440)}d ago`;
+
+                    return (
+                      <div
+                        key={notification.id}
+                        className="bg-slate-900/80 border border-primary/30 rounded-xl p-4 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`material-symbols-outlined text-xs ${
+                                notification.type === 'tech_job_completed' ? 'text-success' : 'text-primary'
+                              }`}>
+                                {notification.type === 'tech_job_completed' ? 'check_circle' : 'add_circle'}
+                              </span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                {notification.type === 'tech_job_completed' ? 'Completed' : 'New Job'} - {createdAgoText}
+                              </span>
+                            </div>
+                            <h4 className="font-black text-white text-sm uppercase tracking-tight truncate">
+                              {notification.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              By: <span className="text-slate-300 font-bold">{notification.created_by_tech_name}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-1">
+                              {linkedJob && (
+                                <button
+                                  onClick={() => navigate(`/admin/report/${notification.job_id}`)}
+                                  className="px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                                >
+                                  View
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleTechNotificationAction(notification.id, 'approved')}
+                                className="px-2 py-2 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg transition-all"
+                                title="Approve"
+                              >
+                                <span className="material-symbols-outlined text-xs">check</span>
+                              </button>
+                              <button
+                                onClick={() => handleTechNotificationDismiss(notification.id)}
+                                className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                                title="Dismiss"
+                              >
+                                <span className="material-symbols-outlined text-xs">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] text-slate-400 italic">
+                    Review and approve technician-created jobs for proper tracking
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* ATTENTION REQUIRED PANEL */}
             {uniqueAttentionJobs.length > 0 && (
               <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-3xl p-6 shadow-2xl animate-in">
@@ -442,9 +673,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
             )}
 
             {/* Mobile Job Cards (shown on mobile, hidden on desktop) */}
-            {jobs.length > 0 && (
+            {sortedJobs.length > 0 && (
               <div className="lg:hidden space-y-3">
-                {jobs.map(job => (
+                {sortedJobs.map(job => (
                   <JobCard
                     key={job.id}
                     job={job}
@@ -474,7 +705,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {jobs.length === 0 ? (
+                {sortedJobs.length === 0 ? (
                   <tr>
                     <td colSpan={5}>
                       <EmptyState
@@ -487,16 +718,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     </td>
                   </tr>
                 ) : (
-                  jobs.map(job => {
+                  sortedJobs.map(job => {
                     const lifecycle = getJobLifecycle(job);
                     const isOverdue = isJobOverdue(job);
                     const syncIntegrity = getSyncIntegrityStatus(job);
+                    const isUrgent = job.priority === 'urgent';
                     return (
-                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
+                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isUrgent ? 'bg-danger/5 border-l-4 border-l-danger' : isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
-                          <div className={`font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors ${isOverdue ? 'text-danger' : 'text-white'}`}>{job.title}</div>
-                          {isOverdue && (
+                          {isUrgent && (
+                            <span className="material-symbols-outlined text-danger text-sm animate-pulse">priority_high</span>
+                          )}
+                          <div className={`font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors ${isUrgent ? 'text-danger' : isOverdue ? 'text-danger' : 'text-white'}`}>{job.title}</div>
+                          {isUrgent && (
+                            <span className="px-2 py-0.5 bg-danger/20 border border-danger/30 text-danger text-[8px] font-black uppercase tracking-widest rounded">URGENT</span>
+                          )}
+                          {isOverdue && !isUrgent && (
                             <span className="px-2 py-0.5 bg-danger/20 border border-danger/30 text-danger text-[8px] font-black uppercase tracking-widest rounded">OVERDUE</span>
                           )}
                         </div>

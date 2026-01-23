@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
-import { createJob, generateMagicLink } from '../lib/db';
-import { getMagicLinkUrl } from '../lib/redirects';
+import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
+import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 
 interface CreateJobProps {
@@ -36,9 +36,15 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState<string>('');
   const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
+  const [magicLinkToken, setMagicLinkToken] = useState<string>(''); // Track token for lifecycle
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [showShareTip, setShowShareTip] = useState(false);
+
+  // Field validation errors for highlighting
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
 
   // Modal states for adding new client/technician
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -87,7 +93,42 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     templateId: initialTemplateId,
     address: '',
     notes: '',
+    isUrgent: false,
   });
+
+  // Refs for auto-advance between fields
+  const clientSelectRef = useRef<HTMLSelectElement>(null);
+  const techSelectRef = useRef<HTMLSelectElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  // Draft saving key
+  const DRAFT_KEY = 'jobproof_job_draft';
+
+  // Load draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...draft }));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save draft on form change (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.title || formData.clientId || formData.techId || formData.address || formData.notes) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [formData]);
+
+  // Clear draft after successful job creation
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+  };
 
   // Combine props with local storage
   const allClients = [...clients, ...localClients];
@@ -214,11 +255,57 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!formData.clientId || !formData.techId) {
-      setError('Please select a Client and Technician.');
+
+    // Validate required fields and highlight errors
+    const errors: { [key: string]: boolean } = {};
+    if (!formData.title.trim()) errors.title = true;
+    if (!formData.clientId) errors.clientId = true;
+    if (!formData.techId) errors.techId = true;
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError('Please fill in all required fields (highlighted in red).');
+      // Focus first error field
+      if (errors.title) titleInputRef.current?.focus();
+      else if (errors.clientId) clientSelectRef.current?.focus();
+      else if (errors.techId) techSelectRef.current?.focus();
       return;
     }
+
+    setFieldErrors({});
     setShowConfirmModal(true);
+  };
+
+  // Auto-advance to next field when current is filled
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && formData.title.trim()) {
+      e.preventDefault();
+      clientSelectRef.current?.focus();
+    }
+  };
+
+  const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    handleClientSelectChange(e);
+    // Clear error when a valid selection is made
+    if (e.target.value && e.target.value !== '__add_new__' && fieldErrors.clientId) {
+      setFieldErrors({ ...fieldErrors, clientId: false });
+    }
+    // Auto-advance to technician if client selected
+    if (e.target.value && e.target.value !== '__add_new__') {
+      setTimeout(() => techSelectRef.current?.focus(), 100);
+    }
+  };
+
+  const handleTechChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    handleTechnicianSelectChange(e);
+    // Clear error when a valid selection is made
+    if (e.target.value && e.target.value !== '__add_new__' && fieldErrors.techId) {
+      setFieldErrors({ ...fieldErrors, techId: false });
+    }
+    // Auto-advance to address if tech selected
+    if (e.target.value && e.target.value !== '__add_new__') {
+      setTimeout(() => addressInputRef.current?.focus(), 100);
+    }
   };
 
   const executeDispatch = async () => {
@@ -244,6 +331,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
         address: formData.address || client.address,
         notes: formData.notes,
+        priority: formData.isUrgent ? 'urgent' : 'normal',
         photos: [],
         signature: null,
         safetyChecklist: [
@@ -277,9 +365,29 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         // Use UUID to prevent enumeration attacks (BACKEND_AUDIT.md Risk #5)
         const newId = `JP-${crypto.randomUUID()}`;
         const localJob: Job = { ...jobData, id: newId } as Job;
+
+        // CRITICAL: Immediately persist to localStorage so magic link works instantly
+        // Don't wait for debounced save - the tech may click the link right away
+        try {
+          const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+          existingJobs.unshift(localJob);
+          localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
+          console.log(`[CreateJob] Immediately persisted job ${newId} to localStorage`);
+        } catch (e) {
+          console.error('[CreateJob] Failed to persist job to localStorage:', e);
+        }
+
+        // Add to React state (will trigger debounced save later, but we already saved)
         onAddJob(localJob);
         setCreatedJobId(newId);
-        setMagicLinkUrl(getMagicLinkUrl(newId));
+
+        // Generate a proper magic link with token for local jobs
+        const localMagicLink = storeMagicLinkLocal(newId, user?.workspace?.id || 'local');
+        setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
+        console.log(`[CreateJob] Generated local magic link: ${localMagicLink.url}`);
+
+        clearDraft();
         setShowConfirmModal(false);
         setShowSuccessModal(true);
         setIsCreating(false);
@@ -294,14 +402,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
+        setMagicLinkToken(magicLinkResult.data.token);
+        console.log(`[CreateJob] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
-        // Fallback to job ID link if token generation fails
-        setMagicLinkUrl(getMagicLinkUrl(createdJob.id));
+        // Fallback to local token generation if DB token generation fails
+        const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
+        setMagicLinkUrl(localMagicLink.url);
+        setMagicLinkToken(localMagicLink.token);
+        console.log(`[CreateJob] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       // Also add to local state via onAddJob for immediate UI update
       onAddJob(createdJob);
 
+      clearDraft();
       setShowConfirmModal(false);
       setShowSuccessModal(true);
     } catch (error) {
@@ -313,13 +427,69 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     }
   };
 
-  const getMagicLink = () => magicLinkUrl || getMagicLinkUrl(createdJobId);
+  // getMagicLink should always return the properly generated URL
+  // The fallback generates a new local token if somehow magicLinkUrl wasn't set
+  const getMagicLinkWithToken = (): { url: string; token: string } => {
+    if (magicLinkUrl && magicLinkToken) {
+      return { url: magicLinkUrl, token: magicLinkToken };
+    }
+    // Emergency fallback: generate a local magic link on the fly
+    console.warn('[CreateJob] magicLinkUrl was not set, generating emergency local link');
+    const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
+    return { url: emergencyLink.url, token: emergencyLink.token };
+  };
+
+  const getMagicLink = () => getMagicLinkWithToken().url;
 
   const copyMagicLink = () => {
-    navigator.clipboard.writeText(getMagicLink());
+    const { url, token } = getMagicLinkWithToken();
+    navigator.clipboard.writeText(url);
+
+    // Track that link was sent via copy
+    if (token) {
+      markLinkAsSent(token, 'copy');
+    }
+
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 3000);
   };
+
+  // Native share API with fallback to clipboard
+  const shareMagicLink = async () => {
+    const { url, token } = getMagicLinkWithToken();
+    const shareData = {
+      title: `Job Assignment: ${formData.title}`,
+      text: `You have been assigned a new job. Click the link to start: `,
+      url: url
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+
+        // Track that link was sent via native share
+        if (token) {
+          markLinkAsSent(token, 'share');
+        }
+
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      } catch (err) {
+        // User cancelled or share failed - fall back to copy
+        if ((err as Error).name !== 'AbortError') {
+          copyMagicLink();
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard and show tip
+      copyMagicLink();
+      setShowShareTip(true);
+      setTimeout(() => setShowShareTip(false), 5000);
+    }
+  };
+
+  // Check if native share is available
+  const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   const getQRCodeDataURL = () => {
     // Generate QR code using Google Chart API (no library needed)
@@ -356,45 +526,100 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Title</label>
+              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Title *</label>
               <input
                 ref={titleInputRef}
                 required
                 type="text"
-                className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                className={`w-full bg-slate-800 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none border-2 transition-colors ${fieldErrors.title ? 'border-danger' : 'border-slate-700'}`}
                 placeholder="e.g. Asset Inspection - Unit 4B"
                 value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                onChange={e => {
+                  setFormData({ ...formData, title: e.target.value });
+                  if (fieldErrors.title) setFieldErrors({ ...fieldErrors, title: false });
+                }}
+                onKeyDown={handleTitleKeyDown}
                 autoFocus
               />
+              {fieldErrors.title && <span className="text-danger text-xs font-bold">Required field</span>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</label>
-                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.clientId} onChange={handleClientSelectChange}>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client *</label>
+                <select
+                  ref={clientSelectRef}
+                  required
+                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.clientId ? 'border-danger' : 'border-slate-700'}`}
+                  value={formData.clientId}
+                  onChange={handleClientChange}
+                >
                   <option value="">Select Registry...</option>
                   {allClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   <option value="__add_new__" className="text-primary font-bold">+ Add New Client</option>
                 </select>
+                {fieldErrors.clientId && <span className="text-danger text-xs font-bold">Required field</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician</label>
-                <select required className="bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white outline-none" value={formData.techId} onChange={handleTechnicianSelectChange}>
+                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician *</label>
+                <select
+                  ref={techSelectRef}
+                  required
+                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.techId ? 'border-danger' : 'border-slate-700'}`}
+                  value={formData.techId}
+                  onChange={handleTechChange}
+                >
                   <option value="">Select Tech...</option>
                   {allTechnicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   <option value="__add_new__" className="text-primary font-bold">+ Add New Technician</option>
                 </select>
+                {fieldErrors.techId && <span className="text-danger text-xs font-bold">Required field</span>}
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Address</label>
-              <input
-                type="text"
-                className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
-                placeholder="Defaults to Client Registry address"
-                value={formData.address}
-                onChange={e => setFormData({ ...formData, address: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <input
+                  ref={addressInputRef}
+                  type="text"
+                  className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                  placeholder="Defaults to Client Registry address"
+                  value={formData.address}
+                  onChange={e => setFormData({ ...formData, address: e.target.value })}
+                />
+                {(formData.address || selectedClient?.address) && (
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(formData.address || selectedClient?.address || '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center px-4 bg-slate-700 hover:bg-slate-600 rounded-xl transition-colors"
+                    aria-label="Open in Google Maps"
+                    title="Open in Google Maps"
+                  >
+                    <span className="material-symbols-outlined text-white">map</span>
+                  </a>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-400">Leave blank to use client's registered address</p>
+            </div>
+
+            {/* Urgent Job Toggle */}
+            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-warning">priority_high</span>
+                <div>
+                  <p className="text-sm font-bold text-white">Urgent Job</p>
+                  <p className="text-[10px] text-slate-400">Prioritize this job and highlight in red</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, isUrgent: !formData.isUrgent })}
+                className={`relative w-12 h-7 rounded-full transition-colors ${formData.isUrgent ? 'bg-danger' : 'bg-slate-600'}`}
+                role="switch"
+                aria-checked={formData.isUrgent}
+              >
+                <span className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.isUrgent ? 'translate-x-5' : ''}`} />
+              </button>
             </div>
           </div>
           <button type="submit" className="w-full py-5 bg-primary text-white font-black rounded-2xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-95 press-spring">Review & Create</button>
@@ -585,18 +810,68 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   <span className="material-symbols-outlined text-primary text-5xl font-black">verified_user</span>
                 </div>
                 <h3 id="confirm-modal-title" className="text-3xl font-black text-white tracking-tighter uppercase">Confirm Job</h3>
+                {formData.isUrgent && (
+                  <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-danger text-sm">priority_high</span>
+                    <span className="text-danger text-xs font-black uppercase tracking-widest">Urgent Job</span>
+                  </div>
+                )}
                 <div className="bg-slate-800/50 rounded-3xl p-6 text-left space-y-4 border border-white/5">
-                  <div className="flex justify-between border-b border-white/5 pb-2">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Service</span>
-                    <span className="text-xs font-bold text-white uppercase">{formData.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase">{formData.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowConfirmModal(false); titleInputRef.current?.focus(); }}
+                        className="text-primary hover:text-primary-hover"
+                        aria-label="Edit job title"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Target</span>
-                    <span className="text-xs font-bold text-white uppercase">{selectedClient?.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase">{selectedClient?.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowConfirmModal(false); clientSelectRef.current?.focus(); }}
+                        className="text-primary hover:text-primary-hover"
+                        aria-label="Edit client"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Technician</span>
-                    <span className="text-xs font-bold text-white uppercase">{selectedTech?.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase">{selectedTech?.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowConfirmModal(false); techSelectRef.current?.focus(); }}
+                        className="text-primary hover:text-primary-hover"
+                        aria-label="Edit technician"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-black text-slate-300">Address</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">{formData.address || selectedClient?.address || 'Client default'}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowConfirmModal(false); addressInputRef.current?.focus(); }}
+                        className="text-primary hover:text-primary-hover"
+                        aria-label="Edit address"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -636,11 +911,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 <p className="text-slate-400 text-sm font-medium">Job <span className="font-mono text-primary">{createdJobId}</span> created. Send the magic link below to your technician.</p>
               </div>
 
-              {copySuccess && (
+              {(copySuccess || shareSuccess) && (
                 <div className="bg-success/10 border border-success/20 rounded-xl p-4 animate-in">
                   <p className="text-success text-sm font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">check_circle</span>
-                    Magic link copied to clipboard! Send this to your technician.
+                    {shareSuccess ? 'Share dialog opened! Select how to send the link.' : 'Magic link copied to clipboard! Send this to your technician.'}
+                  </p>
+                </div>
+              )}
+
+              {showShareTip && (
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 animate-in">
+                  <p className="text-primary text-sm font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">lightbulb</span>
+                    Tip: On mobile, use your phone's native share button to send via WhatsApp, SMS, or email.
                   </p>
                 </div>
               )}
@@ -667,16 +951,29 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
               </div>
 
               <div className="flex flex-col gap-3">
-                <button onClick={copyMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3" aria-label="Copy magic link to clipboard">
-                  <span className="material-symbols-outlined font-black" aria-hidden="true">content_copy</span>
-                  Copy Magic Link
-                </button>
-                <button onClick={() => {
-                  // Trigger guided flow for job creation
-                  navigateToNextStep('CREATE_JOB', user?.persona, navigate);
-                }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10">
-                  Return to Operations Hub
-                </button>
+                {canNativeShare ? (
+                  <button onClick={shareMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 press-spring" aria-label="Share magic link">
+                    <span className="material-symbols-outlined font-black" aria-hidden="true">share</span>
+                    Share Job Link
+                  </button>
+                ) : (
+                  <button onClick={copyMagicLink} className="w-full py-5 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 press-spring" aria-label="Copy magic link to clipboard">
+                    <span className="material-symbols-outlined font-black" aria-hidden="true">content_copy</span>
+                    Copy Magic Link
+                  </button>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={copyMagicLink} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs" aria-label="Copy to clipboard">
+                    <span className="material-symbols-outlined text-sm" aria-hidden="true">content_copy</span>
+                    Copy
+                  </button>
+                  <button onClick={() => {
+                    navigateToNextStep('CREATE_JOB', user?.persona, navigate);
+                  }} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs">
+                    <span className="material-symbols-outlined text-sm" aria-hidden="true">dashboard</span>
+                    Dashboard
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-center gap-4 pt-4 border-t border-white/5">

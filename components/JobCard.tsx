@@ -97,16 +97,31 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
  */
 const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, photoDataUrls }) => {
   const lifecycle = getJobLifecycle(job);
+  const isUrgent = job.priority === 'urgent';
 
   return (
     <button
       onClick={onClick}
-      className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 hover:border-primary/30 transition-all text-left group hover-lift"
+      className={`w-full rounded-2xl p-4 transition-all text-left group hover-lift ${
+        isUrgent
+          ? 'bg-danger/5 border-2 border-danger/30 hover:border-danger/50'
+          : 'bg-slate-900 border border-white/5 hover:border-primary/30'
+      }`}
     >
+      {/* Urgent Priority Banner */}
+      {isUrgent && (
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-danger/20">
+          <span className="material-symbols-outlined text-danger text-sm animate-pulse">priority_high</span>
+          <span className="text-[9px] font-black text-danger uppercase tracking-widest">Urgent Priority</span>
+        </div>
+      )}
+
       {/* Header: Title + Lifecycle Status */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-black text-white tracking-tighter uppercase group-hover:text-primary transition-colors truncate">
+          <h3 className={`font-black tracking-tighter uppercase transition-colors truncate ${
+            isUrgent ? 'text-danger group-hover:text-danger' : 'text-white group-hover:text-primary'
+          }`}>
             {job.title}
           </h3>
           <p className="text-[10px] text-slate-300 font-mono mt-0.5 truncate">
@@ -225,6 +240,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
     prevProps.job.id === nextProps.job.id &&
     prevProps.job.status === nextProps.job.status &&
     prevProps.job.syncStatus === nextProps.job.syncStatus &&
+    prevProps.job.priority === nextProps.job.priority &&
     prevProps.job.photos.length === nextProps.job.photos.length &&
     prevProps.onClick === nextProps.onClick &&
     prevProps.onRetry === nextProps.onRetry &&

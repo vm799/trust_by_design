@@ -1,22 +1,38 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Job, PhotoType, Invoice, UserProfile } from '../types';
+import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
 import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
 import LegalDisclaimer from '../components/LegalDisclaimer';
-import { getReportUrl } from '../lib/redirects';
+import ClientReceiptView from '../components/ClientReceiptView';
+import { getReportUrl, getMagicLinkUrl } from '../lib/redirects';
+import {
+  getMagicLinksForJob,
+  regenerateMagicLink,
+  extendMagicLinkExpiration,
+  revokeMagicLink,
+  markLinkAsSent,
+  getLinkLifecycleSummary,
+  acknowledgeLinkFlag,
+  LINK_EXPIRATION,
+  LINK_ALERT_THRESHOLDS,
+  type MagicLinkInfo,
+  type LinkLifecycleStage
+} from '../lib/db';
 
 interface JobReportProps {
    user?: UserProfile | null;
    jobs: Job[];
    invoices: Invoice[];
+   technicians?: Technician[];
    onGenerateInvoice?: (inv: Invoice) => void;
+   onUpdateJob?: (job: Job) => void;
    publicView?: boolean;
 }
 
-const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateInvoice, publicView = false }) => {
+const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians = [], onGenerateInvoice, onUpdateJob, publicView = false }) => {
    const { jobId } = useParams();
    const navigate = useNavigate();
    const job = jobs.find(j => j.id === jobId);
@@ -27,6 +43,19 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
    const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
    const [isLoadingMedia, setIsLoadingMedia] = useState(true);
    const [showShareModal, setShowShareModal] = useState(false);
+   const [showClientReceipt, setShowClientReceipt] = useState(false);
+
+   // Check if job was created in self-employed mode
+   const techMetadata = (job as any)?.techMetadata;
+   const isSelfEmployedJob = (job as any)?.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
+
+   // Magic Link Management State
+   const [magicLinkInfo, setMagicLinkInfo] = useState<MagicLinkInfo | null>(null);
+   const [showLinkManagement, setShowLinkManagement] = useState(false);
+   const [showReassignModal, setShowReassignModal] = useState(false);
+   const [linkActionLoading, setLinkActionLoading] = useState(false);
+   const [linkActionMessage, setLinkActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+   const [lifecycleSummary, setLifecycleSummary] = useState<ReturnType<typeof getLinkLifecycleSummary>>(null);
 
    // Load photos and signature from IndexedDB
    useEffect(() => {
@@ -58,6 +87,223 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
 
       loadMediaFromIndexedDB();
    }, [job]);
+
+   // Load magic link info for this job
+   useEffect(() => {
+      if (!job || publicView) return;
+
+      const links = getMagicLinksForJob(job.id);
+      let tokenToUse: string | null = null;
+
+      if (links.length > 0) {
+         // Get the most recent active link
+         const activeLink = links.find(l => l.status === 'active') || links[0];
+         setMagicLinkInfo(activeLink);
+         tokenToUse = activeLink.token;
+      } else if (job.magicLinkToken) {
+         // Fallback to token stored on job
+         setMagicLinkInfo({
+            token: job.magicLinkToken,
+            job_id: job.id,
+            workspace_id: job.workspaceId || '',
+            expires_at: new Date(Date.now() + LINK_EXPIRATION.STANDARD).toISOString(),
+            status: 'active'
+         });
+         tokenToUse = job.magicLinkToken;
+      }
+
+      // Load lifecycle summary for the token
+      if (tokenToUse) {
+         const summary = getLinkLifecycleSummary(tokenToUse);
+         setLifecycleSummary(summary);
+      }
+   }, [job, publicView]);
+
+   // Clear action message after 3 seconds
+   useEffect(() => {
+      if (linkActionMessage) {
+         const timer = setTimeout(() => setLinkActionMessage(null), 3000);
+         return () => clearTimeout(timer);
+      }
+   }, [linkActionMessage]);
+
+   // Magic Link Management Handlers
+   const handleRegenerateLink = useCallback(() => {
+      if (!job) return;
+
+      setLinkActionLoading(true);
+      try {
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', {
+            expirationMs: LINK_EXPIRATION.STANDARD,
+            techId: job.techId
+         });
+
+         if (result.success && result.data) {
+            setMagicLinkInfo({
+               token: result.data.token,
+               job_id: job.id,
+               workspace_id: job.workspaceId || '',
+               expires_at: result.data.expiresAt,
+               status: 'active',
+               created_at: new Date().toISOString()
+            });
+
+            // Update job with new magic link
+            if (onUpdateJob) {
+               onUpdateJob({
+                  ...job,
+                  magicLinkToken: result.data.token,
+                  magicLinkUrl: result.data.url
+               });
+            }
+
+            setLinkActionMessage({ type: 'success', text: 'New link generated! Old links revoked.' });
+         } else {
+            setLinkActionMessage({ type: 'error', text: result.error || 'Failed to generate link' });
+         }
+      } catch (e) {
+         setLinkActionMessage({ type: 'error', text: 'Failed to generate link' });
+      } finally {
+         setLinkActionLoading(false);
+      }
+   }, [job, user, onUpdateJob]);
+
+   const handleExtendLink = useCallback((duration: number) => {
+      if (!magicLinkInfo) return;
+
+      setLinkActionLoading(true);
+      try {
+         const result = extendMagicLinkExpiration(magicLinkInfo.token, duration);
+         if (result.success && result.data) {
+            setMagicLinkInfo(prev => prev ? { ...prev, expires_at: result.data!.newExpiresAt, status: 'active' } : null);
+            setLinkActionMessage({ type: 'success', text: 'Link expiration extended!' });
+         } else {
+            setLinkActionMessage({ type: 'error', text: result.error || 'Failed to extend link' });
+         }
+      } catch (e) {
+         setLinkActionMessage({ type: 'error', text: 'Failed to extend link' });
+      } finally {
+         setLinkActionLoading(false);
+      }
+   }, [magicLinkInfo]);
+
+   const handleRevokeLink = useCallback(() => {
+      if (!magicLinkInfo) return;
+
+      if (!confirm('Are you sure you want to revoke this link? The technician will no longer be able to access this job.')) {
+         return;
+      }
+
+      setLinkActionLoading(true);
+      try {
+         const result = revokeMagicLink(magicLinkInfo.token);
+         if (result.success) {
+            setMagicLinkInfo(prev => prev ? { ...prev, status: 'revoked' } : null);
+
+            // Clear magic link from job
+            if (onUpdateJob && job) {
+               onUpdateJob({
+                  ...job,
+                  magicLinkToken: undefined,
+                  magicLinkUrl: undefined
+               });
+            }
+
+            setLinkActionMessage({ type: 'success', text: 'Link revoked successfully' });
+         } else {
+            setLinkActionMessage({ type: 'error', text: result.error || 'Failed to revoke link' });
+         }
+      } catch (e) {
+         setLinkActionMessage({ type: 'error', text: 'Failed to revoke link' });
+      } finally {
+         setLinkActionLoading(false);
+      }
+   }, [magicLinkInfo, job, onUpdateJob]);
+
+   const handleCopyLink = useCallback(() => {
+      if (!magicLinkInfo) return;
+
+      const url = getMagicLinkUrl(magicLinkInfo.token, magicLinkInfo.job_id);
+      navigator.clipboard.writeText(url);
+
+      // Track that link was sent via copy
+      markLinkAsSent(magicLinkInfo.token, 'copy');
+
+      setLinkActionMessage({ type: 'success', text: 'Link copied to clipboard!' });
+   }, [magicLinkInfo]);
+
+   const handleReassignJob = useCallback((newTechId: string, newTechName: string) => {
+      if (!job) return;
+
+      setLinkActionLoading(true);
+      try {
+         // Regenerate link with new technician
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', {
+            expirationMs: LINK_EXPIRATION.STANDARD,
+            techId: newTechId
+         });
+
+         if (result.success && result.data) {
+            setMagicLinkInfo({
+               token: result.data.token,
+               job_id: job.id,
+               workspace_id: job.workspaceId || '',
+               expires_at: result.data.expiresAt,
+               status: 'active',
+               created_at: new Date().toISOString(),
+               assigned_to_tech_id: newTechId
+            });
+
+            // Update job with new technician and magic link
+            if (onUpdateJob) {
+               onUpdateJob({
+                  ...job,
+                  techId: newTechId,
+                  technician: newTechName,
+                  magicLinkToken: result.data.token,
+                  magicLinkUrl: result.data.url
+               });
+            }
+
+            setShowReassignModal(false);
+            setLinkActionMessage({ type: 'success', text: `Job reassigned to ${newTechName}` });
+         } else {
+            setLinkActionMessage({ type: 'error', text: result.error || 'Failed to reassign job' });
+         }
+      } catch (e) {
+         setLinkActionMessage({ type: 'error', text: 'Failed to reassign job' });
+      } finally {
+         setLinkActionLoading(false);
+      }
+   }, [job, user, onUpdateJob]);
+
+   // Helper to format expiration
+   const formatExpiration = (expiresAt: string) => {
+      const expires = new Date(expiresAt);
+      const now = new Date();
+      const diffMs = expires.getTime() - now.getTime();
+
+      if (diffMs <= 0) return 'Expired';
+
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h remaining`;
+      if (diffHours > 0) return `${diffHours}h remaining`;
+      return `${Math.floor(diffMs / (1000 * 60))}m remaining`;
+   };
+
+   // Get link status color
+   const getLinkStatusColor = (status: string) => {
+      switch (status) {
+         case 'active': return 'text-success';
+         case 'expired': return 'text-warning';
+         case 'revoked': return 'text-danger';
+         case 'used': return 'text-primary';
+         case 'sealed': return 'text-slate-400';
+         default: return 'text-slate-400';
+      }
+   };
 
    if (!job) return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
@@ -365,6 +611,15 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                                  Create Invoice
                               </button>
                            )}
+                           {job.status === 'Submitted' && (
+                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
+                                 <span className="material-symbols-outlined text-sm font-black">receipt_long</span>
+                                 Client Receipt
+                                 {isSelfEmployedJob && (
+                                    <span className="bg-success/20 text-success text-[8px] px-2 py-0.5 rounded-full ml-1">Self-Emp</span>
+                                 )}
+                              </button>
+                           )}
                            <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
                               <span className="material-symbols-outlined text-sm font-black">print</span>
                               Print / Export PDF
@@ -376,11 +631,223 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                         </div>
                      </div>
 
+                     {/* Magic Link Management Section */}
+                     {job.status !== 'Submitted' && (
+                        <div className="pt-8 border-t border-white/5">
+                           <button
+                              onClick={() => setShowLinkManagement(!showLinkManagement)}
+                              className="w-full flex items-center justify-between mb-4"
+                           >
+                              <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Technician Link</h3>
+                              <span className={`material-symbols-outlined text-slate-400 text-sm transition-transform ${showLinkManagement ? 'rotate-180' : ''}`}>
+                                 expand_more
+                              </span>
+                           </button>
+
+                           {showLinkManagement && (
+                              <div className="space-y-4 animate-in">
+                                 {/* Link Status */}
+                                 {magicLinkInfo ? (
+                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 space-y-3">
+                                       <div className="flex items-center justify-between">
+                                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+                                          <span className={`text-[10px] font-black uppercase tracking-widest ${getLinkStatusColor(magicLinkInfo.status)}`}>
+                                             {magicLinkInfo.status}
+                                          </span>
+                                       </div>
+                                       <div className="flex items-center justify-between">
+                                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expires</span>
+                                          <span className={`text-[10px] font-bold ${
+                                             new Date(magicLinkInfo.expires_at).getTime() - Date.now() < 24 * 60 * 60 * 1000
+                                                ? 'text-warning'
+                                                : 'text-slate-300'
+                                          }`}>
+                                             {formatExpiration(magicLinkInfo.expires_at)}
+                                          </span>
+                                       </div>
+                                       {magicLinkInfo.first_accessed_at && (
+                                          <div className="flex items-center justify-between">
+                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">First Used</span>
+                                             <span className="text-[10px] text-slate-300">
+                                                {new Date(magicLinkInfo.first_accessed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                             </span>
+                                          </div>
+                                       )}
+                                    </div>
+                                 ) : (
+                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 text-center">
+                                       <span className="material-symbols-outlined text-slate-500 text-2xl mb-2">link_off</span>
+                                       <p className="text-[10px] text-slate-400 uppercase tracking-widest">No active link</p>
+                                    </div>
+                                 )}
+
+                                 {/* Link Lifecycle Timeline */}
+                                 {lifecycleSummary && (
+                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+                                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Link Lifecycle</p>
+                                       <div className="flex items-center justify-between gap-1">
+                                          {[
+                                             { stage: 'sent' as LinkLifecycleStage, icon: 'send', label: 'Sent' },
+                                             { stage: 'opened' as LinkLifecycleStage, icon: 'visibility', label: 'Opened' },
+                                             { stage: 'job_started' as LinkLifecycleStage, icon: 'photo_camera', label: 'Started' },
+                                             { stage: 'job_completed' as LinkLifecycleStage, icon: 'verified', label: 'Done' },
+                                          ].map((item, idx) => {
+                                             const stageData = lifecycleSummary.stages.find(s => s.stage === item.stage);
+                                             const isCompleted = stageData?.completed;
+                                             const isCurrent = lifecycleSummary.currentStage === item.stage;
+                                             return (
+                                                <React.Fragment key={item.stage}>
+                                                   <div className={`flex flex-col items-center gap-1 ${isCompleted ? 'opacity-100' : 'opacity-30'}`}>
+                                                      <div className={`size-7 rounded-lg flex items-center justify-center ${
+                                                         isCompleted
+                                                            ? isCurrent
+                                                               ? 'bg-primary text-white'
+                                                               : 'bg-success/20 text-success'
+                                                            : 'bg-slate-700 text-slate-500'
+                                                      }`}>
+                                                         <span className="material-symbols-outlined text-xs">{item.icon}</span>
+                                                      </div>
+                                                      <span className="text-[7px] font-bold uppercase tracking-widest text-slate-400">{item.label}</span>
+                                                   </div>
+                                                   {idx < 3 && (
+                                                      <div className={`flex-1 h-px ${
+                                                         lifecycleSummary.stages.findIndex(s => s.stage === item.stage && s.completed) <
+                                                         lifecycleSummary.stages.findIndex(s => s.stage === lifecycleSummary.currentStage)
+                                                            ? 'bg-success/50'
+                                                            : 'bg-slate-700'
+                                                      }`} />
+                                                   )}
+                                                </React.Fragment>
+                                             );
+                                          })}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Alert Banner for Unopened Links */}
+                                 {lifecycleSummary?.needsAttention && (
+                                    <div className="bg-warning/10 border border-warning/30 rounded-xl p-3">
+                                       <div className="flex items-start gap-2">
+                                          <span className="material-symbols-outlined text-warning text-sm animate-pulse">warning</span>
+                                          <div className="flex-1">
+                                             <p className="text-[9px] font-black text-warning uppercase tracking-widest">Needs Attention</p>
+                                             <p className="text-[10px] text-slate-300 mt-1">
+                                                {lifecycleSummary.flagReason || 'Link has not been opened by technician'}
+                                             </p>
+                                          </div>
+                                          <button
+                                             onClick={() => {
+                                                if (magicLinkInfo) {
+                                                   acknowledgeLinkFlag(magicLinkInfo.token);
+                                                   setLifecycleSummary(prev => prev ? { ...prev, needsAttention: false } : null);
+                                                }
+                                             }}
+                                             className="text-[8px] font-bold text-warning hover:text-white uppercase tracking-widest px-2 py-1 rounded-lg bg-warning/20 hover:bg-warning/30 transition-all"
+                                          >
+                                             Dismiss
+                                          </button>
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Action Message */}
+                                 {linkActionMessage && (
+                                    <div className={`rounded-xl p-3 text-center text-[10px] font-black uppercase tracking-widest ${
+                                       linkActionMessage.type === 'success'
+                                          ? 'bg-success/20 text-success border border-success/30'
+                                          : 'bg-danger/20 text-danger border border-danger/30'
+                                    }`}>
+                                       {linkActionMessage.text}
+                                    </div>
+                                 )}
+
+                                 {/* Link Actions */}
+                                 <div className="space-y-2">
+                                    {magicLinkInfo?.status === 'active' && (
+                                       <button
+                                          onClick={handleCopyLink}
+                                          disabled={linkActionLoading}
+                                          className="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2"
+                                       >
+                                          <span className="material-symbols-outlined text-xs">content_copy</span>
+                                          Copy Technician Link
+                                       </button>
+                                    )}
+
+                                    <button
+                                       onClick={handleRegenerateLink}
+                                       disabled={linkActionLoading}
+                                       className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                       <span className="material-symbols-outlined text-xs">refresh</span>
+                                       {magicLinkInfo ? 'Regenerate Link' : 'Generate New Link'}
+                                    </button>
+
+                                    {magicLinkInfo?.status === 'active' && (
+                                       <>
+                                          {/* Extend Duration Options */}
+                                          <div className="grid grid-cols-3 gap-2">
+                                             <button
+                                                onClick={() => handleExtendLink(LINK_EXPIRATION.SHORT)}
+                                                disabled={linkActionLoading}
+                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                             >
+                                                +24h
+                                             </button>
+                                             <button
+                                                onClick={() => handleExtendLink(LINK_EXPIRATION.STANDARD)}
+                                                disabled={linkActionLoading}
+                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                             >
+                                                +7 days
+                                             </button>
+                                             <button
+                                                onClick={() => handleExtendLink(LINK_EXPIRATION.EXTENDED)}
+                                                disabled={linkActionLoading}
+                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                             >
+                                                +30 days
+                                             </button>
+                                          </div>
+
+                                          <button
+                                             onClick={handleRevokeLink}
+                                             disabled={linkActionLoading}
+                                             className="w-full py-3 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                          >
+                                             <span className="material-symbols-outlined text-xs">link_off</span>
+                                             Revoke Link
+                                          </button>
+                                       </>
+                                    )}
+
+                                    {/* Reassign Button */}
+                                    <button
+                                       onClick={() => setShowReassignModal(true)}
+                                       disabled={linkActionLoading}
+                                       className="w-full py-3 bg-warning/10 hover:bg-warning/20 text-warning border border-warning/30 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                       <span className="material-symbols-outlined text-xs">swap_horiz</span>
+                                       Reassign Technician
+                                    </button>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+                     )}
+
                      <div className="pt-8 border-t border-white/5">
                         <h3 className="text-[10px] font-black text-slate-300 mb-4 uppercase tracking-[0.2em]">System Status</h3>
                         <div className="space-y-3">
                            <StatusLine label="Integrity Check" value="Pass" success />
                            <StatusLine label="Sync Status" value="Vaulted" success />
+                           {magicLinkInfo && (
+                              <StatusLine
+                                 label="Tech Link"
+                                 value={magicLinkInfo.status === 'active' ? 'Active' : magicLinkInfo.status}
+                                 success={magicLinkInfo.status === 'active'}
+                              />
+                           )}
                         </div>
                      </div>
                   </div>
@@ -423,6 +890,81 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, onGenerateI
                   </div>
                </div>
             </div>
+         )}
+
+         {/* Reassign Technician Modal */}
+         {showReassignModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowReassignModal(false)}>
+               <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+                  <div className="text-center space-y-3">
+                     <div className="bg-warning/20 size-14 rounded-2xl flex items-center justify-center mx-auto">
+                        <span className="material-symbols-outlined text-warning text-3xl font-black">swap_horiz</span>
+                     </div>
+                     <h3 className="text-xl font-black text-white tracking-tighter uppercase">Reassign Technician</h3>
+                     <p className="text-xs text-slate-400 uppercase tracking-widest">
+                        Current: <span className="text-white font-bold">{job.technician}</span>
+                     </p>
+                  </div>
+
+                  <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4">
+                     <div className="flex items-start gap-3">
+                        <span className="material-symbols-outlined text-warning text-lg">warning</span>
+                        <div className="space-y-1">
+                           <p className="text-[10px] font-black text-warning uppercase tracking-widest">Important</p>
+                           <p className="text-xs text-slate-300">
+                              Reassigning will revoke the current technician's access and generate a new link for the selected technician.
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select New Technician</p>
+                     <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').map(tech => (
+                           <button
+                              key={tech.id}
+                              onClick={() => handleReassignJob(tech.id, tech.name)}
+                              disabled={linkActionLoading}
+                              className="w-full flex items-center gap-4 p-4 bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
+                           >
+                              <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
+                                 {tech.name[0]}
+                              </div>
+                              <div className="flex-1 text-left">
+                                 <p className="text-sm font-black text-white uppercase tracking-tight">{tech.name}</p>
+                                 <p className="text-[10px] text-slate-400 uppercase tracking-widest">{tech.status}</p>
+                              </div>
+                              <span className="material-symbols-outlined text-slate-500 group-hover:text-primary text-lg transition-colors">
+                                 arrow_forward
+                              </span>
+                           </button>
+                        ))}
+                        {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').length === 0 && (
+                           <div className="text-center py-8 text-slate-500">
+                              <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
+                              <p className="text-xs uppercase tracking-widest">No available technicians</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  <button
+                     onClick={() => setShowReassignModal(false)}
+                     className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
+                  >
+                     Cancel
+                  </button>
+               </div>
+            </div>
+         )}
+
+         {/* Client Receipt Modal */}
+         {showClientReceipt && job && (
+            <ClientReceiptView
+               job={job}
+               onClose={() => setShowClientReceipt(false)}
+            />
          )}
       </Layout>
    );

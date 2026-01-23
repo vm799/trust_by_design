@@ -63,7 +63,8 @@ const CompleteOnboarding: React.FC = () => {
 
             if (personas && personas.length > 0) {
                 if (personas[0].is_complete) {
-                    navigate('/admin');
+                    // Navigate to root to go through PersonaRedirect (Intent-First UX)
+                    navigate('/');
                     return;
                 }
                 // If has incomplete persona, we'd normally resume,
@@ -121,7 +122,8 @@ const CompleteOnboarding: React.FC = () => {
             if (persona === 'agency_owner' || persona === 'site_supervisor' || persona === 'safety_manager') {
                 navigate('/manager-onboarding');
             } else {
-                navigate('/admin');
+                // Navigate to root to go through PersonaRedirect (Intent-First UX)
+                navigate('/');
             }
         } catch (err) {
             console.error('Persona selection failed:', err);

@@ -609,7 +609,7 @@ const AppContent: React.FC = () => {
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/help" element={isAuthenticated ? <HelpCenter user={user} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport user={user} jobs={jobs} invoices={invoices} onGenerateInvoice={addInvoice} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport user={user} jobs={jobs} invoices={invoices} technicians={technicians} onGenerateInvoice={addInvoice} onUpdateJob={updateJob} /> : <Navigate to="/auth" replace />} />
 
         {/* Technician Entry - Public (Phase C.2: Token-based access) */}
         <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />

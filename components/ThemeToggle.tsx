@@ -34,7 +34,7 @@ export const ThemeToggle: React.FC = () => {
       <span className="material-symbols-outlined text-sm text-slate-300">
         {getIcon()}
       </span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">
+      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider hidden sm:inline">
         {getLabel()}
       </span>
     </button>

@@ -65,9 +65,9 @@ const OAuthSetup: React.FC = () => {
                 .single();
 
             if (profile) {
-                // CRITICAL FIX: Use navigate instead of window.location.reload
-                // Hard reload resets auth state and causes redirect loops
-                navigate('/admin', { replace: true });
+                // CRITICAL FIX: Navigate to root to go through PersonaRedirect
+                // This ensures managers land on /manager/intent (Intent-First UX)
+                navigate('/', { replace: true });
                 return;
             }
 
@@ -123,9 +123,9 @@ const OAuthSetup: React.FC = () => {
                 throw new Error(workspaceError.message || 'Workspace creation failed');
             }
 
-            // CRITICAL FIX: Use navigate instead of hard reload
-            // This preserves auth state and prevents redirect loops
-            navigate('/admin', { replace: true });
+            // CRITICAL FIX: Navigate to root to go through PersonaRedirect
+            // This ensures managers land on /manager/intent (Intent-First UX)
+            navigate('/', { replace: true });
         } catch (err) {
             console.error('Setup error:', err);
             setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');

@@ -268,3 +268,107 @@ export interface SyncQueueEntry {
   created_at: string;
   updated_at: string;
 }
+
+// ============================================================================
+// TECHNICIAN-INITIATED JOBS (2026-01-23)
+// ============================================================================
+
+/**
+ * Job creation origin - tracks who initiated the job
+ * 'manager' - Created by manager/admin via dashboard (default)
+ * 'technician' - Created by technician in the field
+ * 'self_employed' - Created by self-employed technician (no manager)
+ */
+export type JobCreationOrigin = 'manager' | 'technician' | 'self_employed';
+
+/**
+ * Work mode for the user/workspace
+ * 'employed' - Works under a manager, jobs require approval
+ * 'self_employed' - Independent contractor, generates own audit trails
+ */
+export type TechnicianWorkMode = 'employed' | 'self_employed';
+
+/**
+ * Extended job metadata for technician-initiated jobs
+ */
+export interface TechJobMetadata {
+  creationOrigin: JobCreationOrigin;
+  createdByTechId?: string;      // Technician ID who created it
+  createdByTechName?: string;    // Technician name for display
+  managerNotified?: boolean;     // Whether manager was notified
+  managerNotifiedAt?: string;    // When manager was notified
+  approvedByManager?: boolean;   // For employed mode: manager approval
+  approvedAt?: string;           // When approved
+  approvedBy?: string;           // Manager who approved
+
+  // Self-employed mode fields
+  clientReceiptGenerated?: boolean;
+  clientReceiptUrl?: string;
+  clientReceiptSentAt?: string;
+  clientReceiptSentVia?: 'email' | 'sms' | 'copy' | 'share';
+}
+
+/**
+ * Manager notification for technician-created jobs
+ */
+export interface TechJobNotification {
+  id: string;
+  workspace_id: string;
+  job_id: string;
+
+  type: 'tech_job_created' | 'tech_job_completed' | 'tech_job_needs_review';
+  title: string;
+  message: string;
+
+  created_by_tech_id: string;
+  created_by_tech_name: string;
+  created_at: string;
+
+  is_read: boolean;
+  read_at?: string;
+
+  // Action tracking
+  action_taken?: 'approved' | 'rejected' | 'reassigned';
+  action_at?: string;
+  action_by?: string;
+}
+
+/**
+ * Client receipt for self-employed mode
+ * A lightweight proof-of-work document for payment/legal purposes
+ */
+export interface ClientReceipt {
+  id: string;
+  job_id: string;
+  workspace_id: string;
+
+  // Client info
+  client_name: string;
+  client_email?: string;
+  client_phone?: string;
+  client_address?: string;
+
+  // Work details
+  job_title: string;
+  job_description?: string;
+  work_date: string;
+  work_location: string;
+  work_location_w3w?: string;
+
+  // Evidence summary
+  photos_count: number;
+  has_signature: boolean;
+  signer_name?: string;
+  sealed_at?: string;
+  evidence_hash?: string;
+
+  // Payment info (optional)
+  amount?: number;
+  currency?: string;
+  payment_status?: 'pending' | 'paid' | 'invoiced';
+
+  // Timestamps
+  generated_at: string;
+  sent_at?: string;
+  sent_via?: 'email' | 'sms' | 'copy' | 'share';
+}

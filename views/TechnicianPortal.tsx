@@ -3,14 +3,15 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
-import { validateMagicLink, getJobByToken, updateJob, getJob } from '../lib/db';
+import { validateMagicLink, getJobByToken, updateJob, getJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
+import QuickJobForm from '../components/QuickJobForm';
 
-const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }> = ({ jobs, onUpdateJob }) => {
+const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, onAddJob?: (j: Job) => void }> = ({ jobs, onUpdateJob, onAddJob }) => {
   const { token, jobId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,6 +24,36 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
   const [isLoadingJob, setIsLoadingJob] = useState(true);
   const [jobDateWarning, setJobDateWarning] = useState<'future' | 'overdue' | null>(null);
   const [overdueByDays, setOverdueByDays] = useState<number>(0);
+
+  // Quick Job creation (technician-initiated)
+  const [showQuickJobForm, setShowQuickJobForm] = useState(false);
+  const workMode = getTechnicianWorkMode();
+
+  // Handle quick job creation
+  const handleQuickJobCreated = useCallback((newJob: Job) => {
+    // Add job to state
+    if (onAddJob) {
+      onAddJob(newJob);
+    }
+
+    // Save locally
+    saveJobLocal({
+      ...newJob,
+      syncStatus: newJob.syncStatus || 'pending',
+      lastUpdated: Date.now()
+    });
+
+    // Queue for sync
+    queueAction('CREATE_JOB', newJob);
+
+    // Close form and navigate to the new job
+    setShowQuickJobForm(false);
+    setJob(newJob);
+    setIsLoadingJob(false);
+    setStep(0); // Start at job overview
+
+    console.log(`[TechnicianPortal] Quick job created: ${newJob.id}`);
+  }, [onAddJob]);
 
   // Load job via token or legacy jobId
   useEffect(() => {
@@ -166,6 +197,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             }
           }
           setJob(loadedJob);
+
+          // Record magic link access for tracking (only if accessed via token)
+          if (token && !token.startsWith('JP-')) {
+            recordMagicLinkAccess(token);
+          }
         } else if (!tokenError) { // Only set 'not found' if we haven't already set a token error
           setTokenError('Job not found locally or remotely');
           setTokenErrorType('not_found');
@@ -747,6 +783,26 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
 
       onUpdateJob(sealedJob);
 
+      // Generate client receipt for self-employed mode
+      const techMetadata = (job as any).techMetadata;
+      const isSelfEmployed = (job as any).selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
+      if (isSelfEmployed) {
+        const receipt = generateClientReceipt(sealedJob);
+        console.log(`[TechnicianPortal] Client receipt generated: ${receipt.id}`);
+      }
+
+      // Notify manager if technician-initiated and employed mode
+      if (techMetadata?.creationOrigin === 'technician') {
+        notifyManagerOfTechJob(
+          job.workspaceId || 'local',
+          job.id,
+          job.title,
+          techMetadata.createdByTechId || 'unknown',
+          techMetadata.createdByTechName || 'Technician',
+          'tech_job_completed'
+        );
+      }
+
       // Show success
       setTimeout(() => {
         setIsSubmitting(false);
@@ -758,6 +814,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
       setIsSubmitting(false);
     }
   };
+
+  // Quick Job Form Modal
+  if (showQuickJobForm) {
+    return (
+      <QuickJobForm
+        techId="field-tech"
+        techName="Field Technician"
+        workspaceId="local"
+        onJobCreated={handleQuickJobCreated}
+        onCancel={() => setShowQuickJobForm(false)}
+      />
+    );
+  }
 
   // Loading state
   if (isLoadingJob) {
@@ -819,7 +888,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
               <p className="text-xs text-primary font-bold uppercase tracking-wide">{config.action}</p>
             </div>
           </div>
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
+            <button
+              onClick={() => setShowQuickJobForm(true)}
+              className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 min-h-[48px] flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Create Quick Job
+            </button>
+          </div>
         </div>
       </Layout>
     );
@@ -837,7 +915,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void }>
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
             <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
           </div>
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+            <button
+              onClick={() => setShowQuickJobForm(true)}
+              className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Create Quick Job
+            </button>
+          </div>
         </div>
       </Layout>
     );

@@ -721,34 +721,76 @@ export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLi
 };
 
 /**
+ * Store a magic link locally (for offline/local-only mode)
+ * This creates a token and stores the mapping directly in mockDatabase
+ * Use this when the database is unavailable but you need a working magic link
+ */
+export const storeMagicLinkLocal = (jobId: string, workspaceId: string = 'local'): MagicLinkData => {
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days for local links
+  const url = getMagicLinkUrl(token, jobId);
+
+  // Store in mockDatabase for later validation
+  mockDatabase.magicLinks.set(token, {
+    job_id: jobId,
+    workspace_id: workspaceId,
+    expires_at: expiresAt,
+    is_sealed: false
+  });
+
+  // Also persist to localStorage for survival across page refreshes
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = {
+      job_id: jobId,
+      workspace_id: workspaceId,
+      expires_at: expiresAt,
+      is_sealed: false
+    };
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    console.warn('Failed to persist magic link to localStorage:', e);
+  }
+
+  return { token, url, expiresAt };
+};
+
+/**
+ * Load magic links from localStorage into mockDatabase on startup
+ * Call this during app initialization
+ */
+export const loadMagicLinksFromStorage = (): void => {
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    const now = new Date();
+
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      // Only load non-expired links
+      if (new Date(data.expires_at) > now) {
+        mockDatabase.magicLinks.set(token, data);
+      }
+    });
+  } catch (e) {
+    console.warn('Failed to load magic links from localStorage:', e);
+  }
+};
+
+/**
  * Validate a magic link token
+ * Checks mockDatabase first, then localStorage, then Supabase
  */
 export const validateMagicLink = async (token: string): Promise<DbResult<TokenValidationData>> => {
-  if (shouldUseMockDB()) {
-    const linkData = mockDatabase.magicLinks.get(token);
-
-    if (!linkData) {
-      return {
-        success: false,
-        error: 'Invalid token'
-      };
-    }
-
+  // Helper function to validate link data
+  const validateLinkData = (linkData: { job_id: string; workspace_id: string; expires_at: string; is_sealed: boolean }): DbResult<TokenValidationData> => {
     const now = new Date();
     const expiresAt = new Date(linkData.expires_at);
 
     if (now > expiresAt) {
-      return {
-        success: false,
-        error: 'Token expired'
-      };
+      return { success: false, error: 'Token expired' };
     }
 
     if (linkData.is_sealed) {
-      return {
-        success: false,
-        error: 'This job has been sealed and can no longer be modified'
-      };
+      return { success: false, error: 'This job has been sealed and can no longer be modified' };
     }
 
     return {
@@ -759,13 +801,37 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
         is_valid: true
       }
     };
+  };
+
+  // 1. Check mockDatabase first (includes pre-loaded localStorage links)
+  let linkData = mockDatabase.magicLinks.get(token);
+  if (linkData) {
+    return validateLinkData(linkData);
   }
 
+  // 2. Check localStorage directly (in case not yet loaded into mockDatabase)
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    if (localLinks[token]) {
+      // Add to mockDatabase for faster subsequent lookups
+      mockDatabase.magicLinks.set(token, localLinks[token]);
+      return validateLinkData(localLinks[token]);
+    }
+  } catch (e) {
+    console.warn('Failed to check localStorage for magic link:', e);
+  }
+
+  // 3. If in mock mode and not found anywhere local, token is invalid
+  if (shouldUseMockDB()) {
+    return { success: false, error: 'Invalid token' };
+  }
+
+  // 4. Try Supabase
   const supabase = getSupabase();
   if (!supabase) {
     return {
       success: false,
-      error: 'Supabase not configured. Running in offline-only mode.'
+      error: 'Token not found locally and Supabase not configured.'
     };
   }
 
@@ -820,8 +886,692 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
   }
 };
 
+// ============================================================================
+// MAGIC LINK MANAGEMENT - Revoke, Reassign, Extend, Status
+// ============================================================================
+
+/**
+ * Link expiration duration constants (in milliseconds)
+ */
+export const LINK_EXPIRATION = {
+  SHORT: 24 * 60 * 60 * 1000,        // 24 hours
+  STANDARD: 7 * 24 * 60 * 60 * 1000, // 7 days (default)
+  EXTENDED: 30 * 24 * 60 * 60 * 1000, // 30 days
+  LONG: 90 * 24 * 60 * 60 * 1000,    // 90 days
+  UNTIL_COMPLETE: null,               // No expiration until job is sealed
+} as const;
+
+export type LinkStatus = 'active' | 'expired' | 'revoked' | 'used' | 'sealed';
+
+/**
+ * Link Lifecycle Stages for tracking/notifications
+ * SENT → DELIVERED → OPENED → JOB_STARTED → JOB_COMPLETED → REPORT_SENT
+ */
+export type LinkLifecycleStage =
+  | 'sent'           // Link created and shared
+  | 'delivered'      // Confirmed delivered (SMS/email callback)
+  | 'opened'         // Technician clicked the link
+  | 'job_started'    // Technician started working (photos added)
+  | 'job_completed'  // Job sealed/submitted
+  | 'report_sent';   // Report shared with client
+
+export interface MagicLinkInfo {
+  token: string;
+  job_id: string;
+  workspace_id: string;
+  expires_at: string;
+  status: LinkStatus;
+  created_at?: string;
+  first_accessed_at?: string;
+  revoked_at?: string;
+  assigned_to_tech_id?: string;
+
+  // Lifecycle tracking (Phase: Link Notifications)
+  lifecycle_stage?: LinkLifecycleStage;
+  sent_at?: string;              // When link was shared/dispatched
+  sent_via?: 'sms' | 'email' | 'qr' | 'copy' | 'share';  // How it was sent
+  delivered_at?: string;         // Delivery confirmation (if available)
+  job_started_at?: string;       // When first photo was added
+  job_completed_at?: string;     // When job was sealed/submitted
+  report_sent_at?: string;       // When report was shared with client
+
+  // Alert tracking
+  flagged_at?: string;           // When flagged for attention (e.g., 2hr threshold)
+  flag_reason?: string;          // Why it was flagged
+  flag_acknowledged_at?: string; // When manager acknowledged the flag
+  creator_user_id?: string;      // Who created the job (for notifications)
+}
+
+// Alert threshold constants
+export const LINK_ALERT_THRESHOLDS = {
+  UNOPENED_WARNING: 2 * 60 * 60 * 1000,    // 2 hours - flag if not opened
+  UNOPENED_URGENT: 4 * 60 * 60 * 1000,     // 4 hours - urgent flag
+  STALE_JOB: 24 * 60 * 60 * 1000,          // 24 hours - job started but not completed
+} as const;
+
+/**
+ * Revoke a specific magic link token
+ * The link will no longer be valid for access
+ */
+export const revokeMagicLink = (token: string): DbResult<void> => {
+  // Check if token exists
+  const linkData = mockDatabase.magicLinks.get(token);
+  if (!linkData) {
+    // Also check localStorage
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (!localLinks[token]) {
+        return { success: false, error: 'Token not found' };
+      }
+      // Remove from localStorage
+      delete localLinks[token];
+      localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+    } catch (e) {
+      return { success: false, error: 'Failed to revoke token from localStorage' };
+    }
+  }
+
+  // Remove from mockDatabase
+  mockDatabase.magicLinks.delete(token);
+
+  // Also remove from localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    if (localLinks[token]) {
+      delete localLinks[token];
+      localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+    }
+  } catch (e) {
+    console.warn('Failed to remove revoked token from localStorage:', e);
+  }
+
+  console.log(`[MagicLink] Revoked token: ${token.substring(0, 8)}...`);
+  return { success: true };
+};
+
+/**
+ * Revoke all magic links for a specific job
+ * Use this before reassigning to a different technician
+ */
+export const revokeAllLinksForJob = (jobId: string): DbResult<{ revokedCount: number }> => {
+  let revokedCount = 0;
+
+  // Find and remove from mockDatabase
+  const tokensToRemove: string[] = [];
+  mockDatabase.magicLinks.forEach((data, token) => {
+    if (data.job_id === jobId) {
+      tokensToRemove.push(token);
+    }
+  });
+
+  tokensToRemove.forEach(token => {
+    mockDatabase.magicLinks.delete(token);
+    revokedCount++;
+  });
+
+  // Also clean up localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    let localRevokedCount = 0;
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      if (data.job_id === jobId) {
+        delete localLinks[token];
+        localRevokedCount++;
+      }
+    });
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+    revokedCount = Math.max(revokedCount, localRevokedCount);
+  } catch (e) {
+    console.warn('Failed to revoke tokens from localStorage:', e);
+  }
+
+  console.log(`[MagicLink] Revoked ${revokedCount} links for job ${jobId}`);
+  return { success: true, data: { revokedCount } };
+};
+
+/**
+ * Regenerate magic link for a job
+ * This revokes all existing links and creates a new one
+ * Use for reassignment or when a link needs to be refreshed
+ */
+export const regenerateMagicLink = (
+  jobId: string,
+  workspaceId: string,
+  options?: {
+    expirationMs?: number | null; // null = no expiration until sealed
+    techId?: string; // Track which technician this link is for
+  }
+): DbResult<MagicLinkData> => {
+  // Revoke all existing links for this job
+  revokeAllLinksForJob(jobId);
+
+  // Generate new token
+  const token = crypto.randomUUID();
+  const expirationMs = options?.expirationMs ?? LINK_EXPIRATION.STANDARD;
+  const expiresAt = expirationMs === null
+    ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year as "no expiration"
+    : new Date(Date.now() + expirationMs).toISOString();
+
+  const url = getMagicLinkUrl(token, jobId);
+
+  const linkData = {
+    job_id: jobId,
+    workspace_id: workspaceId,
+    expires_at: expiresAt,
+    is_sealed: false,
+    created_at: new Date().toISOString(),
+    assigned_to_tech_id: options?.techId,
+  };
+
+  // Store in mockDatabase
+  mockDatabase.magicLinks.set(token, linkData);
+
+  // Persist to localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = linkData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    console.warn('Failed to persist regenerated magic link:', e);
+  }
+
+  console.log(`[MagicLink] Regenerated link for job ${jobId}: ${token.substring(0, 8)}...`);
+  return {
+    success: true,
+    data: { token, url, expiresAt }
+  };
+};
+
+/**
+ * Extend the expiration of an existing magic link
+ */
+export const extendMagicLinkExpiration = (
+  token: string,
+  additionalMs: number = LINK_EXPIRATION.STANDARD
+): DbResult<{ newExpiresAt: string }> => {
+  // Check mockDatabase
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  // If not in mockDatabase, check localStorage
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  // Calculate new expiration (extend from now, not from old expiration)
+  const newExpiresAt = new Date(Date.now() + additionalMs).toISOString();
+
+  // Update mockDatabase
+  mockDatabase.magicLinks.set(token, { ...linkData, expires_at: newExpiresAt });
+
+  // Update localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    if (localLinks[token]) {
+      localLinks[token] = { ...localLinks[token], expires_at: newExpiresAt };
+      localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+    }
+  } catch (e) {
+    console.warn('Failed to update localStorage:', e);
+  }
+
+  console.log(`[MagicLink] Extended token ${token.substring(0, 8)}... to ${newExpiresAt}`);
+  return { success: true, data: { newExpiresAt } };
+};
+
+/**
+ * Get all active magic links for a job
+ */
+export const getMagicLinksForJob = (jobId: string): MagicLinkInfo[] => {
+  const links: MagicLinkInfo[] = [];
+  const now = new Date();
+
+  // Check mockDatabase
+  mockDatabase.magicLinks.forEach((data, token) => {
+    if (data.job_id === jobId) {
+      const expiresAt = new Date(data.expires_at);
+      let status: LinkStatus = 'active';
+
+      if (data.is_sealed) {
+        status = 'sealed';
+      } else if (now > expiresAt) {
+        status = 'expired';
+      }
+
+      links.push({
+        token,
+        job_id: data.job_id,
+        workspace_id: data.workspace_id,
+        expires_at: data.expires_at,
+        status,
+        created_at: (data as any).created_at,
+        first_accessed_at: (data as any).first_accessed_at,
+        assigned_to_tech_id: (data as any).assigned_to_tech_id,
+      });
+    }
+  });
+
+  // Also check localStorage for any not yet loaded
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      if (data.job_id === jobId && !links.find(l => l.token === token)) {
+        const expiresAt = new Date(data.expires_at);
+        let status: LinkStatus = 'active';
+
+        if (data.is_sealed) {
+          status = 'sealed';
+        } else if (now > expiresAt) {
+          status = 'expired';
+        }
+
+        links.push({
+          token,
+          job_id: data.job_id,
+          workspace_id: data.workspace_id,
+          expires_at: data.expires_at,
+          status,
+          created_at: data.created_at,
+          first_accessed_at: data.first_accessed_at,
+          assigned_to_tech_id: data.assigned_to_tech_id,
+        });
+      }
+    });
+  } catch (e) {
+    // Ignore
+  }
+
+  return links;
+};
+
+/**
+ * Get detailed status of a magic link
+ */
+export const getMagicLinkStatus = (token: string): DbResult<MagicLinkInfo> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(linkData.expires_at);
+  let status: LinkStatus = 'active';
+
+  if (linkData.is_sealed) {
+    status = 'sealed';
+  } else if (now > expiresAt) {
+    status = 'expired';
+  }
+
+  return {
+    success: true,
+    data: {
+      token,
+      job_id: linkData.job_id,
+      workspace_id: linkData.workspace_id,
+      expires_at: linkData.expires_at,
+      status,
+      created_at: (linkData as any).created_at,
+      first_accessed_at: (linkData as any).first_accessed_at,
+      assigned_to_tech_id: (linkData as any).assigned_to_tech_id,
+    }
+  };
+};
+
+/**
+ * Record that a magic link was accessed
+ * Call this when a technician opens a job via magic link
+ */
+export const recordMagicLinkAccess = (token: string): void => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (linkData && !(linkData as any).first_accessed_at) {
+    const now = new Date().toISOString();
+    const updatedData = {
+      ...linkData,
+      first_accessed_at: now,
+      lifecycle_stage: 'opened' as LinkLifecycleStage,
+      // Clear any flags since link was opened
+      flag_acknowledged_at: (linkData as any).flagged_at ? now : undefined,
+    };
+    mockDatabase.magicLinks.set(token, updatedData);
+
+    // Update localStorage too
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        localLinks[token] = updatedData;
+        localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+      }
+    } catch (e) {
+      // Ignore
+    }
+
+    console.log(`[MagicLink] Recorded first access for token ${token.substring(0, 8)}...`);
+  }
+};
+
+// ============================================================================
+// LINK LIFECYCLE TRACKING & ALERTS
+// ============================================================================
+
+/**
+ * Update the lifecycle stage of a magic link
+ */
+export const updateLinkLifecycle = (
+  token: string,
+  stage: LinkLifecycleStage,
+  metadata?: { sent_via?: string }
+): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  // Also check localStorage
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const now = new Date().toISOString();
+  const updates: Record<string, any> = {
+    lifecycle_stage: stage,
+  };
+
+  // Set timestamp based on stage
+  switch (stage) {
+    case 'sent':
+      updates.sent_at = now;
+      if (metadata?.sent_via) updates.sent_via = metadata.sent_via;
+      break;
+    case 'delivered':
+      updates.delivered_at = now;
+      break;
+    case 'opened':
+      updates.first_accessed_at = now;
+      break;
+    case 'job_started':
+      updates.job_started_at = now;
+      break;
+    case 'job_completed':
+      updates.job_completed_at = now;
+      break;
+    case 'report_sent':
+      updates.report_sent_at = now;
+      break;
+  }
+
+  const updatedData = { ...linkData, ...updates };
+
+  // Update mockDatabase
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  // Update localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    console.warn('Failed to update localStorage:', e);
+  }
+
+  console.log(`[MagicLink] Updated lifecycle to ${stage} for token ${token.substring(0, 8)}...`);
+  return { success: true };
+};
+
+/**
+ * Mark a link as sent (after sharing via SMS, email, copy, etc.)
+ */
+export const markLinkAsSent = (
+  token: string,
+  sentVia: 'sms' | 'email' | 'qr' | 'copy' | 'share'
+): DbResult<void> => {
+  return updateLinkLifecycle(token, 'sent', { sent_via: sentVia });
+};
+
+/**
+ * Check for links that need attention (unopened after threshold)
+ * Returns links that should be flagged to the job creator
+ */
+export const getLinksNeedingAttention = (): MagicLinkInfo[] => {
+  const now = Date.now();
+  const needsAttention: MagicLinkInfo[] = [];
+
+  // Helper to check a link
+  const checkLink = (token: string, data: any) => {
+    // Skip if already opened, revoked, or job is complete
+    if (data.first_accessed_at || data.is_sealed || data.lifecycle_stage === 'job_completed') {
+      return;
+    }
+
+    // Skip if already acknowledged
+    if (data.flag_acknowledged_at) {
+      return;
+    }
+
+    // Check if sent_at or created_at exists to calculate age
+    const sentAt = data.sent_at || data.created_at;
+    if (!sentAt) return;
+
+    const ageMs = now - new Date(sentAt).getTime();
+
+    // Check if past the 2-hour threshold and not expired
+    const expiresAt = new Date(data.expires_at).getTime();
+    if (ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_WARNING && now < expiresAt) {
+      const isUrgent = ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_URGENT;
+
+      needsAttention.push({
+        token,
+        job_id: data.job_id,
+        workspace_id: data.workspace_id,
+        expires_at: data.expires_at,
+        status: 'active',
+        created_at: data.created_at,
+        sent_at: data.sent_at,
+        sent_via: data.sent_via,
+        lifecycle_stage: data.lifecycle_stage || 'sent',
+        flagged_at: data.flagged_at || new Date().toISOString(),
+        flag_reason: isUrgent
+          ? `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours - URGENT`
+          : `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours`,
+        assigned_to_tech_id: data.assigned_to_tech_id,
+        creator_user_id: data.creator_user_id,
+      });
+    }
+  };
+
+  // Check mockDatabase
+  mockDatabase.magicLinks.forEach((data, token) => checkLink(token, data));
+
+  // Check localStorage
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      // Avoid duplicates
+      if (!needsAttention.find(l => l.token === token)) {
+        checkLink(token, data);
+      }
+    });
+  } catch (e) {
+    // Ignore
+  }
+
+  // Sort by age (oldest first - most urgent)
+  return needsAttention.sort((a, b) => {
+    const aTime = new Date(a.sent_at || a.created_at || 0).getTime();
+    const bTime = new Date(b.sent_at || b.created_at || 0).getTime();
+    return aTime - bTime;
+  });
+};
+
+/**
+ * Flag a link for manager attention
+ */
+export const flagLinkForAttention = (token: string, reason: string): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const updatedData = {
+    ...linkData,
+    flagged_at: new Date().toISOString(),
+    flag_reason: reason,
+  };
+
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    // Ignore
+  }
+
+  console.log(`[MagicLink] Flagged token ${token.substring(0, 8)}... for attention: ${reason}`);
+  return { success: true };
+};
+
+/**
+ * Acknowledge a flag (manager has seen it)
+ */
+export const acknowledgeLinkFlag = (token: string): DbResult<void> => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) {
+    return { success: false, error: 'Token not found' };
+  }
+
+  const updatedData = {
+    ...linkData,
+    flag_acknowledged_at: new Date().toISOString(),
+  };
+
+  mockDatabase.magicLinks.set(token, updatedData);
+
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    localLinks[token] = updatedData;
+    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
+  } catch (e) {
+    // Ignore
+  }
+
+  return { success: true };
+};
+
+/**
+ * Get full lifecycle status summary for display
+ */
+export const getLinkLifecycleSummary = (token: string): {
+  stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[];
+  currentStage: LinkLifecycleStage;
+  needsAttention: boolean;
+  flagReason?: string;
+} | null => {
+  let linkData = mockDatabase.magicLinks.get(token);
+
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  if (!linkData) return null;
+
+  const data = linkData as any;
+
+  const stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[] = [
+    { stage: 'sent', timestamp: data.sent_at || data.created_at, completed: !!(data.sent_at || data.created_at) },
+    { stage: 'delivered', timestamp: data.delivered_at, completed: !!data.delivered_at },
+    { stage: 'opened', timestamp: data.first_accessed_at, completed: !!data.first_accessed_at },
+    { stage: 'job_started', timestamp: data.job_started_at, completed: !!data.job_started_at },
+    { stage: 'job_completed', timestamp: data.job_completed_at, completed: !!data.job_completed_at },
+    { stage: 'report_sent', timestamp: data.report_sent_at, completed: !!data.report_sent_at },
+  ];
+
+  // Determine current stage
+  let currentStage: LinkLifecycleStage = 'sent';
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (stages[i].completed) {
+      currentStage = stages[i].stage;
+      break;
+    }
+  }
+
+  // Check if needs attention
+  const needsAttention = !!data.flagged_at && !data.flag_acknowledged_at && !data.first_accessed_at;
+
+  return {
+    stages,
+    currentStage,
+    needsAttention,
+    flagReason: data.flag_reason,
+  };
+};
+
 /**
  * Get job by magic link token
+ * Checks multiple sources: mockDatabase, localStorage, and Supabase
  */
 export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
   const validation = await validateMagicLink(token);
@@ -833,24 +1583,46 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
     };
   }
 
-  if (shouldUseMockDB()) {
-    const job = mockDatabase.jobs.get(validation.data.job_id);
+  const jobId = validation.data.job_id;
 
-    if (!job) {
-      return {
-        success: false,
-        error: 'Job not found'
-      };
-    }
-
-    return { success: true, data: job };
+  // 1. Check mockDatabase first
+  const mockJob = mockDatabase.jobs.get(jobId);
+  if (mockJob) {
+    return { success: true, data: mockJob };
   }
 
+  // 2. Check localStorage (where App.tsx stores jobs)
+  // App.tsx uses 'jobproof_jobs_v2' as the key
+  try {
+    const storedJobs = localStorage.getItem('jobproof_jobs_v2');
+    if (storedJobs) {
+      const jobs: Job[] = JSON.parse(storedJobs);
+      const localJob = jobs.find(j => j.id === jobId);
+      if (localJob) {
+        // Add to mockDatabase for faster future lookups
+        mockDatabase.jobs.set(jobId, localJob);
+        console.log(`[getJobByToken] Found job ${jobId} in localStorage`);
+        return { success: true, data: localJob };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to check localStorage for job:', e);
+  }
+
+  // 3. If mock mode and not found locally, return error
+  if (shouldUseMockDB()) {
+    return {
+      success: false,
+      error: 'Job not found in local storage'
+    };
+  }
+
+  // 4. Try Supabase
   const supabase = getSupabase();
   if (!supabase) {
     return {
       success: false,
-      error: 'Supabase not configured. Running in offline-only mode.'
+      error: 'Job not found locally and Supabase not configured.'
     };
   }
 
@@ -1397,6 +2169,274 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
       error: error instanceof Error ? error.message : 'Failed to delete technician'
     };
   }
+};
+
+// ============================================================================
+// TECHNICIAN-INITIATED JOBS & NOTIFICATIONS
+// ============================================================================
+
+import type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';
+
+// Re-export types for convenience
+export type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';
+
+// In-memory notification storage (would be Supabase in production)
+const techNotifications: Map<string, TechJobNotification> = new Map();
+
+/**
+ * Create a notification for managers when technician creates a job
+ */
+export const notifyManagerOfTechJob = (
+  workspaceId: string,
+  jobId: string,
+  jobTitle: string,
+  techId: string,
+  techName: string,
+  notificationType: TechJobNotification['type'] = 'tech_job_created'
+): TechJobNotification => {
+  const notification: TechJobNotification = {
+    id: crypto.randomUUID(),
+    workspace_id: workspaceId,
+    job_id: jobId,
+    type: notificationType,
+    title: notificationType === 'tech_job_created'
+      ? `New Job Created by ${techName}`
+      : notificationType === 'tech_job_completed'
+        ? `Job Completed by ${techName}`
+        : `Job Needs Review`,
+    message: notificationType === 'tech_job_created'
+      ? `${techName} created a new job: "${jobTitle}". Review and approve if appropriate.`
+      : notificationType === 'tech_job_completed'
+        ? `${techName} has completed and sealed job: "${jobTitle}".`
+        : `Job "${jobTitle}" requires your attention.`,
+    created_by_tech_id: techId,
+    created_by_tech_name: techName,
+    created_at: new Date().toISOString(),
+    is_read: false,
+  };
+
+  // Store in memory
+  techNotifications.set(notification.id, notification);
+
+  // Persist to localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    storedNotifs.push(notification);
+    localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+  } catch (e) {
+    console.warn('Failed to persist notification to localStorage:', e);
+  }
+
+  console.log(`[Notification] Manager notified: ${notification.title}`);
+  return notification;
+};
+
+/**
+ * Get all unread tech job notifications for a workspace
+ */
+export const getTechJobNotifications = (workspaceId: string, includeRead = false): TechJobNotification[] => {
+  const notifications: TechJobNotification[] = [];
+
+  // Load from localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    storedNotifs.forEach((notif: TechJobNotification) => {
+      if (notif.workspace_id === workspaceId) {
+        if (includeRead || !notif.is_read) {
+          notifications.push(notif);
+          // Also add to in-memory map for consistency
+          techNotifications.set(notif.id, notif);
+        }
+      }
+    });
+  } catch (e) {
+    console.warn('Failed to load notifications from localStorage:', e);
+  }
+
+  // Also check in-memory (may have notifications not yet persisted)
+  techNotifications.forEach((notif) => {
+    if (notif.workspace_id === workspaceId) {
+      if ((includeRead || !notif.is_read) && !notifications.find(n => n.id === notif.id)) {
+        notifications.push(notif);
+      }
+    }
+  });
+
+  // Sort by created_at descending (newest first)
+  return notifications.sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+};
+
+/**
+ * Mark a tech job notification as read
+ */
+export const markTechNotificationRead = (notificationId: string): DbResult<void> => {
+  const notif = techNotifications.get(notificationId);
+
+  // Also check localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
+    if (idx >= 0) {
+      storedNotifs[idx].is_read = true;
+      storedNotifs[idx].read_at = new Date().toISOString();
+      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+
+      // Update in-memory too
+      if (notif) {
+        notif.is_read = true;
+        notif.read_at = storedNotifs[idx].read_at;
+      }
+
+      return { success: true };
+    }
+  } catch (e) {
+    console.warn('Failed to update notification in localStorage:', e);
+  }
+
+  if (!notif) {
+    return { success: false, error: 'Notification not found' };
+  }
+
+  notif.is_read = true;
+  notif.read_at = new Date().toISOString();
+  return { success: true };
+};
+
+/**
+ * Take action on a tech job notification (approve, reject, reassign)
+ */
+export const actionTechNotification = (
+  notificationId: string,
+  action: 'approved' | 'rejected' | 'reassigned',
+  actionBy: string
+): DbResult<void> => {
+  // Update in localStorage
+  try {
+    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
+    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
+    if (idx >= 0) {
+      storedNotifs[idx].action_taken = action;
+      storedNotifs[idx].action_at = new Date().toISOString();
+      storedNotifs[idx].action_by = actionBy;
+      storedNotifs[idx].is_read = true;
+      storedNotifs[idx].read_at = storedNotifs[idx].read_at || new Date().toISOString();
+      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
+
+      // Update in-memory
+      const notif = techNotifications.get(notificationId);
+      if (notif) {
+        notif.action_taken = action;
+        notif.action_at = storedNotifs[idx].action_at;
+        notif.action_by = actionBy;
+        notif.is_read = true;
+      }
+
+      console.log(`[Notification] Action ${action} taken on notification ${notificationId}`);
+      return { success: true };
+    }
+  } catch (e) {
+    console.warn('Failed to update notification action:', e);
+  }
+
+  return { success: false, error: 'Notification not found' };
+};
+
+/**
+ * Generate a client receipt for a completed job (self-employed mode)
+ */
+export const generateClientReceipt = (job: Job): ClientReceipt => {
+  const receipt: ClientReceipt = {
+    id: crypto.randomUUID(),
+    job_id: job.id,
+    workspace_id: job.workspaceId || 'local',
+
+    client_name: job.client,
+    client_address: job.address,
+
+    job_title: job.title,
+    job_description: job.description || job.notes,
+    work_date: job.date,
+    work_location: job.address,
+    work_location_w3w: job.w3w,
+
+    photos_count: job.photos.length,
+    has_signature: !!job.signature,
+    signer_name: job.signerName,
+    sealed_at: job.sealedAt,
+    evidence_hash: job.evidenceHash,
+
+    amount: job.price,
+    currency: 'GBP',
+    payment_status: 'pending',
+
+    generated_at: new Date().toISOString(),
+  };
+
+  // Store locally
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    receipts.push(receipt);
+    localStorage.setItem('jobproof_client_receipts', JSON.stringify(receipts));
+  } catch (e) {
+    console.warn('Failed to persist receipt:', e);
+  }
+
+  return receipt;
+};
+
+/**
+ * Get client receipt for a job
+ */
+export const getClientReceipt = (jobId: string): ClientReceipt | null => {
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    return receipts.find((r: ClientReceipt) => r.job_id === jobId) || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Mark a client receipt as sent
+ */
+export const markReceiptSent = (
+  receiptId: string,
+  sentVia: 'email' | 'sms' | 'copy' | 'share'
+): DbResult<void> => {
+  try {
+    const receipts = JSON.parse(localStorage.getItem('jobproof_client_receipts') || '[]');
+    const idx = receipts.findIndex((r: ClientReceipt) => r.id === receiptId);
+    if (idx >= 0) {
+      receipts[idx].sent_at = new Date().toISOString();
+      receipts[idx].sent_via = sentVia;
+      localStorage.setItem('jobproof_client_receipts', JSON.stringify(receipts));
+      return { success: true };
+    }
+    return { success: false, error: 'Receipt not found' };
+  } catch (e) {
+    return { success: false, error: 'Failed to update receipt' };
+  }
+};
+
+/**
+ * Get technician work mode from localStorage settings
+ */
+export const getTechnicianWorkMode = (): 'employed' | 'self_employed' => {
+  try {
+    return (localStorage.getItem('jobproof_work_mode') as 'employed' | 'self_employed') || 'employed';
+  } catch {
+    return 'employed';
+  }
+};
+
+/**
+ * Set technician work mode
+ */
+export const setTechnicianWorkMode = (mode: 'employed' | 'self_employed'): void => {
+  localStorage.setItem('jobproof_work_mode', mode);
+  console.log(`[WorkMode] Set to ${mode}`);
 };
 
 // Auto-init mock database if in test environment
