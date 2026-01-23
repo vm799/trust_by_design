@@ -143,6 +143,10 @@ import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/
 - **Slide-out-right** animation on dismiss
 - **Keyboard accessible** (focus triggers tooltip)
 
+### Navigation Components
+- `Breadcrumbs.tsx` - Navigation breadcrumbs with theme support
+- `BackButton` - Quick "back to X" navigation
+
 ### Layout Components (`components/layout/`)
 - `AppShell.tsx` - Main app container
 - `BottomNav.tsx` - Mobile bottom navigation
@@ -153,6 +157,70 @@ import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/
 - `ThemeToggle.tsx` - Full day/night toggle with mode selector
 - `ThemeToggleCompact.tsx` - Navbar-friendly single button
 - `DayNightCarousel.tsx` - Feature carousel with alternating aesthetics
+
+## Job Creation Guards (Phase 3)
+
+### useJobGuard Hook (`hooks/useJobGuard.ts`)
+Enforces client-first flow for job creation:
+
+```tsx
+import { useJobGuard } from '../hooks/useJobGuard';
+
+// In job creation page
+const {
+  isLoading,
+  clients,
+  technicians,
+  hasClients,
+  hasTechnicians,
+  canCreateJob,
+  checkAndRedirect,
+  showClientRequiredToast,
+  showNoTechnicianWarning,
+  refresh
+} = useJobGuard(redirectOnFail);
+
+// Auto-redirect mode: pass true to automatically redirect when no clients
+const guard = useJobGuard(true);
+
+// Manual check mode: validate before action
+const handleCreateJob = async () => {
+  const canProceed = await guard.checkAndRedirect();
+  if (canProceed) {
+    // Proceed with job creation
+  }
+};
+```
+
+### Guard Behavior
+- **Client required**: Redirects to `/admin/clients/new` with returnTo param
+- **Technician optional**: Shows info toast, allows unassigned jobs
+- **Toast messages**: "Create a client first before adding jobs"
+
+### Breadcrumbs (`components/ui/Breadcrumbs.tsx`)
+Navigation breadcrumbs with theme-aware styling:
+
+```tsx
+import { Breadcrumbs, BackButton, JobCreationBreadcrumbs } from '../components/ui';
+
+// Custom breadcrumbs
+<Breadcrumbs
+  items={[
+    { label: 'Jobs', href: '/admin/jobs', icon: 'work' },
+    { label: 'New Job' }
+  ]}
+  separator="chevron"  // 'chevron' | 'slash' | 'arrow'
+  showHome={true}      // Adds Dashboard link
+/>
+
+// Preset breadcrumbs
+<JobCreationBreadcrumbs currentStep="Select Client" />
+<ClientCreationBreadcrumbs currentStep="Details" />
+<TechnicianCreationBreadcrumbs />
+
+// Back button
+<BackButton to="/admin/jobs" label="Back to Jobs" />
+```
 
 ## Glassmorphism Pattern
 Standard glassmorphism container:
@@ -286,7 +354,13 @@ npm run type-check    # TypeScript check
 - [x] Close button (X) option
 - [x] Slide-out-right animation
 
-### Phase 3: Job Creation Guards (pending)
+### Phase 3: Job Creation Guards ✅
+- [x] useJobGuard hook for client-first validation
+- [x] Auto-redirect to client creation when no clients exist
+- [x] Toast notifications for guard warnings
+- [x] Breadcrumbs component with theme support
+- [x] Preset breadcrumbs (Job, Client, Technician creation)
+
 ### Phase 4: Job Flexibility (pending)
 ### Phase 5: Job Lifecycle + Navbar (pending)
 ### Phase 6: Polish + Integrations (pending)
