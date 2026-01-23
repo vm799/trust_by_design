@@ -130,10 +130,9 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link to="/admin/create" id="btn-dispatch" className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black px-4 lg:px-6 py-2 lg:py-3 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm lg:text-base font-black">add</span>
+            <Link to="/admin/create" id="btn-dispatch" className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95">
+              <span className="material-symbols-outlined text-base font-black">add</span>
               <span className="hidden sm:inline tracking-widest uppercase">Dispatch</span>
-              <span className="sm:hidden">Send</span>
             </Link>
           </div>
         </header>

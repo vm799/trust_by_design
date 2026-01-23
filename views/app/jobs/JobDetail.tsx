@@ -1,9 +1,10 @@
 /**
- * JobDetail - Job Detail View
+ * JobDetail - Job Detail View with Dispatch to Technician
  *
- * Shows complete job information with timeline and actions.
- *
- * Phase E: Job Lifecycle
+ * Shows complete job information with the critical ability to:
+ * - Generate magic link for technician access
+ * - Send via email, copy link, or share
+ * - Track job status through completion
  */
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
 import { getJobs, getClients, getTechnicians, deleteJob, updateJob } from '../../../hooks/useWorkspaceData';
+import { generateMagicLink } from '../../../lib/db';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
@@ -26,8 +28,15 @@ const JobDetail: React.FC = () => {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [assigning, setAssigning] = useState(false);
+
+  // Magic link state
+  const [magicLink, setMagicLink] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -45,7 +54,11 @@ const JobDetail: React.FC = () => {
 
         if (foundJob) {
           setClient(clientsData.find(c => c.id === foundJob.clientId) || null);
-          setTechnician(techsData.find(t => t.id === foundJob.technicianId) || null);
+          setTechnician(techsData.find(t => t.id === foundJob.technicianId || t.id === foundJob.techId) || null);
+          // Use existing magic link if available
+          if (foundJob.magicLinkUrl) {
+            setMagicLink(foundJob.magicLinkUrl);
+          }
         }
 
         setTechnicians(techsData);
@@ -80,10 +93,10 @@ const JobDetail: React.FC = () => {
 
     setAssigning(true);
     try {
-      await updateJob(job.id, { technicianId: techId });
+      await updateJob(job.id, { technicianId: techId, techId });
       const tech = technicians.find(t => t.id === techId);
       setTechnician(tech || null);
-      setJob({ ...job, technicianId: techId });
+      setJob({ ...job, technicianId: techId, techId });
       setShowAssignModal(false);
     } catch (error) {
       console.error('Failed to assign technician:', error);
@@ -93,14 +106,94 @@ const JobDetail: React.FC = () => {
     }
   };
 
+  // Generate magic link for technician
+  const handleGenerateMagicLink = async () => {
+    if (!job) return;
+
+    setGeneratingLink(true);
+    try {
+      const result = await generateMagicLink(job.id);
+      if (result.success && result.data) {
+        setMagicLink(result.data.url);
+        // Store magic link on job for later reference
+        await updateJob(job.id, {
+          magicLinkToken: result.data.token,
+          magicLinkUrl: result.data.url,
+        });
+        setJob({ ...job, magicLinkToken: result.data.token, magicLinkUrl: result.data.url });
+      } else {
+        throw new Error(result.error || 'Failed to generate link');
+      }
+    } catch (error) {
+      console.error('Failed to generate magic link:', error);
+      alert('Failed to generate link. Please try again.');
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  // Copy magic link to clipboard
+  const handleCopyLink = async () => {
+    if (!magicLink) return;
+
+    try {
+      await navigator.clipboard.writeText(magicLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  // Send email to technician
+  const handleSendEmail = () => {
+    if (!magicLink || !technician) return;
+
+    const subject = encodeURIComponent(`Job Assignment: ${job?.title || 'New Job'}`);
+    const body = encodeURIComponent(
+      `Hi ${technician.name},\n\n` +
+      `You have been assigned a new job:\n\n` +
+      `Job: ${job?.title || 'Job'}\n` +
+      `Client: ${client?.name || 'N/A'}\n` +
+      `Address: ${job?.address || 'N/A'}\n` +
+      `Date: ${job?.date ? new Date(job.date).toLocaleDateString('en-GB') : 'N/A'}\n\n` +
+      `Click the link below to access the job and start capturing evidence:\n\n` +
+      `${magicLink}\n\n` +
+      `This link expires in 7 days.\n\n` +
+      `Thanks,\n` +
+      `JobProof`
+    );
+
+    const email = technician.email || '';
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    setEmailSent(true);
+    setTimeout(() => setEmailSent(false), 3000);
+  };
+
+  // Share via Web Share API
+  const handleShare = async () => {
+    if (!magicLink || !navigator.share) return;
+
+    try {
+      await navigator.share({
+        title: `Job: ${job?.title || 'New Job'}`,
+        text: `Access your assigned job: ${job?.title}`,
+        url: magicLink,
+      });
+    } catch (error) {
+      // User cancelled or share failed
+      console.log('Share cancelled or failed');
+    }
+  };
+
   // Get computed status
   const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' => {
     if (!job) return 'draft';
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
-    if (job.status === 'complete') return 'review';
-    if (job.status === 'in-progress') return 'active';
-    if (job.technicianId) return 'dispatched';
+    if (job.status === 'complete' || job.status === 'Submitted') return 'review';
+    if (job.status === 'in-progress' || job.status === 'In Progress') return 'active';
+    if (job.technicianId || job.techId) return 'dispatched';
     return 'draft';
   };
 
@@ -132,6 +225,7 @@ const JobDetail: React.FC = () => {
   }
 
   const status = getJobStatus();
+  const canSend = (status === 'dispatched' || technician) && !job.sealedAt;
 
   return (
     <div>
@@ -144,6 +238,12 @@ const JobDetail: React.FC = () => {
             label: 'Assign Tech',
             icon: 'person_add',
             onClick: () => setShowAssignModal(true),
+            variant: 'primary' as const,
+          }] : []),
+          ...(canSend ? [{
+            label: 'Send Job',
+            icon: 'send',
+            onClick: () => setShowSendModal(true),
             variant: 'primary' as const,
           }] : []),
           ...(status === 'review' ? [{
@@ -165,24 +265,22 @@ const JobDetail: React.FC = () => {
 
       <PageContent>
         {/* Status Banner */}
-        <div className={`
-          p-4 rounded-2xl mb-6 flex items-center gap-4
-          ${status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-            status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
-            status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
-            status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20' :
-            status === 'invoiced' ? 'bg-cyan-500/10 border border-cyan-500/20' :
-            'bg-slate-800 border border-white/10'}
-        `}>
-          <div className={`
-            size-12 rounded-xl flex items-center justify-center
-            ${status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
-              status === 'review' ? 'bg-purple-500/20 text-purple-400' :
-              status === 'active' ? 'bg-amber-500/20 text-amber-400' :
-              status === 'dispatched' ? 'bg-blue-500/20 text-blue-400' :
-              status === 'invoiced' ? 'bg-cyan-500/20 text-cyan-400' :
-              'bg-slate-700 text-slate-400'}
-          `}>
+        <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
+          status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
+          status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
+          status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
+          status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20' :
+          status === 'invoiced' ? 'bg-cyan-500/10 border border-cyan-500/20' :
+          'bg-slate-800 border border-white/10'
+        }`}>
+          <div className={`size-12 rounded-xl flex items-center justify-center ${
+            status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
+            status === 'review' ? 'bg-purple-500/20 text-purple-400' :
+            status === 'active' ? 'bg-amber-500/20 text-amber-400' :
+            status === 'dispatched' ? 'bg-blue-500/20 text-blue-400' :
+            status === 'invoiced' ? 'bg-cyan-500/20 text-cyan-400' :
+            'bg-slate-700 text-slate-400'
+          }`}>
             <span className="material-symbols-outlined text-2xl">
               {status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
@@ -205,13 +303,21 @@ const JobDetail: React.FC = () => {
               {status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
-               status === 'dispatched' ? 'Awaiting technician to start' :
+               status === 'dispatched' ? 'Send link to technician to start' :
                status === 'invoiced' ? 'Invoice has been generated' :
                'Assign a technician to dispatch this job'}
             </p>
           </div>
           <StatusBadge status={status} />
         </div>
+
+        {/* Priority Badge */}
+        {job.priority === 'urgent' && (
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mb-6">
+            <span className="material-symbols-outlined text-red-400">priority_high</span>
+            <span className="text-red-400 text-sm font-bold uppercase">Urgent Priority</span>
+          </div>
+        )}
 
         {/* Seal Badge (if sealed) */}
         {job.sealedAt && (
@@ -233,7 +339,7 @@ const JobDetail: React.FC = () => {
                   <span className="material-symbols-outlined text-slate-500">calendar_today</span>
                   <div>
                     <p className="text-white">
-                      {new Date(job.date).toLocaleDateString('en-AU', {
+                      {new Date(job.date).toLocaleDateString('en-GB', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -254,21 +360,21 @@ const JobDetail: React.FC = () => {
                   </div>
                 )}
 
-                {job.description && (
+                {(job.description || job.notes) && (
                   <div className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-slate-500">description</span>
                     <div>
-                      <p className="text-white">{job.description}</p>
+                      <p className="text-white">{job.description || job.notes}</p>
                       <p className="text-sm text-slate-500">Description</p>
                     </div>
                   </div>
                 )}
 
-                {job.total && (
+                {(job.total || job.price) && (
                   <div className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-slate-500">payments</span>
                     <div>
-                      <p className="text-white text-lg font-semibold">${job.total.toFixed(2)}</p>
+                      <p className="text-white text-lg font-semibold">£{(job.total || job.price || 0).toFixed(2)}</p>
                       <p className="text-sm text-slate-500">Total</p>
                     </div>
                   </div>
@@ -317,8 +423,8 @@ const JobDetail: React.FC = () => {
                 Client
               </h3>
               {client ? (
-                <Link to={route(ROUTES.CLIENT_DETAIL, { id: client.id })}>
-                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-white/5 transition-colors">
+                <Link to={route(ROUTES.CLIENT_DETAIL, { id: client.id })} className="block">
+                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-white/5 transition-colors active:scale-[0.98]">
                     <div className="size-10 rounded-lg bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
                       <span className="text-primary font-bold">{client.name.charAt(0)}</span>
                     </div>
@@ -340,26 +446,36 @@ const JobDetail: React.FC = () => {
                 Technician
               </h3>
               {technician ? (
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                    <span className="text-amber-400 font-bold">{technician.name.charAt(0)}</span>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                      <span className="text-amber-400 font-bold">{technician.name.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">{technician.name}</p>
+                      <p className="text-sm text-slate-400 truncate">{technician.phone || technician.email}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white truncate">{technician.name}</p>
-                    <p className="text-sm text-slate-400 truncate">{technician.phone || technician.email}</p>
-                  </div>
+                  {!job.sealedAt && (
+                    <button
+                      onClick={() => setShowSendModal(true)}
+                      className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-lg">send</span>
+                      Send Job Link
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-4">
                   <p className="text-slate-400 mb-3">No technician assigned</p>
-                  <ActionButton
-                    variant="primary"
-                    size="sm"
-                    icon="person_add"
+                  <button
                     onClick={() => setShowAssignModal(true)}
+                    className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                   >
+                    <span className="material-symbols-outlined text-lg">person_add</span>
                     Assign Technician
-                  </ActionButton>
+                  </button>
                 </div>
               )}
             </Card>
@@ -384,7 +500,6 @@ const JobDetail: React.FC = () => {
         isOpen={showAssignModal}
         onClose={() => setShowAssignModal(false)}
         title="Assign Technician"
-        description="Select a technician to dispatch this job"
         size="md"
       >
         {technicians.length === 0 ? (
@@ -401,7 +516,7 @@ const JobDetail: React.FC = () => {
                 key={tech.id}
                 onClick={() => handleAssignTech(tech.id)}
                 disabled={assigning}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left disabled:opacity-50"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
               >
                 <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                   <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>
@@ -417,6 +532,122 @@ const JobDetail: React.FC = () => {
             ))}
           </div>
         )}
+      </Modal>
+
+      {/* Send Job Modal */}
+      <Modal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        title="Send Job to Technician"
+        size="md"
+      >
+        <div className="space-y-6">
+          {/* Technician Info */}
+          {technician && (
+            <div className="flex items-center gap-3 p-4 bg-slate-800 rounded-xl">
+              <div className="size-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                <span className="text-amber-400 font-bold text-lg">{technician.name.charAt(0)}</span>
+              </div>
+              <div>
+                <p className="font-bold text-white">{technician.name}</p>
+                <p className="text-sm text-slate-400">{technician.email || 'No email'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Generate or Show Link */}
+          {!magicLink ? (
+            <button
+              onClick={handleGenerateMagicLink}
+              disabled={generatingLink}
+              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {generatingLink ? (
+                <>
+                  <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-lg">link</span>
+                  Generate Job Link
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="space-y-4">
+              {/* Magic Link Display */}
+              <div className="p-4 bg-slate-800 rounded-xl">
+                <p className="text-xs text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
+                <p className="text-sm text-white font-mono break-all">{magicLink}</p>
+                <p className="text-xs text-slate-500 mt-2">Expires in 7 days</p>
+              </div>
+
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(magicLink)}`}
+                  alt="QR Code"
+                  className="rounded-xl bg-white p-2"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={handleCopyLink}
+                  className={`py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    linkCopied
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-700 hover:bg-slate-600 text-white'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {linkCopied ? 'check' : 'content_copy'}
+                  </span>
+                  {linkCopied ? 'Copied!' : 'Copy Link'}
+                </button>
+
+                {technician?.email && (
+                  <button
+                    onClick={handleSendEmail}
+                    className={`py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                      emailSent
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-primary hover:bg-primary-hover text-white'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {emailSent ? 'check' : 'email'}
+                    </span>
+                    {emailSent ? 'Email Opened!' : 'Send Email'}
+                  </button>
+                )}
+              </div>
+
+              {/* Share Button (if supported) */}
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button
+                  onClick={handleShare}
+                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-lg">share</span>
+                  Share via...
+                </button>
+              )}
+
+              {/* Regenerate Link */}
+              <button
+                onClick={handleGenerateMagicLink}
+                disabled={generatingLink}
+                className="w-full py-2 text-slate-400 hover:text-white text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1"
+              >
+                <span className="material-symbols-outlined text-sm">refresh</span>
+                Generate New Link
+              </button>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

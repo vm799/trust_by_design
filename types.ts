@@ -45,6 +45,8 @@ export interface JobTemplate {
   defaultTasks: string[];
 }
 
+export type JobPriority = 'normal' | 'urgent';
+
 export interface Job {
   id: string;
   title: string;
@@ -52,13 +54,16 @@ export interface Job {
   clientId: string;
   technician: string;
   techId: string;
+  technicianId?: string; // Alias for techId
   status: JobStatus;
+  priority?: JobPriority;
   date: string;
   address: string;
   lat?: number;
   lng?: number;
   w3w?: string;
   notes: string;
+  description?: string;
   workSummary?: string;
   photos: Photo[];
   signature: string | null; // IndexedDB key reference (e.g., "sig_jobId") when offline
@@ -72,6 +77,7 @@ export interface Job {
   syncStatus: SyncStatus;
   lastUpdated: number;
   price?: number;
+  total?: number; // Alias for price
   magicLinkToken?: string; // Magic link token for technician access
   magicLinkUrl?: string; // Full URL for sharing
   workspaceId?: string; // Workspace ID (from database)
