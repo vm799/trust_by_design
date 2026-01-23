@@ -101,7 +101,7 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
           id: 'job-1',
           type: 'job',
           data: {},
-          retryCount: 4, // Max retries exceeded
+          retryCount: 8, // Max retries exceeded (MAX_RETRIES = 8)
           lastAttempt: Date.now(),
         },
         {

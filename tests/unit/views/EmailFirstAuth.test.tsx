@@ -16,6 +16,7 @@ vi.mock('react-router-dom', async () => {
 const mockSupabase = {
     auth: {
         getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+        onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
     },
     from: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -29,6 +30,26 @@ const mockSupabase = {
 
 vi.mock('../../../lib/supabase', () => ({
     getSupabase: () => mockSupabase,
+}));
+
+// Mock AuthContext to avoid needing full provider
+vi.mock('../../../lib/AuthContext', () => ({
+    useAuth: () => ({
+        session: null,
+        userId: null,
+        userEmail: null,
+        workspaceId: null,
+        isAuthenticated: false,
+        isLoading: false,
+    }),
+    AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock auth functions
+vi.mock('../../../lib/auth', () => ({
+    onAuthStateChange: vi.fn(() => () => {}),
+    signIn: vi.fn(),
+    signUp: vi.fn(),
 }));
 
 describe('EmailFirstAuth View', () => {

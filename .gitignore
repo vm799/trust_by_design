@@ -29,3 +29,4 @@ seal_private_key.pem
 seal_public_key.pem
 seal_private_key_base64.txt
 seal_public_key_base64.txt
+.archive/
