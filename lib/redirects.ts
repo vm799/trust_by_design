@@ -35,7 +35,7 @@ export const getSecureOrigin = (): string => {
   const currentOrigin = window.location.origin;
 
   // Check if current origin is in allowlist
-  if (REDIRECT_ALLOWLIST.includes(currentOrigin as any)) {
+  if ((REDIRECT_ALLOWLIST as readonly string[]).includes(currentOrigin)) {
     return currentOrigin;
   }
 
@@ -58,8 +58,10 @@ export const getAuthRedirectUrl = (path: string = ''): string => {
  * @param jobId - Optional job ID to include as query parameter for deep-linking
  */
 export const getMagicLinkUrl = (token: string, jobId?: string): string => {
-  const baseUrl = `${getSecureOrigin()}/#/track/${token}`;
-  return jobId ? `${baseUrl}?jobId=${jobId}` : baseUrl;
+  // URL encode parameters to prevent injection attacks
+  const encodedToken = encodeURIComponent(token);
+  const baseUrl = `${getSecureOrigin()}/#/track/${encodedToken}`;
+  return jobId ? `${baseUrl}?jobId=${encodeURIComponent(jobId)}` : baseUrl;
 };
 
 /**
@@ -67,7 +69,7 @@ export const getMagicLinkUrl = (token: string, jobId?: string): string => {
  * @param jobId - Job ID
  */
 export const getReportUrl = (jobId: string): string => {
-  return `${getSecureOrigin()}/#/report/${jobId}`;
+  return `${getSecureOrigin()}/#/report/${encodeURIComponent(jobId)}`;
 };
 
 /**
@@ -76,7 +78,7 @@ export const getReportUrl = (jobId: string): string => {
 export const isAllowedRedirect = (url: string): boolean => {
   try {
     const urlObj = new URL(url);
-    return REDIRECT_ALLOWLIST.includes(urlObj.origin as any);
+    return (REDIRECT_ALLOWLIST as readonly string[]).includes(urlObj.origin);
   } catch {
     return false;
   }

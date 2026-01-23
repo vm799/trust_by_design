@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
+import { generateSecureSlugSuffix } from '../lib/secureId';
 
 /**
  * OAuth Setup View
@@ -109,7 +110,7 @@ const OAuthSetup: React.FC = () => {
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-|-$/g, '');
 
-            const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 7)}`;
+            const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
             const { data: workspaceId, error: workspaceError } = await supabase.rpc('create_workspace_with_owner', {
                 p_user_id: userId,

@@ -23,6 +23,7 @@ import {
   updateTechnician,
   deleteTechnician as dbDeleteTechnician,
 } from '../lib/db';
+import { generateSecureEntityId } from '../lib/secureId';
 import type { Job, Client, Technician, Invoice } from '../types';
 
 /**
@@ -63,7 +64,7 @@ export const addJob = async (job: Omit<Job, 'id'>): Promise<Job> => {
   const jobs = await getJobs();
   const newJob: Job = {
     ...job,
-    id: `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureEntityId('job'),
   };
   jobs.push(newJob);
   localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
@@ -103,7 +104,7 @@ export const addClient = async (client: Omit<Client, 'id'>): Promise<Client> => 
   const clients = await getClients();
   const newClient: Client = {
     ...client,
-    id: `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureEntityId('client'),
   };
   clients.push(newClient);
   localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
@@ -143,7 +144,7 @@ export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Techn
   const techs = await getTechnicians();
   const newTech: Technician = {
     ...tech,
-    id: `tech-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureEntityId('tech'),
   };
   techs.push(newTech);
   localStorage.setItem('jobproof_technicians_v2', JSON.stringify(techs));
@@ -173,7 +174,7 @@ export const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice>
   const invoices = await getInvoices();
   const newInvoice: Invoice = {
     ...invoice,
-    id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generateSecureEntityId('inv'),
   };
   invoices.push(newInvoice);
   localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));

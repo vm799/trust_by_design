@@ -219,8 +219,11 @@ export function generateMockW3W(): string {
     'steel', 'core', 'vault', 'trust', 'chain', 'lock',
     'verify', 'secure', 'guard', 'shield', 'defend', 'protect',
   ];
-  const pick = () => words[Math.floor(Math.random() * words.length)];
-  return `///${pick()}.${pick()}.${pick()}`;
+  // Use crypto-secure random selection
+  const array = new Uint8Array(3);
+  crypto.getRandomValues(array);
+  const pick = (idx: number) => words[array[idx] % words.length];
+  return `///${pick(0)}.${pick(1)}.${pick(2)}`;
 }
 
 /**

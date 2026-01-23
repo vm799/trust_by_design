@@ -17,6 +17,7 @@
  */
 
 import { getSupabase } from './supabase';
+import { generateSecureSlugSuffix } from './secureId';
 import type { Session, User } from '@supabase/supabase-js';
 
 // ============================================================================
@@ -191,7 +192,7 @@ class UserSubagent {
         .trim()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
-      const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 7)}`;
+      const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
       // Call RPC to create workspace and user atomically
       const { error } = await supabase.rpc('create_workspace_with_owner', {

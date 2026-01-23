@@ -6,6 +6,8 @@
 
 import { getSupabase } from './supabase';
 import { getAuthRedirectUrl } from './redirects';
+import { generateSecureSlugSuffix } from './secureId';
+import { clearEncryptionKey } from './encryption';
 import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 export interface AuthResult {
@@ -13,6 +15,63 @@ export interface AuthResult {
   user?: User;
   session?: Session;
   error?: AuthError | Error;
+  rateLimited?: boolean;
+  retryAfter?: number; // seconds until retry
+}
+
+/**
+ * Rate limiting detection and handling
+ * Supabase returns 429 status for rate limiting
+ */
+const RATE_LIMIT_PATTERNS = [
+  'rate limit',
+  'too many requests',
+  'exceeded',
+  '429',
+  'email rate limit',
+  'request rate limit'
+];
+
+function isRateLimitError(error: AuthError | Error | unknown): boolean {
+  if (!error) return false;
+
+  const errorMessage = String((error as Error)?.message || '').toLowerCase();
+  const errorStatus = (error as { status?: number })?.status;
+
+  // Check HTTP status
+  if (errorStatus === 429) return true;
+
+  // Check error message patterns
+  return RATE_LIMIT_PATTERNS.some(pattern =>
+    errorMessage.includes(pattern.toLowerCase())
+  );
+}
+
+function getRetryAfter(error: AuthError | Error | unknown): number {
+  // Default retry time: 60 seconds
+  const DEFAULT_RETRY = 60;
+
+  if (!error) return DEFAULT_RETRY;
+
+  // Check for Retry-After header value in error
+  const retryAfter = (error as { retryAfter?: number })?.retryAfter;
+  if (typeof retryAfter === 'number' && retryAfter > 0) {
+    return Math.min(retryAfter, 300); // Cap at 5 minutes
+  }
+
+  return DEFAULT_RETRY;
+}
+
+function enhanceWithRateLimitInfo(result: AuthResult): AuthResult {
+  if (result.error && isRateLimitError(result.error)) {
+    return {
+      ...result,
+      rateLimited: true,
+      retryAfter: getRetryAfter(result.error),
+      error: new Error('Too many requests. Please wait before trying again.')
+    };
+  }
+  return result;
 }
 
 // CRITICAL FIX: Profile cache to prevent repeated fetches
@@ -60,7 +119,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
     });
 
     if (authError) {
-      return { success: false, error: authError };
+      return enhanceWithRateLimitInfo({ success: false, error: authError });
     }
 
     if (!authData.user) {
@@ -77,7 +136,7 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
 
-    const finalSlug = `${workspaceSlug}-${Math.random().toString(36).substring(2, 7)}`;
+    const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
     // Use a small delay to ensure auth.users record is fully available if needed
     // though RPC should handle it if called with a valid user id
@@ -107,10 +166,10 @@ export const signUp = async (data: SignUpData): Promise<AuthResult> => {
       session: authData.session || undefined
     };
   } catch (error) {
-    return {
+    return enhanceWithRateLimitInfo({
       success: false,
       error: error as Error
-    };
+    });
   }
 };
 
@@ -133,7 +192,7 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
     });
 
     if (error) {
-      return { success: false, error };
+      return enhanceWithRateLimitInfo({ success: false, error });
     }
 
     // Update last_sign_in_at
@@ -150,10 +209,10 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
       session: data.session
     };
   } catch (error) {
-    return {
+    return enhanceWithRateLimitInfo({
       success: false,
       error: error as Error
-    };
+    });
   }
 };
 
@@ -247,9 +306,48 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
 };
 
 /**
+ * Secure session cleanup - removes all sensitive data
+ * Call this on logout to ensure no sensitive data persists
+ */
+export const secureCleanup = (): void => {
+  // Clear encryption keys from memory
+  clearEncryptionKey();
+
+  // Clear profile cache
+  profileCache = null;
+  profileFetchPromise = null;
+
+  // Clear sensitive localStorage items
+  const sensitiveKeys = [
+    'jobproof_user_v2',
+    'jobproof_onboarding_v4',
+    'jobproof_magic_links',
+    'sb-auth-token', // Supabase auth token
+  ];
+  sensitiveKeys.forEach(key => localStorage.removeItem(key));
+
+  // Clear all session storage (includes session entropy for encryption)
+  sessionStorage.clear();
+
+  // Clear any in-memory caches in other modules
+  try {
+    // Clear auth flow manager cache if available
+    const { clearCache } = require('./authFlowManager');
+    if (typeof clearCache === 'function') {
+      clearCache();
+    }
+  } catch {
+    // Module may not be loaded
+  }
+};
+
+/**
  * Sign out current user
  */
 export const signOut = async (): Promise<AuthResult> => {
+  // Always perform secure cleanup, even if supabase fails
+  secureCleanup();
+
   const supabase = getSupabase();
   if (!supabase) {
     return { success: true }; // Already offline-only mode
@@ -259,23 +357,16 @@ export const signOut = async (): Promise<AuthResult> => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      return { success: false, error };
+      console.warn('[Auth] Supabase signOut error:', error);
+      // Still return success since we've cleared local data
+      return { success: true };
     }
-
-    // Clear sensitive user data from localStorage
-    // Keep job drafts and sync queue for offline functionality
-    localStorage.removeItem('jobproof_user_v2');
-    localStorage.removeItem('jobproof_onboarding_v4');
-
-    // Clear session storage
-    sessionStorage.clear();
 
     return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: error as Error
-    };
+    console.warn('[Auth] signOut exception:', error);
+    // Still return success since we've cleared local data
+    return { success: true };
   }
 };
 

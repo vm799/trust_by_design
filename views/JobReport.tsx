@@ -8,6 +8,7 @@ import SealBadge from '../components/SealBadge';
 import LegalDisclaimer from '../components/LegalDisclaimer';
 import ClientReceiptView from '../components/ClientReceiptView';
 import { getReportUrl, getMagicLinkUrl } from '../lib/redirects';
+import { generateSecureInvoiceId } from '../lib/secureId';
 import {
   getMagicLinksForJob,
   regenerateMagicLink,
@@ -46,8 +47,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    const [showClientReceipt, setShowClientReceipt] = useState(false);
 
    // Check if job was created in self-employed mode
-   const techMetadata = (job as any)?.techMetadata;
-   const isSelfEmployedJob = (job as any)?.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
+   const techMetadata = job?.techMetadata;
+   const isSelfEmployedJob = job?.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
 
    // Magic Link Management State
    const [magicLinkInfo, setMagicLinkInfo] = useState<MagicLinkInfo | null>(null);
@@ -347,7 +348,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    const handleGenerateInvoice = () => {
       if (!onGenerateInvoice) return;
       const inv: Invoice = {
-         id: `INV-${Math.floor(Math.random() * 9000) + 1000}`,
+         id: generateSecureInvoiceId(),
          jobId: job.id,
          clientId: job.clientId,
          clientName: job.client,
