@@ -317,31 +317,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               </div>
             )}
 
-            {/* Compact Metrics - Mobile First */}
+            {/* Compact Metrics - Mobile First - All Clickable */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <CompactMetricCard
                 label="Active"
                 value={activeJobs.length.toString()}
                 icon="send"
                 color="text-primary"
+                onClick={() => activeJobs.length > 0 ? navigate(`/admin/report/${activeJobs[0].id}`) : navigate('/admin/create')}
               />
               <CompactMetricCard
                 label="Awaiting Seal"
                 value={pendingSignatures.toString()}
                 icon="signature"
                 color="text-warning"
+                onClick={() => {
+                  const awaitingSeal = activeJobs.filter(j => !j.signature);
+                  if (awaitingSeal.length > 0) navigate(`/admin/report/${awaitingSeal[0].id}`);
+                }}
               />
               <CompactMetricCard
                 label="Sealed"
                 value={sealedJobs.length.toString()}
                 icon="verified"
                 color="text-success"
+                onClick={() => sealedJobs.length > 0 ? navigate(`/admin/report/${sealedJobs[0].id}`) : null}
               />
               <CompactMetricCard
                 label="Sync Issues"
                 value={syncIssues.toString()}
                 icon="sync_problem"
                 color={syncIssues > 0 ? "text-danger" : "text-slate-300"}
+                onClick={() => failedJobs.length > 0 ? navigate(`/admin/report/${failedJobs[0].id}`) : null}
               />
             </div>
 
@@ -698,13 +705,18 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
 /**
  * Compact Metric Card - Mobile-First Design
  * Reduced padding and text size for better space efficiency
+ * Now clickable with navigation support
  */
-const CompactMetricCard = ({ label, value, icon, color = "text-white" }: any) => (
-  <div className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 transition-all">
+const CompactMetricCard = ({ label, value, icon, color = "text-white", onClick }: { label: string; value: string; icon: string; color?: string; onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="bg-slate-900 border border-white/5 p-4 rounded-2xl relative overflow-hidden group shadow-lg hover:border-white/10 hover:bg-slate-800/50 transition-all text-left w-full active:scale-95 cursor-pointer"
+  >
     <span className={`material-symbols-outlined absolute -top-1 -right-1 text-5xl opacity-5 transition-transform group-hover:scale-110 font-black ${color.replace('text-', 'text-')}`}>{icon}</span>
     <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 relative z-10">{label}</p>
     <p className={`text-2xl sm:text-3xl font-black tracking-tighter ${color} relative z-10`}>{value}</p>
-  </div>
+    <span className="material-symbols-outlined absolute bottom-2 right-2 text-sm text-slate-600 group-hover:text-slate-400 transition-colors">arrow_forward</span>
+  </button>
 );
 
 // PERFORMANCE OPTIMIZATION: Wrap in React.memo to prevent unnecessary re-renders

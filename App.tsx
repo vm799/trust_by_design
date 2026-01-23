@@ -351,7 +351,7 @@ const AppContent: React.FC = () => {
   };
 
   const loadLocalStorageTechnicians = () => {
-    const saved = localStorage.getItem('jobproof_techs_v2');
+    const saved = localStorage.getItem('jobproof_technicians_v2');
     if (saved) {
       try {
         setTechnicians(JSON.parse(saved));
@@ -379,7 +379,7 @@ const AppContent: React.FC = () => {
     localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
     localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
     localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
-    localStorage.setItem('jobproof_techs_v2', JSON.stringify(technicians));
+    localStorage.setItem('jobproof_technicians_v2', JSON.stringify(technicians));
     localStorage.setItem('jobproof_templates_v2', JSON.stringify(templates));
     localStorage.setItem('jobproof_onboarding_v4', hasSeenOnboarding.toString());
 
