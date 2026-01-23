@@ -155,7 +155,8 @@ const ManagerOnboarding: React.FC = () => {
   };
 
   const handleSkipToDashboard = () => {
-    navigate('/admin');
+    // Intent-First UX: Managers go to intent selector first
+    navigate('/manager/intent');
   };
 
   if (authLoading) {
