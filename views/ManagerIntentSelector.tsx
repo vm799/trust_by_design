@@ -97,6 +97,13 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
       <header className="p-6 pb-0">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/admin')}
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring"
+              aria-label="Back to dashboard"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
             <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-xl">verified_user</span>
             </div>
@@ -104,7 +111,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
           </div>
           <button
             onClick={() => navigate('/admin/profile')}
-            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring"
             aria-label="Profile settings"
           >
             <span className="material-symbols-outlined">account_circle</span>

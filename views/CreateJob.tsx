@@ -333,7 +333,16 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   return (
     <Layout user={user}>
       <div className="max-w-2xl mx-auto space-y-6 pb-20">
-        <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Create Job</h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin')}
+            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring lg:hidden"
+            aria-label="Back to dashboard"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Create Job</h2>
+        </div>
 
         {error && (
           <div className="bg-danger/10 border border-danger/20 rounded-xl p-4 animate-in">

@@ -1,5 +1,6 @@
 ﻿
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { UserProfile } from '../types';
 
@@ -10,6 +11,7 @@ interface ProfileViewProps {
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(user);
 
   const handleSave = () => {
@@ -21,9 +23,18 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
     <Layout>
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="flex justify-between items-end border-b border-white/5 pb-8">
-          <div className="space-y-1">
-             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Your Profile</h2>
-             <p className="text-slate-400">Manage your administrative credentials.</p>
+          <div className="flex items-start gap-4">
+            <button
+              onClick={() => navigate('/admin')}
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring lg:hidden mt-1"
+              aria-label="Back to dashboard"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div className="space-y-1">
+               <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Your Profile</h2>
+               <p className="text-slate-400">Manage your administrative credentials.</p>
+            </div>
           </div>
           <div className="bg-gradient-to-br from-primary to-blue-600 size-20 rounded-[2rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-primary/20">
             {user.name[0]}
