@@ -1,137 +1,246 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { useTheme } from '../../lib/theme';
 
-interface TooltipProps {
-  content: string;
+// Auto-dismiss duration in ms (60 seconds)
+const AUTO_DISMISS_DURATION = 60000;
+// Show delay in ms (300ms as per spec)
+const SHOW_DELAY = 300;
+
+export interface TooltipProps {
+  content: React.ReactNode;
   children: React.ReactNode;
   position?: 'top' | 'bottom' | 'left' | 'right';
-  variant?: 'default' | 'highlighted' | 'warning' | 'success';
-  delay?: number;
+  variant?: 'default' | 'highlighted' | 'warning' | 'success' | 'info';
+  showClose?: boolean;
+  autoDismiss?: boolean;
+  autoDismissDelay?: number;
+  delayDuration?: number;
+  className?: string;
 }
 
 /**
- * Tooltip Component - UAT Fix #1
- * Custom styled tooltips with highlighted colors that stand out
- * against the dashboard visual noise
+ * Smart Tooltip Component - Phase 2 UX Polish
+ *
+ * Features:
+ * - Radix UI for accessibility and positioning
+ * - High-contrast colors (dark bg/white text or inverse)
+ * - 300ms hover delay to show
+ * - 60s auto-dismiss option
+ * - Close button (X) option
+ * - Slide-out-right animation on dismiss
  */
 const Tooltip: React.FC<TooltipProps> = ({
   content,
   children,
   position = 'top',
-  variant = 'highlighted',
-  delay = 200,
+  variant = 'default',
+  showClose = false,
+  autoDismiss = false,
+  autoDismissDelay = AUTO_DISMISS_DURATION,
+  delayDuration = SHOW_DELAY,
+  className = '',
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [open, setOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
+  // Handle close with slide-out animation
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setOpen(false);
+      setIsExiting(false);
+    }, 150); // Animation duration
+  }, []);
+
+  // Auto-dismiss after specified duration
+  useEffect(() => {
+    if (open && autoDismiss) {
+      const timer = setTimeout(() => {
+        handleClose();
+      }, autoDismissDelay);
+      return () => clearTimeout(timer);
+    }
+  }, [open, autoDismiss, autoDismissDelay, handleClose]);
+
+  // Get variant styles - high contrast for visibility
   const getVariantStyles = () => {
     switch (variant) {
       case 'highlighted':
-        return 'bg-amber-500 text-slate-900 border-amber-400 shadow-amber-500/30';
+        // Safety orange - high contrast
+        return 'bg-amber-500 text-slate-900 border-amber-400 shadow-amber-500/40';
       case 'warning':
-        return 'bg-orange-500 text-white border-orange-400 shadow-orange-500/30';
+        // Orange warning
+        return 'bg-orange-500 text-white border-orange-400 shadow-orange-500/40';
       case 'success':
-        return 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30';
+        // Emerald success
+        return 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/40';
+      case 'info':
+        // Blue info
+        return 'bg-blue-500 text-white border-blue-400 shadow-blue-500/40';
       default:
-        return 'bg-slate-800 text-white border-slate-700 shadow-slate-900/50';
+        // High contrast based on theme
+        return isDark
+          ? 'bg-white text-slate-900 border-slate-200 shadow-white/20'
+          : 'bg-slate-900 text-white border-slate-700 shadow-slate-900/40';
     }
   };
 
-  const getArrowStyles = () => {
-    switch (variant) {
-      case 'highlighted':
-        return 'border-amber-500';
-      case 'warning':
-        return 'border-orange-500';
-      case 'success':
-        return 'border-emerald-500';
-      default:
-        return 'border-slate-800';
+  // Map position to Radix side
+  const getSide = (): 'top' | 'right' | 'bottom' | 'left' => {
+    return position;
+  };
+
+  // Animation classes
+  const getAnimationClasses = () => {
+    if (isExiting) {
+      return 'animate-out fade-out-0 slide-out-to-right-2 duration-150';
     }
+    return 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200';
   };
 
-  const getPositionStyles = () => {
-    switch (position) {
-      case 'top':
-        return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
-      case 'bottom':
-        return 'top-full left-1/2 -translate-x-1/2 mt-2';
-      case 'left':
-        return 'right-full top-1/2 -translate-y-1/2 mr-2';
-      case 'right':
-        return 'left-full top-1/2 -translate-y-1/2 ml-2';
-    }
-  };
-
-  const getArrowPosition = () => {
-    switch (position) {
-      case 'top':
-        return 'top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent';
-      case 'bottom':
-        return 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent';
-      case 'left':
-        return 'left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent';
-      case 'right':
-        return 'right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent';
-    }
-  };
-
-  const showTooltip = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-  };
-
-  const hideTooltip = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setIsVisible(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  if (!content) return <>{children}</>;
 
   return (
-    <div
-      ref={triggerRef}
-      className="relative inline-flex"
-      onMouseEnter={showTooltip}
-      onMouseLeave={hideTooltip}
-      onFocus={showTooltip}
-      onBlur={hideTooltip}
-    >
-      {children}
-      {isVisible && content && (
-        <div
-          ref={tooltipRef}
-          role="tooltip"
-          className={`
-            absolute z-[200] px-3 py-2 text-xs font-bold uppercase tracking-wide
-            rounded-lg border shadow-lg whitespace-nowrap
-            animate-in fade-in zoom-in-95 duration-150
-            ${getPositionStyles()}
-            ${getVariantStyles()}
-          `}
-        >
-          {content}
-          <div
+    <TooltipPrimitive.Provider delayDuration={delayDuration}>
+      <TooltipPrimitive.Root open={open} onOpenChange={setOpen}>
+        <TooltipPrimitive.Trigger asChild>
+          <span className="inline-flex">{children}</span>
+        </TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Portal>
+          <TooltipPrimitive.Content
+            side={getSide()}
+            sideOffset={8}
             className={`
-              absolute w-0 h-0 border-4
-              ${getArrowPosition()}
-              ${getArrowStyles()}
+              z-[200] max-w-xs px-3 py-2 text-xs font-semibold
+              rounded-lg border shadow-lg
+              ${getVariantStyles()}
+              ${getAnimationClasses()}
+              ${className}
             `}
-          />
-        </div>
-      )}
-    </div>
+            onPointerDownOutside={(e) => {
+              // Allow clicking outside to close
+              if (showClose) {
+                e.preventDefault();
+              }
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <span className="flex-1">{content}</span>
+              {showClose && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClose();
+                  }}
+                  className={`
+                    flex-shrink-0 -mr-1 -mt-0.5 p-0.5 rounded
+                    transition-colors duration-150
+                    ${variant === 'default'
+                      ? isDark
+                        ? 'hover:bg-slate-200 text-slate-600'
+                        : 'hover:bg-slate-700 text-slate-300'
+                      : variant === 'highlighted'
+                        ? 'hover:bg-amber-600/30 text-slate-800'
+                        : 'hover:bg-white/20 text-white/80'
+                    }
+                  `}
+                  aria-label="Close tooltip"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
+            </div>
+            <TooltipPrimitive.Arrow
+              className={`
+                ${variant === 'highlighted'
+                  ? 'fill-amber-500'
+                  : variant === 'warning'
+                    ? 'fill-orange-500'
+                    : variant === 'success'
+                      ? 'fill-emerald-500'
+                      : variant === 'info'
+                        ? 'fill-blue-500'
+                        : isDark
+                          ? 'fill-white'
+                          : 'fill-slate-900'
+                }
+              `}
+            />
+          </TooltipPrimitive.Content>
+        </TooltipPrimitive.Portal>
+      </TooltipPrimitive.Root>
+    </TooltipPrimitive.Provider>
+  );
+};
+
+/**
+ * Simple Tooltip - For quick usage without close button
+ */
+export const SimpleTooltip: React.FC<{
+  content: string;
+  children: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+}> = ({ content, children, position = 'top' }) => (
+  <Tooltip content={content} position={position} variant="default">
+    {children}
+  </Tooltip>
+);
+
+/**
+ * Info Tooltip - With auto-dismiss and close button
+ * For form field hints and help text
+ */
+export const InfoTooltip: React.FC<{
+  content: React.ReactNode;
+  children: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+}> = ({ content, children, position = 'top' }) => (
+  <Tooltip
+    content={content}
+    position={position}
+    variant="info"
+    showClose
+    autoDismiss
+  >
+    {children}
+  </Tooltip>
+);
+
+/**
+ * Help Icon with Tooltip
+ * Standalone help icon that shows tooltip on hover
+ */
+export const HelpTooltip: React.FC<{
+  content: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  size?: 'sm' | 'md' | 'lg';
+}> = ({ content, position = 'top', size = 'sm' }) => {
+  const sizeClasses = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
+  };
+
+  return (
+    <Tooltip content={content} position={position} variant="info" showClose autoDismiss>
+      <button
+        type="button"
+        className={`
+          inline-flex items-center justify-center
+          text-slate-400 hover:text-slate-600 dark:hover:text-slate-300
+          transition-colors duration-150
+          ${sizeClasses[size]}
+        `}
+        aria-label="Help"
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: 'inherit' }}>
+          help
+        </span>
+      </button>
+    </Tooltip>
   );
 };
 
