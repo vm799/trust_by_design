@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../lib/theme';
+import {
+  carouselSlideVariants,
+  carouselTransition,
+  floatingGlowTransition,
+  floatingGlowSlowTransition,
+} from '../lib/animations';
 
 interface CarouselSlide {
   id: string;
@@ -9,6 +15,15 @@ interface CarouselSlide {
   icon: string;
   isDark: boolean;
 }
+
+// REMEDIATION ITEM 11: Animation objects defined outside component
+const glowAnimation1 = { scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] };
+const glowAnimation2 = { scale: [1.2, 1, 1.2], opacity: [0.4, 0.2, 0.4] };
+const ringAnimation = { scale: [1, 1.1, 1], opacity: [0.5, 0, 0.5] };
+const ringTransition = { duration: 2, repeat: Infinity, ease: 'easeInOut' as const };
+const iconInitial = { scale: 0.8, rotate: -10 };
+const iconAnimate = { scale: 1, rotate: 0 };
+const iconTransition = { type: 'spring' as const, stiffness: 200, damping: 15 };
 
 const slides: CarouselSlide[] = [
   {
@@ -120,36 +135,22 @@ export const DayNightCarousel: React.FC = () => {
             transition-all duration-700
           `}
         >
-          {/* Animated background glow */}
+          {/* Animated background glow - REMEDIATION ITEM 11: Using memoized animation objects */}
           <motion.div
             className={`
               absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl
               ${isSlideNight ? 'bg-primary/20' : 'bg-amber-300/30'}
             `}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+            animate={glowAnimation1}
+            transition={floatingGlowTransition}
           />
           <motion.div
             className={`
               absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-3xl
               ${isSlideNight ? 'bg-indigo-500/20' : 'bg-blue-300/30'}
             `}
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.4, 0.2, 0.4],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+            animate={glowAnimation2}
+            transition={floatingGlowSlowTransition}
           />
 
           {/* Slide Content */}
@@ -168,7 +169,7 @@ export const DayNightCarousel: React.FC = () => {
               }}
               className="relative z-10 flex flex-col items-center text-center"
             >
-              {/* Icon with glow effect */}
+              {/* Icon with glow effect - REMEDIATION ITEM 11: Using memoized animation objects */}
               <motion.div
                 className={`
                   relative mb-6 p-6 rounded-2xl
@@ -177,9 +178,9 @@ export const DayNightCarousel: React.FC = () => {
                     : 'bg-gradient-to-br from-amber-100 to-orange-100 shadow-lg shadow-amber-200/50'
                   }
                 `}
-                initial={{ scale: 0.8, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                initial={iconInitial}
+                animate={iconAnimate}
+                transition={iconTransition}
               >
                 <span
                   className={`
@@ -191,21 +192,14 @@ export const DayNightCarousel: React.FC = () => {
                   {currentSlide.icon}
                 </span>
 
-                {/* Animated ring */}
+                {/* Animated ring - REMEDIATION ITEM 11: Using memoized animation objects */}
                 <motion.div
                   className={`
                     absolute inset-0 rounded-2xl border-2
                     ${isSlideNight ? 'border-primary/50' : 'border-amber-400/50'}
                   `}
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.5, 0, 0.5],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
+                  animate={ringAnimation}
+                  transition={ringTransition}
                 />
               </motion.div>
 
