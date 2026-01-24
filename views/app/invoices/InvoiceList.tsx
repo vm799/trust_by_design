@@ -2,14 +2,15 @@
  * InvoiceList - Invoice Management List View
  *
  * Displays all invoices with status filtering.
+ * REMEDIATION ITEM 10: Added error state with retry UI
  *
  * Phase I: Invoice Flow
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../../components/ui';
+import { Card, StatusBadge, ActionButton, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
 import { getInvoices, getClients, getJobs } from '../../../hooks/useWorkspaceData';
 import { Invoice, Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
@@ -19,31 +20,36 @@ type FilterStatus = 'all' | 'pending' | 'paid' | 'overdue';
 const InvoiceList: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [invoicesData, clientsData, jobsData] = await Promise.all([
-          getInvoices(),
-          getClients(),
-          getJobs(),
-        ]);
-        setInvoices(invoicesData);
-        setClients(clientsData);
-        setJobs(jobsData);
-      } catch (error) {
-        console.error('Failed to load invoices:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [invoicesData, clientsData, jobsData] = await Promise.all([
+        getInvoices(),
+        getClients(),
+        getJobs(),
+      ]);
+      setInvoices(invoicesData);
+      setClients(clientsData);
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('Failed to load invoices:', err);
+      setError('Failed to load invoices. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Get invoice status
   const getInvoiceStatus = (invoice: Invoice): FilterStatus => {
@@ -99,6 +105,23 @@ const InvoiceList: React.FC = () => {
         <PageHeader title="Invoices" />
         <PageContent>
           <LoadingSkeleton variant="list" count={5} />
+        </PageContent>
+      </div>
+    );
+  }
+
+  // REMEDIATION ITEM 10: Show error state with retry
+  if (error) {
+    return (
+      <div>
+        <PageHeader title="Invoices" />
+        <PageContent>
+          <ErrorState
+            title="Failed to load invoices"
+            message={error}
+            onRetry={loadData}
+            secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
+          />
         </PageContent>
       </div>
     );

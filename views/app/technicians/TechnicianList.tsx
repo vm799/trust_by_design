@@ -2,20 +2,22 @@
  * TechnicianList - Technician Management View
  *
  * Displays all technicians with job assignments.
+ * REMEDIATION ITEM 10: Added error state with retry UI
  *
  * Phase E: Job Lifecycle
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, EmptyState, LoadingSkeleton, Modal } from '../../../components/ui';
+import { Card, ActionButton, EmptyState, ErrorState, LoadingSkeleton, Modal } from '../../../components/ui';
 import { getTechnicians, getJobs, addTechnician, deleteTechnician } from '../../../hooks/useWorkspaceData';
 import { Technician, Job } from '../../../types';
 import { ROUTES } from '../../../lib/routes';
 
 const TechnicianList: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,24 +30,28 @@ const TechnicianList: React.FC = () => {
     phone: '',
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [techsData, jobsData] = await Promise.all([
-          getTechnicians(),
-          getJobs(),
-        ]);
-        setTechnicians(techsData);
-        setJobs(jobsData);
-      } catch (error) {
-        console.error('Failed to load technicians:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [techsData, jobsData] = await Promise.all([
+        getTechnicians(),
+        getJobs(),
+      ]);
+      setTechnicians(techsData);
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('Failed to load technicians:', err);
+      setError('Failed to load technicians. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // REMEDIATION ITEM 7: Memoize tech stats to avoid O(n*m) lookups in render
   const techStatsMap = useMemo(() => {
@@ -124,6 +130,26 @@ const TechnicianList: React.FC = () => {
         />
         <PageContent>
           <LoadingSkeleton variant="list" count={5} />
+        </PageContent>
+      </div>
+    );
+  }
+
+  // REMEDIATION ITEM 10: Show error state with retry
+  if (error) {
+    return (
+      <div>
+        <PageHeader
+          title="Technicians"
+          actions={[{ label: 'Add Technician', icon: 'add', onClick: () => setShowAddModal(true), variant: 'primary' }]}
+        />
+        <PageContent>
+          <ErrorState
+            title="Failed to load technicians"
+            message={error}
+            onRetry={loadData}
+            secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
+          />
         </PageContent>
       </div>
     );
