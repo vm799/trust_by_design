@@ -1,26 +1,16 @@
 
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { Job, Client, Technician, JobTemplate, UserProfile, Invoice } from './types';
+import { UserProfile } from './types';
 import { startSyncWorker } from './lib/syncQueue';
 import { signOut, getUserProfile } from './lib/auth';
-import { getJobs, getClients, getTechnicians } from './lib/db';
 import { getSupabase } from './lib/supabase';
 import { pushQueue, pullJobs } from './lib/offline/sync';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
 
-// PERFORMANCE: Custom debounce utility to batch localStorage writes
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
+// PERFORMANCE: Debounce utility moved to DataContext for centralized state management
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -110,10 +100,28 @@ const ChunkErrorFallback: React.FC<{ error: Error; resetError: () => void }> = (
   </div>
 );
 
-// Inner component that consumes AuthContext
+// Inner component that consumes AuthContext and DataContext
 const AppContent: React.FC = () => {
   // CRITICAL FIX: Consume AuthContext instead of managing own auth state
   const { session, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // REMEDIATION #1: Use DataContext for centralized data state
+  const {
+    jobs,
+    clients,
+    technicians,
+    invoices,
+    templates,
+    isLoading: dataLoading,
+    addJob,
+    updateJob,
+    addClient,
+    deleteClient,
+    addTechnician,
+    deleteTechnician,
+    addInvoice,
+    updateInvoiceStatus,
+  } = useData();
 
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
     return localStorage.getItem('jobproof_onboarding_v4') === 'true';
@@ -174,26 +182,9 @@ const AppContent: React.FC = () => {
     };
   }, [user?.workspace?.id]);
 
-  // Data state (Phase C.2: Load from Supabase with localStorage fallback)
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
-
   // CRITICAL FIX: Track profile loading separately from auth loading
   // This prevents premature redirects that cause the /admin ↔ /auth/setup loop
   const [profileLoading, setProfileLoading] = useState(true);
-
-  // Templates still in localStorage (Phase D.6 will migrate to Protocols)
-  const [templates, setTemplates] = useState<JobTemplate[]>(() => {
-    const saved = localStorage.getItem('jobproof_templates_v2');
-    return saved ? JSON.parse(saved) : [
-      { id: 't1', name: 'Electrical Safety Audit', description: 'Standard 20-point precision audit for commercial infrastructure.', defaultTasks: ['Verify PPE', 'Lockout Tagout', 'Voltage Check', 'Evidence Capture'] },
-      { id: 't2', name: 'Mechanical Systems Check', description: 'Quarterly operational protocol for HVAC/R units.', defaultTasks: ['Filter Inspection', 'Fluid Levels', 'Acoustic Test', 'Final Evidence'] },
-      { id: 't3', name: 'Rapid Proof Capture', description: 'Priority evidence sequence for emergency callouts.', defaultTasks: ['Emergency Snapshot', 'Hazard ID', 'Signature Capture'] }
-    ];
-  });
 
   // CRITICAL FIX: Use STABLE primitive values instead of session object
   // The session object changes reference on EVERY token refresh (every ~10-50 minutes)
@@ -218,8 +209,7 @@ const AppContent: React.FC = () => {
         setProfileLoading(false); // Done loading (no profile to load)
         // Clear user data from localStorage on logout
         localStorage.removeItem('jobproof_user_v2');
-        // Fallback to localStorage if not authenticated
-        loadLocalStorageData();
+        // DataContext handles localStorage fallback automatically
         return;
       }
 
@@ -285,9 +275,7 @@ const AppContent: React.FC = () => {
         setUser(userProfile);
         profileLoadedRef.current = sessionUserId;
         setProfileLoading(false); // CRITICAL: Profile loaded successfully
-
-        // Phase C.2: Load workspace data from Supabase
-        loadWorkspaceData(profile.workspace_id);
+        // DataContext automatically loads workspace data based on workspaceId
       } else {
         // CRITICAL FIX: Profile load failed - handle gracefully
         console.warn('[App] Session exists but profile missing. Redirecting to setup.');
@@ -303,148 +291,23 @@ const AppContent: React.FC = () => {
     loadProfile();
   }, [sessionUserId]); // FIXED: Only depends on primitive userId, not session object
 
-  // Phase C.2: Load data from Supabase
-  const loadWorkspaceData = async (workspaceId: string) => {
-    setDataLoading(true);
-
-    try {
-      // Load jobs, clients, and technicians in parallel
-      const [jobsResult, clientsResult, techsResult] = await Promise.all([
-        getJobs(workspaceId),
-        getClients(workspaceId),
-        getTechnicians(workspaceId)
-      ]);
-
-      if (jobsResult.success && jobsResult.data) {
-        setJobs(jobsResult.data);
-      } else {
-        console.warn('Failed to load jobs from Supabase, falling back to localStorage:', jobsResult.error);
-        loadLocalStorageJobs();
-      }
-
-      if (clientsResult.success && clientsResult.data) {
-        setClients(clientsResult.data);
-      } else {
-        console.warn('Failed to load clients from Supabase, falling back to localStorage:', clientsResult.error);
-        loadLocalStorageClients();
-      }
-
-      if (techsResult.success && techsResult.data) {
-        setTechnicians(techsResult.data);
-      } else {
-        console.warn('Failed to load technicians from Supabase, falling back to localStorage:', techsResult.error);
-        loadLocalStorageTechnicians();
-      }
-
-      // Invoices still from localStorage (Phase E.1)
-      loadLocalStorageInvoices();
-    } catch (error) {
-      console.error('Error loading workspace data:', error);
-      loadLocalStorageData();
-    } finally {
-      setDataLoading(false);
-    }
-  };
-
-  // Fallback: Load from localStorage
-  const loadLocalStorageData = () => {
-    loadLocalStorageJobs();
-    loadLocalStorageClients();
-    loadLocalStorageTechnicians();
-    loadLocalStorageInvoices();
-  };
-
-  const loadLocalStorageJobs = () => {
-    const saved = localStorage.getItem('jobproof_jobs_v2');
-    if (saved) {
-      try {
-        setJobs(JSON.parse(saved));
-      } catch (error) {
-        console.error('Failed to parse jobs from localStorage:', error);
-      }
-    }
-  };
-
-  const loadLocalStorageClients = () => {
-    const saved = localStorage.getItem('jobproof_clients_v2');
-    if (saved) {
-      try {
-        setClients(JSON.parse(saved));
-      } catch (error) {
-        console.error('Failed to parse clients from localStorage:', error);
-      }
-    }
-  };
-
-  const loadLocalStorageTechnicians = () => {
-    const saved = localStorage.getItem('jobproof_technicians_v2');
-    if (saved) {
-      try {
-        setTechnicians(JSON.parse(saved));
-      } catch (error) {
-        console.error('Failed to parse technicians from localStorage:', error);
-      }
-    }
-  };
-
-  const loadLocalStorageInvoices = () => {
-    const saved = localStorage.getItem('jobproof_invoices_v2');
-    if (saved) {
-      try {
-        setInvoices(JSON.parse(saved));
-      } catch (error) {
-        console.error('Failed to parse invoices from localStorage:', error);
-      }
-    }
-  };
-
-  // PERFORMANCE OPTIMIZATION: Debounced localStorage persistence
-  // Previously: 8 writes per state change (causing performance issues)
-  // Now: Batched writes with 1000ms debounce, immediate save on unmount
-  const saveToLocalStorage = useCallback(() => {
-    localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
-    localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
-    localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
-    localStorage.setItem('jobproof_technicians_v2', JSON.stringify(technicians));
-    localStorage.setItem('jobproof_templates_v2', JSON.stringify(templates));
-    localStorage.setItem('jobproof_onboarding_v4', hasSeenOnboarding.toString());
-
-    // Persist user profile
-    if (user) {
-      localStorage.setItem('jobproof_user_v2', JSON.stringify(user));
-    }
-  }, [jobs, invoices, clients, technicians, templates, user, hasSeenOnboarding]);
-
-  // Create debounced version once
-  const debouncedSave = useRef(debounce(saveToLocalStorage, 1000)).current;
-
-  // Trigger debounced save on state changes
-  useEffect(() => {
-    debouncedSave();
-
-    // CRITICAL: Save immediately on unmount to ensure final state is persisted
-    return () => {
-      saveToLocalStorage();
-    };
-  }, [jobs, invoices, clients, technicians, templates, user, hasSeenOnboarding, debouncedSave, saveToLocalStorage]);
-
+  // REMEDIATION #1: Data loading and mutations now handled by DataContext
   // Start background sync worker on app mount
   useEffect(() => {
     startSyncWorker();
   }, []);
 
-  const addJob = (newJob: Job) => setJobs(prev => [newJob, ...prev]);
-  const updateJob = (updatedJob: Job) => setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
+  // Save user profile to localStorage when it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('jobproof_user_v2', JSON.stringify(user));
+    }
+    localStorage.setItem('jobproof_onboarding_v4', hasSeenOnboarding.toString());
+  }, [user, hasSeenOnboarding]);
 
-  const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
-  const updateInvoiceStatus = (id: string, status: Invoice['status']) =>
-    setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status } : inv));
-
-  const addClient = (c: Client) => setClients(prev => [...prev, c]);
-  const deleteClient = (id: string) => setClients(prev => prev.filter(c => c.id !== id));
-
-  const addTech = (t: Technician) => setTechnicians(prev => [...prev, t]);
-  const deleteTech = (id: string) => setTechnicians(prev => prev.filter(t => t.id !== id));
+  // Alias for technician mutations (matches old API)
+  const addTech = addTechnician;
+  const deleteTech = deleteTechnician;
 
   const completeOnboarding = () => {
     setHasSeenOnboarding(true);
@@ -656,13 +519,15 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Main App component that provides AuthContext
+// Main App component that provides AuthContext and DataContext
 const App: React.FC = () => {
-  // We need to lift user state out to pass workspaceId to AuthProvider
-  // But we'll use a temporary approach: pass null initially, AuthContext manages its own
+  // REMEDIATION #1: DataProvider wraps AppContent for centralized state management
+  // AuthProvider → DataProvider → AppContent (data depends on auth)
   return (
     <AuthProvider workspaceId={null}>
-      <AppContent />
+      <DataProvider>
+        <AppContent />
+      </DataProvider>
     </AuthProvider>
   );
 };
