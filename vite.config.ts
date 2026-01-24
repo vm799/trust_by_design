@@ -58,47 +58,86 @@ export default defineConfig(({ mode }) => {
             comments: false
           }
         },
-        // Aggressive code splitting
+        // REMEDIATION ITEM 12: Split large route chunks for better code splitting
+        // Each chunk should be ~50-80KB for optimal loading
         rollupOptions: {
           output: {
             manualChunks: {
               // Vendor chunks
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-              'supabase-vendor': ['@supabase/supabase-js'],
+              'animation-vendor': ['framer-motion'],
               'db-vendor': ['dexie'],
-              // Route chunks
+
+              // Auth routes - split by flow
               'auth-routes': [
                 './views/AuthView.tsx',
-                './views/EmailFirstAuth.tsx',
                 './views/OAuthSetup.tsx',
                 './views/SignupSuccess.tsx',
                 './views/CompleteOnboarding.tsx'
               ],
-              'admin-routes': [
+
+              // Admin routes - split by function
+              'admin-dashboard': [
                 './views/AdminDashboard.tsx',
+                './views/ManagerIntentSelector.tsx'
+              ],
+              'admin-jobs': [
                 './views/CreateJob.tsx',
+                './views/JobCreationWizard.tsx',
+                './views/app/jobs/JobsList.tsx'
+              ],
+              'admin-management': [
                 './views/ClientsView.tsx',
                 './views/TechniciansView.tsx',
                 './views/TemplatesView.tsx',
-                './views/InvoicesView.tsx',
+                './views/app/clients/ClientForm.tsx',
+                './views/app/technicians/TechnicianForm.tsx'
+              ],
+              'admin-settings': [
                 './views/Settings.tsx',
-                './views/ProfileView.tsx'
+                './views/ProfileView.tsx',
+                './views/HelpCenter.tsx'
               ],
+              'admin-finance': [
+                './views/InvoicesView.tsx'
+              ],
+
+              // Contractor routes - kept together (reasonable size)
               'contractor-routes': [
-                './views/ContractorDashboard.tsx',
-                './views/TechnicianPortal.tsx'
+                './views/ContractorDashboard.tsx'
               ],
+
+              // Technician portal - separate chunk (public access)
+              'tech-portal': [
+                './views/TechnicianPortal.tsx',
+                './views/TrackLookup.tsx'
+              ],
+
+              // Client routes
               'client-routes': [
                 './views/ClientDashboard.tsx',
                 './views/JobReport.tsx'
               ],
-              'public-routes': [
-                './views/LandingPage.tsx',
+
+              // Public routes - split landing from static pages
+              'landing': [
+                './views/LandingPage.tsx'
+              ],
+              'public-static': [
                 './views/PricingView.tsx',
                 './views/RoadmapView.tsx',
-                './views/HelpCenter.tsx',
-                './views/LegalPage.tsx',
-                './views/TrackLookup.tsx'
+                './views/LegalPage.tsx'
+              ],
+
+              // Onboarding - separate chunk
+              'onboarding': [
+                './views/ManagerOnboarding.tsx',
+                './components/OnboardingTour.tsx'
+              ],
+
+              // Docs - separate chunk
+              'docs': [
+                './views/docs/AuditReport.tsx'
               ]
             },
             // Optimize chunk naming
