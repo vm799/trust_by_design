@@ -9,6 +9,11 @@
  * - Mutation functions accessible from any component
  * - Loading and error states
  *
+ * REMEDIATION ITEM 8: Loading States Pattern
+ * - Global isLoading: For initial data fetch and refresh operations
+ * - Local component states: Forms handle their own 'saving' state for specific operations
+ * - This separation provides better UX - users see specific feedback per action
+ *
  * Usage:
  *   const { jobs, clients, addJob, updateJob, isLoading } = useData();
  */
@@ -50,6 +55,7 @@ interface DataContextType {
 
   // Loading states
   isLoading: boolean;
+  isRefreshing: boolean;  // REMEDIATION ITEM 8: Separate state for background refresh
   isInitialized: boolean;
   error: string | null;
 
@@ -105,6 +111,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);  // REMEDIATION ITEM 8
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -291,13 +298,18 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     setTemplates(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Refresh function
+  // Refresh function - REMEDIATION ITEM 8: Uses separate isRefreshing state
   const refresh = useCallback(async () => {
-    if (workspaceId) {
-      loadedWorkspaceRef.current = null; // Force reload
-      await loadFromSupabase(workspaceId);
-    } else {
-      loadFromLocalStorage();
+    setIsRefreshing(true);
+    try {
+      if (workspaceId) {
+        loadedWorkspaceRef.current = null; // Force reload
+        await loadFromSupabase(workspaceId);
+      } else {
+        loadFromLocalStorage();
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   }, [workspaceId, loadFromSupabase, loadFromLocalStorage]);
 
@@ -311,6 +323,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
     // Loading states
     isLoading,
+    isRefreshing,
     isInitialized,
     error,
 
