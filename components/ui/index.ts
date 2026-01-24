@@ -21,3 +21,4 @@ export {
   TechnicianCreationBreadcrumbs,
 } from './Breadcrumbs';
 export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
+export { default as JobActionsMenu } from './JobActionsMenu';

@@ -306,9 +306,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
         {/* Header with Sticky CTA */}
             <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
               <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                <div className="space-y-1">
-                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
-                  <p className="text-slate-400 text-sm">Verifiable field evidence management.</p>
+                <div className="space-y-1 flex items-center gap-3">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
+                    <p className="text-slate-400 text-sm">Verifiable field evidence management.</p>
+                  </div>
+                  {/* Phase 3.5: Red Alert Badge for Unopened Links */}
+                  {linksNeedingAttention.length > 0 && (
+                    <button
+                      onClick={() => document.getElementById('unopened-alerts')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="relative flex items-center gap-2 px-3 py-2 bg-danger/20 hover:bg-danger/30 border border-danger/40 rounded-xl transition-all animate-pulse"
+                      title={`${linksNeedingAttention.length} unopened job link${linksNeedingAttention.length > 1 ? 's' : ''}`}
+                    >
+                      <span className="material-symbols-outlined text-danger text-lg">warning</span>
+                      <span className="text-danger font-black text-sm">{linksNeedingAttention.length}</span>
+                      <span className="hidden sm:inline text-danger text-xs font-bold uppercase">Unopened</span>
+                    </button>
+                  )}
                 </div>
                 <button
                   id="btn-dispatch"
@@ -351,9 +365,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         )}
 
-            {/* UNOPENED LINK ALERTS - Mobile optimized */}
+            {/* UNOPENED LINK ALERTS - Mobile optimized - Phase 3.5: Enhanced with Call Tech */}
             {linksNeedingAttention.length > 0 && (
-              <div className="bg-gradient-to-br from-warning/10 to-orange-500/10 border-2 border-warning/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in">
+              <div id="unopened-alerts" className="bg-gradient-to-br from-danger/10 to-orange-500/10 border-2 border-danger/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in scroll-mt-20">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-warning/20 flex items-center justify-center flex-shrink-0">
                     <span className="material-symbols-outlined text-warning text-lg sm:text-xl font-black animate-pulse">notifications_active</span>
@@ -402,6 +416,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                             </p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
+                            {/* Phase 3.5: Call Tech button */}
+                            {(() => {
+                              const tech = technicians.find(t => t.id === linkedJob.techId);
+                              return tech?.phone ? (
+                                <a
+                                  href={`tel:${tech.phone}`}
+                                  className="flex items-center gap-1 px-3 py-2 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                                  title={`Call ${tech.name}: ${tech.phone}`}
+                                >
+                                  <span className="material-symbols-outlined text-xs">call</span>
+                                  <span className="hidden sm:inline">Call</span>
+                                </a>
+                              ) : null;
+                            })()}
                             <button
                               onClick={() => navigate(`/admin/report/${link.job_id}`)}
                               className="flex-1 sm:flex-none px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
