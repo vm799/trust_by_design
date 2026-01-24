@@ -2,11 +2,12 @@
  * BottomNav - Mobile Bottom Navigation
  *
  * Provides thumb-zone optimized navigation for mobile users.
+ * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
  *
  * Phase A: Foundation & App Shell
  */
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface BottomNavProps {
@@ -26,6 +27,31 @@ const navItems: NavItem[] = [
   { to: '/app/invoices', icon: 'receipt_long', label: 'Invoices' },
   { to: '/app/settings', icon: 'more_horiz', label: 'More' },
 ];
+
+// Memoized nav item component to prevent re-renders when other items change
+const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) => (
+  <Link
+    to={item.to}
+    className={`
+      flex flex-col items-center justify-center gap-1
+      min-w-[64px] min-h-[48px] px-3 py-2
+      rounded-xl transition-colors
+      ${active
+        ? 'text-primary'
+        : 'text-slate-500 hover:text-slate-300'
+      }
+    `}
+  >
+    <span className={`material-symbols-outlined text-2xl ${active ? 'font-bold' : ''}`}>
+      {item.icon}
+    </span>
+    <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>
+      {item.label}
+    </span>
+  </Link>
+));
+
+NavItemLink.displayName = 'NavItemLink';
 
 const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
   const location = useLocation();
@@ -50,34 +76,17 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
       ${className}
     `}>
       <div className="flex items-center justify-around h-16">
-        {navItems.map(item => {
-          const active = isActive(item.to);
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`
-                flex flex-col items-center justify-center gap-1
-                min-w-[64px] min-h-[48px] px-3 py-2
-                rounded-xl transition-colors
-                ${active
-                  ? 'text-primary'
-                  : 'text-slate-500 hover:text-slate-300'
-                }
-              `}
-            >
-              <span className={`material-symbols-outlined text-2xl ${active ? 'font-bold' : ''}`}>
-                {item.icon}
-              </span>
-              <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+        {navItems.map(item => (
+          <NavItemLink
+            key={item.to}
+            item={item}
+            active={isActive(item.to)}
+          />
+        ))}
       </div>
     </nav>
   );
 };
 
-export default BottomNav;
+// REMEDIATION ITEM 6: Export memoized component
+export default memo(BottomNav);

@@ -6,11 +6,12 @@
  * - Optional subtitle/description
  * - Optional action buttons
  * - Optional breadcrumbs
+ * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
  *
  * Phase A: Foundation & App Shell
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 
 interface Breadcrumb {
@@ -141,4 +142,5 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   );
 };
 
-export default PageHeader;
+// REMEDIATION ITEM 6: Export memoized PageHeader
+export default memo(PageHeader);
