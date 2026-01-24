@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
@@ -89,6 +89,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   technicians,
 }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -108,6 +109,40 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     clientId: '',
     techId: '',
   });
+
+  // Phase 2.5: Auto-populate from returnTo params (client/technician creation flow)
+  useEffect(() => {
+    const newClientId = searchParams.get('newClientId');
+    const newTechId = searchParams.get('newTechId');
+
+    if (newClientId || newTechId) {
+      setFormData(prev => ({
+        ...prev,
+        ...(newClientId && { clientId: newClientId }),
+        ...(newTechId && { techId: newTechId }),
+      }));
+
+      // Jump to step 4 (Assign Contractor) if we have new selections
+      if (newClientId || newTechId) {
+        setStep(4);
+        showToast(
+          newClientId && newTechId
+            ? 'Client and technician selected!'
+            : newClientId
+            ? 'Client selected! Now choose a technician.'
+            : 'Technician selected!',
+          'success',
+          3000
+        );
+      }
+
+      // Clear the params from URL to prevent re-triggering
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('newClientId');
+      newParams.delete('newTechId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Refs for auto-focus
   const titleRef = useRef<HTMLInputElement>(null);
@@ -154,6 +189,20 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     if (canProceed() && step < 5) {
       hapticFeedback('light');
       setStep(step + 1);
+    }
+  };
+
+  // Phase 2.5: Keyboard navigation - Enter to proceed, Escape to go back
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Don't trigger on textareas (allow multi-line input)
+    if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+
+    if (e.key === 'Enter' && canProceed() && step < 5) {
+      e.preventDefault();
+      handleNext();
+    } else if (e.key === 'Escape' && step > 1) {
+      e.preventDefault();
+      handleBack();
     }
   };
 
@@ -293,10 +342,29 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   const selectedClient = clients.find(c => c.id === formData.clientId);
   const selectedTech = technicians.find(t => t.id === formData.techId);
 
+  // Phase 2.5: Calculate progress percentage for smooth progress bar
+  const progressPercent = ((step - 1) / (STEP_TITLES.length - 1)) * 100;
+
   return (
     <Layout user={user}>
       <div className="max-w-2xl mx-auto pb-20">
-        {/* Progress Bar */}
+        {/* Phase 2.5: Top Progress Bar - Fixed position for visibility */}
+        <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm pt-4 pb-2 -mx-4 px-4 mb-6">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="font-bold uppercase tracking-widest">
+              Step {step} of {STEP_TITLES.length}
+            </span>
+            <span className="font-mono">{Math.round(progressPercent)}%</span>
+          </div>
+          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-success rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Step Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             {STEP_TITLES.map((title, idx) => (
@@ -336,8 +404,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           </h2>
         </div>
 
-        {/* Step Content */}
-        <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
+        {/* Step Content - Phase 2.5: Added keyboard navigation */}
+        <div
+          className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+          onKeyDown={handleKeyDown}
+        >
           {/* Step 1: Job Basics */}
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
@@ -658,8 +729,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   value={formData.clientId}
                   onChange={(e) => {
                     if (e.target.value === '__add_new__') {
-                      // Navigate to client creation - UAT Fix #9
-                      window.location.href = '/admin/clients/new?returnTo=/admin/jobs/new';
+                      // Phase 2.5: Navigate to client creation with returnTo
+                      navigate('/admin/clients/new?returnTo=' + encodeURIComponent('/admin/create'));
                     } else {
                       setFormData({ ...formData, clientId: e.target.value });
                     }
@@ -685,8 +756,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   value={formData.techId}
                   onChange={(e) => {
                     if (e.target.value === '__add_new__') {
-                      // Navigate to technician creation - UAT Fix #9
-                      window.location.href = '/admin/technicians/new?returnTo=/admin/jobs/new';
+                      // Phase 2.5: Navigate to technician creation with returnTo
+                      navigate('/admin/technicians/new?returnTo=' + encodeURIComponent('/admin/create'));
                     } else {
                       setFormData({ ...formData, techId: e.target.value });
                     }

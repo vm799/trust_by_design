@@ -53,6 +53,8 @@ const RoadmapView = lazy(() => import('./views/RoadmapView'));
 const TrackLookup = lazy(() => import('./views/TrackLookup'));
 const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector'));
 const JobsList = lazy(() => import('./views/app/jobs/JobsList'));
+const ClientForm = lazy(() => import('./views/app/clients/ClientForm'));
+const TechnicianForm = lazy(() => import('./views/app/technicians/TechnicianForm'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -626,7 +628,9 @@ const AppContent: React.FC = () => {
         {/* Legacy Job Creation (kept for backwards compatibility) */}
         <Route path="/admin/create-quick" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/clients" element={isAuthenticated ? <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients/new" element={isAuthenticated ? <ClientForm /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians/new" element={isAuthenticated ? <TechnicianForm /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView user={user} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView user={user} invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
         <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
