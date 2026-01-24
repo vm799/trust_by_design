@@ -162,10 +162,11 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
             </span>
           </div>
           <div className="flex -space-x-2">
-            {job.photos.slice(0, 4).map((p, i) => {
+            {/* REMEDIATION ITEM 9: Use photo.id for stable React keys */}
+            {job.photos.slice(0, 4).map((p) => {
               const displayUrl = p.isIndexedDBRef ? (photoDataUrls?.get(p.id) || '') : p.url;
               return (
-                <div key={i} className="size-8 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800 flex-shrink-0">
+                <div key={p.id} className="size-8 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800 flex-shrink-0">
                   {displayUrl ? (
                     <img
                       src={displayUrl}
