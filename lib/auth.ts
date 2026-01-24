@@ -573,3 +573,7 @@ export const updatePassword = async (newPassword: string): Promise<AuthResult> =
     };
   }
 };
+
+// REMEDIATION ITEM 13: Re-export getSupabase for modules that lazy-load auth
+// This allows getting supabase client through auth module without separate import
+export { getSupabase as getSupabaseClient } from './supabase';

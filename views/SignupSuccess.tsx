@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+// REMEDIATION ITEM 13: Static import since view is already lazy-loaded
+import { getSupabase } from '../lib/supabase';
 
 interface LocationState {
   email?: string;
@@ -113,7 +115,6 @@ const SignupSuccess: React.FC = () => {
               type="button"
               className="text-primary text-xs font-bold hover:underline uppercase tracking-wide"
               onClick={async () => {
-                const { getSupabase } = await import('../lib/supabase');
                 const supabase = getSupabase();
                 if (!supabase) {
                   alert('Supabase not configured');

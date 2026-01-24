@@ -11,8 +11,11 @@ import RouteErrorBoundary from './components/RouteErrorBoundary';
 // These are loaded on-demand when first needed
 const getSyncQueue = () => import('./lib/syncQueue');
 const getAuth = () => import('./lib/auth');
-const getSupabaseModule = () => import('./lib/supabase');
 const getOfflineSync = () => import('./lib/offline/sync');
+
+// REMEDIATION ITEM 13: Removed getSupabaseModule - supabase is statically imported
+// by auth.ts, db.ts, etc. so dynamic import provides no code splitting benefit.
+// When getAuth() loads auth.ts, supabase comes with it.
 
 // PERFORMANCE: Debounce utility moved to DataContext for centralized state management
 
@@ -249,9 +252,8 @@ const AppContent: React.FC = () => {
           .replace(/^-|-$/g, '');
         const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
-        // REMEDIATION ITEM 5: Lazy load supabase module
-        const supabaseModule = await getSupabaseModule();
-        const supabase = supabaseModule.getSupabase();
+        // REMEDIATION ITEM 13: Get supabase through auth module (already lazy loaded above)
+        const supabase = auth.getSupabaseClient();
         if (supabase) {
           try {
             const { error } = await supabase.rpc('create_workspace_with_owner', {
