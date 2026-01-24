@@ -2,42 +2,48 @@
  * ClientList - Client Registry List View
  *
  * Displays all clients with search and filtering.
+ * REMEDIATION ITEM 10: Added error state with retry UI
  *
  * Phase D: Client Registry
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../../components/ui';
+import { Card, ActionButton, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
 import { getClients, getJobs } from '../../../hooks/useWorkspaceData';
 import { Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
 const ClientList: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
   const [clients, setClients] = useState<Client[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [clientsData, jobsData] = await Promise.all([
-          getClients(),
-          getJobs(),
-        ]);
-        setClients(clientsData);
-        setJobs(jobsData);
-      } catch (error) {
-        console.error('Failed to load clients:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [clientsData, jobsData] = await Promise.all([
+        getClients(),
+        getJobs(),
+      ]);
+      setClients(clientsData);
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('Failed to load clients:', err);
+      setError('Failed to load clients. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Filter clients by search query
   const filteredClients = useMemo(() => {
@@ -113,6 +119,26 @@ const ClientList: React.FC = () => {
         />
         <PageContent>
           <LoadingSkeleton variant="list" count={5} />
+        </PageContent>
+      </div>
+    );
+  }
+
+  // REMEDIATION ITEM 10: Show error state with retry
+  if (error) {
+    return (
+      <div>
+        <PageHeader
+          title="Clients"
+          actions={[{ label: 'Add Client', icon: 'add', to: ROUTES.CLIENT_NEW, variant: 'primary' }]}
+        />
+        <PageContent>
+          <ErrorState
+            title="Failed to load clients"
+            message={error}
+            onRetry={loadData}
+            secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
+          />
         </PageContent>
       </div>
     );
