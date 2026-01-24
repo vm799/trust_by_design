@@ -14,9 +14,12 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { Job, Client, Technician, Invoice, JobTemplate, UserProfile } from '../types';
-import { getJobs as dbGetJobs, getClients as dbGetClients, getTechnicians as dbGetTechnicians } from './db';
+import { Job, Client, Technician, Invoice, JobTemplate } from '../types';
 import { useAuth } from './AuthContext';
+
+// REMEDIATION ITEM 5: Lazy load heavy db module (2,445 lines)
+// Dynamic import defers parsing until actually needed
+const getDbModule = () => import('./db');
 
 // Debounce utility for batched localStorage writes
 function debounce<T extends (...args: unknown[]) => unknown>(
@@ -129,15 +132,19 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, []);
 
   // Load data from Supabase with localStorage fallback
+  // REMEDIATION ITEM 5: Uses dynamic import for lazy loading
   const loadFromSupabase = useCallback(async (wsId: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Lazy load db module only when needed
+      const db = await getDbModule();
+
       const [jobsResult, clientsResult, techsResult] = await Promise.all([
-        dbGetJobs(wsId),
-        dbGetClients(wsId),
-        dbGetTechnicians(wsId)
+        db.getJobs(wsId),
+        db.getClients(wsId),
+        db.getTechnicians(wsId)
       ]);
 
       if (jobsResult.success && jobsResult.data) {
