@@ -33,11 +33,15 @@ const ThemeTestComponent = () => {
   );
 };
 
+/**
+ * Phase 5.5: Dark-only theme tests
+ * The theme system now always resolves to dark mode for a consistent premium experience.
+ * All theme operations (setTheme, toggleDayNight) are no-ops that maintain dark mode.
+ */
 describe('Theme System', () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove('light', 'dark');
-    // Ensure matchMedia is always mocked
     window.matchMedia = createMatchMediaMock(false);
   });
 
@@ -45,20 +49,8 @@ describe('Theme System', () => {
     vi.restoreAllMocks();
   });
 
-  describe('ThemeProvider', () => {
-    it('defaults to auto mode when no preference stored', () => {
-      render(
-        <ThemeProvider>
-          <ThemeTestComponent />
-        </ThemeProvider>
-      );
-
-      expect(screen.getByTestId('theme').textContent).toBe('auto');
-    });
-
-    it('loads saved theme from localStorage', () => {
-      localStorage.setItem('jobproof_theme', 'dark');
-
+  describe('ThemeProvider - Dark-Only Mode (Phase 5.5)', () => {
+    it('defaults to dark mode regardless of stored preference', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
@@ -66,25 +58,24 @@ describe('Theme System', () => {
       );
 
       expect(screen.getByTestId('theme').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
 
-    it('persists theme changes to localStorage', () => {
+    it('ignores saved theme from localStorage and uses dark', () => {
+      localStorage.setItem('jobproof_theme', 'light');
+
       render(
         <ThemeProvider>
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
-      fireEvent.click(screen.getByTestId('set-light'));
-      expect(localStorage.getItem('jobproof_theme')).toBe('light');
-
-      fireEvent.click(screen.getByTestId('set-dark'));
-      expect(localStorage.getItem('jobproof_theme')).toBe('dark');
+      // Phase 5.5: Always dark regardless of localStorage
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
 
-    it('applies dark class to document when resolved theme is dark', () => {
-      localStorage.setItem('jobproof_theme', 'dark');
-
+    it('applies dark class to document on mount', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
@@ -95,7 +86,7 @@ describe('Theme System', () => {
       expect(document.documentElement.classList.contains('light')).toBe(false);
     });
 
-    it('applies light class to document when resolved theme is light', () => {
+    it('ensures dark class even when light was set in localStorage', () => {
       localStorage.setItem('jobproof_theme', 'light');
 
       render(
@@ -104,41 +95,63 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(document.documentElement.classList.contains('light')).toBe(true);
-      expect(document.documentElement.classList.contains('dark')).toBe(false);
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.classList.contains('light')).toBe(false);
     });
   });
 
-  describe('toggleDayNight', () => {
-    it('switches from dark to light', () => {
-      localStorage.setItem('jobproof_theme', 'dark');
-
+  describe('toggleDayNight - No-op (Phase 5.5)', () => {
+    it('does not switch theme (always stays dark)', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
       fireEvent.click(screen.getByTestId('toggle'));
-      expect(screen.getByTestId('theme').textContent).toBe('light');
-    });
-
-    it('switches from light to dark', () => {
-      localStorage.setItem('jobproof_theme', 'light');
-
-      render(
-        <ThemeProvider>
-          <ThemeTestComponent />
-        </ThemeProvider>
-      );
-
-      fireEvent.click(screen.getByTestId('toggle'));
+      // Phase 5.5: toggle is a no-op
       expect(screen.getByTestId('theme').textContent).toBe('dark');
     });
+
+    it('maintains dark resolved theme after toggle attempts', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('toggle'));
+      fireEvent.click(screen.getByTestId('toggle'));
+      fireEvent.click(screen.getByTestId('toggle'));
+
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+    });
   });
 
-  describe('setTheme', () => {
-    it('allows setting to any valid theme mode', () => {
+  describe('setTheme - No-op (Phase 5.5)', () => {
+    it('ignores all theme mode changes and stays dark', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      // All these should be no-ops - always dark
+      fireEvent.click(screen.getByTestId('set-light'));
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+
+      fireEvent.click(screen.getByTestId('set-auto'));
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+
+      fireEvent.click(screen.getByTestId('set-system'));
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+
+      fireEvent.click(screen.getByTestId('set-dark'));
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+    });
+
+    it('resolvedTheme is always dark regardless of setTheme calls', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
@@ -146,22 +159,15 @@ describe('Theme System', () => {
       );
 
       fireEvent.click(screen.getByTestId('set-light'));
-      expect(screen.getByTestId('theme').textContent).toBe('light');
-
-      fireEvent.click(screen.getByTestId('set-dark'));
-      expect(screen.getByTestId('theme').textContent).toBe('dark');
-
-      fireEvent.click(screen.getByTestId('set-auto'));
-      expect(screen.getByTestId('theme').textContent).toBe('auto');
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
 
       fireEvent.click(screen.getByTestId('set-system'));
-      expect(screen.getByTestId('theme').textContent).toBe('system');
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
   });
 
-  describe('System theme mode', () => {
-    it('respects system preference for dark mode', () => {
-      // Mock matchMedia to prefer dark
+  describe('System theme mode - Ignored (Phase 5.5)', () => {
+    it('ignores system dark preference (always dark anyway)', () => {
       vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
         matches: query === '(prefers-color-scheme: dark)',
         media: query,
@@ -184,8 +190,7 @@ describe('Theme System', () => {
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
 
-    it('respects system preference for light mode', () => {
-      // Mock matchMedia to prefer light
+    it('ignores system light preference (forces dark)', () => {
       vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
         matches: false,
         media: query,
@@ -205,13 +210,13 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      // Phase 5.5: Always dark regardless of system preference
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
   });
 
-  describe('Auto (time-based) theme mode', () => {
-    it('returns dark during evening hours (6PM-6AM)', () => {
-      // Mock Date to 9 PM
+  describe('Auto (time-based) theme mode - Ignored (Phase 5.5)', () => {
+    it('returns dark during evening hours (no change)', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2024-01-15T21:00:00'));
 
@@ -224,13 +229,13 @@ describe('Theme System', () => {
       );
 
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      // isEvening is still tracked for API compatibility
       expect(screen.getByTestId('evening').textContent).toBe('yes');
 
       vi.useRealTimers();
     });
 
-    it('returns light during day hours (6AM-6PM)', () => {
-      // Mock Date to 10 AM
+    it('returns dark during day hours (time-based disabled)', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2024-01-15T10:00:00'));
 
@@ -242,7 +247,9 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      // Phase 5.5: Always dark regardless of time
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      // isEvening still updates for API compatibility
       expect(screen.getByTestId('evening').textContent).toBe('no');
 
       vi.useRealTimers();

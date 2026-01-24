@@ -19,6 +19,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <style>
     /* Critical CSS for instant dark theme - prevents white flash */
+    /* Phase 5.5: Force dark-only, no horizontal scroll */
+    html {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
     html, body, #root {
       background-color: #020617; /* slate-950 */
       min-height: 100vh;
@@ -26,7 +31,12 @@
     body {
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
+      max-width: 100vw;
       color: #f1f5f9; /* slate-100 */
+    }
+    #root {
+      overflow-x: hidden;
+      max-width: 100vw;
     }
 
     /* Loading spinner shown before React mounts */

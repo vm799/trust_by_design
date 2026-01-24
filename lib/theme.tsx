@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 
+/**
+ * Phase 5.5: Dark-only theme
+ * All theme options now resolve to dark mode for consistent premium experience
+ */
+
 type Theme = 'light' | 'dark' | 'system' | 'auto';
 
 interface ThemeContextType {
@@ -14,94 +19,46 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
  * Determines if it's evening based on local time
- * Evening: 6 PM - 6 AM (dark mode hours)
+ * Kept for API compatibility but not used for theme selection
  */
 function getIsEvening(): boolean {
   const hour = new Date().getHours();
   return hour >= 18 || hour < 6;
 }
 
-/**
- * Get theme based on time of day for 'auto' mode
- */
-function getTimeBasedTheme(): 'light' | 'dark' {
-  return getIsEvening() ? 'dark' : 'light';
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isEvening, setIsEvening] = useState(getIsEvening);
 
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'auto';
-    const stored = localStorage.getItem('jobproof_theme') as Theme;
-    // Default to 'auto' (time-based) if no preference stored
-    return stored || 'auto';
-  });
+  // Phase 5.5: Always store 'dark' regardless of what's passed
+  const [theme, setThemeInternal] = useState<Theme>('dark');
 
-  const getResolvedTheme = useCallback((): 'light' | 'dark' => {
-    if (theme === 'auto') {
-      return getTimeBasedTheme();
-    }
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return theme;
-  }, [theme]);
+  // Phase 5.5: Always resolve to dark
+  const resolvedTheme: 'light' | 'dark' = 'dark';
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return getResolvedTheme();
-  });
+  // setTheme now ignores the value and keeps dark
+  const setTheme = useCallback((_theme: Theme) => {
+    // Phase 5.5: Force dark-only, ignore any theme changes
+    setThemeInternal('dark');
+  }, []);
 
-  // Toggle between light and dark directly
+  // Toggle is now a no-op (kept for API compatibility)
   const toggleDayNight = useCallback(() => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-  }, [resolvedTheme]);
+    // Phase 5.5: No-op - always dark
+  }, []);
 
-  // Update evening status every minute
+  // Update evening status every minute (kept for API compatibility)
   useEffect(() => {
     const updateEvening = () => setIsEvening(getIsEvening());
     const interval = setInterval(updateEvening, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Apply theme changes
+  // Ensure dark class is always set on mount
   useEffect(() => {
-    const newResolvedTheme = getResolvedTheme();
-    setResolvedTheme(newResolvedTheme);
-
     const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(newResolvedTheme);
-    localStorage.setItem('jobproof_theme', theme);
-  }, [theme, getResolvedTheme]);
-
-  // Listen for system preference changes when in 'system' mode
-  useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = (e: MediaQueryListEvent) => {
-        const newTheme = e.matches ? 'dark' : 'light';
-        setResolvedTheme(newTheme);
-        document.documentElement.classList.remove('light', 'dark');
-        document.documentElement.classList.add(newTheme);
-      };
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    }
-  }, [theme]);
-
-  // Update theme when time changes for 'auto' mode
-  useEffect(() => {
-    if (theme === 'auto') {
-      const newResolvedTheme = getTimeBasedTheme();
-      if (newResolvedTheme !== resolvedTheme) {
-        setResolvedTheme(newResolvedTheme);
-        document.documentElement.classList.remove('light', 'dark');
-        document.documentElement.classList.add(newResolvedTheme);
-      }
-    }
-  }, [theme, isEvening, resolvedTheme]);
+    root.classList.remove('light');
+    root.classList.add('dark');
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme, isEvening, toggleDayNight }}>

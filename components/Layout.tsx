@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { JobProofLogo } from './branding/jobproof-logo';
-import { ThemeToggle } from './ThemeToggle';
 import { UserProfile } from '../types';
 
 interface LayoutProps {
@@ -144,7 +143,6 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <Link
               to="/admin/create"
               id="btn-dispatch"
