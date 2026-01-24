@@ -151,6 +151,16 @@ export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Techn
   return newTech;
 };
 
+export const updateTechnician = async (id: string, updates: Partial<Technician>): Promise<Technician> => {
+  const techs = await getTechnicians();
+  const index = techs.findIndex(t => t.id === id);
+  if (index === -1) throw new Error('Technician not found');
+
+  techs[index] = { ...techs[index], ...updates };
+  localStorage.setItem('jobproof_technicians_v2', JSON.stringify(techs));
+  return techs[index];
+};
+
 export const deleteTechnician = async (id: string): Promise<void> => {
   const techs = await getTechnicians();
   const filtered = techs.filter(t => t.id !== id);
