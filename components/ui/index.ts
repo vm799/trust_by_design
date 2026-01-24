@@ -14,6 +14,8 @@ export { default as ErrorState } from './ErrorState';  // REMEDIATION ITEM 10
 export { default as LoadingSkeleton } from './LoadingSkeleton';
 export { default as Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from './Tooltip';
 export type { TooltipProps } from './Tooltip';
+export { default as InfoBox } from './InfoBox';
+export type { InfoBoxProps } from './InfoBox';
 export {
   default as Breadcrumbs,
   BackButton,

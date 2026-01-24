@@ -29,7 +29,7 @@ const slides: CarouselSlide[] = [
   {
     id: 'capture',
     title: 'Capture Evidence',
-    description: 'GPS-verified photos with timestamps that stand up in court',
+    description: 'GPS-verified photos with timestamps for professional documentation',
     icon: 'photo_camera',
     isDark: true,
   },

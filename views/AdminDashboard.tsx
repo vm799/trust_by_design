@@ -391,9 +391,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     return (
                       <div
                         key={link.token}
-                        className={`bg-slate-900/80 border rounded-xl p-3 sm:p-4 transition-all ${
+                        className={`bg-slate-900/80 border rounded-xl p-3 sm:p-4 transition-all cursor-pointer hover:bg-slate-800/80 ${
                           isUrgent ? 'border-danger/40' : 'border-warning/30'
                         }`}
+                        onClick={() => navigate(`/admin/report/${link.job_id}`)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && navigate(`/admin/report/${link.job_id}`)}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
@@ -415,7 +419,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                               )}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
+                          <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start" onClick={(e) => e.stopPropagation()}>
                             {/* Phase 3.5: Call Tech button */}
                             {(() => {
                               const tech = technicians.find(t => t.id === linkedJob.techId);

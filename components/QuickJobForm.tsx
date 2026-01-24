@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Job, TechJobMetadata } from '../types';
+import { InfoBox } from './ui';
 import {
   notifyManagerOfTechJob,
   getTechnicianWorkMode,
@@ -560,17 +561,16 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         )}
 
         {/* Info Banner */}
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-start gap-3">
-          <span className="material-symbols-outlined text-primary text-lg mt-0.5">info</span>
-          <div className="flex-1">
-            <p className="text-xs font-bold text-white">What happens next?</p>
-            <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
-              {workMode === 'employed'
-                ? 'This creates a new job and notifies your manager. You can start capturing photos immediately. The job will appear in their dashboard for approval.'
-                : 'This creates a job for your records. Complete it, seal the evidence, and a client receipt will be generated for payment and legal documentation.'}
-            </p>
-          </div>
-        </div>
+        <InfoBox
+          icon="info"
+          title="What happens next?"
+          variant="tip"
+          persistKey="quickjob_next_steps"
+        >
+          {workMode === 'employed'
+            ? 'This creates a new job and notifies your manager. You can start capturing photos immediately. The job will appear in their dashboard for approval.'
+            : 'This creates a job for your records. Complete it, seal the evidence, and a client receipt will be generated for payment.'}
+        </InfoBox>
       </div>
 
       {/* Footer Actions */}
