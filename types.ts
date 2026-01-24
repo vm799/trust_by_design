@@ -1,5 +1,5 @@
 
-export type JobStatus = 'Pending' | 'In Progress' | 'Submitted' | 'Archived';
+export type JobStatus = 'Pending' | 'In Progress' | 'Submitted' | 'Archived' | 'Paused' | 'Cancelled';
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
 export type PhotoType = 'Before' | 'During' | 'After' | 'Evidence';
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue';
