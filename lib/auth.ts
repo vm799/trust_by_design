@@ -222,6 +222,9 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
  * This is the PRIMARY authentication method for V1.
  * NO passwords, NO Google OAuth - Magic Link only.
  *
+ * Phase 6.5: Updated to use dedicated /auth/callback route
+ * This ensures proper session establishment before dashboard redirect.
+ *
  * @param email - User's email address
  * @param signupData - Optional workspace data for signup flow
  */
@@ -232,16 +235,17 @@ export const signInWithMagicLink = async (
   const supabase = getSupabase();
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
 
-  // Build redirect URL with signup data if provided
-  // CRITICAL: Use /#/ for HashRouter to properly route through PersonaRedirect
-  // This ensures managers land on /manager/intent (Intent-First UX)
-  let redirectUrl = getAuthRedirectUrl('/#/');
+  // Phase 6.5: Use dedicated callback route for proper session handling
+  // The callback route waits for session establishment before redirecting
+  let redirectUrl = getAuthRedirectUrl('/#/auth/callback');
+
+  // For signup, include workspace data as query params
   if (signupData?.workspaceName) {
     const params = new URLSearchParams();
     params.set('workspace', signupData.workspaceName);
     if (signupData.fullName) params.set('name', signupData.fullName);
     params.set('signup', 'true');
-    redirectUrl = getAuthRedirectUrl(`/#/auth/setup?${params.toString()}`);
+    redirectUrl = getAuthRedirectUrl(`/#/auth/callback?${params.toString()}`);
   }
 
   const { error } = await supabase.auth.signInWithOtp({

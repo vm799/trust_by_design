@@ -364,3 +364,213 @@ npm run type-check    # TypeScript check
 ### Phase 4: Job Flexibility (pending)
 ### Phase 5: Job Lifecycle + Navbar (pending)
 ### Phase 6: Polish + Integrations (pending)
+
+---
+
+## Architecture Guidelines (CRITICAL - Do Not Violate)
+
+These patterns were established during the 14-item architecture remediation.
+**All future code MUST follow these patterns to prevent regressions.**
+
+### 1. State Management - Use DataContext
+
+**DO NOT** create new useState for jobs/clients/technicians in components.
+**ALWAYS** use the centralized DataContext.
+
+```tsx
+// ✅ CORRECT
+import { useData } from '../lib/DataContext';
+const { jobs, clients, addJob, updateJob } = useData();
+
+// ❌ WRONG - Creates duplicate state
+const [jobs, setJobs] = useState<Job[]>([]);
+```
+
+### 2. Authentication - Use AuthContext
+
+**DO NOT** call `supabase.auth.getUser()` directly in components.
+**ALWAYS** use AuthContext for auth state.
+
+```tsx
+// ✅ CORRECT
+import { useAuth } from '../lib/AuthContext';
+const { isAuthenticated, userId, session } = useAuth();
+
+// ❌ WRONG - Causes excessive API calls
+const { data } = await supabase.auth.getUser();
+```
+
+### 3. Protected Routes - Use ProtectedRoute Wrapper
+
+**ALWAYS** wrap authenticated routes with error boundaries.
+
+```tsx
+// ✅ CORRECT
+import { ProtectedRoute } from '../components/ProtectedRoute';
+
+<ProtectedRoute sectionName="Dashboard" fallbackRoute="/home">
+  <Dashboard />
+</ProtectedRoute>
+
+// ❌ WRONG - No error isolation
+<Route path="/admin" element={isAuthenticated ? <Dashboard /> : <Navigate to="/auth" />} />
+```
+
+### 4. Animation Objects - Use Shared Constants
+
+**DO NOT** define animation objects inline in JSX.
+**ALWAYS** use constants from `lib/animations.ts`.
+
+```tsx
+// ✅ CORRECT
+import { fadeInUp, hoverLiftQuick } from '../lib/animations';
+<motion.div variants={fadeInUp} whileHover={hoverLiftQuick}>
+
+// ❌ WRONG - Creates new object every render
+<motion.div animate={{ opacity: 1 }} whileHover={{ y: -5 }}>
+```
+
+### 5. List Keys - Use Stable IDs
+
+**DO NOT** use array index as React key.
+**ALWAYS** use stable identifiers (id, url, timestamp).
+
+```tsx
+// ✅ CORRECT
+{photos.map(photo => <img key={photo.id} src={photo.url} />)}
+
+// ❌ WRONG - Causes re-render issues
+{photos.map((photo, index) => <img key={index} src={photo.url} />)}
+```
+
+### 6. Expensive Computations - Use useMemo
+
+**ALWAYS** memoize expensive list operations and lookups.
+
+```tsx
+// ✅ CORRECT
+const clientsById = useMemo(() =>
+  new Map(clients.map(c => [c.id, c])),
+  [clients]
+);
+
+// ❌ WRONG - Recomputes every render
+const clientsById = new Map(clients.map(c => [c.id, c]));
+```
+
+### 7. Navigation Components - Use React.memo
+
+**ALWAYS** wrap navigation components (Sidebar, BottomNav, PageHeader) with memo.
+
+```tsx
+// ✅ CORRECT
+export const Sidebar = memo(function Sidebar({ ... }) { ... });
+
+// ❌ WRONG - Re-renders on every parent update
+export const Sidebar = ({ ... }) => { ... };
+```
+
+### 8. Lazy Loading - Use Dynamic Imports
+
+**ALWAYS** lazy-load route components and heavy libraries.
+
+```tsx
+// ✅ CORRECT - Route components
+const Dashboard = lazy(() => import('./views/Dashboard'));
+
+// ✅ CORRECT - Heavy libraries
+const getAuth = () => import('./lib/auth');
+const auth = await getAuth();
+
+// ❌ WRONG - Increases initial bundle
+import { Dashboard } from './views/Dashboard';
+```
+
+### 9. Error Handling - Use ErrorState Component
+
+**ALWAYS** provide retry UI for failed operations.
+
+```tsx
+// ✅ CORRECT
+import { ErrorState } from '../components/ui/ErrorState';
+
+if (error) {
+  return <ErrorState message={error} onRetry={loadData} />;
+}
+
+// ❌ WRONG - No recovery option
+if (error) return <div>Error: {error}</div>;
+```
+
+### 10. Supabase Access - Through Auth Module
+
+**DO NOT** import supabase directly in components.
+**ALWAYS** access through lazy-loaded auth module.
+
+```tsx
+// ✅ CORRECT
+const auth = await import('../lib/auth');
+const supabase = auth.getSupabaseClient();
+
+// ❌ WRONG - Breaks code splitting
+import { getSupabase } from '../lib/supabase';
+```
+
+### 11. Magic Link Auth - Use Callback Route
+
+**ALWAYS** redirect magic links to `/auth/callback`.
+
+```tsx
+// ✅ CORRECT (in lib/auth.ts)
+emailRedirectTo: getAuthRedirectUrl('/#/auth/callback')
+
+// ❌ WRONG - Race condition with auth state
+emailRedirectTo: getAuthRedirectUrl('/#/')
+```
+
+### 12. Code Splitting - Check vite.config.ts
+
+When adding new views, **ALWAYS** add them to appropriate chunk in `manualChunks`.
+
+```js
+// vite.config.ts - Add new views to appropriate chunks
+'admin-routes': ['./views/NewAdminView.tsx', ...],
+'public-routes': ['./views/NewPublicView.tsx', ...],
+```
+
+---
+
+## Architecture Test Commands
+
+Run these before committing to catch violations:
+
+```bash
+# Type check
+npm run type-check
+
+# Lint (includes architecture rules)
+npm run lint
+
+# Unit tests
+npm test
+
+# Build (catches chunk issues)
+npm run build
+```
+
+---
+
+## PR Checklist for Architecture Compliance
+
+Before merging any PR, verify:
+
+- [ ] No direct `supabase.auth.getUser()` calls in components
+- [ ] No `useState` for jobs/clients/technicians (use DataContext)
+- [ ] All route components lazy-loaded
+- [ ] All protected routes wrapped with ProtectedRoute or RouteErrorBoundary
+- [ ] No inline animation objects in Framer Motion
+- [ ] No array index as React key
+- [ ] New views added to vite.config.ts manualChunks
+- [ ] Navigation components wrapped with React.memo
+- [ ] Expensive list operations use useMemo
+- [ ] Failed operations have ErrorState with retry
