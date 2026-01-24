@@ -2,11 +2,12 @@
  * Sidebar - Desktop Navigation
  *
  * Provides the main navigation for desktop users.
+ * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
  *
  * Phase A: Foundation & App Shell
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { JobProofLogo } from '../branding/jobproof-logo';
 
@@ -123,7 +124,8 @@ interface NavLinkProps extends NavItem {
   onClick?: () => void;
 }
 
-const NavLink: React.FC<NavLinkProps> = ({ to, icon, label, badge, active, onClick }) => (
+// REMEDIATION ITEM 6: Memoized NavLink to prevent re-renders when other items change
+const NavLink = memo<NavLinkProps>(({ to, icon, label, badge, active, onClick }) => (
   <Link
     to={to}
     onClick={onClick}
@@ -144,6 +146,9 @@ const NavLink: React.FC<NavLinkProps> = ({ to, icon, label, badge, active, onCli
       </span>
     )}
   </Link>
-);
+));
 
-export default Sidebar;
+NavLink.displayName = 'NavLink';
+
+// REMEDIATION ITEM 6: Export memoized Sidebar
+export default memo(Sidebar);

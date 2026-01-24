@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../lib/theme';
 
@@ -19,6 +19,7 @@ export interface BreadcrumbsProps {
  * Breadcrumbs Navigation Component
  *
  * Phase 3: Job Creation Guards
+ * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
  *
  * Provides navigation context with:
  * - Clickable links to parent pages
@@ -26,7 +27,7 @@ export interface BreadcrumbsProps {
  * - Theme-aware styling
  * - Optional home link
  */
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
+const Breadcrumbs = memo<BreadcrumbsProps>(({
   items,
   className = '',
   showHome = true,
@@ -127,17 +128,20 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       </ol>
     </nav>
   );
-};
+});
+
+Breadcrumbs.displayName = 'Breadcrumbs';
 
 /**
  * Back Button Component
  * Provides a quick "back to X" navigation
+ * REMEDIATION ITEM 6: Wrapped in React.memo
  */
-export const BackButton: React.FC<{
+export const BackButton = memo<{
   to: string;
   label?: string;
   className?: string;
-}> = ({ to, label = 'Back', className = '' }) => {
+}>(({ to, label = 'Back', className = '' }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -159,60 +163,65 @@ export const BackButton: React.FC<{
       <span>{label}</span>
     </Link>
   );
-};
+});
+
+BackButton.displayName = 'BackButton';
 
 /**
  * Job Creation Breadcrumbs - Preset for job creation flow
+ * REMEDIATION ITEM 6: Wrapped in React.memo
  */
-export const JobCreationBreadcrumbs: React.FC<{
+export const JobCreationBreadcrumbs = memo<{
   currentStep?: string;
   className?: string;
-}> = ({ currentStep = 'New Job', className }) => {
-  return (
-    <Breadcrumbs
-      items={[
-        { label: 'Jobs', href: '/admin/jobs', icon: 'work' },
-        { label: currentStep },
-      ]}
-      className={className}
-    />
-  );
-};
+}>(({ currentStep = 'New Job', className }) => (
+  <Breadcrumbs
+    items={[
+      { label: 'Jobs', href: '/admin/jobs', icon: 'work' },
+      { label: currentStep },
+    ]}
+    className={className}
+  />
+));
+
+JobCreationBreadcrumbs.displayName = 'JobCreationBreadcrumbs';
 
 /**
  * Client Creation Breadcrumbs - Preset for client creation flow
+ * REMEDIATION ITEM 6: Wrapped in React.memo
  */
-export const ClientCreationBreadcrumbs: React.FC<{
+export const ClientCreationBreadcrumbs = memo<{
   currentStep?: string;
   className?: string;
-}> = ({ currentStep = 'New Client', className }) => {
-  return (
-    <Breadcrumbs
-      items={[
-        { label: 'Clients', href: '/admin/clients', icon: 'people' },
-        { label: currentStep },
-      ]}
-      className={className}
-    />
-  );
-};
+}>(({ currentStep = 'New Client', className }) => (
+  <Breadcrumbs
+    items={[
+      { label: 'Clients', href: '/admin/clients', icon: 'people' },
+      { label: currentStep },
+    ]}
+    className={className}
+  />
+));
+
+ClientCreationBreadcrumbs.displayName = 'ClientCreationBreadcrumbs';
 
 /**
  * Technician Creation Breadcrumbs - Preset for technician creation flow
+ * REMEDIATION ITEM 6: Wrapped in React.memo
  */
-export const TechnicianCreationBreadcrumbs: React.FC<{
+export const TechnicianCreationBreadcrumbs = memo<{
   currentStep?: string;
   className?: string;
-}> = ({ currentStep = 'New Technician', className }) => {
-  return (
-    <Breadcrumbs
-      items={[
-        { label: 'Technicians', href: '/admin/technicians', icon: 'engineering' },
-        { label: currentStep },
-      ]}
-      className={className}
-    />
-  );
-};
+}>(({ currentStep = 'New Technician', className }) => (
+  <Breadcrumbs
+    items={[
+      { label: 'Technicians', href: '/admin/technicians', icon: 'engineering' },
+      { label: currentStep },
+    ]}
+    className={className}
+  />
+));
+
+TechnicianCreationBreadcrumbs.displayName = 'TechnicianCreationBreadcrumbs';
 
 export default Breadcrumbs;
