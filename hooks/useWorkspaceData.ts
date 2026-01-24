@@ -1,28 +1,22 @@
 /**
  * Workspace Data Hooks
  *
- * Provides easy access to workspace-scoped data without needing to pass workspaceId manually.
- * These hooks automatically get the workspaceId from AuthContext and handle DbResult unwrapping.
+ * REMEDIATION ITEM 2: Single source of truth via DataContext
  *
- * Phase A: Foundation
+ * These hooks provide easy access to workspace-scoped data through DataContext.
+ * All data operations go through the centralized state management.
+ *
+ * Usage:
+ *   // Hook-based (preferred - reactive)
+ *   const { jobs, addJob, updateJob } = useWorkspaceData();
+ *
+ *   // Standalone (for non-React code - reads from localStorage)
+ *   const jobs = await getJobsStandalone();
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import {
-  getJobs as dbGetJobs,
-  getClients as dbGetClients,
-  getTechnicians as dbGetTechnicians,
-  createJob,
-  updateJob as dbUpdateJob,
-  deleteJob as dbDeleteJob,
-  createClient,
-  updateClient as dbUpdateClient,
-  deleteClient as dbDeleteClient,
-  createTechnician,
-  updateTechnician,
-  deleteTechnician as dbDeleteTechnician,
-} from '../lib/db';
+import { useData, useDataOptional } from '../lib/DataContext';
 import { generateSecureEntityId } from '../lib/secureId';
 import type { Job, Client, Technician, Invoice } from '../types';
 
@@ -31,35 +25,128 @@ import type { Job, Client, Technician, Invoice } from '../types';
  */
 export const useWorkspaceId = (): string | null => {
   const { session } = useAuth();
-
-  // TODO: Get workspace ID from user profile or session
-  // For now, try to extract from user metadata or use a default
   const workspaceId = session?.user?.user_metadata?.workspace_id || null;
-
   return workspaceId;
 };
 
 /**
- * Simple data fetching functions that use localStorage fallback for demo
- * These are temporary wrappers that work without requiring workspaceId
+ * Main hook for workspace data - uses DataContext (PREFERRED)
+ * This is reactive and will re-render when data changes
  */
+export const useWorkspaceData = () => {
+  const data = useData();
 
-// Jobs
+  // Job operations with ID generation
+  const createJob = useCallback((jobData: Omit<Job, 'id'>): Job => {
+    const newJob: Job = {
+      ...jobData,
+      id: generateSecureEntityId('job'),
+    };
+    data.addJob(newJob);
+    return newJob;
+  }, [data]);
+
+  // Client operations with ID generation
+  const createClient = useCallback((clientData: Omit<Client, 'id'>): Client => {
+    const newClient: Client = {
+      ...clientData,
+      id: generateSecureEntityId('client'),
+    };
+    data.addClient(newClient);
+    return newClient;
+  }, [data]);
+
+  // Technician operations with ID generation
+  const createTechnician = useCallback((techData: Omit<Technician, 'id'>): Technician => {
+    const newTech: Technician = {
+      ...techData,
+      id: generateSecureEntityId('tech'),
+    };
+    data.addTechnician(newTech);
+    return newTech;
+  }, [data]);
+
+  // Invoice operations with ID generation
+  const createInvoice = useCallback((invoiceData: Omit<Invoice, 'id'>): Invoice => {
+    const newInvoice: Invoice = {
+      ...invoiceData,
+      id: generateSecureEntityId('inv'),
+    };
+    data.addInvoice(newInvoice);
+    return newInvoice;
+  }, [data]);
+
+  return {
+    // Data arrays (reactive)
+    jobs: data.jobs,
+    clients: data.clients,
+    technicians: data.technicians,
+    invoices: data.invoices,
+    templates: data.templates,
+
+    // Loading states
+    isLoading: data.isLoading,
+    isInitialized: data.isInitialized,
+    error: data.error,
+
+    // Job operations
+    createJob,
+    addJob: data.addJob,
+    updateJob: data.updateJob,
+    deleteJob: data.deleteJob,
+
+    // Client operations
+    createClient,
+    addClient: data.addClient,
+    updateClient: data.updateClient,
+    deleteClient: data.deleteClient,
+
+    // Technician operations
+    createTechnician,
+    addTechnician: data.addTechnician,
+    updateTechnician: data.updateTechnician,
+    deleteTechnician: data.deleteTechnician,
+
+    // Invoice operations
+    createInvoice,
+    addInvoice: data.addInvoice,
+    updateInvoice: data.updateInvoice,
+    updateInvoiceStatus: data.updateInvoiceStatus,
+    deleteInvoice: data.deleteInvoice,
+
+    // Template operations
+    addTemplate: data.addTemplate,
+    updateTemplate: data.updateTemplate,
+    deleteTemplate: data.deleteTemplate,
+
+    // Refresh
+    refresh: data.refresh,
+  };
+};
+
+// ============================================================================
+// STANDALONE FUNCTIONS (for non-React code)
+// These read from localStorage which is kept in sync by DataContext
+// NOTE: Mutations should use the hook when possible for proper state updates
+// ============================================================================
+
+/**
+ * @deprecated Use useWorkspaceData() hook instead for reactive updates
+ * Standalone function for reading jobs from localStorage
+ */
 export const getJobs = async (): Promise<Job[]> => {
   try {
-    // Try localStorage first for demo
     const stored = localStorage.getItem('jobproof_jobs_v2');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Fallback to empty array
-    return [];
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
+/**
+ * @deprecated Use useWorkspaceData().createJob() instead
+ * Standalone function - writes to localStorage (DataContext will sync on next load)
+ */
 export const addJob = async (job: Omit<Job, 'id'>): Promise<Job> => {
   const jobs = await getJobs();
   const newJob: Job = {
@@ -71,35 +158,42 @@ export const addJob = async (job: Omit<Job, 'id'>): Promise<Job> => {
   return newJob;
 };
 
+/**
+ * @deprecated Use useWorkspaceData().updateJob() instead
+ */
 export const updateJob = async (id: string, updates: Partial<Job>): Promise<Job> => {
   const jobs = await getJobs();
   const index = jobs.findIndex(j => j.id === id);
   if (index === -1) throw new Error('Job not found');
-
   jobs[index] = { ...jobs[index], ...updates };
   localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
   return jobs[index];
 };
 
+/**
+ * @deprecated Use useWorkspaceData().deleteJob() instead
+ */
 export const deleteJob = async (id: string): Promise<void> => {
   const jobs = await getJobs();
   const filtered = jobs.filter(j => j.id !== id);
   localStorage.setItem('jobproof_jobs_v2', JSON.stringify(filtered));
 };
 
-// Clients
+/**
+ * @deprecated Use useWorkspaceData() hook instead
+ */
 export const getClients = async (): Promise<Client[]> => {
   try {
     const stored = localStorage.getItem('jobproof_clients_v2');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return [];
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
+/**
+ * @deprecated Use useWorkspaceData().createClient() instead
+ */
 export const addClient = async (client: Omit<Client, 'id'>): Promise<Client> => {
   const clients = await getClients();
   const newClient: Client = {
@@ -111,35 +205,42 @@ export const addClient = async (client: Omit<Client, 'id'>): Promise<Client> => 
   return newClient;
 };
 
+/**
+ * @deprecated Use useWorkspaceData().updateClient() instead
+ */
 export const updateClient = async (id: string, updates: Partial<Client>): Promise<Client> => {
   const clients = await getClients();
   const index = clients.findIndex(c => c.id === id);
   if (index === -1) throw new Error('Client not found');
-
   clients[index] = { ...clients[index], ...updates };
   localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
   return clients[index];
 };
 
+/**
+ * @deprecated Use useWorkspaceData().deleteClient() instead
+ */
 export const deleteClient = async (id: string): Promise<void> => {
   const clients = await getClients();
   const filtered = clients.filter(c => c.id !== id);
   localStorage.setItem('jobproof_clients_v2', JSON.stringify(filtered));
 };
 
-// Technicians
+/**
+ * @deprecated Use useWorkspaceData() hook instead
+ */
 export const getTechnicians = async (): Promise<Technician[]> => {
   try {
     const stored = localStorage.getItem('jobproof_technicians_v2');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return [];
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
+/**
+ * @deprecated Use useWorkspaceData().createTechnician() instead
+ */
 export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Technician> => {
   const techs = await getTechnicians();
   const newTech: Technician = {
@@ -151,35 +252,42 @@ export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Techn
   return newTech;
 };
 
+/**
+ * @deprecated Use useWorkspaceData().updateTechnician() instead
+ */
 export const updateTechnician = async (id: string, updates: Partial<Technician>): Promise<Technician> => {
   const techs = await getTechnicians();
   const index = techs.findIndex(t => t.id === id);
   if (index === -1) throw new Error('Technician not found');
-
   techs[index] = { ...techs[index], ...updates };
   localStorage.setItem('jobproof_technicians_v2', JSON.stringify(techs));
   return techs[index];
 };
 
+/**
+ * @deprecated Use useWorkspaceData().deleteTechnician() instead
+ */
 export const deleteTechnician = async (id: string): Promise<void> => {
   const techs = await getTechnicians();
   const filtered = techs.filter(t => t.id !== id);
   localStorage.setItem('jobproof_technicians_v2', JSON.stringify(filtered));
 };
 
-// Invoices
+/**
+ * @deprecated Use useWorkspaceData() hook instead
+ */
 export const getInvoices = async (): Promise<Invoice[]> => {
   try {
     const stored = localStorage.getItem('jobproof_invoices_v2');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return [];
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
+/**
+ * @deprecated Use useWorkspaceData().createInvoice() instead
+ */
 export const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice> => {
   const invoices = await getInvoices();
   const newInvoice: Invoice = {
@@ -191,16 +299,21 @@ export const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice>
   return newInvoice;
 };
 
+/**
+ * @deprecated Use useWorkspaceData().updateInvoice() instead
+ */
 export const updateInvoice = async (id: string, updates: Partial<Invoice>): Promise<Invoice> => {
   const invoices = await getInvoices();
   const index = invoices.findIndex(i => i.id === id);
   if (index === -1) throw new Error('Invoice not found');
-
   invoices[index] = { ...invoices[index], ...updates };
   localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
   return invoices[index];
 };
 
+/**
+ * @deprecated Use useWorkspaceData().deleteInvoice() instead
+ */
 export const deleteInvoice = async (id: string): Promise<void> => {
   const invoices = await getInvoices();
   const filtered = invoices.filter(i => i.id !== id);
