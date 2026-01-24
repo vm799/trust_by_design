@@ -76,6 +76,23 @@ const InvoiceList: React.FC = () => {
     };
   }, [invoices]);
 
+  // REMEDIATION ITEM 7: Memoize lookups to avoid O(n) find() calls in render loop
+  const clientsById = useMemo(() => {
+    const map: Record<string, Client> = {};
+    for (const client of clients) {
+      map[client.id] = client;
+    }
+    return map;
+  }, [clients]);
+
+  const jobsById = useMemo(() => {
+    const map: Record<string, Job> = {};
+    for (const job of jobs) {
+      map[job.id] = job;
+    }
+    return map;
+  }, [jobs]);
+
   if (loading) {
     return (
       <div>
@@ -130,8 +147,9 @@ const InvoiceList: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {filteredInvoices.map(invoice => {
-              const client = clients.find(c => c.id === invoice.clientId);
-              const job = jobs.find(j => j.id === invoice.jobId);
+              // REMEDIATION ITEM 7: Use memoized lookups instead of O(n) find()
+              const client = invoice.clientId ? clientsById[invoice.clientId] : undefined;
+              const job = invoice.jobId ? jobsById[invoice.jobId] : undefined;
               const status = getInvoiceStatus(invoice);
 
               return (

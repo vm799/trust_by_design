@@ -47,14 +47,34 @@ const TechnicianList: React.FC = () => {
     loadData();
   }, []);
 
-  // Get job stats for each technician
+  // REMEDIATION ITEM 7: Memoize tech stats to avoid O(n*m) lookups in render
+  const techStatsMap = useMemo(() => {
+    const stats: Record<string, { total: number; active: number; completed: number }> = {};
+
+    // Group jobs by technicianId and calculate stats in single pass
+    const jobsByTech: Record<string, { total: number; active: number; completed: number }> = {};
+
+    for (const job of jobs) {
+      if (job.technicianId) {
+        if (!jobsByTech[job.technicianId]) {
+          jobsByTech[job.technicianId] = { total: 0, active: 0, completed: 0 };
+        }
+        jobsByTech[job.technicianId].total++;
+        if (job.status === 'in-progress' || job.status === 'In Progress') {
+          jobsByTech[job.technicianId].active++;
+        }
+        if (job.status === 'complete' || job.status === 'Submitted') {
+          jobsByTech[job.technicianId].completed++;
+        }
+      }
+    }
+
+    return jobsByTech;
+  }, [jobs]);
+
+  // Get job stats for each technician (uses memoized stats)
   const getTechStats = (techId: string) => {
-    const techJobs = jobs.filter(j => j.technicianId === techId);
-    return {
-      total: techJobs.length,
-      active: techJobs.filter(j => j.status === 'in-progress').length,
-      completed: techJobs.filter(j => j.status === 'complete').length,
-    };
+    return techStatsMap[techId] ?? { total: 0, active: 0, completed: 0 };
   };
 
   const handleAddTechnician = async (e: React.FormEvent) => {
