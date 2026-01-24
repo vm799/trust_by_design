@@ -9,6 +9,7 @@ import { pushQueue, pullJobs } from './lib/offline/sync';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
 
 // PERFORMANCE: Debounce utility moved to DataContext for centralized state management
 
@@ -417,26 +418,27 @@ const AppContent: React.FC = () => {
           isAuthenticated ? <OnboardingTour onComplete={completeOnboarding} persona={user?.persona} /> : <Navigate to="/auth" replace />
         } />
 
-        {/* Contractor Persona Flow */}
-        {/* Contractor Persona Flow */}
+        {/* Contractor Persona Flow - REMEDIATION #3: Error boundary */}
         <Route path="/contractor" element={
           isAuthenticated ? (
             user ? (
-              hasSeenOnboarding ? (
-                <ContractorDashboard
-                  jobs={jobs}
-                  user={user}
-                  showOnboarding={false}
-                  onCloseOnboarding={completeOnboarding}
-                />
-              ) : (
-                <ContractorDashboard
-                  jobs={jobs}
-                  user={user}
-                  showOnboarding={true}
-                  onCloseOnboarding={completeOnboarding}
-                />
-              )
+              <RouteErrorBoundary sectionName="Contractor Dashboard" fallbackRoute="/home">
+                {hasSeenOnboarding ? (
+                  <ContractorDashboard
+                    jobs={jobs}
+                    user={user}
+                    showOnboarding={false}
+                    onCloseOnboarding={completeOnboarding}
+                  />
+                ) : (
+                  <ContractorDashboard
+                    jobs={jobs}
+                    user={user}
+                    showOnboarding={true}
+                    onCloseOnboarding={completeOnboarding}
+                  />
+                )}
+              </RouteErrorBoundary>
             ) : (
               <div className="min-h-screen bg-slate-950 flex items-center justify-center">
                 <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -445,67 +447,128 @@ const AppContent: React.FC = () => {
           ) : <Navigate to="/auth" replace />
         } />
 
-        {/* Client Persona Flow */}
+        {/* Client Persona Flow - REMEDIATION #3: Error boundary */}
         <Route path="/client" element={
           isAuthenticated ? (
-            <ClientDashboard jobs={jobs} invoices={invoices} user={user} />
+            <RouteErrorBoundary sectionName="Client Dashboard" fallbackRoute="/home">
+              <ClientDashboard jobs={jobs} invoices={invoices} user={user} />
+            </RouteErrorBoundary>
           ) : <Navigate to="/auth" replace />
         } />
 
         {/* Admin Hub - Protected by real session */}
-        {/* CRITICAL FIX: Profile loading is now blocked at the top level, so if we reach here:
-            - isAuthenticated=true means user is logged in
-            - user=null means profile is truly missing (not loading), redirect to setup
-            - user exists means profile loaded successfully */}
+        {/* REMEDIATION #3: Route-level error boundary prevents crashes */}
         <Route path="/admin" element={
           isAuthenticated ? (
             user ? (
-              hasSeenOnboarding ? (
-                <AdminDashboard
-                  jobs={jobs}
-                  clients={clients}
-                  technicians={technicians}
-                  user={user}
-                  showOnboarding={false}
-                  onCloseOnboarding={completeOnboarding}
-                />
-              ) : (
-                <AdminDashboard
-                  jobs={jobs}
-                  clients={clients}
-                  technicians={technicians}
-                  user={user}
-                  showOnboarding={true}
-                  onCloseOnboarding={completeOnboarding}
-                />
-              )
+              <RouteErrorBoundary sectionName="Dashboard" fallbackRoute="/home">
+                {hasSeenOnboarding ? (
+                  <AdminDashboard
+                    jobs={jobs}
+                    clients={clients}
+                    technicians={technicians}
+                    user={user}
+                    showOnboarding={false}
+                    onCloseOnboarding={completeOnboarding}
+                  />
+                ) : (
+                  <AdminDashboard
+                    jobs={jobs}
+                    clients={clients}
+                    technicians={technicians}
+                    user={user}
+                    showOnboarding={true}
+                    onCloseOnboarding={completeOnboarding}
+                  />
+                )}
+              </RouteErrorBoundary>
             ) : (
               <Navigate to="/auth/setup" replace />
             )
           ) : <Navigate to="/auth" replace />
         } />
-        {/* Jobs List - Filterable list of all jobs */}
-        <Route path="/admin/jobs" element={isAuthenticated ? <JobsList jobs={jobs} user={user} /> : <Navigate to="/auth" replace />} />
+        {/* Jobs List - REMEDIATION #3: Error boundaries on admin routes */}
+        <Route path="/admin/jobs" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Jobs" fallbackRoute="/admin">
+            <JobsList jobs={jobs} user={user} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
         {/* Job Creation - UX Spec: 5-Step Guided Wizard */}
-        <Route path="/admin/create" element={isAuthenticated ? <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/create" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Job Creation" fallbackRoute="/admin">
+            <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
         {/* Legacy Job Creation (kept for backwards compatibility) */}
-        <Route path="/admin/create-quick" element={isAuthenticated ? <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/clients" element={isAuthenticated ? <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/clients/new" element={isAuthenticated ? <ClientForm /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/technicians" element={isAuthenticated ? <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/technicians/new" element={isAuthenticated ? <TechnicianForm /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/templates" element={isAuthenticated ? <TemplatesView user={user} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/invoices" element={isAuthenticated ? <InvoicesView user={user} invoices={invoices} updateStatus={updateInvoiceStatus} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/settings" element={isAuthenticated ? <Settings user={user!} setUser={setUser} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/profile" element={isAuthenticated ? <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/help" element={isAuthenticated ? <HelpCenter user={user} /> : <Navigate to="/auth" replace />} />
-        <Route path="/admin/report/:jobId" element={isAuthenticated ? <JobReport user={user} jobs={jobs} invoices={invoices} technicians={technicians} onGenerateInvoice={addInvoice} onUpdateJob={updateJob} /> : <Navigate to="/auth" replace />} />
+        <Route path="/admin/create-quick" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Quick Job Creation" fallbackRoute="/admin">
+            <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Clients" fallbackRoute="/admin">
+            <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/clients/new" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="New Client" fallbackRoute="/admin/clients">
+            <ClientForm />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Technicians" fallbackRoute="/admin">
+            <TechniciansView user={user} techs={technicians} onAdd={addTech} onDelete={deleteTech} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/technicians/new" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="New Technician" fallbackRoute="/admin/technicians">
+            <TechnicianForm />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/templates" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Templates" fallbackRoute="/admin">
+            <TemplatesView user={user} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/invoices" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Invoices" fallbackRoute="/admin">
+            <InvoicesView user={user} invoices={invoices} updateStatus={updateInvoiceStatus} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/settings" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Settings" fallbackRoute="/admin">
+            <Settings user={user!} setUser={setUser} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/profile" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Profile" fallbackRoute="/admin">
+            <ProfileView user={user!} setUser={setUser} onLogout={handleLogout} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/help" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Help Center" fallbackRoute="/admin">
+            <HelpCenter user={user} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/report/:jobId" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Job Report" fallbackRoute="/admin/jobs">
+            <JobReport user={user} jobs={jobs} invoices={invoices} technicians={technicians} onGenerateInvoice={addInvoice} onUpdateJob={updateJob} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
 
-        {/* Technician Entry - Public (Phase C.2: Token-based access) */}
-        <Route path="/track/:token" element={<TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />} />
+        {/* Technician Entry - Public (Phase C.2: Token-based access) - CRITICAL: Error boundary */}
+        <Route path="/track/:token" element={
+          <RouteErrorBoundary sectionName="Job Tracking" fallbackRoute="/track-lookup">
+            <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
+          </RouteErrorBoundary>
+        } />
 
         {/* Public Client Entry - Public */}
-        <Route path="/report/:jobId" element={<JobReport jobs={jobs} invoices={invoices} publicView />} />
+        <Route path="/report/:jobId" element={
+          <RouteErrorBoundary sectionName="Report" fallbackRoute="/home">
+            <JobReport jobs={jobs} invoices={invoices} publicView />
+          </RouteErrorBoundary>
+        } />
 
         {/* System & Docs */}
         <Route path="/docs/audit" element={<AuditReport />} />
