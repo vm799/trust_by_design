@@ -2,14 +2,17 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { UserProfile } from './types';
-import { startSyncWorker } from './lib/syncQueue';
-import { signOut, getUserProfile } from './lib/auth';
-import { getSupabase } from './lib/supabase';
-import { pushQueue, pullJobs } from './lib/offline/sync';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
+
+// REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
+// These are loaded on-demand when first needed
+const getSyncQueue = () => import('./lib/syncQueue');
+const getAuth = () => import('./lib/auth');
+const getSupabaseModule = () => import('./lib/supabase');
+const getOfflineSync = () => import('./lib/offline/sync');
 
 // PERFORMANCE: Debounce utility moved to DataContext for centralized state management
 
@@ -142,11 +145,12 @@ const AppContent: React.FC = () => {
 
   // Offline Sync Engine - Optimized with throttling
   // PERFORMANCE FIX: Reduced from 60s/90s to 5 minutes to minimize Supabase API calls
+  // REMEDIATION ITEM 5: Uses lazy-loaded sync module
   useEffect(() => {
     let lastSyncTime = 0;
     const MIN_SYNC_INTERVAL = 300000; // Throttle: minimum 5 minutes (300s) between syncs
 
-    const performSync = () => {
+    const performSync = async () => {
       const now = Date.now();
       if (now - lastSyncTime < MIN_SYNC_INTERVAL) {
         return; // Throttle: skip if synced too recently
@@ -154,16 +158,22 @@ const AppContent: React.FC = () => {
 
       if (navigator.onLine && user?.workspace?.id) {
         lastSyncTime = now;
-        pushQueue();
-        pullJobs(user.workspace.id);
+        // Lazy load sync module only when needed
+        const sync = await getOfflineSync();
+        sync.pushQueue();
+        sync.pullJobs(user.workspace.id);
       }
     };
 
     // Initial Pull (no throttle on mount)
-    if (user?.workspace?.id) {
-      pullJobs(user.workspace.id);
-      lastSyncTime = Date.now();
-    }
+    const initialPull = async () => {
+      if (user?.workspace?.id) {
+        const sync = await getOfflineSync();
+        sync.pullJobs(user.workspace.id);
+        lastSyncTime = Date.now();
+      }
+    };
+    initialPull();
 
     // Consolidated Background Sync Interval (every 5 minutes, with throttle check)
     // Reduced from 90s to minimize Supabase REST API usage
@@ -223,8 +233,11 @@ const AppContent: React.FC = () => {
 
       console.log('[App] Loading profile for user:', sessionUserId);
 
+      // REMEDIATION ITEM 5: Lazy load auth module for profile operations
+      const auth = await getAuth();
+
       // Load user profile from database
-      let profile = await getUserProfile(sessionUserId);
+      let profile = await auth.getUserProfile(sessionUserId);
 
       // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
       if (!profile && sessionUserMetadata?.workspace_name) {
@@ -236,7 +249,9 @@ const AppContent: React.FC = () => {
           .replace(/^-|-$/g, '');
         const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
-        const supabase = getSupabase();
+        // REMEDIATION ITEM 5: Lazy load supabase module
+        const supabaseModule = await getSupabaseModule();
+        const supabase = supabaseModule.getSupabase();
         if (supabase) {
           try {
             const { error } = await supabase.rpc('create_workspace_with_owner', {
@@ -250,7 +265,7 @@ const AppContent: React.FC = () => {
               console.error('[App] Auto-heal workspace creation failed:', error);
             } else {
               // Try fetching again after creation
-              profile = await getUserProfile(sessionUserId);
+              profile = await auth.getUserProfile(sessionUserId);
             }
           } catch (err) {
             console.error('[App] Auto-heal exception:', err);
@@ -294,8 +309,13 @@ const AppContent: React.FC = () => {
 
   // REMEDIATION #1: Data loading and mutations now handled by DataContext
   // Start background sync worker on app mount
+  // REMEDIATION ITEM 5: Lazy load syncQueue module
   useEffect(() => {
-    startSyncWorker();
+    const initSyncWorker = async () => {
+      const syncQueue = await getSyncQueue();
+      syncQueue.startSyncWorker();
+    };
+    initSyncWorker();
   }, []);
 
   // Save user profile to localStorage when it changes
@@ -321,8 +341,10 @@ const AppContent: React.FC = () => {
     // This callback just exists for compatibility with AuthView
   };
 
+  // REMEDIATION ITEM 5: Lazy load auth module for logout
   const handleLogout = async () => {
-    await signOut();
+    const auth = await getAuth();
+    await auth.signOut();
     // AuthContext will automatically update session state
   };
 
