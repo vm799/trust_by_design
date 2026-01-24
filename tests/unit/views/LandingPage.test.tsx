@@ -118,7 +118,7 @@ describe('LandingPage', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       expect(
-        screen.getByText(/SHA-256 sealed evidence/i)
+        screen.getByText(/SHA-256 sealed records/i)
       ).toBeInTheDocument();
       expect(
         screen.getByText(/Capture evidence anywhere/i)
@@ -229,14 +229,19 @@ describe('LandingPage', () => {
     });
   });
 
-  describe('Theme Toggle', () => {
-    it('renders the theme toggle button in navbar', () => {
+  describe('Dark Mode', () => {
+    // Phase 4.5: Landing page always forces dark mode, no toggle button
+    it('forces dark mode on landing page (no theme toggle)', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
-      const themeToggle = screen.getByRole('button', {
+      // Theme toggle should NOT be present - landing is always dark
+      const themeToggle = screen.queryByRole('button', {
         name: /Switch to (day|night) mode/i,
       });
-      expect(themeToggle).toBeInTheDocument();
+      expect(themeToggle).not.toBeInTheDocument();
+
+      // Should have dark mode styling
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
   });
 

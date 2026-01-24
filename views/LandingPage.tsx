@@ -2,19 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
-import { ThemeToggleCompact } from '../components/ThemeToggle';
 import { DayNightCarousel } from '../components/DayNightCarousel';
 import { useTheme } from '../lib/theme';
 
 /**
  * Landing Page - Modern gradient design with glassmorphism
- * Adaptive dark/light mode with day/night carousel
+ *
+ * Phase 4.5: Force dark mode always - no auto-detect or toggle on landing
  */
 const LandingPage: React.FC = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const { setTheme } = useTheme();
+
+  // Phase 4.5: Force dark mode on landing page
+  useEffect(() => {
+    // Set dark mode on mount
+    setTheme('dark');
+    // Add dark class to html element immediately for instant dark
+    document.documentElement.classList.add('dark');
+  }, [setTheme]);
+
+  // Always dark on landing
+  const isDark = true;
 
   // PWA Install prompt detection
   useEffect(() => {
@@ -155,7 +165,7 @@ const LandingPage: React.FC = () => {
             <JobProofLogo variant="full" size="sm" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <ThemeToggleCompact />
+            {/* Phase 4.5: Removed theme toggle from landing - always dark */}
             <Link
               to="/pricing"
               className={`
@@ -273,7 +283,7 @@ const LandingPage: React.FC = () => {
           <FeatureCard
             icon="verified"
             title="Immutable Proof"
-            desc="SHA-256 sealed evidence with timestamps and GPS location. Legally defensible."
+            desc="SHA-256 sealed records with timestamps and GPS location. Professional job documentation."
             isDark={isDark}
             delay={0}
           />
@@ -368,6 +378,107 @@ const LandingPage: React.FC = () => {
               isDark={isDark}
               delay={0.2}
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Phase 4.5: Roadmap Teasers Section */}
+      <section
+        className={`
+          relative py-12 sm:py-16 px-4 sm:px-6
+          ${isDark ? 'bg-slate-900/30' : 'bg-white/30'}
+          backdrop-blur-sm
+        `}
+      >
+        <div className="max-w-4xl mx-auto space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center space-y-3"
+          >
+            <span className="inline-block px-4 py-1 bg-primary/20 rounded-full text-primary text-xs font-bold uppercase tracking-widest">
+              Coming Soon
+            </span>
+            <h2
+              className={`
+                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                ${isDark ? 'text-white' : 'text-slate-900'}
+              `}
+            >
+              Version 2.0 Roadmap
+            </h2>
+            <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              We're building the future of field service documentation
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0 }}
+              className={`
+                p-5 rounded-xl border text-center space-y-2
+                ${isDark
+                  ? 'bg-slate-900/50 border-primary/20'
+                  : 'bg-white/50 border-slate-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-3xl text-primary">gavel</span>
+              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                Legal Evidence Capture
+              </h3>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Court-ready documentation with certified timestamps
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className={`
+                p-5 rounded-xl border text-center space-y-2
+                ${isDark
+                  ? 'bg-slate-900/50 border-primary/20'
+                  : 'bg-white/50 border-slate-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-3xl text-primary">link</span>
+              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                Blockchain Verification
+              </h3>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Immutable proof anchored to distributed ledger
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className={`
+                p-5 rounded-xl border text-center space-y-2
+                ${isDark
+                  ? 'bg-slate-900/50 border-primary/20'
+                  : 'bg-white/50 border-slate-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-3xl text-primary">smart_toy</span>
+              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                AI Job Matching
+              </h3>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Smart technician assignment based on skills and location
+              </p>
+            </motion.div>
           </div>
         </div>
       </section>
