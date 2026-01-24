@@ -7,12 +7,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
 import { getClients, addClient, updateClient } from '../../../hooks/useWorkspaceData';
 import { Client } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
+import { showToast } from '../../../lib/microInteractions';
 
 interface FormData {
   name: string;
@@ -26,7 +27,9 @@ interface FormData {
 const ClientForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
+  const returnTo = searchParams.get('returnTo');
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -104,7 +107,18 @@ const ClientForm: React.FC = () => {
         navigate(route(ROUTES.CLIENT_DETAIL, { id }));
       } else {
         const newClient = await addClient(clientData as Omit<Client, 'id'>);
-        navigate(route(ROUTES.CLIENT_DETAIL, { id: newClient.id }));
+        showToast('Client created successfully!', 'success', 3000);
+
+        // Phase 2.5: Handle returnTo parameter for flow navigation
+        if (returnTo) {
+          // Decode and navigate back to the original page
+          const decodedReturnTo = decodeURIComponent(returnTo);
+          // Add query param to indicate we came from client creation
+          const separator = decodedReturnTo.includes('?') ? '&' : '?';
+          navigate(`${decodedReturnTo}${separator}newClientId=${newClient.id}`, { replace: true });
+        } else {
+          navigate(route(ROUTES.CLIENT_DETAIL, { id: newClient.id }));
+        }
       }
     } catch (error) {
       console.error('Failed to save client:', error);
