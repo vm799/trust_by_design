@@ -15,6 +15,7 @@ import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 
 interface Photo {
+  id?: string;  // REMEDIATION ITEM 9: Added for stable React keys
   url?: string;
   localPath?: string;
   type?: 'before' | 'during' | 'after';
@@ -225,10 +226,11 @@ const TechJobDetail: React.FC = () => {
                 {beforePhotos.length} captured
               </span>
             </div>
+            {/* REMEDIATION ITEM 9: Use stable keys for photos */}
             {beforePhotos.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
                 {beforePhotos.map((photo, i) => (
-                  <div key={i} className="aspect-square rounded-lg bg-slate-800 overflow-hidden">
+                  <div key={photo.id || photo.url || photo.timestamp || `before-${i}`} className="aspect-square rounded-lg bg-slate-800 overflow-hidden">
                     <img
                       src={photo.url || photo.localPath}
                       alt={`Before ${i + 1}`}
@@ -253,7 +255,7 @@ const TechJobDetail: React.FC = () => {
             {afterPhotos.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
                 {afterPhotos.map((photo, i) => (
-                  <div key={i} className="aspect-square rounded-lg bg-slate-800 overflow-hidden">
+                  <div key={photo.id || photo.url || photo.timestamp || `after-${i}`} className="aspect-square rounded-lg bg-slate-800 overflow-hidden">
                     <img
                       src={photo.url || photo.localPath}
                       alt={`After ${i + 1}`}

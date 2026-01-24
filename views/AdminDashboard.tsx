@@ -780,10 +780,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex -space-x-2">
-                          {job.photos.slice(0, 3).map((p, i) => {
+                          {/* REMEDIATION ITEM 9: Use photo.id for stable React keys */}
+                          {job.photos.slice(0, 3).map((p) => {
                             const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
                             return (
-                              <div key={i} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
+                              <div key={p.id} className="size-6 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800">
                                 {displayUrl ? (
                                   <img src={displayUrl} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="Evidence" />
                                 ) : (

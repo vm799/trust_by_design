@@ -397,10 +397,11 @@ const JobDetail: React.FC = () => {
                     View All
                   </ActionButton>
                 </div>
+                {/* REMEDIATION ITEM 9: Use photo.id or url for stable React keys */}
                 <div className="grid grid-cols-4 gap-2">
                   {job.photos.slice(0, 4).map((photo, i) => (
                     <div
-                      key={i}
+                      key={(photo as any).id || photo.url || `photo-${i}`}
                       className="aspect-square rounded-lg bg-slate-800 overflow-hidden"
                     >
                       <img

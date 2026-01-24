@@ -17,6 +17,7 @@ import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
 
 interface Photo {
+  id?: string;  // REMEDIATION ITEM 9: Added for stable React keys
   url?: string;
   localPath?: string;
   type?: 'before' | 'during' | 'after';
@@ -173,7 +174,7 @@ const EvidenceReview: React.FC = () => {
           />
         ) : (
           <div className="space-y-8">
-            {/* Before Photos */}
+            {/* Before Photos - REMEDIATION ITEM 9: Use stable keys */}
             {grouped.before.length > 0 && (
               <section>
                 <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
@@ -182,7 +183,7 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {grouped.before.map((photo, i) => (
                     <PhotoCard
-                      key={i}
+                      key={photo.id || photo.url || photo.timestamp || `before-${i}`}
                       photo={photo}
                       locked={isSealed}
                       onClick={() => setSelectedPhoto(photo)}
@@ -201,7 +202,7 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {grouped.during.map((photo, i) => (
                     <PhotoCard
-                      key={i}
+                      key={photo.id || photo.url || photo.timestamp || `during-${i}`}
                       photo={photo}
                       locked={isSealed}
                       onClick={() => setSelectedPhoto(photo)}
@@ -220,7 +221,7 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {grouped.after.map((photo, i) => (
                     <PhotoCard
-                      key={i}
+                      key={photo.id || photo.url || photo.timestamp || `after-${i}`}
                       photo={photo}
                       locked={isSealed}
                       onClick={() => setSelectedPhoto(photo)}
@@ -239,7 +240,7 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {grouped.other.map((photo, i) => (
                     <PhotoCard
-                      key={i}
+                      key={photo.id || photo.url || photo.timestamp || `other-${i}`}
                       photo={photo}
                       locked={isSealed}
                       onClick={() => setSelectedPhoto(photo)}
