@@ -51,20 +51,44 @@ const ClientList: React.FC = () => {
     );
   }, [clients, searchQuery]);
 
-  // Get job count for each client
+  // REMEDIATION ITEM 7: Memoize job stats per client to avoid O(n*m) lookups in render
+  const clientJobStats = useMemo(() => {
+    const stats: Record<string, { count: number; lastJobDate: Date | null }> = {};
+
+    // Group jobs by clientId
+    const jobsByClient: Record<string, Job[]> = {};
+    for (const job of jobs) {
+      if (job.clientId) {
+        if (!jobsByClient[job.clientId]) {
+          jobsByClient[job.clientId] = [];
+        }
+        jobsByClient[job.clientId].push(job);
+      }
+    }
+
+    // Calculate stats for each client
+    for (const clientId of Object.keys(jobsByClient)) {
+      const clientJobs = jobsByClient[clientId];
+      const sortedJobs = [...clientJobs].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      stats[clientId] = {
+        count: clientJobs.length,
+        lastJobDate: sortedJobs.length > 0 ? new Date(sortedJobs[0].date) : null,
+      };
+    }
+
+    return stats;
+  }, [jobs]);
+
+  // Get job count for each client (uses memoized stats)
   const getJobCount = (clientId: string) => {
-    return jobs.filter(j => j.clientId === clientId).length;
+    return clientJobStats[clientId]?.count ?? 0;
   };
 
-  // Get last job date for client
+  // Get last job date for client (uses memoized stats)
   const getLastJobDate = (clientId: string) => {
-    const clientJobs = jobs.filter(j => j.clientId === clientId);
-    if (clientJobs.length === 0) return null;
-
-    const sorted = clientJobs.sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    return new Date(sorted[0].date);
+    return clientJobStats[clientId]?.lastJobDate ?? null;
   };
 
   const formatRelativeDate = (date: Date | null) => {
