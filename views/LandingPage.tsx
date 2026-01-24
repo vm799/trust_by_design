@@ -4,6 +4,16 @@ import { motion } from 'framer-motion';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
 import { DayNightCarousel } from '../components/DayNightCarousel';
 import { useTheme } from '../lib/theme';
+import {
+  bgOrb1Animate,
+  bgOrb1Transition,
+  bgOrb2Animate,
+  bgOrb2Transition,
+  bgOrbCenterAnimate,
+  bgOrbCenterTransition,
+  hoverLiftQuick,
+  stepNumberHover,
+} from '../lib/animations';
 
 /**
  * Landing Page - Modern gradient design with glassmorphism
@@ -66,54 +76,31 @@ const LandingPage: React.FC = () => {
         }
       `}
     >
-      {/* Animated background orbs */}
+      {/* Animated background orbs - REMEDIATION ITEM 11: Using memoized animation objects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className={`
             absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl
             ${isDark ? 'bg-primary/20' : 'bg-amber-300/30'}
           `}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          animate={bgOrb1Animate}
+          transition={bgOrb1Transition}
         />
         <motion.div
           className={`
             absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl
             ${isDark ? 'bg-indigo-500/20' : 'bg-blue-300/20'}
           `}
-          animate={{
-            x: [0, -30, 0],
-            y: [0, -50, 0],
-            scale: [1.1, 1, 1.1],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          animate={bgOrb2Animate}
+          transition={bgOrb2Transition}
         />
         <motion.div
           className={`
             absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl
             ${isDark ? 'bg-violet-500/10' : 'bg-rose-200/20'}
           `}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          animate={bgOrbCenterAnimate}
+          transition={bgOrbCenterTransition}
         />
       </div>
 
@@ -539,7 +526,7 @@ const LandingPage: React.FC = () => {
   );
 };
 
-// Feature Card - Glassmorphism
+// Feature Card - Glassmorphism - REMEDIATION ITEM 11: Using memoized animation objects
 const FeatureCard = ({
   icon,
   title,
@@ -558,7 +545,7 @@ const FeatureCard = ({
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+    whileHover={hoverLiftQuick}
     className={`
       text-center space-y-3 sm:space-y-4 p-6 sm:p-8 rounded-2xl
       backdrop-blur-xl border transition-all duration-300
@@ -601,7 +588,7 @@ const FeatureCard = ({
   </motion.div>
 );
 
-// Step Card - Glassmorphism
+// Step Card - Glassmorphism - REMEDIATION ITEM 11: Using memoized animation objects
 const StepCard = ({
   num,
   title,
@@ -623,7 +610,7 @@ const StepCard = ({
     className="text-center space-y-2 sm:space-y-3"
   >
     <motion.div
-      whileHover={{ scale: 1.1, rotate: 5 }}
+      whileHover={stepNumberHover}
       className={`
         inline-flex items-center justify-center size-10 sm:size-12 rounded-full
         font-black text-sm sm:text-lg shadow-lg
@@ -649,7 +636,7 @@ const StepCard = ({
   </motion.div>
 );
 
-// Price Card - Glassmorphism
+// Price Card - Glassmorphism - REMEDIATION ITEM 11: Using memoized animation objects
 const PriceCard = ({
   tier,
   price,
@@ -672,7 +659,7 @@ const PriceCard = ({
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+    whileHover={hoverLiftQuick}
     className={`
       relative p-6 sm:p-8 rounded-2xl border transition-all duration-300
       ${active
