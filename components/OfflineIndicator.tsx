@@ -112,4 +112,5 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
 
 OfflineIndicator.displayName = 'OfflineIndicator';
 
+export { OfflineIndicator };
 export default OfflineIndicator;
