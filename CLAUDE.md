@@ -83,9 +83,69 @@ const isDark = resolvedTheme === 'dark';
 - `ActionButton.tsx` - Primary buttons with press-spring animation
 - `Card.tsx` - Container with glassmorphism support
 - `Modal.tsx` - Dialog overlay
-- `Tooltip.tsx` - Hint tooltips
+- `Tooltip.tsx` - Smart tooltips with Radix UI (see Tooltip System below)
 - `StatusBadge.tsx` - Status indicators
 - `LoadingSkeleton.tsx` - Loading placeholders
+
+## Tooltip System (Phase 2)
+
+### Components (`components/ui/Tooltip.tsx`)
+Built on Radix UI for accessibility:
+- `Tooltip` - Main component with all options
+- `SimpleTooltip` - Quick usage for basic hints
+- `InfoTooltip` - For form fields (auto-dismiss + close button)
+- `HelpTooltip` - Standalone help icon with tooltip
+
+### Usage
+```tsx
+import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/ui';
+
+// Basic tooltip (300ms delay, high-contrast)
+<Tooltip content="Helpful hint" position="top">
+  <button>Hover me</button>
+</Tooltip>
+
+// Simple tooltip shorthand
+<SimpleTooltip content="Quick tip">
+  <span>Info</span>
+</SimpleTooltip>
+
+// Form field with auto-dismiss (60s) and close button
+<InfoTooltip content="This field is required">
+  <input type="text" />
+</InfoTooltip>
+
+// Help icon that shows tooltip
+<HelpTooltip content="Click here for more info" />
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| content | ReactNode | - | Tooltip content |
+| position | 'top' \| 'bottom' \| 'left' \| 'right' | 'top' | Position |
+| variant | 'default' \| 'highlighted' \| 'warning' \| 'success' \| 'info' | 'default' | Color scheme |
+| showClose | boolean | false | Show X button |
+| autoDismiss | boolean | false | Auto-hide after delay |
+| autoDismissDelay | number | 60000 | Auto-hide delay (ms) |
+| delayDuration | number | 300 | Show delay (ms) |
+
+### Variants
+- `default` - High-contrast (dark bg in light mode, white bg in dark mode)
+- `highlighted` - Amber/orange for important hints
+- `warning` - Orange for warnings
+- `success` - Emerald for success messages
+- `info` - Blue for informational tooltips
+
+### Behavior
+- **300ms hover delay** before showing
+- **60s auto-dismiss** when `autoDismiss` is enabled
+- **Slide-out-right** animation on dismiss
+- **Keyboard accessible** (focus triggers tooltip)
+
+### Navigation Components
+- `Breadcrumbs.tsx` - Navigation breadcrumbs with theme support
+- `BackButton` - Quick "back to X" navigation
 
 ### Layout Components (`components/layout/`)
 - `AppShell.tsx` - Main app container
@@ -97,6 +157,70 @@ const isDark = resolvedTheme === 'dark';
 - `ThemeToggle.tsx` - Full day/night toggle with mode selector
 - `ThemeToggleCompact.tsx` - Navbar-friendly single button
 - `DayNightCarousel.tsx` - Feature carousel with alternating aesthetics
+
+## Job Creation Guards (Phase 3)
+
+### useJobGuard Hook (`hooks/useJobGuard.ts`)
+Enforces client-first flow for job creation:
+
+```tsx
+import { useJobGuard } from '../hooks/useJobGuard';
+
+// In job creation page
+const {
+  isLoading,
+  clients,
+  technicians,
+  hasClients,
+  hasTechnicians,
+  canCreateJob,
+  checkAndRedirect,
+  showClientRequiredToast,
+  showNoTechnicianWarning,
+  refresh
+} = useJobGuard(redirectOnFail);
+
+// Auto-redirect mode: pass true to automatically redirect when no clients
+const guard = useJobGuard(true);
+
+// Manual check mode: validate before action
+const handleCreateJob = async () => {
+  const canProceed = await guard.checkAndRedirect();
+  if (canProceed) {
+    // Proceed with job creation
+  }
+};
+```
+
+### Guard Behavior
+- **Client required**: Redirects to `/admin/clients/new` with returnTo param
+- **Technician optional**: Shows info toast, allows unassigned jobs
+- **Toast messages**: "Create a client first before adding jobs"
+
+### Breadcrumbs (`components/ui/Breadcrumbs.tsx`)
+Navigation breadcrumbs with theme-aware styling:
+
+```tsx
+import { Breadcrumbs, BackButton, JobCreationBreadcrumbs } from '../components/ui';
+
+// Custom breadcrumbs
+<Breadcrumbs
+  items={[
+    { label: 'Jobs', href: '/admin/jobs', icon: 'work' },
+    { label: 'New Job' }
+  ]}
+  separator="chevron"  // 'chevron' | 'slash' | 'arrow'
+  showHome={true}      // Adds Dashboard link
+/>
+
+// Preset breadcrumbs
+<JobCreationBreadcrumbs currentStep="Select Client" />
+<ClientCreationBreadcrumbs currentStep="Details" />
+<TechnicianCreationBreadcrumbs />
+
+// Back button
+<BackButton to="/admin/jobs" label="Back to Jobs" />
+```
 
 ## Glassmorphism Pattern
 Standard glassmorphism container:
@@ -222,8 +346,21 @@ npm run type-check    # TypeScript check
 - [x] Global theme with Tailwind dark:`class`
 - [x] Theme persisted in localStorage
 
-### Phase 2: Tooltip UX Polish (pending)
-### Phase 3: Job Creation Guards (pending)
+### Phase 2: Tooltip UX Polish ✅
+- [x] Radix UI tooltips with accessibility
+- [x] High-contrast variants (dark bg/white text or inverse)
+- [x] 300ms hover delay to show
+- [x] 60s auto-dismiss option
+- [x] Close button (X) option
+- [x] Slide-out-right animation
+
+### Phase 3: Job Creation Guards ✅
+- [x] useJobGuard hook for client-first validation
+- [x] Auto-redirect to client creation when no clients exist
+- [x] Toast notifications for guard warnings
+- [x] Breadcrumbs component with theme support
+- [x] Preset breadcrumbs (Job, Client, Technician creation)
+
 ### Phase 4: Job Flexibility (pending)
 ### Phase 5: Job Lifecycle + Navbar (pending)
 ### Phase 6: Polish + Integrations (pending)

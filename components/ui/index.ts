@@ -11,3 +11,13 @@ export { default as Modal } from './Modal';
 export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as EmptyState } from './EmptyState';
 export { default as LoadingSkeleton } from './LoadingSkeleton';
+export { default as Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from './Tooltip';
+export type { TooltipProps } from './Tooltip';
+export {
+  default as Breadcrumbs,
+  BackButton,
+  JobCreationBreadcrumbs,
+  ClientCreationBreadcrumbs,
+  TechnicianCreationBreadcrumbs,
+} from './Breadcrumbs';
+export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
