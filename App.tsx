@@ -38,6 +38,8 @@ const LegalPage = lazy(() => import('./views/LegalPage'));
 const PricingView = lazy(() => import('./views/PricingView'));
 const ProfileView = lazy(() => import('./views/ProfileView'));
 const AuthView = lazy(() => import('./views/AuthView'));
+// Phase 6.5: Dedicated callback handler for magic link auth
+const AuthCallback = lazy(() => import('./views/AuthCallback'));
 // V1 MVP: EmailFirstAuth removed - Magic Link only via AuthView
 // const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
 const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
@@ -409,6 +411,8 @@ const AppContent: React.FC = () => {
 
         {/* V1 MVP: Magic Link Only Authentication */}
         <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        {/* Phase 6.5: Dedicated callback handler for magic link - processes auth tokens */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />

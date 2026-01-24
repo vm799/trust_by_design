@@ -10,9 +10,12 @@
  * Allowlist of permitted redirect origins
  * Only these domains are allowed for OAuth redirects
  * UAT Fix #14: Extended allowlist for development and various ports
+ * Phase 6.5: Added Vercel preview/production URLs
  */
 export const REDIRECT_ALLOWLIST = [
   'https://jobproof.pro',
+  'https://jobproof.vercel.app',           // Vercel production
+  'https://trust-by-design.vercel.app',    // Vercel alternate
   'http://localhost:3000',
   'http://localhost:5173',  // Vite default
   'http://localhost:5174',  // Vite alternate
