@@ -50,6 +50,9 @@ export const TechnicianPortal = lazy(() => import('../views/TechnicianPortal'));
 
 /**
  * Route path constants
+ *
+ * IMPORTANT: These must match the actual routes defined in App.tsx
+ * The app currently uses /admin/* routes, not /app/* routes
  */
 export const ROUTES = {
   // Public
@@ -64,39 +67,39 @@ export const ROUTES = {
   ONBOARDING: '/onboarding',
   ONBOARDING_STEP: '/onboarding/:step',
 
-  // Main App
-  APP: '/app',
-  DASHBOARD: '/app',
+  // Main App - using actual /admin routes from App.tsx
+  APP: '/admin',
+  DASHBOARD: '/admin',
 
-  // Clients
-  CLIENTS: '/app/clients',
-  CLIENT_NEW: '/app/clients/new',
-  CLIENT_DETAIL: '/app/clients/:id',
-  CLIENT_EDIT: '/app/clients/:id/edit',
+  // Clients - actual routes
+  CLIENTS: '/admin/clients',
+  CLIENT_NEW: '/admin/clients/new',
+  CLIENT_DETAIL: '/admin/clients/:id',
+  CLIENT_EDIT: '/admin/clients/:id/edit',
 
-  // Jobs
-  JOBS: '/app/jobs',
-  JOB_NEW: '/app/jobs/new',
-  JOB_DETAIL: '/app/jobs/:id',
-  JOB_EDIT: '/app/jobs/:id/edit',
-  JOB_EVIDENCE: '/app/jobs/:id/evidence',
-  JOB_SEAL: '/app/jobs/:id/seal',
+  // Jobs - actual routes
+  JOBS: '/admin/jobs',
+  JOB_NEW: '/admin/jobs/new',
+  JOB_DETAIL: '/admin/jobs/:id',
+  JOB_EDIT: '/admin/jobs/:id/edit',
+  JOB_EVIDENCE: '/admin/jobs/:id/evidence',
+  JOB_SEAL: '/admin/jobs/:id/seal',
 
-  // Technicians
-  TECHNICIANS: '/app/technicians',
-  TECHNICIAN_NEW: '/app/technicians/new',
-  TECHNICIAN_DETAIL: '/app/technicians/:id',
+  // Technicians - actual routes
+  TECHNICIANS: '/admin/technicians',
+  TECHNICIAN_NEW: '/admin/technicians/new',
+  TECHNICIAN_DETAIL: '/admin/technicians/:id',
 
-  // Invoices
-  INVOICES: '/app/invoices',
-  INVOICE_DETAIL: '/app/invoices/:id',
-  INVOICE_SEND: '/app/invoices/:id/send',
+  // Invoices - actual routes
+  INVOICES: '/admin/invoices',
+  INVOICE_DETAIL: '/admin/invoices/:id',
+  INVOICE_SEND: '/admin/invoices/:id/send',
 
-  // Settings
-  SETTINGS: '/app/settings',
-  SETTINGS_WORKSPACE: '/app/settings/workspace',
-  SETTINGS_BILLING: '/app/settings/billing',
-  SETTINGS_TEAM: '/app/settings/team',
+  // Settings - actual routes
+  SETTINGS: '/admin/settings',
+  SETTINGS_WORKSPACE: '/admin/settings/workspace',
+  SETTINGS_BILLING: '/admin/settings/billing',
+  SETTINGS_TEAM: '/admin/settings/team',
 
   // Technician Portal
   TECH: '/tech',
