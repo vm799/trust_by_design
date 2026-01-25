@@ -13,6 +13,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '../types';
+import { InfoBox } from '../components/ui';
 
 interface ManagerIntentSelectorProps {
   user: UserProfile | null;
@@ -149,24 +150,14 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
           {/* PWA Tip Banner */}
           {showPwaTip && (
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 animate-in relative">
-              <button
-                onClick={dismissPwaTip}
-                className="absolute top-2 right-2 text-slate-400 hover:text-white p-1"
-                aria-label="Dismiss tip"
-              >
-                <span className="material-symbols-outlined text-sm">close</span>
-              </button>
-              <div className="flex items-start gap-3 pr-6">
-                <span className="material-symbols-outlined text-primary text-xl flex-shrink-0">add_to_home_screen</span>
-                <div>
-                  <p className="text-sm font-bold text-white">Add to Home Screen</p>
-                  <p className="text-xs text-slate-300 mt-1">
-                    For quick access, bookmark this app. On mobile, tap your browser's share button and select "Add to Home Screen".
-                  </p>
-                </div>
-              </div>
-            </div>
+            <InfoBox
+              icon="add_to_home_screen"
+              title="Add to Home Screen"
+              variant="tip"
+              onDismiss={dismissPwaTip}
+            >
+              For quick access, bookmark this app. On mobile, tap your browser's share button and select "Add to Home Screen".
+            </InfoBox>
           )}
 
           {/* Intent Question */}
