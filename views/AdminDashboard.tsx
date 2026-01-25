@@ -6,12 +6,14 @@ import JobCard from '../components/JobCard';
 import OfflineIndicator from '../components/OfflineIndicator';
 import EmptyState from '../components/EmptyState';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
+import UnopenedLinksActionCenter from '../components/UnopenedLinksActionCenter';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
 import { retryFailedSyncs, syncJobToSupabase } from '../lib/syncQueue';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
+import { useData } from '../lib/DataContext';
 import { getLinksNeedingAttention, acknowledgeLinkFlag, getTechJobNotifications, markTechNotificationRead, actionTechNotification, type MagicLinkInfo, type TechJobNotification } from '../lib/db';
 
 interface AdminDashboardProps {
@@ -25,6 +27,7 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], technicians = [], user, showOnboarding, onCloseOnboarding }) => {
   const navigate = useNavigate();
+  const { updateJob, deleteJob } = useData();
 
   // Loading state with 300ms delay to prevent flash of skeleton on fast loads
   const [isLoading, setIsLoading] = useState(true);
@@ -160,24 +163,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   // State for links needing attention (unopened for 2+ hours)
   const [linksNeedingAttention, setLinksNeedingAttention] = useState<MagicLinkInfo[]>([]);
 
+  // Phase 10: Action Center modal state
+  const [showActionCenter, setShowActionCenter] = useState(false);
+
   // State for technician-created job notifications
   const [techNotifications, setTechNotifications] = useState<TechJobNotification[]>([]);
 
+  // Phase 10: Refresh function for links needing attention
+  const refreshLinksNeedingAttention = useCallback(() => {
+    const flaggedLinks = getLinksNeedingAttention();
+    setLinksNeedingAttention(flaggedLinks);
+  }, []);
+
   // Check for unopened links periodically
   useEffect(() => {
-    const checkUnopenedLinks = () => {
-      const flaggedLinks = getLinksNeedingAttention();
-      setLinksNeedingAttention(flaggedLinks);
-    };
-
     // Check immediately
-    checkUnopenedLinks();
+    refreshLinksNeedingAttention();
 
     // Check every 5 minutes
-    const interval = setInterval(checkUnopenedLinks, 5 * 60 * 1000);
+    const interval = setInterval(refreshLinksNeedingAttention, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [jobs]); // Re-check when jobs change
+  }, [jobs, refreshLinksNeedingAttention]); // Re-check when jobs change
 
   // Load technician-created job notifications
   useEffect(() => {
@@ -311,12 +318,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
                     <p className="text-slate-400 text-sm">Verifiable field evidence management.</p>
                   </div>
-                  {/* Phase 3.5: Red Alert Badge for Unopened Links */}
+                  {/* Phase 10: Red Alert Badge for Unopened Links - Opens Action Center */}
                   {linksNeedingAttention.length > 0 && (
                     <button
-                      onClick={() => document.getElementById('unopened-alerts')?.scrollIntoView({ behavior: 'smooth' })}
+                      onClick={() => setShowActionCenter(true)}
                       className="relative flex items-center gap-2 px-3 py-2 bg-danger/20 hover:bg-danger/30 border border-danger/40 rounded-xl transition-all animate-pulse"
-                      title={`${linksNeedingAttention.length} unopened job link${linksNeedingAttention.length > 1 ? 's' : ''}`}
+                      title={`${linksNeedingAttention.length} unopened job link${linksNeedingAttention.length > 1 ? 's' : ''} - Click to manage`}
                     >
                       <span className="material-symbols-outlined text-danger text-lg">warning</span>
                       <span className="text-danger font-black text-sm">{linksNeedingAttention.length}</span>
@@ -835,6 +842,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           </div>
         </div>
       </div>
+      {/* Phase 10: Unopened Links Action Center Modal */}
+      <UnopenedLinksActionCenter
+        isOpen={showActionCenter}
+        onClose={() => setShowActionCenter(false)}
+        links={linksNeedingAttention}
+        jobs={jobs}
+        technicians={technicians}
+        clients={clients}
+        onUpdateJob={updateJob}
+        onDeleteJob={deleteJob}
+        onDismissLink={(token) => {
+          acknowledgeLinkFlag(token);
+          setLinksNeedingAttention(prev => prev.filter(l => l.token !== token));
+        }}
+        onRefreshLinks={refreshLinksNeedingAttention}
+      />
     </Layout>
   );
 };
