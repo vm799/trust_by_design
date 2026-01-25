@@ -120,8 +120,19 @@ const ClientDetail: React.FC = () => {
             {client.address && (
               <div className="flex items-start gap-3">
                 <span className="material-symbols-outlined text-slate-500">location_on</span>
-                <div>
+                <div className="flex-1">
                   <p className="text-white">{client.address}</p>
+                  {/* Phase 9: Clickable map link */}
+                  <button
+                    onClick={() => {
+                      const encodedAddress = encodeURIComponent(client.address);
+                      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+                    }}
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-lg text-primary text-xs font-bold transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">map</span>
+                    Open in Maps
+                  </button>
                 </div>
               </div>
             )}

@@ -104,20 +104,21 @@ const ClientForm: React.FC = () => {
 
       if (isEdit && id) {
         await updateClient(id, clientData);
+        showToast('Client updated!', 'success', 3000);
         navigate(route(ROUTES.CLIENT_DETAIL, { id }));
       } else {
         const newClient = await addClient(clientData as Omit<Client, 'id'>);
-        showToast('Client created successfully!', 'success', 3000);
+        showToast('Client created! Add another?', 'success', 4000);
 
-        // Phase 2.5: Handle returnTo parameter for flow navigation
+        // Phase 9: Handle returnTo parameter for flow navigation, otherwise go to list
         if (returnTo) {
-          // Decode and navigate back to the original page
+          // Decode and navigate back to the original page (e.g., job creation)
           const decodedReturnTo = decodeURIComponent(returnTo);
-          // Add query param to indicate we came from client creation
           const separator = decodedReturnTo.includes('?') ? '&' : '?';
           navigate(`${decodedReturnTo}${separator}newClientId=${newClient.id}`, { replace: true });
         } else {
-          navigate(route(ROUTES.CLIENT_DETAIL, { id: newClient.id }));
+          // Default: go to clients list view for easy "add another" workflow
+          navigate(ROUTES.CLIENTS, { replace: true });
         }
       }
     } catch (error) {

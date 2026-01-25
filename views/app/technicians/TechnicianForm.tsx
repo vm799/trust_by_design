@@ -102,21 +102,20 @@ const TechnicianForm: React.FC = () => {
 
       if (isEdit && id) {
         await updateTechnician(id, technicianData);
-        showToast('Technician updated successfully!', 'success', 3000);
-        navigate(`/admin/technicians`);
+        showToast('Technician updated!', 'success', 3000);
+        navigate('/admin/technicians');
       } else {
         const newTechnician = await addTechnician(technicianData as Omit<Technician, 'id'>);
-        showToast('Technician created successfully!', 'success', 3000);
+        showToast('Technician created! Add another?', 'success', 4000);
 
-        // Phase 2.5: Handle returnTo parameter for flow navigation
+        // Phase 9: Handle returnTo parameter for flow navigation
         if (returnTo) {
-          // Decode and navigate back to the original page
           const decodedReturnTo = decodeURIComponent(returnTo);
-          // Add query param to indicate we came from technician creation
           const separator = decodedReturnTo.includes('?') ? '&' : '?';
           navigate(`${decodedReturnTo}${separator}newTechId=${newTechnician.id}`, { replace: true });
         } else {
-          navigate('/admin/technicians');
+          // Default: go to technicians list view for easy "add another" workflow
+          navigate('/admin/technicians', { replace: true });
         }
       }
     } catch (error) {

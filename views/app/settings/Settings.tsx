@@ -13,6 +13,7 @@ import { Card, ActionButton, ConfirmDialog } from '../../../components/ui';
 import { useAuth } from '../../../lib/AuthContext';
 import { signOut } from '../../../lib/auth';
 import { ROUTES } from '../../../lib/routes';
+import { useNavigation } from '../../../hooks/useNavigation';
 
 interface SettingsSection {
   title: string;
@@ -25,6 +26,7 @@ interface SettingsSection {
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
+  const { goBack } = useNavigation('/admin');
   const { userEmail } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
@@ -84,6 +86,17 @@ const Settings: React.FC = () => {
 
   return (
     <div>
+      {/* Back Button */}
+      <div className="px-6 pt-4">
+        <button
+          onClick={() => goBack()}
+          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+        >
+          <span className="material-symbols-outlined text-lg">arrow_back</span>
+          Back
+        </button>
+      </div>
+
       <PageHeader
         title="Settings"
         subtitle="Manage your workspace and preferences"

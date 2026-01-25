@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { useNavigation } from '../hooks/useNavigation';
 
 interface HelpCenterProps {
   user: UserProfile | null;
@@ -18,6 +19,7 @@ interface HelpSection {
 
 const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
   const navigate = useNavigate();
+  const { goBack } = useNavigation('/admin');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
 
@@ -236,7 +238,18 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
   return (
     <Layout user={user}>
       <div className="max-w-5xl mx-auto space-y-12 pb-24">
-        <div className="text-center space-y-4 pt-12">
+        {/* Back Button */}
+        <div className="pt-6">
+          <button
+            onClick={() => goBack()}
+            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            Back
+          </button>
+        </div>
+
+        <div className="text-center space-y-4">
           <div className="size-16 bg-primary/20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">
             <span className="material-symbols-outlined text-primary text-4xl">help_center</span>
           </div>
