@@ -89,6 +89,12 @@ DO $$ BEGIN
   ALTER FUNCTION public.can_access_job_with_token(uuid, text) SET search_path = public, pg_temp;
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
 
+-- NOTE: generate_tech_token and generate_tech_pin exist in live DB but NOT in migrations!
+-- These were likely created manually. Trying all possible signatures:
+DO $$ BEGIN
+  ALTER FUNCTION public.generate_tech_token() SET search_path = public, pg_temp;
+EXCEPTION WHEN undefined_function THEN NULL; END $$;
+
 DO $$ BEGIN
   ALTER FUNCTION public.generate_tech_token(text) SET search_path = public, pg_temp;
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
@@ -98,11 +104,23 @@ DO $$ BEGIN
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
 
 DO $$ BEGIN
+  ALTER FUNCTION public.generate_tech_token(text, integer) SET search_path = public, pg_temp;
+EXCEPTION WHEN undefined_function THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER FUNCTION public.generate_tech_pin() SET search_path = public, pg_temp;
+EXCEPTION WHEN undefined_function THEN NULL; END $$;
+
+DO $$ BEGIN
   ALTER FUNCTION public.generate_tech_pin(text) SET search_path = public, pg_temp;
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
 
 DO $$ BEGIN
   ALTER FUNCTION public.generate_tech_pin(uuid) SET search_path = public, pg_temp;
+EXCEPTION WHEN undefined_function THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER FUNCTION public.generate_tech_pin(text, integer) SET search_path = public, pg_temp;
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
 
 -- Token validation and invalidation functions
@@ -177,7 +195,7 @@ CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user
   ON public.user_subscriptions(user_id);
 
 -- ============================================================================
--- SECTION 4: DROP UNUSED INDEXES
+-- SECTION 4: DROP UNUSED INDEXES (from previous migration)
 -- ============================================================================
 
 DROP INDEX IF EXISTS idx_workspaces_slug;
@@ -185,5 +203,55 @@ DROP INDEX IF EXISTS idx_users_workspace;
 DROP INDEX IF EXISTS idx_users_role;
 DROP INDEX IF EXISTS idx_tokens_job;
 DROP INDEX IF EXISTS idx_tokens_token;
+
+-- ============================================================================
+-- SECTION 5: DROP DUPLICATE INDEXES (from linter)
+-- ============================================================================
+-- These indexes have identical functionality - keep one, drop duplicates
+
+-- audit_logs: keep idx_audit_logs_workspace_id, drop idx_audit_workspace
+DROP INDEX IF EXISTS idx_audit_workspace;
+
+-- evidence_seals: keep idx_evidence_seals_workspace_id, drop idx_evidence_seals_workspace_btree
+DROP INDEX IF EXISTS idx_evidence_seals_workspace_btree;
+
+-- jobs assigned_technician_id: keep idx_jobs_assigned_technician_id, drop others
+DROP INDEX IF EXISTS idx_jobs_assigned;
+DROP INDEX IF EXISTS idx_jobs_assigned_technician_btree;
+
+-- jobs created_by_user_id: keep idx_jobs_created_by, drop idx_jobs_created_by_btree
+DROP INDEX IF EXISTS idx_jobs_created_by_btree;
+
+-- jobs workspace_id: keep idx_jobs_workspace_id, drop others
+DROP INDEX IF EXISTS idx_jobs_workspace;
+DROP INDEX IF EXISTS idx_jobs_workspace_id_btree;
+
+-- photos job_id: keep idx_photos_job_id, drop idx_photos_job_id_btree
+DROP INDEX IF EXISTS idx_photos_job_id_btree;
+
+-- users workspace_id: keep idx_users_workspace_id, drop idx_users_workspace_id_btree
+DROP INDEX IF EXISTS idx_users_workspace_id_btree;
+
+-- ============================================================================
+-- SECTION 6: DOCUMENTATION - FUNCTIONS MISSING FROM MIGRATIONS
+-- ============================================================================
+-- WARNING: The following functions exist in the live database but are NOT
+-- tracked in migration files. They should be added to version control:
+--
+-- 1. generate_tech_token - MISSING from migrations!
+--    - Linter reports: function_search_path_mutable
+--    - Action needed: Export function definition and add to migrations
+--
+-- 2. generate_tech_pin - MISSING from migrations!
+--    - Linter reports: function_search_path_mutable
+--    - Action needed: Export function definition and add to migrations
+--
+-- To export these functions from the live database, run:
+--   SELECT pg_get_functiondef(oid)
+--   FROM pg_proc
+--   WHERE proname IN ('generate_tech_token', 'generate_tech_pin')
+--   AND pronamespace = 'public'::regnamespace;
+--
+-- ============================================================================
 
 COMMIT;
