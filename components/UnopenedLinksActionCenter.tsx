@@ -81,19 +81,19 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   };
 
   const handlePauseJob = async (job: Job) => {
-    const updatedJob = { ...job, status: 'paused' as const, pausedAt: Date.now() };
-    onUpdateJob(updatedJob);
+    const updatedJob = { ...job, status: 'Paused' as const, pausedAt: Date.now() };
+    onUpdateJob(updatedJob as Job);
     showToast(`Job paused - ${job.technician} notified`, 'success', 3000);
   };
 
   const handleCancelJob = async (job: Job, reason: string) => {
     const updatedJob = {
       ...job,
-      status: 'cancelled' as const,
+      status: 'Cancelled' as const,
       cancelledAt: Date.now(),
       cancellationReason: reason,
     };
-    onUpdateJob(updatedJob);
+    onUpdateJob(updatedJob as Job);
     showToast(`Job cancelled - ${job.technician} notified`, 'warning', 3000);
   };
 
@@ -111,7 +111,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
     onUpdateJob(updatedJob);
 
     // Generate new magic link for new technician
-    const newLink = await generateMagicLink(job.id, newTechId, 'reassign');
+    const newLinkResult = await generateMagicLink(job.id);
 
     showToast(`Reassigned to ${newTech.name}${newTech.phone ? ` (${newTech.phone})` : ''}`, 'success', 4000);
     setShowReassignDropdown(null);
@@ -120,10 +120,10 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
 
   const handleResendLink = async (job: Job, link: MagicLinkInfo) => {
     // Generate a fresh magic link
-    const newLink = await generateMagicLink(job.id, job.techId, 'resend');
+    const newLinkResult = await generateMagicLink(job.id);
 
     // Share via native share if available, otherwise copy to clipboard
-    const linkUrl = `${window.location.origin}/#/tech/${newLink.token}`;
+    const linkUrl = newLinkResult.data?.url || `${window.location.origin}/#/tech/${job.id}`;
 
     if (navigator.share) {
       try {

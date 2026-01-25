@@ -233,7 +233,7 @@ export function generateMockW3W(): string {
 export interface VerifiedLocationResult {
   w3w: string;
   isVerified: boolean;
-  verificationSource: 'w3w_api' | 'mock' | 'manual' | 'cached';
+  verificationSource: 'w3w_api' | 'unknown' | 'manual' | 'cached';
   coordinates: {
     lat: number;
     lng: number;
@@ -272,7 +272,7 @@ export async function getVerifiedLocation(
   return {
     w3w: mockW3w,
     isVerified: false,
-    verificationSource: 'mock',
+    verificationSource: 'unknown',
     coordinates: { lat, lng, accuracy },
     warning: 'UNVERIFIED: W3W address is mock - API unavailable. GPS coordinates are real but W3W is NOT verified.',
   };

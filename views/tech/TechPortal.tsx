@@ -32,7 +32,7 @@ const TechPortal: React.FC = () => {
 
         // Filter jobs assigned to current technician (or all for demo)
         const myJobs = jobsData.filter(j =>
-          j.technicianId && j.status !== 'complete'
+          j.technicianId && j.status !== 'Complete'
         );
 
         setJobs(myJobs);
@@ -107,7 +107,7 @@ const TechPortal: React.FC = () => {
                 <div className="space-y-3">
                   {todayJobs.map(job => {
                     const client = clients.find(c => c.id === job.clientId);
-                    const isActive = job.status === 'in-progress';
+                    const isActive = job.status === 'In Progress';
 
                     return (
                       <Link key={job.id} to={`/tech/job/${job.id}`}>

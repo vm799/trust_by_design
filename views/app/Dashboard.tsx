@@ -65,21 +65,21 @@ const Dashboard: React.FC = () => {
   const stats: QuickStat[] = [
     {
       label: 'Need Action',
-      value: jobs.filter(j => !j.technicianId || j.status === 'pending').length,
+      value: jobs.filter(j => !j.technicianId || j.status === 'Pending').length,
       icon: 'priority_high',
       color: 'text-red-400 bg-red-500/10',
       link: `${ROUTES.JOBS}?status=pending`,
     },
     {
       label: 'In Progress',
-      value: jobs.filter(j => j.status === 'in-progress').length,
+      value: jobs.filter(j => j.status === 'In Progress').length,
       icon: 'pending',
       color: 'text-amber-400 bg-amber-500/10',
       link: `${ROUTES.JOBS}?status=in-progress`,
     },
     {
       label: 'Completed',
-      value: jobs.filter(j => j.status === 'complete').length,
+      value: jobs.filter(j => j.status === 'Complete').length,
       icon: 'check_circle',
       color: 'text-emerald-400 bg-emerald-500/10',
       link: `${ROUTES.JOBS}?status=complete`,
@@ -99,7 +99,7 @@ const Dashboard: React.FC = () => {
 
     // Jobs without technicians
     jobs
-      .filter(j => !j.technicianId && j.status !== 'complete')
+      .filter(j => !j.technicianId && j.status !== 'Complete')
       .slice(0, 3)
       .forEach(job => {
         const client = clients.find(c => c.id === job.clientId);
@@ -115,7 +115,7 @@ const Dashboard: React.FC = () => {
 
     // Jobs ready for sealing (completed but not sealed)
     jobs
-      .filter(j => j.status === 'complete' && !j.sealedAt)
+      .filter(j => j.status === 'Complete' && !j.sealedAt)
       .slice(0, 3)
       .forEach(job => {
         items.push({
@@ -314,7 +314,7 @@ const Dashboard: React.FC = () => {
                               {job.title || `Job #${job.id.slice(0, 6)}`}
                             </p>
                             <StatusBadge
-                              status={job.status === 'complete' ? 'completed' : job.status === 'in-progress' ? 'active' : 'pending'}
+                              status={job.status === 'Complete' ? 'completed' : job.status === 'In Progress' ? 'active' : 'pending'}
                               variant="compact"
                             />
                           </div>

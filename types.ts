@@ -1,8 +1,9 @@
 
-export type JobStatus = 'Pending' | 'In Progress' | 'Submitted' | 'Archived' | 'Paused' | 'Cancelled';
+export type JobStatus = 'Pending' | 'In Progress' | 'Complete' | 'Submitted' | 'Archived' | 'Paused' | 'Cancelled' | 'Draft';
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
-export type PhotoType = 'Before' | 'During' | 'After' | 'Evidence';
+export type PhotoType = 'before' | 'during' | 'after' | 'Before' | 'During' | 'After' | 'Evidence';
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue';
+export type LocationSource = 'gps' | 'manual' | 'cached' | 'w3w_api' | 'unknown';
 
 export interface SafetyCheck {
   id: string;
@@ -14,6 +15,7 @@ export interface SafetyCheck {
 export interface Photo {
   id: string;
   url: string; // IndexedDB key reference (e.g., "media_abc123") for offline, or full URL when synced
+  localPath?: string; // Local file path for offline photos
   timestamp: string;
   lat?: number;
   lng?: number;
@@ -63,7 +65,8 @@ export interface Job {
   lng?: number;
   w3w?: string;
   locationVerified?: boolean; // True if W3W was verified via API, false if mock/manual
-  locationSource?: 'gps' | 'manual' | 'cached' | 'unknown'; // Source of location data
+  locationSource?: LocationSource; // Source of location data
+  invoiceId?: string; // Reference to invoice if created
   notes: string;
   description?: string;
   workSummary?: string;
@@ -116,34 +119,51 @@ export interface Job {
   clientNotifiedAt?: string; // ISO timestamp when client emailed
 }
 
+export interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
 export interface Invoice {
   id: string;
   jobId: string;
   clientId: string;
   clientName: string;
   amount: number;
+  total: number;
   status: InvoiceStatus;
   issuedDate: string;
   dueDate: string;
+  paidAt?: string;
+  number?: string;
+  items: InvoiceItem[];
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface Client {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
-  address: string;
+  address?: string;
   totalJobs: number;
+  type?: string;
+  notes?: string;
 }
 
 export interface Technician {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
   rating: number;
   jobsCompleted: number;
+  specialty?: string;
 }
 
 export interface UserProfile {

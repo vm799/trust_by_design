@@ -65,8 +65,8 @@ const ClientDetail: React.FC = () => {
 
   const getJobStatus = (job: Job): 'pending' | 'active' | 'completed' | 'sealed' => {
     if (job.sealedAt) return 'sealed';
-    if (job.status === 'complete') return 'completed';
-    if (job.status === 'in-progress') return 'active';
+    if (job.status === 'Complete' || job.status === 'Submitted') return 'completed';
+    if (job.status === 'In Progress') return 'active';
     return 'pending';
   };
 
@@ -125,7 +125,7 @@ const ClientDetail: React.FC = () => {
                   {/* Phase 9: Clickable map link */}
                   <button
                     onClick={() => {
-                      const encodedAddress = encodeURIComponent(client.address);
+                      const encodedAddress = encodeURIComponent(client.address || '');
                       window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
                     }}
                     className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-lg text-primary text-xs font-bold transition-colors"

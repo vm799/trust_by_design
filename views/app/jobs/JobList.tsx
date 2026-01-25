@@ -14,7 +14,8 @@ import { getJobs, getClients, getTechnicians } from '../../../hooks/useWorkspace
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
-type FilterStatus = 'all' | 'pending' | 'active' | 'review' | 'sealed' | 'invoiced';
+type StatusType = 'pending' | 'active' | 'review' | 'sealed' | 'invoiced';
+type FilterStatus = 'all' | StatusType;
 
 const statusFilters: { value: FilterStatus; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -54,11 +55,11 @@ const JobList: React.FC = () => {
   }, []);
 
   // Get computed status for job
-  const getJobStatus = (job: Job): FilterStatus => {
+  const getJobStatus = (job: Job): StatusType => {
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
-    if (job.status === 'complete') return 'review';
-    if (job.status === 'in-progress') return 'active';
+    if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
+    if (job.status === 'In Progress') return 'active';
     return 'pending';
   };
 
