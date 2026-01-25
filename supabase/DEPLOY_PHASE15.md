@@ -4,6 +4,40 @@
 
 ---
 
+## SUPABASE-SPECIFIC GOTCHAS (READ FIRST!)
+
+### 1. pgcrypto Extension Lives in `extensions` Schema
+
+Supabase installs pgcrypto in the `extensions` schema, **not** `public`. When using `SET search_path = public` in SECURITY DEFINER functions, you MUST prefix pgcrypto calls:
+
+```sql
+-- ❌ WRONG (will fail with "function digest does not exist")
+v_token_hash := encode(digest(v_token, 'sha256'), 'hex');
+
+-- ✅ CORRECT (explicitly reference extensions schema)
+v_token_hash := encode(extensions.digest(v_token::bytea, 'sha256'), 'hex');
+```
+
+### 2. Column Names - Verify Your Schema
+
+Production schema may differ from local! Common differences:
+- `client_id` (not `client`)
+- `assigned_technician_id` (not `techId`)
+
+**Always verify columns exist before deploying:**
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'jobs' ORDER BY ordinal_position;
+```
+
+### 3. Type Casting Required
+
+Always use explicit type casts in function calls:
+- `p_job_id::TEXT`
+- `v_token::bytea`
+
+---
+
 ## SECURITY AUDIT FIXES IMPLEMENTED
 
 | Issue | Severity | Fix |
