@@ -523,7 +523,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Account Verified (Email)</p>
                            </div>
                            <p className="text-[8px] text-slate-300 italic pl-6">
-                              (Account-based identity, not legally verified)
+                              (Account-based identity verification)
                            </p>
                         </div>
                      </div>

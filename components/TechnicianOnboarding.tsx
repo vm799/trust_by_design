@@ -20,9 +20,9 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to JobProof',
-    description: 'Capture tamper-proof evidence for every job. Photos, location, and signatures - all cryptographically secured.',
+    description: 'Capture professional evidence for every job. Photos, location, and signatures - all securely stored.',
     icon: 'verified_user',
-    tip: 'Your evidence is legally defensible and can\'t be faked.'
+    tip: 'Your evidence is professionally documented and audit-ready.'
   },
   {
     id: 'offline',
@@ -48,9 +48,9 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'signature',
     title: 'Client Sign-Off',
-    description: 'Get the client to sign on screen. This legally confirms the work was completed.',
+    description: 'Get the client to sign on screen. This confirms the work was completed to their satisfaction.',
     icon: 'draw',
-    tip: 'The signature is hashed for tamper detection. If cleared, it\'s logged.'
+    tip: 'The signature is stored securely with the job record.'
   },
   {
     id: 'seal',

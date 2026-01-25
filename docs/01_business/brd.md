@@ -26,7 +26,7 @@ JobProof provides a **zero-friction proof-of-work system** that:
 - Admins create and dispatch jobs
 - Technicians receive magic links (no login required)
 - Technicians capture photos, signatures, and notes
-- System creates tamper-proof evidence bundle
+- System creates secure evidence bundle
 - Admins receive structured reports
 - Clients receive verifiable proof
 
@@ -39,7 +39,7 @@ Everything is timestamped, geolocated, and exportable.
 ### Primary Goals
 1. **Reduce invoice disputes by 80%** through verifiable evidence
 2. **Enable same-day invoicing** with instant professional reports
-3. **Provide legally defensible audit trail** for compliance and disputes
+3. **Provide comprehensive audit trail** for compliance and documentation
 4. **Build sustainable SaaS business** targeting $10K-50K MRR
 
 ### Secondary Goals
@@ -194,7 +194,7 @@ Everything is timestamped, geolocated, and exportable.
 **Rule:** Once job status = "Submitted", no edits allowed
 
 **Rationale:**
-- Legal defensibility (tamper-proof evidence)
+- Professional documentation standards (secure evidence)
 - Insurance claim compliance
 - Trust signal to clients
 

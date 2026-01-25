@@ -436,12 +436,12 @@ const LandingPage: React.FC = () => {
                 }
               `}
             >
-              <span className="material-symbols-outlined text-3xl text-primary">link</span>
+              <span className="material-symbols-outlined text-3xl text-primary">verified</span>
               <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                Blockchain Verification
+                Secure Verification
               </h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Immutable proof anchored to distributed ledger
+                Cryptographic signatures for audit-ready records
               </p>
             </motion.div>
 

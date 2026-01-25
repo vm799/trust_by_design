@@ -206,7 +206,7 @@ export const PERSONA_STEPS: Record<PersonaType, OnboardingStep[]> = {
       step_key: 'seal_first_job',
       step_order: 3,
       title: 'Seal Your First Job',
-      description: 'Learn the blockchain sealing process',
+      description: 'Learn the job sealing process',
       icon: 'lock',
     },
     {

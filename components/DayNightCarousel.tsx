@@ -50,7 +50,7 @@ const slides: CarouselSlide[] = [
   {
     id: 'paid',
     title: 'Get Paid Faster',
-    description: 'Eliminate disputes with tamper-proof documentation',
+    description: 'Eliminate disputes with professional documentation',
     icon: 'payments',
     isDark: false,
   },

@@ -2110,7 +2110,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">What happens when I seal the job?</summary>
-                  <p className="text-xs text-slate-400 mt-2">Sealing creates a tamper-proof evidence bundle with cryptographic proof. The client and manager receive a report.</p>
+                  <p className="text-xs text-slate-400 mt-2">Sealing finalizes the evidence bundle for this job. The client and manager receive a professional report.</p>
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">I see "Syncing" but nothing happens</summary>

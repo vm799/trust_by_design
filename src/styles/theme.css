@@ -442,3 +442,67 @@
 .light .border-white\/10 {
   border-color: hsl(214.3 31.8% 91.4%);
 }
+
+/* ============================================
+   PHASE 11: UI OVERFLOW FIXES
+   Prevent layout overflow and text clipping
+   ============================================ */
+
+/* Global box-sizing reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Form container with overflow protection */
+.form-container {
+  @apply max-w-md p-6 rounded-xl shadow-xl overflow-hidden;
+}
+
+/* Headings with truncation for overflow protection */
+h1, h2, h3, h4, h5, h6 {
+  @apply leading-tight;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.heading-truncate {
+  @apply truncate;
+  text-overflow: ellipsis;
+}
+
+/* Cancel button with danger styling */
+.cancel-btn {
+  @apply bg-red-500/20 hover:bg-red-500/30 border border-red-400
+         text-red-100 px-6 py-2 rounded-lg font-medium transition-all;
+}
+
+/* Light mode cancel button */
+.light .cancel-btn {
+  @apply bg-red-500/10 hover:bg-red-500/20 border-red-500 text-red-600;
+}
+
+/* Form field overflow protection */
+.form-field {
+  @apply w-full overflow-hidden;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  @apply w-full max-w-full;
+}
+
+/* Card overflow protection */
+.card-overflow-safe {
+  @apply overflow-hidden;
+}
+
+/* Responsive text that prevents overflow */
+.text-responsive {
+  @apply break-words;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}

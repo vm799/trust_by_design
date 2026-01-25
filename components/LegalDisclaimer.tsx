@@ -20,10 +20,7 @@ const LegalDisclaimer: React.FC = () => {
             This is a technical evidence capture tool, not legal authority.
           </p>
           <p className="leading-relaxed">
-            No guarantee of court admissibility. Consult legal counsel for admissibility requirements.
-          </p>
-          <p className="leading-relaxed">
-            Identity verification is account-based (email), not legally verified (no KYC).
+            Identity verification is account-based (email authentication).
           </p>
         </div>
       </div>

@@ -382,7 +382,7 @@ ON CONFLICT (persona_type, step_key) DO NOTHING;
 INSERT INTO onboarding_steps (persona_type, step_key, step_order, title, description, icon) VALUES
   ('compliance_officer', 'enable_audit_logs', 1, 'Enable Audit Logs', 'Activate comprehensive audit trail tracking', 'history'),
   ('compliance_officer', 'review_pending_jobs', 2, 'Review Pending Jobs', 'Inspect jobs awaiting compliance approval', 'task_alt'),
-  ('compliance_officer', 'seal_first_job', 3, 'Seal Your First Job', 'Learn the blockchain sealing process', 'lock'),
+  ('compliance_officer', 'seal_first_job', 3, 'Seal Your First Job', 'Learn the job sealing process', 'lock'),
   ('compliance_officer', 'export_report', 4, 'Export Audit Report', 'Generate compliance reports for regulators', 'description')
 ON CONFLICT (persona_type, step_key) DO NOTHING;
 

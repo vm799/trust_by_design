@@ -1243,9 +1243,22 @@ export const getMagicLinkStatus = (token: string): DbResult<MagicLinkInfo> => {
 /**
  * Record that a magic link was accessed
  * Call this when a technician opens a job via magic link
+ * Phase 11: Also updates Job.technicianLinkOpened flag for easy filtering
  */
 export const recordMagicLinkAccess = (token: string): void => {
   let linkData = mockDatabase.magicLinks.get(token);
+
+  // Also check localStorage if not in mockDatabase
+  if (!linkData) {
+    try {
+      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+      if (localLinks[token]) {
+        linkData = localLinks[token];
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
 
   if (linkData && !(linkData as any).first_accessed_at) {
     const now = new Date().toISOString();
@@ -1258,15 +1271,30 @@ export const recordMagicLinkAccess = (token: string): void => {
     };
     mockDatabase.magicLinks.set(token, updatedData);
 
-    // Update localStorage too
+    // Update localStorage for magic links
     try {
       const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
-      if (localLinks[token]) {
-        localLinks[token] = updatedData;
-        localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
-      }
+      localLinks[token] = updatedData;
+      localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
     } catch (e) {
       // Ignore
+    }
+
+    // Phase 11: Update Job.technicianLinkOpened flag for easy query filtering
+    const jobId = (linkData as any).job_id;
+    if (jobId) {
+      try {
+        const jobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+        const jobIndex = jobs.findIndex((j: any) => j.id === jobId);
+        if (jobIndex !== -1) {
+          jobs[jobIndex].technicianLinkOpened = true;
+          jobs[jobIndex].technicianLinkOpenedAt = now;
+          localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
+          console.log(`[MagicLink] Updated job ${jobId} with technicianLinkOpened=true`);
+        }
+      } catch (e) {
+        console.warn('[MagicLink] Failed to update job technicianLinkOpened flag:', e);
+      }
     }
 
     console.log(`[MagicLink] Recorded first access for token ${token.substring(0, 8)}...`);

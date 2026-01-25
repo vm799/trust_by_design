@@ -292,7 +292,7 @@ function getProTip(persona: PersonaType, step: string): string {
       upload_logo: 'Use a square logo (500x500px) for best results on certificates. PNG or JPG formats work great!',
       create_first_job: "Your first job is practice! Don't worry about perfection - you can edit or delete it later.",
       safety_checklist: 'Create a template checklist you can reuse across all jobs. Add items specific to your trade.',
-      generate_certificate: 'Certificates are blockchain-sealed and tamper-proof. Share them with clients for instant trust.',
+      generate_certificate: 'Certificates are professionally formatted and ready to share. Send them to clients for instant documentation.',
     },
     agency_owner: {
       add_first_technician: "Invite technicians with their email. They'll get setup instructions automatically.",
@@ -303,7 +303,7 @@ function getProTip(persona: PersonaType, step: string): string {
     compliance_officer: {
       enable_audit_logs: 'Every action is logged automatically - no configuration needed. Just enable and review.',
       review_pending_jobs: 'Look for missing photos, incomplete safety checks, or unsigned certificates.',
-      seal_first_job: 'Blockchain sealing creates an immutable record. Use it when jobs are 100% complete.',
+      seal_first_job: 'Sealing finalizes the job record. Use it when jobs are 100% complete.',
       export_report: 'Reports include all audit logs, photos, and signatures - ready for regulators.',
     },
     safety_manager: {

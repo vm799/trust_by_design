@@ -86,6 +86,8 @@ export interface Job {
   magicLinkToken?: string; // Magic link token for technician access
   magicLinkUrl?: string; // Full URL for sharing
   workspaceId?: string; // Workspace ID (from database)
+  technicianLinkOpened?: boolean; // Phase 11: Flag for unopened links filtering
+  technicianLinkOpenedAt?: string; // ISO timestamp when technician first opened link
   selfEmployedMode?: boolean; // Self-employed mode flag
   techMetadata?: TechJobMetadata; // Technician job creation metadata
   // Phase C.3: Cryptographic sealing
