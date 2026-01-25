@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { getSupabase } from '../lib/supabase';
 
 /**
- * Phase 6.5: Auth Callback Handler
+ * Phase 6.5: Auth Callback Handler (Fixed Jan 2026)
  *
  * Dedicated route for handling Supabase magic link callbacks.
  * This ensures proper session establishment before redirecting to dashboard.
  *
+ * CRITICAL FIX: Uses onAuthStateChange listener instead of just getSession()
+ * getSession() may return null because Supabase processes URL tokens async.
+ * The listener catches the SIGNED_IN event once tokens are processed.
+ *
  * Flow:
  * 1. User clicks magic link in email
  * 2. Supabase redirects to /auth/callback with tokens in URL hash
- * 3. This component waits for session to be established
- * 4. Redirects to appropriate dashboard based on user role/persona
+ * 3. Supabase client processes tokens (async) and fires onAuthStateChange
+ * 4. This component catches SIGNED_IN event and redirects to dashboard
  */
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -21,61 +25,85 @@ const AuthCallback: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
+  const hasRedirected = useRef(false);
 
+  // CRITICAL FIX: Listen for auth state change from Supabase
+  // This catches the session AFTER Supabase processes URL tokens
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const supabase = getSupabase();
-        if (!supabase) {
-          setError('Authentication service unavailable');
-          setProcessing(false);
-          return;
-        }
+    const supabase = getSupabase();
+    if (!supabase) {
+      setError('Authentication service unavailable');
+      setProcessing(false);
+      return;
+    }
 
-        // Check for error in URL params (Supabase passes errors this way)
-        const errorParam = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
-        if (errorParam) {
-          setError(errorDescription || errorParam);
-          setProcessing(false);
-          return;
-        }
+    // Check for error in URL params first (Supabase passes errors this way)
+    const errorParam = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    if (errorParam) {
+      setError(errorDescription || errorParam);
+      setProcessing(false);
+      return;
+    }
 
-        // Get the session - Supabase handles token extraction from URL hash
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('[AuthCallback] Setting up auth state listener...');
 
-        if (sessionError) {
-          console.error('[AuthCallback] Session error:', sessionError);
-          setError(sessionError.message);
-          setProcessing(false);
-          return;
-        }
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[AuthCallback] Auth event:', event, 'Session:', !!session);
 
-        if (session) {
-          console.log('[AuthCallback] Session established, redirecting to dashboard');
-          // Small delay to ensure AuthContext picks up the session
-          setTimeout(() => {
-            // Redirect to root which will use PersonaRedirect for proper routing
-            navigate('/', { replace: true });
-          }, 100);
-        } else {
-          // No session yet - wait for auth state change
-          console.log('[AuthCallback] Waiting for session...');
-        }
-      } catch (err) {
-        console.error('[AuthCallback] Error:', err);
-        setError(err instanceof Error ? err.message : 'Authentication failed');
+      // Prevent double redirect
+      if (hasRedirected.current) return;
+
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
+        console.log(`[AuthCallback] ${event} event received with session, redirecting to dashboard`);
+        hasRedirected.current = true;
         setProcessing(false);
+        // Redirect to root which uses PersonaRedirect for proper routing
+        navigate('/', { replace: true });
+      } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+        // SIGNED_OUT or initial load with no session (token expired/invalid)
+        console.log(`[AuthCallback] ${event} event with no session - token may be expired`);
+        setError('Sign-in link expired or already used. Please request a new link.');
+        setProcessing(false);
+      }
+    });
+
+    // Also check if session already exists (user might be already logged in)
+    const checkExistingSession = async () => {
+      if (hasRedirected.current) return;
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('[AuthCallback] Session check error:', sessionError);
+        // Don't set error yet - wait for the listener to potentially fire
+        return;
+      }
+
+      if (session && !hasRedirected.current) {
+        console.log('[AuthCallback] Existing session found, redirecting');
+        hasRedirected.current = true;
+        setProcessing(false);
+        navigate('/', { replace: true });
       }
     };
 
-    handleCallback();
+    // Small delay to let Supabase process URL tokens first
+    const sessionCheckTimer = setTimeout(checkExistingSession, 500);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(sessionCheckTimer);
+    };
   }, [navigate, searchParams]);
 
-  // Once authenticated via AuthContext, redirect
+  // Fallback: Once authenticated via AuthContext, redirect
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      console.log('[AuthCallback] Auth context confirmed, redirecting');
+    if (!isLoading && isAuthenticated && !hasRedirected.current) {
+      console.log('[AuthCallback] AuthContext confirmed auth, redirecting');
+      hasRedirected.current = true;
+      setProcessing(false);
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -83,11 +111,11 @@ const AuthCallback: React.FC = () => {
   // Timeout fallback - if stuck for too long, show error
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (processing && !isAuthenticated) {
+      if (processing && !isAuthenticated && !hasRedirected.current) {
         setError('Authentication timed out. Please try signing in again.');
         setProcessing(false);
       }
-    }, 15000); // 15 second timeout
+    }, 20000); // 20 second timeout (increased from 15s)
 
     return () => clearTimeout(timeout);
   }, [processing, isAuthenticated]);
