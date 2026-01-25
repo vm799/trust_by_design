@@ -26,6 +26,13 @@ BEGIN;
 -- NOTE: Using 'public, extensions' to include pgcrypto/uuid-ossp
 -- ============================================================================
 
+-- Drop functions that may have incompatible signatures before recreating
+DROP FUNCTION IF EXISTS public.get_user_workflow();
+DROP FUNCTION IF EXISTS public.validate_tech_access(TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.create_tech_access_link(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS public.can_access_job_with_token(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.photos_sync_workspace_id();
+
 -- 1.1 Create public equivalents for auth helper functions
 -- These replace the auth.* versions which we can't modify
 
