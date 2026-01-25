@@ -34,6 +34,9 @@ export const TechPortal = lazy(() => import('../views/tech/TechPortal'));
 export const TechJobDetail = lazy(() => import('../views/tech/TechJobDetail'));
 export const EvidenceCapture = lazy(() => import('../views/tech/EvidenceCapture'));
 
+// Phase 15: Field Proof System
+export const TechProofScreen = lazy(() => import('../views/TechProofScreen'));
+
 // Public views
 export const CertificateVerify = lazy(() => import('../views/public/CertificateVerify'));
 export const Landing = lazy(() => import('../views/Landing'));
@@ -99,6 +102,10 @@ export const ROUTES = {
   TECH: '/tech',
   TECH_JOB: '/tech/job/:jobId',
   TECH_CAPTURE: '/tech/job/:jobId/capture',
+
+  // Phase 15: Field Proof System (magic link access)
+  JOB_PROOF: '/job/:jobId/:token',
+  JOB_PROOF_PIN: '/job/:jobId', // With ?pin= query param
 
   // Legacy (redirects)
   LEGACY_ADMIN: '/admin',

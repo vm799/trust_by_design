@@ -25,6 +25,7 @@ const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
 const CreateJob = lazy(() => import('./views/CreateJob'));
 const ContractorDashboard = lazy(() => import('./views/ContractorDashboard'));
 const TechnicianPortal = lazy(() => import('./views/TechnicianPortal'));
+const TechProofScreen = lazy(() => import('./views/TechProofScreen'));
 const JobReport = lazy(() => import('./views/JobReport'));
 const Settings = lazy(() => import('./views/Settings'));
 const ClientsView = lazy(() => import('./views/ClientsView'));
@@ -590,6 +591,18 @@ const AppContent: React.FC = () => {
         <Route path="/track/:token" element={
           <RouteErrorBoundary sectionName="Job Tracking" fallbackRoute="/track-lookup">
             <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
+          </RouteErrorBoundary>
+        } />
+
+        {/* Phase 15: Field Proof System - Public magic link access */}
+        <Route path="/job/:jobId/:token" element={
+          <RouteErrorBoundary sectionName="Job Proof" fallbackRoute="/home">
+            <TechProofScreen />
+          </RouteErrorBoundary>
+        } />
+        <Route path="/job/:jobId" element={
+          <RouteErrorBoundary sectionName="Job Proof" fallbackRoute="/home">
+            <TechProofScreen />
           </RouteErrorBoundary>
         } />
 
