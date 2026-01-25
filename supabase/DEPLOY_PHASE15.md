@@ -1,6 +1,19 @@
-# Phase 15: Enterprise-Grade Schema Migration
+# Phase 15: Security-Hardened Schema Migration
 
 ## Supabase Project: `ndcjtpzixjbhmzbavqdm`
+
+---
+
+## SECURITY AUDIT FIXES IMPLEMENTED
+
+| Issue | Severity | Fix |
+|-------|----------|-----|
+| Raw tokens stored in DB | CRITICAL | SHA256 hashed only |
+| Public table access | CRITICAL | Revoked, RPC only |
+| Timing attacks | CRITICAL | Constant-time hash compare |
+| Non-atomic operations | HIGH | SECURITY DEFINER stored procs |
+| Missing indexes | HIGH | Added for RLS columns |
+| Oversized JSONB | HIGH | Storage URLs, not base64 |
 
 ---
 
@@ -13,13 +26,13 @@
 supabase link --project-ref ndcjtpzixjbhmzbavqdm
 
 # Create backup BEFORE any changes
-supabase db dump --db-url "$DATABASE_URL" -f backup_20260125_proof.sql
+supabase db dump -f backup_security_20260125.sql
 
 # Verify backup created
-ls -la backup_20260125_proof.sql
+ls -la backup_security_20260125.sql
 ```
 
-**CHECKPOINT:** `backup_20260125_proof.sql` file exists
+**CHECKPOINT:** `backup_security_20260125.sql` file exists
 
 ---
 
@@ -29,8 +42,8 @@ ls -la backup_20260125_proof.sql
 # Reset local DB and apply all migrations
 supabase db reset
 
-# Verify migration applied
-supabase db diff --local
+# Check migration applied
+supabase migration list
 
 # Generate TypeScript types
 supabase gen types typescript --local > supabase/types.ts
@@ -40,24 +53,45 @@ supabase gen types typescript --local > supabase/types.ts
 
 ---
 
-### GATE 3: RLS Verification (REQUIRED)
+### GATE 3: RLS + Security Verification (REQUIRED)
+
+Run these queries in **Supabase SQL Editor** (NOT psql!):
 
 ```sql
--- Run in Supabase SQL Editor (local first)
+-- Test 1: Verify new columns exist
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'jobs'
+AND column_name LIKE 'tech_%';
 
--- Test 1: Anon cannot select jobs without token
-SET request.headers = '{}';
-SELECT count(*) FROM jobs; -- Should return 0 or error
+-- Expected: tech_token_hash, tech_pin_hash, token_expires_at, token_used, etc.
 
--- Test 2: With valid token header, can access
-SET request.headers = '{"x-tech-token": "ABC123"}';
-SELECT count(*) FROM jobs WHERE tech_token = 'ABC123'; -- Should work
+-- Test 2: Verify indexes exist
+SELECT indexname
+FROM pg_indexes
+WHERE tablename = 'jobs'
+AND indexname LIKE 'idx_jobs_%';
 
--- Test 3: Verify new columns exist
-\d jobs | grep -E "(tech_token|tech_pin|proof_data)"
+-- Expected: idx_jobs_tech_token_hash, idx_jobs_workspace_status, idx_jobs_token_expires
+
+-- Test 3: Verify RPC functions exist
+SELECT proname
+FROM pg_proc
+WHERE proname IN ('generate_tech_access', 'validate_tech_token', 'submit_job_proof', 'get_job_proof_status');
+
+-- Expected: All 4 functions
+
+-- Test 4: Anon cannot directly access jobs
+SET ROLE anon;
+SELECT count(*) FROM jobs; -- Should return 0 or permission denied
+RESET ROLE;
+
+-- Test 5: Anon CAN call validation RPC
+SELECT validate_tech_token('nonexistent-id', 'ABCDEF', NULL);
+-- Expected: Returns (false, NULL) - no error
 ```
 
-**CHECKPOINT:** Anon blocked, token access works
+**CHECKPOINT:** All 5 tests pass
 
 ---
 
@@ -67,130 +101,180 @@ SELECT count(*) FROM jobs WHERE tech_token = 'ABC123'; -- Should work
 # Apply ONLY this migration to production
 supabase migration up --single
 
-# Verify in dashboard
-# Go to: Table Editor > jobs > Check columns
+# Verify in Supabase Dashboard:
+# 1. Table Editor > jobs > Check new columns
+# 2. Database > Functions > Check 4 new functions
 ```
 
-**CHECKPOINT:** New columns visible in production
+**CHECKPOINT:** Migration successful, no errors
 
 ---
 
 ### GATE 5: End-to-End Token Flow
 
 ```bash
-# 1. Create test job with token
-curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/create_tech_access_link" \
+# 1. Generate tech access link (as authenticated user)
+curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/generate_tech_access" \
   -H "apikey: YOUR_ANON_KEY" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"p_job_id": "test-job-123"}'
+  -d '{"p_job_id": "your-job-id"}'
 
-# Expected response:
-# {"token": "ABC123", "pin": "483920", "link": "/job/test-job-123/ABC123"}
+# Expected: {"raw_token": "ABC123", "raw_pin": "483920", "link_url": "/job/your-job-id/ABC123"}
+# NOTE: raw_token is returned ONCE - DB only stores hash!
 
-# 2. Validate token access
-curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/validate_tech_access" \
+# 2. Validate token (as anon - simulates technician)
+curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/validate_tech_token" \
   -H "apikey: YOUR_ANON_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"p_job_id": "test-job-123", "p_token": "ABC123"}'
+  -d '{"p_job_id": "your-job-id", "p_raw_token": "ABC123"}'
 
-# Expected: true
+# Expected: {"is_valid": true, "job_data": {...}}
+
+# 3. Submit proof (as anon)
+curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/submit_job_proof" \
+  -H "apikey: YOUR_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "p_job_id": "your-job-id",
+    "p_raw_token": "ABC123",
+    "p_before_photo": "https://storage.url/before.jpg",
+    "p_after_photo": "https://storage.url/after.jpg",
+    "p_client_signature": "https://storage.url/sig.png",
+    "p_proof_metadata": {"gps_lat": 51.5074, "gps_lng": -0.1278}
+  }'
+
+# Expected: {"success": true, "job_id": "...", "completed_at": "..."}
+# NOTE: Token is now INVALIDATED - cannot be reused!
+
+# 4. Verify token invalidated
+curl -X POST "https://ndcjtpzixjbhmzbavqdm.supabase.co/rest/v1/rpc/validate_tech_token" \
+  -H "apikey: YOUR_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"p_job_id": "your-job-id", "p_raw_token": "ABC123"}'
+
+# Expected: {"is_valid": false, "job_data": null}
 ```
 
-**CHECKPOINT:** Token generation and validation works
+**CHECKPOINT:** Token flow works, token invalidated after use
 
 ---
 
-## Migration Summary
+## Security Architecture
 
-### New Columns Added to `jobs` table:
+### Token Flow (Never Stored Raw)
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `tech_token` | TEXT | Unique 6-char magic link token |
-| `tech_pin` | TEXT | 6-digit fallback PIN |
-| `token_used` | BOOLEAN | Track if token accessed |
-| `token_used_at` | TIMESTAMPTZ | First access timestamp |
-| `proof_data` | JSONB | Flexible proof metadata |
-| `before_photo` | TEXT | Before photo URL |
-| `after_photo` | TEXT | After photo URL |
-| `notes_before` | TEXT | Tech notes (before work) |
-| `notes_after` | TEXT | Tech notes (after work) |
-| `client_signature` | TEXT | Client signature data |
-| `client_signature_at` | TIMESTAMPTZ | Signature timestamp |
-| `client_name_signed` | TEXT | Printed name on signature |
-| `proof_completed_at` | TIMESTAMPTZ | Full proof submission time |
-| `proof_submitted_by` | TEXT | Token used for submission |
-| `manager_notified_at` | TIMESTAMPTZ | Manager email sent |
-| `client_notified_at` | TIMESTAMPTZ | Client email sent |
+```
+1. Manager: generate_tech_access(job_id)
+   └─> Returns: {raw_token: "ABC123", raw_pin: "483920"}
+   └─> DB stores: SHA256("ABC123"), SHA256("483920")
 
-### New Functions:
+2. Tech clicks: /job/{id}/ABC123
+   └─> Frontend calls: validate_tech_token(id, "ABC123")
+   └─> DB compares: SHA256("ABC123") === stored_hash
+   └─> Returns: Job data if valid
 
-| Function | Purpose |
-|----------|---------|
-| `generate_tech_token()` | Creates unique 6-char token |
-| `generate_tech_pin()` | Creates 6-digit PIN |
-| `create_tech_access_link(job_id)` | Returns token, PIN, and link |
-| `validate_tech_access(job_id, token, pin)` | Validates access |
-| `submit_job_proof(...)` | Submits complete proof data |
+3. Tech submits: submit_job_proof(id, "ABC123", proof...)
+   └─> DB verifies hash, locks row, updates atomically
+   └─> Sets token_used = true (invalidates token)
+   └─> Writes audit log
 
-### New Indexes:
+4. Reuse attempt: validate_tech_token(id, "ABC123")
+   └─> Fails: token_used = true
+```
 
-- `idx_jobs_tech_token` (UNIQUE) - Fast token lookups
-- `idx_jobs_status_completed` - Status queries
-- `idx_jobs_token_used` - Token tracking queries
+### RLS + RPC Security Model
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        ANON USERS                            │
+│  ✗ Cannot SELECT/INSERT/UPDATE/DELETE jobs directly         │
+│  ✓ Can call validate_tech_token() RPC                       │
+│  ✓ Can call submit_job_proof() RPC                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              SECURITY DEFINER FUNCTIONS                      │
+│  - Run with definer (owner) privileges                       │
+│  - Hash tokens before any comparison                         │
+│  - Use FOR UPDATE to lock rows atomically                    │
+│  - Write to audit_logs on success                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   AUTHENTICATED USERS                        │
+│  ✓ Can SELECT/INSERT/UPDATE jobs in their workspace         │
+│  ✓ Can call generate_tech_access() RPC                       │
+│  ✓ Can call get_job_proof_status() RPC                       │
+│  (RLS enforces workspace isolation)                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## New Columns on `jobs` Table
+
+| Column | Type | Security | Description |
+|--------|------|----------|-------------|
+| `tech_token_hash` | TEXT | SHA256 | Hash of 6-char token |
+| `tech_pin_hash` | TEXT | SHA256 | Hash of 6-digit PIN |
+| `token_expires_at` | TIMESTAMPTZ | - | Default 7 days |
+| `token_used` | BOOLEAN | - | Invalidates after use |
+| `token_used_at` | TIMESTAMPTZ | - | First access time |
+| `proof_data` | JSONB | - | GPS, device metadata |
+| `before_photo` | TEXT | Storage URL | NOT base64! |
+| `after_photo` | TEXT | Storage URL | NOT base64! |
+| `client_signature` | TEXT | Storage URL | NOT base64! |
+| `proof_completed_at` | TIMESTAMPTZ | - | Submission time |
+
+---
+
+## New Functions
+
+| Function | Accessible By | Purpose |
+|----------|---------------|---------|
+| `generate_tech_access(job_id)` | authenticated | Creates token, stores hash only |
+| `validate_tech_token(job_id, token, pin)` | anon | Validates via hash comparison |
+| `submit_job_proof(...)` | anon | Atomic proof submission |
+| `get_job_proof_status(job_id)` | authenticated | Manager dashboard status |
 
 ---
 
 ## Rollback Plan (Emergency Only)
 
 ```sql
--- Remove new columns (safe - no data loss if columns empty)
-ALTER TABLE jobs DROP COLUMN IF EXISTS tech_token;
-ALTER TABLE jobs DROP COLUMN IF EXISTS tech_pin;
-ALTER TABLE jobs DROP COLUMN IF EXISTS token_used;
-ALTER TABLE jobs DROP COLUMN IF EXISTS token_used_at;
-ALTER TABLE jobs DROP COLUMN IF EXISTS proof_data;
-ALTER TABLE jobs DROP COLUMN IF EXISTS before_photo;
-ALTER TABLE jobs DROP COLUMN IF EXISTS after_photo;
-ALTER TABLE jobs DROP COLUMN IF EXISTS notes_before;
-ALTER TABLE jobs DROP COLUMN IF EXISTS notes_after;
-ALTER TABLE jobs DROP COLUMN IF EXISTS client_signature;
-ALTER TABLE jobs DROP COLUMN IF EXISTS client_signature_at;
-ALTER TABLE jobs DROP COLUMN IF EXISTS client_name_signed;
-ALTER TABLE jobs DROP COLUMN IF EXISTS proof_completed_at;
-ALTER TABLE jobs DROP COLUMN IF EXISTS proof_submitted_by;
-ALTER TABLE jobs DROP COLUMN IF EXISTS manager_notified_at;
-ALTER TABLE jobs DROP COLUMN IF EXISTS client_notified_at;
-
--- Drop functions
-DROP FUNCTION IF EXISTS generate_tech_token();
-DROP FUNCTION IF EXISTS generate_tech_pin();
-DROP FUNCTION IF EXISTS create_tech_access_link(TEXT);
-DROP FUNCTION IF EXISTS validate_tech_access(TEXT, TEXT, TEXT);
+-- Step 1: Drop functions
+DROP FUNCTION IF EXISTS generate_tech_access(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS validate_tech_token(TEXT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS submit_job_proof(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, JSONB);
+DROP FUNCTION IF EXISTS get_job_proof_status(TEXT);
+
+-- Step 2: Drop security-critical columns
+ALTER TABLE jobs DROP COLUMN IF EXISTS tech_token_hash;
+ALTER TABLE jobs DROP COLUMN IF EXISTS tech_pin_hash;
+ALTER TABLE jobs DROP COLUMN IF EXISTS token_expires_at;
+
+-- Step 3: Other columns can remain (backward compatible)
+-- ALTER TABLE jobs DROP COLUMN IF EXISTS token_used;
+-- etc.
 ```
 
 ---
 
-## Post-Migration: Frontend Integration
+## Post-Migration: Frontend URLs
 
-The tech proof screen URL pattern:
-
+**Tech proof screen:**
 ```
-https://jobproof.pro/job/{job_id}/{tech_token}
-```
-
-Example:
-```
-https://jobproof.pro/job/123/ABC456
+https://jobproof.pro/job/{job_id}/{token}
 ```
 
-PIN fallback:
+**PIN fallback:**
 ```
-https://jobproof.pro/job/123?pin=483920
+https://jobproof.pro/job/{job_id}?pin={pin}
 ```
 
 ---
 
-**MIGRATION SAFE TO DEPLOY AFTER ALL GATES PASS**
+**MIGRATION SAFE TO DEPLOY AFTER ALL 5 GATES PASS**

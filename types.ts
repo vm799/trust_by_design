@@ -96,21 +96,22 @@ export interface Job {
   evidenceHash?: string; // SHA-256 hash of evidence bundle
   isSealed?: boolean; // Computed: !!sealedAt
 
-  // Phase 15: Field Proof System
-  techToken?: string; // Unique 6-char magic link token (e.g., ABC123)
-  techPin?: string; // 6-digit fallback PIN
-  tokenUsed?: boolean; // True when tech has accessed via token
+  // Phase 15: Field Proof System (Security-Hardened)
+  // NOTE: Raw tokens are NEVER stored - only hashes
+  techTokenHash?: string; // SHA256 hash of token (raw never stored)
+  techPinHash?: string; // SHA256 hash of PIN (raw never stored)
+  tokenExpiresAt?: string; // ISO timestamp for token expiration
+  tokenUsed?: boolean; // True when token has been used for proof submission
   tokenUsedAt?: string; // ISO timestamp of first token access
-  proofData?: Record<string, unknown>; // JSONB proof metadata bundle
-  beforePhoto?: string; // Storage URL for before photo
-  afterPhoto?: string; // Storage URL for after photo
+  proofData?: Record<string, unknown>; // JSONB proof metadata (keep small, use Storage refs)
+  beforePhoto?: string; // Supabase Storage URL for before photo
+  afterPhoto?: string; // Supabase Storage URL for after photo
   notesBefore?: string; // Tech notes before work
   notesAfter?: string; // Tech notes after work (completion notes)
-  clientSignature?: string; // Base64 or Storage URL for client signature
+  clientSignature?: string; // Supabase Storage URL for client signature
   clientSignatureAt?: string; // ISO timestamp when client signed
   clientNameSigned?: string; // Printed name on signature
   proofCompletedAt?: string; // ISO timestamp when full proof submitted
-  proofSubmittedBy?: string; // Token used for submission
   managerNotifiedAt?: string; // ISO timestamp when manager emailed
   clientNotifiedAt?: string; // ISO timestamp when client emailed
 }
