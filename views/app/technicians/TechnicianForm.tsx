@@ -6,13 +6,23 @@
  * Phase 2.5: Client-first flow fix - handles returnTo for job creation wizard
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
 import { useWorkspaceData } from '../../../hooks/useWorkspaceData';
 import { Technician } from '../../../types';
 import { showToast } from '../../../lib/microInteractions';
+
+// Draft storage key and expiry (8 hours)
+const DRAFT_KEY = 'jobproof_technician_draft';
+const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000;
+
+interface DraftData {
+  formData: FormData;
+  savedAt: number;
+  editId?: string;
+}
 
 interface FormData {
   name: string;
@@ -42,6 +52,69 @@ const TechnicianForm: React.FC = () => {
     notes: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [draftRestored, setDraftRestored] = useState(false);
+  const draftSaveTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Load draft from localStorage on mount (only for new technicians)
+  useEffect(() => {
+    if (isEdit) return; // Don't restore draft for edit mode
+
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        const draft: DraftData = JSON.parse(savedDraft);
+        const now = Date.now();
+
+        // Check if draft is still valid (not expired and not for a different edit)
+        if (now - draft.savedAt < DRAFT_EXPIRY_MS && !draft.editId) {
+          setFormData(draft.formData);
+          setDraftRestored(true);
+          showToast('Draft restored from previous session', 'info', 3000);
+        } else {
+          // Clear expired draft
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load technician draft:', e);
+    }
+  }, [isEdit]);
+
+  // Auto-save draft on form changes (debounced 500ms)
+  useEffect(() => {
+    if (isEdit) return; // Don't save draft for edit mode
+
+    // Clear previous timer
+    if (draftSaveTimer.current) {
+      clearTimeout(draftSaveTimer.current);
+    }
+
+    // Only save if form has content
+    if (formData.name || formData.email || formData.phone || formData.specialty || formData.notes) {
+      draftSaveTimer.current = setTimeout(() => {
+        try {
+          const draft: DraftData = {
+            formData,
+            savedAt: Date.now(),
+          };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        } catch (e) {
+          console.warn('Failed to save technician draft:', e);
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (draftSaveTimer.current) {
+        clearTimeout(draftSaveTimer.current);
+      }
+    };
+  }, [formData, isEdit]);
+
+  // Clear draft after successful save
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+  }, []);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -107,6 +180,10 @@ const TechnicianForm: React.FC = () => {
       } else {
         // Create new technician via DataContext (generates ID automatically)
         const newTechnician = createTechnician(technicianData);
+
+        // Clear draft after successful creation
+        clearDraft();
+
         showToast('Technician created! Add another?', 'success', 4000);
 
         // Phase 9: Handle returnTo parameter for flow navigation
