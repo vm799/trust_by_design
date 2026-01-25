@@ -48,7 +48,7 @@ SET search_path = public, extensions
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users
-    WHERE id = auth.uid() AND role IN ('manager', 'owner', 'admin')
+    WHERE id = auth.uid() AND role IN ('owner', 'admin')
   )
 $$;
 
