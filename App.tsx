@@ -405,6 +405,8 @@ const AppContent: React.FC = () => {
         <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
+        {/* Public Help Center - accessible without auth */}
+        <Route path="/help" element={<HelpCenter user={user} />} />
 
         {/* Technician Entry Point - Public */}
         <Route path="/track-lookup" element={<TrackLookup />} />

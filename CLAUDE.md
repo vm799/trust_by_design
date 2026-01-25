@@ -143,6 +143,56 @@ import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/
 - **Slide-out-right** animation on dismiss
 - **Keyboard accessible** (focus triggers tooltip)
 
+## InfoBox Component (Phase 2.1)
+
+Compact, dismissible callout boxes for hints and notices. Uses cyan/teal (not primary blue) to visually distinguish from active UI states.
+
+### Usage
+```tsx
+import { InfoBox } from '../components/ui';
+
+// Basic info box with dismiss button
+<InfoBox title="Tip" variant="info">
+  This is helpful information you can dismiss.
+</InfoBox>
+
+// Persistent dismissal (saved to localStorage)
+<InfoBox
+  icon="lightbulb"
+  title="Pro Tip"
+  variant="tip"
+  persistKey="feature_tip_shown"
+>
+  Once dismissed, this won't show again.
+</InfoBox>
+
+// Non-dismissible warning
+<InfoBox
+  title="Warning"
+  variant="warning"
+  dismissible={false}
+>
+  This cannot be dismissed.
+</InfoBox>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| children | ReactNode | - | Box content |
+| icon | string | auto | Material symbol icon name |
+| title | string | - | Optional bold title |
+| variant | 'info' \| 'warning' \| 'success' \| 'tip' | 'info' | Color scheme |
+| dismissible | boolean | true | Show X close button |
+| onDismiss | () => void | - | Callback when dismissed |
+| persistKey | string | - | localStorage key for persistent dismissal |
+
+### Variants
+- `info` - Cyan/teal (distinct from primary blue)
+- `warning` - Amber/orange
+- `success` - Emerald green
+- `tip` - Violet/purple for helpful tips
+
 ### Navigation Components
 - `Breadcrumbs.tsx` - Navigation breadcrumbs with theme support
 - `BackButton` - Quick "back to X" navigation

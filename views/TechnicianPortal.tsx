@@ -17,6 +17,7 @@ import TechnicianOnboarding, { useShouldShowOnboarding } from '../components/Tec
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Modal from '../components/ui/Modal';
 import ActionButton from '../components/ui/ActionButton';
+import { InfoBox } from '../components/ui';
 
 // Dialog state type for managing styled modals
 interface DialogState {
@@ -1300,22 +1301,24 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       <div className="space-y-8 pb-32 max-w-2xl mx-auto">
         {/* Job Date Warning Banner */}
         {jobDateWarning === 'future' && (
-          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-start gap-3 animate-in">
-            <span className="material-symbols-outlined text-primary text-xl">event</span>
-            <div>
-              <p className="text-sm font-bold text-primary">Scheduled for a Future Date</p>
-              <p className="text-xs text-slate-400 mt-1">This job is scheduled for a future date. You can review details now, but consider waiting until the scheduled time.</p>
-            </div>
-          </div>
+          <InfoBox
+            icon="event"
+            title="Scheduled for a Future Date"
+            variant="info"
+            dismissible={false}
+          >
+            This job is scheduled for a future date. You can review details now, but consider waiting until the scheduled time.
+          </InfoBox>
         )}
         {jobDateWarning === 'overdue' && (
-          <div className="bg-warning/10 border border-warning/30 rounded-2xl p-4 flex items-start gap-3 animate-in">
-            <span className="material-symbols-outlined text-warning text-xl">warning</span>
-            <div>
-              <p className="text-sm font-bold text-warning">Job Overdue ({overdueByDays} {overdueByDays === 1 ? 'day' : 'days'} late)</p>
-              <p className="text-xs text-slate-400 mt-1">This job was scheduled for an earlier date. You can still complete it, but please submit as soon as possible.</p>
-            </div>
-          </div>
+          <InfoBox
+            icon="warning"
+            title={`Job Overdue (${overdueByDays} ${overdueByDays === 1 ? 'day' : 'days'} late)`}
+            variant="warning"
+            dismissible={false}
+          >
+            This job was scheduled for an earlier date. You can still complete it, but please submit as soon as possible.
+          </InfoBox>
         )}
 
         {/* Visual Sync Queue Status */}
@@ -2085,7 +2088,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Signature</p>
-                  <p className="text-xs text-slate-400 mt-1">The client signs to confirm work was completed. Make sure they sign clearly - it's legally binding evidence.</p>
+                  <p className="text-xs text-slate-400 mt-1">The client signs to confirm work was completed. Make sure they sign clearly for your records.</p>
                 </div>
               </div>
             </div>
@@ -2117,10 +2120,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </div>
 
             {/* Contact */}
-            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
-              <p className="text-xs font-bold text-primary">Need More Help?</p>
-              <p className="text-xs text-slate-400 mt-1">Contact your manager or dispatcher. They can see your job status and assist remotely.</p>
-            </div>
+            <InfoBox
+              icon="support_agent"
+              title="Need More Help?"
+              variant="tip"
+              persistKey="tech_help_contact"
+            >
+              Contact your manager or dispatcher. They can see your job status and assist remotely.
+            </InfoBox>
 
             <ActionButton variant="secondary" onClick={() => setShowHelp(false)} fullWidth>
               Close Help

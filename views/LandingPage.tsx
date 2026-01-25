@@ -414,12 +414,12 @@ const LandingPage: React.FC = () => {
                 }
               `}
             >
-              <span className="material-symbols-outlined text-3xl text-primary">gavel</span>
+              <span className="material-symbols-outlined text-3xl text-primary">description</span>
               <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                Legal Evidence Capture
+                Advanced Evidence Export
               </h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Court-ready documentation with certified timestamps
+                Professional PDF reports with verified timestamps
               </p>
             </motion.div>
 
