@@ -230,7 +230,7 @@ const JobForm: React.FC = () => {
         total: formData.total ? parseFloat(formData.total) : undefined,
         price: formData.total ? parseFloat(formData.total) : undefined,
         priority: formData.priority,
-        status: 'pending',
+        status: 'Pending',
       };
 
       clearDraft();

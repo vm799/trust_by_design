@@ -131,11 +131,15 @@ const EvidenceCapture: React.FC = () => {
     setSaving(true);
     try {
       const newPhoto = {
+        id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
         url: capturedPhoto.dataUrl, // In production, this would be uploaded to storage
         localPath: capturedPhoto.dataUrl,
         type: capturedPhoto.type,
         timestamp: capturedPhoto.timestamp,
-        location: capturedPhoto.location,
+        lat: capturedPhoto.location?.lat,
+        lng: capturedPhoto.location?.lng,
+        verified: false,
+        syncStatus: 'pending' as const,
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];

@@ -66,10 +66,10 @@ const TechnicianList: React.FC = () => {
           jobsByTech[job.technicianId] = { total: 0, active: 0, completed: 0 };
         }
         jobsByTech[job.technicianId].total++;
-        if (job.status === 'in-progress' || job.status === 'In Progress') {
+        if (job.status === 'In Progress') {
           jobsByTech[job.technicianId].active++;
         }
-        if (job.status === 'complete' || job.status === 'Submitted') {
+        if (job.status === 'Complete' || job.status === 'Submitted') {
           jobsByTech[job.technicianId].completed++;
         }
       }
@@ -97,6 +97,9 @@ const TechnicianList: React.FC = () => {
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
         phone: formData.phone.trim() || undefined,
+        status: 'Available',
+        rating: 0,
+        jobsCompleted: 0,
       });
       setTechnicians([...technicians, newTech]);
       setShowAddModal(false);

@@ -191,8 +191,8 @@ const JobDetail: React.FC = () => {
     if (!job) return 'draft';
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
-    if (job.status === 'complete' || job.status === 'Submitted') return 'review';
-    if (job.status === 'in-progress' || job.status === 'In Progress') return 'active';
+    if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
+    if (job.status === 'In Progress') return 'active';
     if (job.technicianId || job.techId) return 'dispatched';
     return 'draft';
   };
@@ -638,7 +638,7 @@ const JobDetail: React.FC = () => {
               </div>
 
               {/* Native Share (if supported) */}
-              {typeof navigator !== 'undefined' && navigator.share && (
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
                 <button
                   onClick={handleShare}
                   className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"

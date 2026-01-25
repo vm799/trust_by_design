@@ -1226,12 +1226,17 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           });
         } catch (err) {
           // Fallback to copy
-          navigator.clipboard.writeText(reportUrl);
-          alert('Report link copied to clipboard!');
+          if ('clipboard' in navigator) {
+            (navigator.clipboard as Clipboard).writeText(reportUrl);
+            alert('Report link copied to clipboard!');
+          }
         }
       } else {
-        navigator.clipboard.writeText(reportUrl);
-        alert('Report link copied to clipboard!');
+        const nav = navigator as Navigator & { clipboard?: Clipboard };
+        if (nav.clipboard) {
+          nav.clipboard.writeText(reportUrl);
+          alert('Report link copied to clipboard!');
+        }
       }
     };
 

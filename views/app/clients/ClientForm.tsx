@@ -94,6 +94,7 @@ const ClientForm: React.FC = () => {
         address: formData.address.trim() || undefined,
         type: formData.type,
         notes: formData.notes.trim() || undefined,
+        totalJobs: 0,
       };
 
       if (isEdit && id) {

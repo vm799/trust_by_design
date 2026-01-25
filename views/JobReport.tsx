@@ -353,9 +353,17 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          clientId: job.clientId,
          clientName: job.client,
          amount: job.price || 450.00,
+         total: job.price || 450.00,
          status: 'Draft',
          issuedDate: new Date().toISOString(),
          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+         items: [{
+           id: '1',
+           description: job.title || 'Service',
+           quantity: 1,
+           unitPrice: job.price || 450.00,
+           amount: job.price || 450.00,
+         }],
       };
       onGenerateInvoice(inv);
       navigate('/admin/invoices');

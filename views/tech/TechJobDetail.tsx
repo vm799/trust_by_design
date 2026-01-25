@@ -61,8 +61,8 @@ const TechJobDetail: React.FC = () => {
     if (!job) return;
 
     try {
-      await updateJob(job.id, { status: 'in-progress' });
-      setJob({ ...job, status: 'in-progress' });
+      await updateJob(job.id, { status: 'In Progress' });
+      setJob({ ...job, status: 'In Progress' });
     } catch (error) {
       console.error('Failed to start job:', error);
       alert('Failed to start job. Please try again.');
@@ -74,7 +74,7 @@ const TechJobDetail: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await updateJob(job.id, { status: 'complete' });
+      await updateJob(job.id, { status: 'Complete' });
       navigate('/tech');
     } catch (error) {
       console.error('Failed to complete job:', error);
@@ -116,7 +116,7 @@ const TechJobDetail: React.FC = () => {
   const photos = (job.photos || []) as Photo[];
   const beforePhotos = photos.filter(p => p.type === 'before');
   const afterPhotos = photos.filter(p => p.type === 'after');
-  const isActive = job.status === 'in-progress';
+  const isActive = job.status === 'In Progress';
   const canComplete = beforePhotos.length >= 1 && afterPhotos.length >= 1;
 
   return (

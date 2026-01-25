@@ -15,7 +15,8 @@ import { getInvoices, getClients, getJobs } from '../../../hooks/useWorkspaceDat
 import { Invoice, Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
-type FilterStatus = 'all' | 'pending' | 'paid' | 'overdue';
+type StatusType = 'pending' | 'paid' | 'overdue';
+type FilterStatus = 'all' | StatusType;
 
 const InvoiceList: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ const InvoiceList: React.FC = () => {
   }, [loadData]);
 
   // Get invoice status
-  const getInvoiceStatus = (invoice: Invoice): FilterStatus => {
+  const getInvoiceStatus = (invoice: Invoice): StatusType => {
     if (invoice.paidAt) return 'paid';
     if (invoice.dueDate && new Date(invoice.dueDate) < new Date()) return 'overdue';
     return 'pending';
