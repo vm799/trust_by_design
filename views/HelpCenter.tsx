@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,22 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
   const { goBack } = useNavigation('/admin');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const expandedContentRef = useRef<HTMLDivElement>(null);
+
+  // CRITICAL FIX: Auto-scroll to expanded content when a section is selected
+  useEffect(() => {
+    if (selectedSection && expandedContentRef.current) {
+      // Small delay to ensure the DOM has rendered
+      setTimeout(() => {
+        expandedContentRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        // Also focus the container for accessibility
+        expandedContentRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedSection]);
 
   const helpSections: HelpSection[] = [
     {
@@ -273,7 +289,11 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
 
         {/* Expanded Section Content */}
         {selectedSection && (
-          <div className="bg-slate-900 border border-white/10 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] shadow-2xl animate-in">
+          <div
+            ref={expandedContentRef}
+            tabIndex={-1}
+            className="bg-slate-900 border border-white/10 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] shadow-2xl animate-in scroll-mt-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
             <button
               onClick={() => setSelectedSection(null)}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group"
