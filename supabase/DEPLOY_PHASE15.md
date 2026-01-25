@@ -86,8 +86,8 @@ SET ROLE anon;
 SELECT count(*) FROM jobs; -- Should return 0 or permission denied
 RESET ROLE;
 
--- Test 5: Anon CAN call validation RPC
-SELECT validate_tech_token('nonexistent-id', 'ABCDEF', NULL);
+-- Test 5: Anon CAN call validation RPC (NOTE: explicit casts required!)
+SELECT * FROM validate_tech_token('nonexistent-id'::TEXT, 'ABCDEF'::TEXT, NULL::TEXT);
 -- Expected: Returns (false, NULL) - no error
 ```
 
