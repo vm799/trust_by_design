@@ -5,11 +5,12 @@
 -- PURPOSE: Address 96 linter errors causing instability and timeouts
 --
 -- FIXES:
--- 1. SECURITY (Critical): 19 functions with mutable search_path
+-- 1. SECURITY (Critical): 16 public functions with mutable search_path
 -- 2. SECURITY (High): users_insert RLS policy with WITH CHECK (true)
 -- 3. PERFORMANCE (High): 7 unindexed foreign keys causing table scans
 -- 4. PERFORMANCE (Low): 5 unused indexes causing write overhead
 --
+-- NOTE: auth.* functions are managed by Supabase - we create public.* equivalents
 -- SEVERITY: HIGH
 -- ROLLBACK: Available at end of file
 -- ============================================================================
@@ -17,15 +18,18 @@
 BEGIN;
 
 -- ============================================================================
--- SECTION 1: FIX FUNCTION SEARCH_PATH (19 Functions)
+-- SECTION 1: FIX FUNCTION SEARCH_PATH (Public Functions Only)
 -- ============================================================================
 -- Purpose: Prevent search_path injection attacks (LINT 0011)
 -- All SECURITY DEFINER functions must have explicit search_path
+-- NOTE: auth.* schema is managed by Supabase - cannot modify directly
 -- NOTE: Using 'public, extensions' to include pgcrypto/uuid-ossp
 -- ============================================================================
 
--- 1.1 Auth Helper Functions (in auth schema)
-CREATE OR REPLACE FUNCTION auth.workspace_id()
+-- 1.1 Create public equivalents for auth helper functions
+-- These replace the auth.* versions which we can't modify
+
+CREATE OR REPLACE FUNCTION public.get_current_workspace_id()
 RETURNS UUID
 LANGUAGE sql
 SECURITY DEFINER
@@ -35,7 +39,7 @@ AS $$
   SELECT workspace_id FROM public.users WHERE id = auth.uid()
 $$;
 
-CREATE OR REPLACE FUNCTION auth.is_manager()
+CREATE OR REPLACE FUNCTION public.is_manager()
 RETURNS BOOLEAN
 LANGUAGE sql
 SECURITY DEFINER
@@ -48,7 +52,7 @@ AS $$
   )
 $$;
 
-CREATE OR REPLACE FUNCTION auth.technician_id()
+CREATE OR REPLACE FUNCTION public.get_technician_id()
 RETURNS UUID
 LANGUAGE sql
 SECURITY DEFINER
