@@ -14,7 +14,7 @@ Field service companies lose $50,000-500,000/year from:
 **JobProof v2** is a **professional-grade evidence documentation platform** that creates **cryptographically sealed, timestamped, geolocated photo evidence**.
 
 ### Key Features:
-- ✅ **Legally defensible** (tamper-proof audit trail)
+- ✅ **Audit-ready** (comprehensive documentation trail)
 - ✅ **Instantly accessible** (magic links, no app install)
 - ✅ **Offline-first** (works in basements, remote sites)
 - ✅ **Integration-ready** (CRM, QuickBooks, insurance portals)
@@ -66,9 +66,9 @@ B2B SaaS Subscription:
 - Only field service platform using what3words
 - Higher insurance claim approval rates
 
-### 4. Immutable Evidence Chain
+### 4. Secure Evidence Chain
 - Once sealed, no edits possible
-- Legally defensible in court
+- Professional documentation standards
 - Meets ISO 27001 audit requirements
 
 ### 5. Integration-Ready Architecture

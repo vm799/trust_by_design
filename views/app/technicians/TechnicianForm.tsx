@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
-import { getTechnicians, addTechnician, updateTechnician } from '../../../hooks/useWorkspaceData';
+import { useWorkspaceData } from '../../../hooks/useWorkspaceData';
 import { Technician } from '../../../types';
 import { showToast } from '../../../lib/microInteractions';
 
@@ -29,6 +29,9 @@ const TechnicianForm: React.FC = () => {
   const isEdit = Boolean(id);
   const returnTo = searchParams.get('returnTo');
 
+  // Use centralized DataContext via hook (REMEDIATION ITEM 1)
+  const { technicians, createTechnician, updateTechnician } = useWorkspaceData();
+
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -43,29 +46,20 @@ const TechnicianForm: React.FC = () => {
   useEffect(() => {
     if (!isEdit) return;
 
-    const loadTechnician = async () => {
-      try {
-        const technicians = await getTechnicians();
-        const technician = technicians.find(t => t.id === id);
+    // Load technician from DataContext (reactive, no async needed)
+    const technician = technicians.find(t => t.id === id);
 
-        if (technician) {
-          setFormData({
-            name: technician.name || '',
-            email: technician.email || '',
-            phone: technician.phone || '',
-            specialty: (technician as any).specialty || '',
-            notes: (technician as any).notes || '',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load technician:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTechnician();
-  }, [id, isEdit]);
+    if (technician) {
+      setFormData({
+        name: technician.name || '',
+        email: technician.email || '',
+        phone: technician.phone || '',
+        specialty: (technician as any).specialty || '',
+        notes: (technician as any).notes || '',
+      });
+    }
+    setLoading(false);
+  }, [id, isEdit, technicians]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -91,7 +85,7 @@ const TechnicianForm: React.FC = () => {
 
     setSaving(true);
     try {
-      const technicianData: Partial<Technician> = {
+      const technicianData: Omit<Technician, 'id'> = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
@@ -101,11 +95,18 @@ const TechnicianForm: React.FC = () => {
       };
 
       if (isEdit && id) {
-        await updateTechnician(id, technicianData);
-        showToast('Technician updated!', 'success', 3000);
-        navigate('/admin/technicians');
+        // Update existing technician via DataContext
+        const existingTech = technicians.find(t => t.id === id);
+        if (existingTech) {
+          updateTechnician({ ...existingTech, ...technicianData });
+          showToast('Technician updated!', 'success', 3000);
+          navigate('/admin/technicians');
+        } else {
+          throw new Error('Technician not found');
+        }
       } else {
-        const newTechnician = await addTechnician(technicianData as Omit<Technician, 'id'>);
+        // Create new technician via DataContext (generates ID automatically)
+        const newTechnician = createTechnician(technicianData);
         showToast('Technician created! Add another?', 'success', 4000);
 
         // Phase 9: Handle returnTo parameter for flow navigation
@@ -120,7 +121,7 @@ const TechnicianForm: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to save technician:', error);
-      alert('Failed to save technician. Please try again.');
+      showToast('Failed to save technician. Please try again.', 'error', 4000);
     } finally {
       setSaving(false);
     }

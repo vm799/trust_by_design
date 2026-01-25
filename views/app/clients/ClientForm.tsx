@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
-import { getClients, addClient, updateClient } from '../../../hooks/useWorkspaceData';
+import { useWorkspaceData } from '../../../hooks/useWorkspaceData';
 import { Client } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import { showToast } from '../../../lib/microInteractions';
@@ -31,6 +31,9 @@ const ClientForm: React.FC = () => {
   const isEdit = Boolean(id);
   const returnTo = searchParams.get('returnTo');
 
+  // Use centralized DataContext via hook (REMEDIATION ITEM 1)
+  const { clients, createClient, updateClient } = useWorkspaceData();
+
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -46,30 +49,21 @@ const ClientForm: React.FC = () => {
   useEffect(() => {
     if (!isEdit) return;
 
-    const loadClient = async () => {
-      try {
-        const clients = await getClients();
-        const client = clients.find(c => c.id === id);
+    // Load client from DataContext (reactive, no async needed)
+    const client = clients.find(c => c.id === id);
 
-        if (client) {
-          setFormData({
-            name: client.name || '',
-            email: client.email || '',
-            phone: client.phone || '',
-            address: client.address || '',
-            type: (client.type as 'residential' | 'commercial') || 'residential',
-            notes: client.notes || '',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load client:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadClient();
-  }, [id, isEdit]);
+    if (client) {
+      setFormData({
+        name: client.name || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        address: client.address || '',
+        type: (client.type as 'residential' | 'commercial') || 'residential',
+        notes: client.notes || '',
+      });
+    }
+    setLoading(false);
+  }, [id, isEdit, clients]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -93,7 +87,7 @@ const ClientForm: React.FC = () => {
 
     setSaving(true);
     try {
-      const clientData: Partial<Client> = {
+      const clientData: Omit<Client, 'id'> = {
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
         phone: formData.phone.trim() || undefined,
@@ -103,12 +97,19 @@ const ClientForm: React.FC = () => {
       };
 
       if (isEdit && id) {
-        await updateClient(id, clientData);
-        showToast('Client updated!', 'success', 3000);
-        navigate(route(ROUTES.CLIENT_DETAIL, { id }));
+        // Update existing client via DataContext
+        const existingClient = clients.find(c => c.id === id);
+        if (existingClient) {
+          updateClient({ ...existingClient, ...clientData });
+          showToast('Client updated!', 'success', 3000);
+          navigate(route(ROUTES.CLIENT_DETAIL, { id }));
+        } else {
+          throw new Error('Client not found');
+        }
       } else {
-        const newClient = await addClient(clientData as Omit<Client, 'id'>);
-        showToast('Client created! Add another?', 'success', 4000);
+        // Create new client via DataContext (generates ID automatically)
+        const newClient = createClient(clientData);
+        showToast('Client created! Would you like to add a technician?', 'success', 4000);
 
         // Phase 9: Handle returnTo parameter for flow navigation, otherwise go to list
         if (returnTo) {
@@ -123,7 +124,7 @@ const ClientForm: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to save client:', error);
-      alert('Failed to save client. Please try again.');
+      showToast('Failed to save client. Please try again.', 'error', 4000);
     } finally {
       setSaving(false);
     }

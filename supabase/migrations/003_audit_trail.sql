@@ -7,7 +7,7 @@
 --   - Append-only audit_logs table
 --   - Auto-logging of all evidence operations
 --   - Workspace-scoped RLS
---   - Tamper-proof (no DELETE/UPDATE)
+--   - Append-only (no DELETE/UPDATE)
 -- =====================================================================
 
 -- =====================================================================

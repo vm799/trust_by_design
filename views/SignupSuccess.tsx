@@ -94,7 +94,7 @@ const SignupSuccess: React.FC = () => {
                   3. Start Dispatching Jobs
                 </h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  Create your first job, add technicians, and start building tamper-proof audit trails
+                  Create your first job, add technicians, and start building professional audit trails
                 </p>
               </div>
             </div>

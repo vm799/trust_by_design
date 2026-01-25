@@ -4,7 +4,7 @@
 
 **Professional Field Evidence Management System**
 
-*Legally defensible, tamper-evident work evidence for field service professionals*
+*Professional job management and secure evidence tracking for field service professionals*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)](https://reactjs.org/)

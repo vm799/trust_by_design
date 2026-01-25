@@ -86,6 +86,8 @@ export interface Job {
   magicLinkToken?: string; // Magic link token for technician access
   magicLinkUrl?: string; // Full URL for sharing
   workspaceId?: string; // Workspace ID (from database)
+  technicianLinkOpened?: boolean; // Phase 11: Flag for unopened links filtering
+  technicianLinkOpenedAt?: string; // ISO timestamp when technician first opened link
   selfEmployedMode?: boolean; // Self-employed mode flag
   techMetadata?: TechJobMetadata; // Technician job creation metadata
   // Phase C.3: Cryptographic sealing
@@ -93,6 +95,24 @@ export interface Job {
   sealedBy?: string; // Email of user who sealed the evidence
   evidenceHash?: string; // SHA-256 hash of evidence bundle
   isSealed?: boolean; // Computed: !!sealedAt
+
+  // Phase 15: Field Proof System
+  techToken?: string; // Unique 6-char magic link token (e.g., ABC123)
+  techPin?: string; // 6-digit fallback PIN
+  tokenUsed?: boolean; // True when tech has accessed via token
+  tokenUsedAt?: string; // ISO timestamp of first token access
+  proofData?: Record<string, unknown>; // JSONB proof metadata bundle
+  beforePhoto?: string; // Storage URL for before photo
+  afterPhoto?: string; // Storage URL for after photo
+  notesBefore?: string; // Tech notes before work
+  notesAfter?: string; // Tech notes after work (completion notes)
+  clientSignature?: string; // Base64 or Storage URL for client signature
+  clientSignatureAt?: string; // ISO timestamp when client signed
+  clientNameSigned?: string; // Printed name on signature
+  proofCompletedAt?: string; // ISO timestamp when full proof submitted
+  proofSubmittedBy?: string; // Token used for submission
+  managerNotifiedAt?: string; // ISO timestamp when manager emailed
+  clientNotifiedAt?: string; // ISO timestamp when client emailed
 }
 
 export interface Invoice {

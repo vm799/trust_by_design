@@ -241,9 +241,9 @@ const RoadmapView: React.FC = () => {
               icon="schedule"
             />
             <FutureFeatureCard
-              title="Blockchain Anchoring"
-              description="Immutable evidence anchoring on blockchain"
-              icon="link"
+              title="Advanced Verification"
+              description="Enhanced evidence verification options"
+              icon="verified"
             />
             <FutureFeatureCard
               title="Video Evidence"

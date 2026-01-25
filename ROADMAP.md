@@ -109,10 +109,10 @@
 - 🔮 Hardware security keys (WebAuthn)
 - 🔮 Single Sign-On (SSO) for Enterprise
 
-### Cryptographic Hardening
+### Verification Enhancements
 - 🔮 External timestamp authority (TSA)
-- 🔮 Blockchain anchoring
-- 🔮 Distributed ledger integration
+- 🔮 Advanced verification options
+- 🔮 Enhanced audit capabilities
 
 ### Integrations
 - 🔮 **QuickBooks API** — Automated invoice sync
