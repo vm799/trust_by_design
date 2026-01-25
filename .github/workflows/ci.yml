@@ -100,16 +100,31 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Start development server
-        run: npm run dev &
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Start preview server
+        run: npm run preview -- --host 0.0.0.0 --port 5173 &
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Wait for server to be ready
         run: |
-          timeout 120 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 2; done'
-          echo "✅ Development server is ready"
+          echo "Waiting for preview server on port 5173..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5173 > /dev/null 2>&1; then
+              echo "✅ Server is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - waiting 2s..."
+            sleep 2
+          done
+          echo "❌ Server failed to start within 60s"
+          exit 1
 
       - name: Run PHASE 1 Auth + Workspace Tests
         id: phase1_tests
