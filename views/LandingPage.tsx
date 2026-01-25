@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { JobProofLogo } from '../components/branding/jobproof-logo';
-import { DayNightCarousel } from '../components/DayNightCarousel';
+// DayNightCarousel removed - features now shown in static sections below
 import { useTheme } from '../lib/theme';
 import {
   bgOrb1Animate,
@@ -250,18 +250,6 @@ const LandingPage: React.FC = () => {
             No credit card required • 14-day free trial • Cancel anytime
           </motion.p>
         </div>
-      </section>
-
-      {/* Day/Night Carousel Section */}
-      <section className="relative py-12 sm:py-16 px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <DayNightCarousel />
-        </motion.div>
       </section>
 
       {/* Features - Glassmorphism cards */}

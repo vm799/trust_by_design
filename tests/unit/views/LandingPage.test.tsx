@@ -245,15 +245,7 @@ describe('LandingPage', () => {
     });
   });
 
-  describe('Day/Night Carousel', () => {
-    it('renders the carousel with slide content', () => {
-      render(<LandingPage />, { wrapper: TestWrapper });
-
-      // Carousel renders with slide navigation
-      const carouselNav = screen.getByRole('tablist', { name: /Carousel navigation/i });
-      expect(carouselNav).toBeInTheDocument();
-    });
-  });
+  // DayNightCarousel was removed from LandingPage - features shown in static sections instead
 
   describe('Responsive Design', () => {
     it('renders buttons with proper padding', () => {
