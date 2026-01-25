@@ -170,10 +170,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const [techNotifications, setTechNotifications] = useState<TechJobNotification[]>([]);
 
   // Phase 10: Refresh function for links needing attention
+  // CRITICAL FIX: Filter links to only include those with matching jobs
+  // This ensures the badge count matches the actual displayed items
   const refreshLinksNeedingAttention = useCallback(() => {
     const flaggedLinks = getLinksNeedingAttention();
-    setLinksNeedingAttention(flaggedLinks);
-  }, []);
+    // Only include links that have a corresponding job in the current jobs array
+    const validLinks = flaggedLinks.filter(link => jobs.some(j => j.id === link.job_id));
+    setLinksNeedingAttention(validLinks);
+  }, [jobs]);
 
   // Check for unopened links periodically
   useEffect(() => {
