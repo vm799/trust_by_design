@@ -12,11 +12,16 @@
 -- ✅ Proper indexes for RLS performance [HIGH]
 -- ✅ SECURITY DEFINER on all RPC functions [CRITICAL]
 -- ============================================================================
+-- SUPABASE-SPECIFIC NOTES:
+-- ⚠️ pgcrypto is installed in 'extensions' schema by Supabase
+-- ⚠️ Must use extensions.digest() when search_path = public
+-- ⚠️ Do NOT use techId column (doesn't exist) - use assigned_technician_id
+-- ============================================================================
 -- SAFETY: All operations use IF NOT EXISTS / IF EXISTS guards
 -- ROLLBACK: See bottom of file for safe rollback commands
 -- ============================================================================
 
--- Enable pgcrypto for secure hashing
+-- Enable pgcrypto for secure hashing (Supabase installs in 'extensions' schema)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ============================================================================
@@ -133,9 +138,9 @@ BEGIN
   -- Generate secure PIN (6 digits)
   v_pin := lpad((floor(random() * 1000000)::integer)::text, 6, '0');
 
-  -- Hash tokens before storage (SHA256)
-  v_token_hash := encode(digest(v_token, 'sha256'), 'hex');
-  v_pin_hash := encode(digest(v_pin, 'sha256'), 'hex');
+  -- Hash tokens before storage (SHA256) - NOTE: extensions. prefix required for Supabase!
+  v_token_hash := encode(extensions.digest(v_token::bytea, 'sha256'), 'hex');
+  v_pin_hash := encode(extensions.digest(v_pin::bytea, 'sha256'), 'hex');
 
   -- Update job with hashed tokens
   UPDATE jobs SET
@@ -178,13 +183,13 @@ DECLARE
   v_job RECORD;
   v_valid BOOLEAN := false;
 BEGIN
-  -- Hash the provided token/pin for comparison
+  -- Hash the provided token/pin for comparison - NOTE: extensions. prefix required for Supabase!
   IF p_raw_token IS NOT NULL THEN
-    v_token_hash := encode(digest(p_raw_token, 'sha256'), 'hex');
+    v_token_hash := encode(extensions.digest(p_raw_token::bytea, 'sha256'), 'hex');
   END IF;
 
   IF p_raw_pin IS NOT NULL THEN
-    v_pin_hash := encode(digest(p_raw_pin, 'sha256'), 'hex');
+    v_pin_hash := encode(extensions.digest(p_raw_pin::bytea, 'sha256'), 'hex');
   END IF;
 
   -- Fetch job with constant-time hash comparison
@@ -266,8 +271,8 @@ DECLARE
   v_workspace_id UUID;
   v_result JSONB;
 BEGIN
-  -- Hash token for validation
-  v_token_hash := encode(digest(p_raw_token, 'sha256'), 'hex');
+  -- Hash token for validation - NOTE: extensions. prefix required for Supabase!
+  v_token_hash := encode(extensions.digest(p_raw_token::bytea, 'sha256'), 'hex');
 
   -- Atomic validation: Check token and get job in single query
   SELECT j.id, j.workspace_id
@@ -434,15 +439,11 @@ CREATE POLICY "Manager full access to workspace jobs" ON jobs
   );
 
 -- Technicians can only read their assigned jobs
+-- NOTE: Only use assigned_technician_id (techId column does not exist in Supabase schema)
 DROP POLICY IF EXISTS "Tech reads assigned jobs" ON jobs;
 CREATE POLICY "Tech reads assigned jobs" ON jobs
   FOR SELECT
-  USING (
-    assigned_technician_id = auth.uid()
-    OR techId IN (
-      SELECT id::text FROM technicians WHERE user_id = auth.uid()
-    )
-  );
+  USING (assigned_technician_id = auth.uid());
 
 -- ============================================================================
 -- COMMENTS (Documentation)
