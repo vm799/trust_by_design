@@ -193,10 +193,11 @@ BEGIN
   END IF;
 
   -- Fetch job with constant-time hash comparison
+  -- NOTE: Production uses client_id (not client) - verify column names match your schema
   SELECT
     j.id,
     j.title,
-    j.client,
+    j.client_id,
     j.address,
     j.notes,
     j.tech_token_hash,
@@ -232,7 +233,7 @@ BEGIN
       jsonb_build_object(
         'id', v_job.id,
         'title', v_job.title,
-        'client', v_job.client,
+        'client_id', v_job.client_id,
         'address', v_job.address,
         'notes', v_job.notes,
         'status', v_job.status

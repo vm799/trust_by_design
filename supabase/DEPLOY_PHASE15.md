@@ -18,9 +18,17 @@ v_token_hash := encode(digest(v_token, 'sha256'), 'hex');
 v_token_hash := encode(extensions.digest(v_token::bytea, 'sha256'), 'hex');
 ```
 
-### 2. Column Names - Use Snake Case
+### 2. Column Names - Verify Your Schema
 
-The `jobs` table uses `assigned_technician_id`, **not** `techId`. Always verify column names before writing RLS policies.
+Production schema may differ from local! Common differences:
+- `client_id` (not `client`)
+- `assigned_technician_id` (not `techId`)
+
+**Always verify columns exist before deploying:**
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'jobs' ORDER BY ordinal_position;
+```
 
 ### 3. Type Casting Required
 
