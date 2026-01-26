@@ -822,7 +822,7 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
   };
 
   // 1. Check mockDatabase first (includes pre-loaded localStorage links)
-  let linkData = mockDatabase.magicLinks.get(token);
+  const linkData = mockDatabase.magicLinks.get(token);
   if (linkData) {
     return validateLinkData(linkData);
   }

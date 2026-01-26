@@ -7,8 +7,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
+import { Link } from 'react-router-dom';
+import { Card, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { getJobs, getClients } from '../../hooks/useWorkspaceData';
 import { useAuth } from '../../lib/AuthContext';
 import { Job, Client } from '../../types';
@@ -16,8 +16,7 @@ import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 
 const TechPortal: React.FC = () => {
-  const navigate = useNavigate();
-  const { userId, isAuthenticated } = useAuth();
+  const { userId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
