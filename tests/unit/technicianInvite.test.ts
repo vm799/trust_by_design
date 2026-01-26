@@ -28,7 +28,7 @@ describe('Technician Invite - Job Not Found Fix', () => {
 
   it('should preserve loaded job state across parent re-renders', () => {
     // Simulates: technician loads job, parent re-renders, job should still be there
-    let jobState: { id: string } | null = { id: 'JP-test-123' };
+    const jobState: { id: string } | null = { id: 'JP-test-123' };
 
     // Simulate parent re-render by creating new jobs array reference
     const _newJobsArray: never[] = [];
