@@ -42,9 +42,9 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-widest"
+            className="bg-primary text-white px-5 py-3 min-h-[44px] rounded-xl text-xs font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-wide whitespace-nowrap"
           >
-            <span className="material-symbols-outlined text-lg font-black">{showAdd ? 'close' : 'add'}</span>
+            <span className="material-symbols-outlined text-base">{showAdd ? 'close' : 'add'}</span>
             {showAdd ? 'Cancel' : 'Register Client'}
           </button>
         </div>

@@ -821,9 +821,35 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
     console.warn('Failed to check localStorage for magic link:', e);
   }
 
-  // 3. If in mock mode and not found anywhere local, token is invalid
+  // 3. CRITICAL FIX: Check jobs directly for magicLinkToken field
+  // This handles the case where technician opens link in different browser
+  // and doesn't have the token in their localStorage
+  try {
+    const storedJobs = localStorage.getItem('jobproof_jobs_v2');
+    if (storedJobs) {
+      const jobs: Job[] = JSON.parse(storedJobs);
+      const matchingJob = jobs.find(j => j.magicLinkToken === token);
+      if (matchingJob) {
+        console.log(`[validateMagicLink] Found token on job ${matchingJob.id} via direct lookup`);
+        // Create synthetic link data from job
+        const syntheticLinkData = {
+          job_id: matchingJob.id,
+          workspace_id: matchingJob.workspaceId || 'local',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 day validity
+          is_sealed: matchingJob.isSealed || false
+        };
+        // Store in mockDatabase for future lookups
+        mockDatabase.magicLinks.set(token, syntheticLinkData);
+        return validateLinkData(syntheticLinkData);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to check jobs for magic link token:', e);
+  }
+
+  // 4. If in mock mode and not found anywhere local, token is invalid
   if (shouldUseMockDB()) {
-    return { success: false, error: 'Invalid token' };
+    return { success: false, error: 'Invalid token - link may have been opened in a different browser. Please ask your manager to resend the link.' };
   }
 
   // 4. Try Supabase
