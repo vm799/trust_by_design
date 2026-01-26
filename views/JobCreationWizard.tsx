@@ -97,6 +97,10 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   const [magicLinkUrl, setMagicLinkUrl] = useState('');
   const [magicLinkToken, setMagicLinkToken] = useState(''); // Track token for lifecycle
 
+  // Draft storage key for job creation wizard
+  const JOB_DRAFT_KEY = 'jobproof_job_creation_draft';
+  const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     jobType: '',
@@ -110,12 +114,57 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     techId: '',
   });
 
+  // Load draft from localStorage on mount (BEFORE handling returnTo params)
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(JOB_DRAFT_KEY);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
+          setFormData(draft.formData);
+          setStep(draft.step || 1);
+          console.log('[JobCreationWizard] Draft restored from localStorage');
+        } else {
+          localStorage.removeItem(JOB_DRAFT_KEY);
+        }
+      }
+    } catch (e) {
+      console.warn('[JobCreationWizard] Failed to load draft:', e);
+    }
+  }, []);
+
+  // Auto-save draft on formData/step changes (debounced)
+  useEffect(() => {
+    // Don't save if form is empty
+    if (!formData.title && !formData.address && !formData.workDescription) return;
+
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(JOB_DRAFT_KEY, JSON.stringify({
+          formData,
+          step,
+          savedAt: Date.now()
+        }));
+      } catch (e) {
+        console.warn('[JobCreationWizard] Failed to save draft:', e);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData, step]);
+
+  // Clear draft after successful job creation
+  const clearDraft = () => {
+    localStorage.removeItem(JOB_DRAFT_KEY);
+  };
+
   // Phase 2.5: Auto-populate from returnTo params (client/technician creation flow)
   useEffect(() => {
     const newClientId = searchParams.get('newClientId');
     const newTechId = searchParams.get('newTechId');
 
     if (newClientId || newTechId) {
+      // Apply new IDs on top of restored draft
       setFormData(prev => ({
         ...prev,
         ...(newClientId && { clientId: newClientId }),
@@ -263,27 +312,35 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       if (!result.success) {
         // Fallback to localStorage
         const newId = `JP-${crypto.randomUUID()}`;
-        const localJob: Job = { ...jobData, id: newId } as Job;
 
-        // CRITICAL: Immediately persist to localStorage so magic link works instantly
+        // Generate magic link FIRST so we can store it on the job
+        const localMagicLink = storeMagicLinkLocal(newId, workspaceId);
+
+        // Create job with magic link token embedded (CRITICAL for cross-browser access)
+        const localJob: Job = {
+          ...jobData,
+          id: newId,
+          magicLinkToken: localMagicLink.token,
+          magicLinkUrl: localMagicLink.url
+        } as Job;
+
+        // CRITICAL: Persist job WITH token to localStorage so magic link works across browsers
         try {
           const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
           existingJobs.unshift(localJob);
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-          console.log(`[JobCreationWizard] Immediately persisted job ${newId} to localStorage`);
+          console.log(`[JobCreationWizard] Persisted job ${newId} with magicLinkToken to localStorage`);
         } catch (e) {
           console.error('[JobCreationWizard] Failed to persist job to localStorage:', e);
         }
 
         onAddJob(localJob);
         setCreatedJobId(newId);
-
-        // Generate proper magic link with token
-        const localMagicLink = storeMagicLinkLocal(newId, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
         console.log(`[JobCreationWizard] Generated local magic link: ${localMagicLink.url}`);
 
+        clearDraft(); // Clear draft on successful creation
         setShowSuccessModal(true);
         setIsCreating(false);
         return;
@@ -293,19 +350,48 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       setCreatedJobId(createdJob.id);
 
       const magicLinkResult = await generateMagicLink(createdJob.id);
+      let jobWithToken = createdJob;
+
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
         setMagicLinkToken(magicLinkResult.data.token);
+        // Store token on job for cross-browser access
+        jobWithToken = {
+          ...createdJob,
+          magicLinkToken: magicLinkResult.data.token,
+          magicLinkUrl: magicLinkResult.data.url
+        };
         console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation
         const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
+        // Store token on job for cross-browser access
+        jobWithToken = {
+          ...createdJob,
+          magicLinkToken: localMagicLink.token,
+          magicLinkUrl: localMagicLink.url
+        };
         console.log(`[JobCreationWizard] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
-      onAddJob(createdJob);
+      // Update localStorage with token-embedded job
+      try {
+        const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+        const jobIndex = existingJobs.findIndex((j: Job) => j.id === jobWithToken.id);
+        if (jobIndex >= 0) {
+          existingJobs[jobIndex] = jobWithToken;
+        } else {
+          existingJobs.unshift(jobWithToken);
+        }
+        localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
+      } catch (e) {
+        console.warn('[JobCreationWizard] Failed to update job with magic link token:', e);
+      }
+
+      onAddJob(jobWithToken);
+      clearDraft(); // Clear draft on successful creation
       setShowSuccessModal(true);
 
       // PhD-Level Delight: Celebrate successful dispatch!
@@ -680,7 +766,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </h3>
               </div>
 
-              {/* UAT Fix #4: Warning if no clients/technicians exist */}
+              {/* UAT Fix #4: Warning if no clients/technicians exist - with returnTo for flow preservation */}
               {clients.length === 0 && (
                 <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 animate-in">
                   <div className="flex items-start gap-3">
@@ -689,7 +775,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       <p className="text-sm font-bold text-warning">No Clients Found</p>
                       <p className="text-xs text-slate-400 mt-1">You need to create a client first before creating a job.</p>
                       <Link
-                        to="/admin/clients/new"
+                        to={`/admin/clients/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>
@@ -708,7 +794,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       <p className="text-sm font-bold text-warning">No Technicians Found</p>
                       <p className="text-xs text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
                       <Link
-                        to="/admin/technicians/new"
+                        to={`/admin/technicians/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>
