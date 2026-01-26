@@ -870,68 +870,41 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
   const supabase = getSupabase();
   if (supabase) {
     try {
-      // 4a. First try job_access_tokens table
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('job_access_tokens')
-        .select('job_id, expires_at, used_at')
-        .eq('token', token)
-        .single();
+      // FIX: Use RPC function that bypasses RLS for anonymous access
+      // This allows technicians to validate magic links in cross-browser scenarios
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('validate_magic_link_token', { p_token: token });
 
-      if (!tokenError && tokenData) {
-        const now = new Date();
-        const expiresAt = new Date(tokenData.expires_at);
+      if (!rpcError && rpcResult && rpcResult.length > 0) {
+        const tokenData = rpcResult[0];
 
-        if (now > expiresAt) {
+        // Check if expired
+        if (tokenData.is_expired) {
           return { success: false, error: 'This link has expired. Please ask your manager to send a new link.' };
         }
 
-        const { data: job } = await supabase
-          .from('jobs')
-          .select('sealed_at, workspace_id')
-          .eq('id', tokenData.job_id)
-          .single();
-
-        if (job?.sealed_at) {
+        // Check if sealed
+        if (tokenData.is_sealed) {
           return { success: false, error: 'This job has been sealed and can no longer be modified.' };
         }
 
-        console.log(`[validateMagicLink] Validated token via job_access_tokens: job_id=${tokenData.job_id}`);
+        console.log(`[validateMagicLink] Validated token via RPC: job_id=${tokenData.job_id}`);
         return {
           success: true,
           data: {
             job_id: tokenData.job_id,
-            workspace_id: job?.workspace_id,
+            workspace_id: tokenData.workspace_id,
             is_valid: true
           }
         };
       }
 
-      // 4b. CRITICAL FIX: Also check jobs table directly by magic_link_token
-      // This handles the case where token was stored on job but not in job_access_tokens
-      const { data: jobByToken, error: jobError } = await supabase
-        .from('jobs')
-        .select('id, workspace_id, sealed_at')
-        .eq('magic_link_token', token)
-        .single();
-
-      if (!jobError && jobByToken) {
-        if (jobByToken.sealed_at) {
-          return { success: false, error: 'This job has been sealed and can no longer be modified.' };
-        }
-
-        console.log(`[validateMagicLink] Validated token via jobs.magic_link_token: job_id=${jobByToken.id}`);
-        return {
-          success: true,
-          data: {
-            job_id: jobByToken.id,
-            workspace_id: jobByToken.workspace_id,
-            is_valid: true
-          }
-        };
+      // RPC returned empty result or error - token not found
+      if (rpcError) {
+        console.warn('[validateMagicLink] RPC error:', rpcError.message);
+      } else {
+        console.log('[validateMagicLink] Token not found via RPC');
       }
-
-      // Token not found in Supabase
-      console.log('[validateMagicLink] Token not found in Supabase (job_access_tokens or jobs.magic_link_token)');
     } catch (error) {
       console.warn('[validateMagicLink] Supabase check failed:', error);
       // Continue to fallback error below
