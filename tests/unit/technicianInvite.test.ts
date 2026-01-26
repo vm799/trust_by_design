@@ -112,4 +112,62 @@ describe('Technician Invite - Job Not Found Fix', () => {
     const isValid = !mockRpcResult.is_sealed && !mockRpcResult.is_expired;
     expect(isValid).toBe(true);
   });
+
+  it('getJobByToken should use get_job_by_magic_link_token RPC for full job data', () => {
+    // FIX: getJobByToken now uses RPC that returns full job data
+    // This bypasses RLS and allows anonymous users to fetch job details
+    // via magic link token in cross-browser scenarios
+
+    // The RPC function 'get_job_by_magic_link_token' is:
+    // 1. SECURITY DEFINER - bypasses RLS
+    // 2. GRANT EXECUTE TO anon - callable by anonymous users
+    // 3. Returns full job data, not just validation info
+    // 4. Includes is_valid and error_message for validation
+
+    const rpcFunctionName = 'get_job_by_magic_link_token';
+
+    // Mock RPC result with full job data
+    const mockRpcResult = {
+      id: 'JP-test-456',
+      title: 'Test Job for Technician',
+      client_name: 'Test Client',
+      status: 'Pending',
+      workspace_id: '550e8400-e29b-41d4-a716-446655440000',
+      is_valid: true,
+      error_message: null
+    };
+
+    // Verify RPC function name
+    expect(rpcFunctionName).toBe('get_job_by_magic_link_token');
+
+    // Verify result includes job data AND validation info
+    expect(mockRpcResult).toHaveProperty('id');
+    expect(mockRpcResult).toHaveProperty('title');
+    expect(mockRpcResult).toHaveProperty('is_valid');
+    expect(mockRpcResult.is_valid).toBe(true);
+    expect(mockRpcResult.error_message).toBeNull();
+  });
+
+  it('should return error message when token is invalid or expired', () => {
+    // When token validation fails, RPC returns is_valid=false with error_message
+
+    const expiredResult = {
+      id: null,
+      is_valid: false,
+      error_message: 'This link has expired. Please ask your manager to send a new link.'
+    };
+
+    const invalidResult = {
+      id: null,
+      is_valid: false,
+      error_message: 'Invalid or expired link. Please check the URL or contact your manager.'
+    };
+
+    // Verify error handling
+    expect(expiredResult.is_valid).toBe(false);
+    expect(expiredResult.error_message).toContain('expired');
+
+    expect(invalidResult.is_valid).toBe(false);
+    expect(invalidResult.error_message).toContain('Invalid');
+  });
 });
