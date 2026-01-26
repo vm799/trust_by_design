@@ -19,7 +19,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { onAuthStateChange } from './auth';
+import { onAuthStateChange, getSession } from './auth';
 import type { Session } from '@supabase/supabase-js';
 
 export interface AuthContextValue {
@@ -54,7 +54,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const currentUserIdRef = useRef<string | null>(null);
   const sessionRef = useRef<Session | null>(null);
 
-  // Listen to auth state changes
+  // CRITICAL FIX: Restore session on mount (page refresh)
+  // getSession() immediately retrieves stored session from Supabase storage
+  // This prevents the "empty lists after F5" issue
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const storedSession = await getSession();
+        if (storedSession) {
+          console.log('[AuthContext] Session restored on mount:', storedSession.user?.id);
+          currentUserIdRef.current = storedSession.user?.id || null;
+          sessionRef.current = storedSession;
+          setSession(storedSession);
+        }
+      } catch (err) {
+        console.error('[AuthContext] Failed to restore session:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // Listen to auth state changes (login/logout/token refresh)
   useEffect(() => {
     const unsubscribe = onAuthStateChange((newSession) => {
       const newUserId = newSession?.user?.id || null;
@@ -67,14 +90,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         currentUserIdRef.current = newUserId;
         sessionRef.current = newSession;
         setSession(newSession);
+        setIsLoading(false);
       } else if (newSession && sessionRef.current) {
         // Same user, but update the ref with fresh token for API calls
         // This does NOT trigger re-renders (ref update, not state update)
         sessionRef.current = newSession;
         console.log('[AuthContext] Token refreshed for user:', newUserId, '(no re-render)');
       }
-
-      setIsLoading(false);
     });
 
     return () => unsubscribe();
