@@ -97,7 +97,7 @@ interface DataProviderProps {
 }
 
 export function DataProvider({ children, workspaceId: propWorkspaceId }: DataProviderProps) {
-  const { session } = useAuth();
+  const { session, userId } = useAuth();
 
   // Data state
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -118,8 +118,50 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   // Track loaded workspace to prevent duplicate loads
   const loadedWorkspaceRef = useRef<string | null>(null);
 
-  // Get workspace ID from props or session
-  const workspaceId = propWorkspaceId || session?.user?.user_metadata?.workspace_id || null;
+  // Workspace ID state - fetched from profile when session available
+  const [fetchedWorkspaceId, setFetchedWorkspaceId] = useState<string | null>(null);
+
+  // Get workspace ID from props, fetched profile, or session metadata
+  const workspaceId = propWorkspaceId || fetchedWorkspaceId || session?.user?.user_metadata?.workspace_id || null;
+
+  // Fetch workspace_id from profile when session is available
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId) {
+        setFetchedWorkspaceId(null);
+        return;
+      }
+
+      try {
+        const db = await getDbModule();
+        const supabase = db.getSupabase?.();
+        if (!supabase) {
+          console.log('[DataContext] Supabase not available, using localStorage');
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('workspace_id')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) {
+          console.warn('[DataContext] Profile fetch failed:', profileError.message);
+          return;
+        }
+
+        if (profile?.workspace_id) {
+          console.log('[DataContext] Workspace ID fetched from profile:', profile.workspace_id);
+          setFetchedWorkspaceId(profile.workspace_id);
+        }
+      } catch (err) {
+        console.error('[DataContext] Failed to fetch profile:', err);
+      }
+    };
+
+    fetchProfile();
+  }, [userId]);
 
   // Load data from localStorage
   const loadFromLocalStorage = useCallback(() => {
