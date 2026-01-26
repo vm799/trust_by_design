@@ -22,10 +22,18 @@ export interface LocalMedia {
     createdAt: number;
 }
 
+// CLAUDE.md mandate: Form draft storage for offline persistence
+export interface FormDraft {
+    formType: string; // 'client' | 'technician' | 'job'
+    data: Record<string, unknown>;
+    savedAt: number;
+}
+
 export class JobProofDatabase extends Dexie {
     jobs!: Table<LocalJob, string>;
     queue!: Table<OfflineAction, number>;
     media!: Table<LocalMedia, string>;
+    formDrafts!: Table<FormDraft, string>; // CLAUDE.md: Dexie/IndexedDB draft saving
 
     constructor() {
         super('JobProofOfflineDB');
@@ -33,6 +41,13 @@ export class JobProofDatabase extends Dexie {
             jobs: 'id, syncStatus, workspaceId, status', // Indexes
             queue: '++id, type, synced, createdAt',
             media: 'id, jobId'
+        });
+        // Version 2: Add formDrafts for CLAUDE.md offline mandate
+        this.version(2).stores({
+            jobs: 'id, syncStatus, workspaceId, status',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt' // Primary key: formType
         });
     }
 }
@@ -77,4 +92,46 @@ export async function queueAction(type: OfflineAction['type'], payload: any) {
         synced: false,
         retryCount: 0
     });
+}
+
+// ============================================================================
+// FORM DRAFT PERSISTENCE (CLAUDE.md Mandate: Dexie/IndexedDB draft saving)
+// ============================================================================
+
+const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
+
+/**
+ * Save form draft to IndexedDB
+ * CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
+ */
+export async function saveFormDraft(formType: string, data: Record<string, unknown>): Promise<void> {
+    await db.formDrafts.put({
+        formType,
+        data,
+        savedAt: Date.now()
+    });
+}
+
+/**
+ * Get form draft from IndexedDB
+ * Returns null if draft is expired (8hr)
+ */
+export async function getFormDraft(formType: string): Promise<FormDraft | undefined> {
+    const draft = await db.formDrafts.get(formType);
+    if (!draft) return undefined;
+
+    // Check expiry
+    if (Date.now() - draft.savedAt >= DRAFT_EXPIRY_MS) {
+        await clearFormDraft(formType);
+        return undefined;
+    }
+
+    return draft;
+}
+
+/**
+ * Clear form draft after successful submission
+ */
+export async function clearFormDraft(formType: string): Promise<void> {
+    await db.formDrafts.delete(formType);
 }
