@@ -664,76 +664,70 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
 // ============================================================================
 
 /**
- * Generate a magic link token for a job
+ * Generate a job invite token (Simple Invite System)
+ * Inserts into `invites` table and returns URL
  */
-export const generateMagicLink = async (jobId: string): Promise<DbResult<MagicLinkData>> => {
+export const generateMagicLink = async (jobId: string, email?: string): Promise<DbResult<MagicLinkData>> => {
+  // Offline/mock mode: generate local token
   if (shouldUseMockDB()) {
     const job = mockDatabase.jobs.get(jobId);
 
     if (!job) {
-      return {
-        success: false,
-        error: 'Job not found'
-      };
+      return { success: false, error: 'Job not found' };
     }
 
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const url = getMagicLinkUrl(token, jobId);
+    const token = crypto.randomUUID().replace(/-/g, '').slice(0, 32);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const url = getMagicLinkUrl(token);
 
     mockDatabase.magicLinks.set(token, {
       job_id: jobId,
       workspace_id: job.workspaceId || 'workspace-123',
       expires_at: expiresAt,
-      is_sealed: !!job.sealedAt
+      is_sealed: false
     });
 
-    return {
-      success: true,
-      data: {
-        token,
-        url,
-        expiresAt
-      }
-    };
+    return { success: true, data: { token, url, expiresAt } };
   }
 
+  // Online: insert into invites table
   const supabase = getSupabase();
   if (!supabase) {
-    return {
-      success: false,
-      error: 'Supabase not configured. Running in offline-only mode.'
-    };
+    return { success: false, error: 'Supabase not configured' };
   }
 
   try {
     const { data, error } = await supabase
-      .rpc('generate_job_access_token', {
-        p_job_id: jobId
-      });
+      .from('invites')
+      .insert({
+        job_id: jobId,
+        granted_to_email: email || null
+      })
+      .select('token, expires_at')
+      .single();
 
     if (error) {
       return { success: false, error: error.message };
     }
 
     if (!data) {
-      return { success: false, error: 'Failed to generate token' };
+      return { success: false, error: 'Failed to create invite' };
     }
 
-    const url = getMagicLinkUrl(data.token, jobId);
+    const url = getMagicLinkUrl(data.token);
 
     return {
       success: true,
       data: {
         token: data.token,
-        url: url,
+        url,
         expiresAt: data.expires_at
       }
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate magic link'
+      error: error instanceof Error ? error.message : 'Failed to generate invite'
     };
   }
 };
@@ -1702,10 +1696,9 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
   }
 
   try {
-    // FIX: Use RPC function that bypasses RLS for anonymous access
-    // Direct table query is blocked by RLS for anonymous users
+    // Simple Invite System: Use get_job_by_invite_token RPC
     const { data: rpcResult, error: rpcError } = await supabase
-      .rpc('get_job_by_magic_link_token', { p_token: token });
+      .rpc('get_job_by_invite_token', { p_token: token });
 
     if (rpcError) {
       console.error('[getJobByToken] RPC error:', rpcError.message);
@@ -1721,41 +1714,25 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       return { success: false, error: errorMsg };
     }
 
-    console.log(`[getJobByToken] Job loaded via RPC: ${data.id}`);
+    console.log(`[getJobByToken] Job loaded via RPC: ${data.job_id}`);
 
+    // Map RPC response to Job type (simple invite system fields)
     const job: Job = {
-      id: data.id,
-      title: data.title,
+      id: data.job_id,
+      title: data.job_title,
       client: data.client_name,
-      clientId: data.client_id,
-      technician: data.technician_name,
-      techId: data.technician_id,
+      clientName: data.client_name,
       status: data.status,
       date: data.scheduled_date,
+      scheduledDate: data.scheduled_date,
       address: data.address,
-      lat: data.lat,
-      lng: data.lng,
-      w3w: data.w3w,
       notes: data.notes,
-      workSummary: data.work_summary,
-      photos: data.photos || [],
-      signature: data.signature_url,
-      signerName: data.signer_name,
-      signerRole: data.signer_role,
-      safetyChecklist: data.safety_checklist || [],
-      siteHazards: data.site_hazards || [],
-      completedAt: data.completed_at,
-      templateId: data.template_id,
-      syncStatus: data.sync_status || 'synced',
-      lastUpdated: data.last_updated || Date.now(),
-      price: data.price,
-      workspaceId: data.workspace_id,
-      sealedAt: data.sealed_at,
-      sealedBy: data.sealed_by,
-      evidenceHash: data.evidence_hash,
-      isSealed: !!data.sealed_at,
-      magicLinkToken: data.magic_link_token,
-      magicLinkUrl: data.magic_link_url
+      // Defaults for fields not returned by simple RPC
+      photos: [],
+      safetyChecklist: [],
+      siteHazards: [],
+      syncStatus: 'synced',
+      lastUpdated: Date.now()
     };
 
     // Cache to mockDatabase for faster future lookups
