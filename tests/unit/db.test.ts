@@ -152,17 +152,17 @@ describe('lib/db - Database Operations', () => {
         expect(result.data).toHaveProperty('token');
         expect(result.data).toHaveProperty('url');
         expect(result.data).toHaveProperty('expiresAt');
-        expect(result.data?.url).toContain('/#/track/');
+        expect(result.data?.url).toContain('/#/technician/');
       });
 
-      it('should generate token with 24-hour expiry', async () => {
+      it('should generate token with 7-day expiry', async () => {
         const result = await generateMagicLink('job-1');
         const expiresAt = new Date(result.data!.expiresAt);
         const now = new Date();
-        const hoursDiff = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const daysDiff = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
-        expect(hoursDiff).toBeGreaterThan(23);
-        expect(hoursDiff).toBeLessThan(25);
+        expect(daysDiff).toBeGreaterThan(6.9);
+        expect(daysDiff).toBeLessThan(7.1);
       });
 
       it('should return error when job does not exist', async () => {
