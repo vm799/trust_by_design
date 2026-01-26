@@ -1,44 +1,497 @@
-# CLAUDE.md - JobProof Shared UI Patterns
+# PRODUCTION AI BUILDER CONSTITUTION
+**Date: Jan 26, 2026** | **Status: ENFORCE ALL RULES** | **Creator: Solo AI Builder**
+
+## CORE MISSION
+Build bulletproof **offline-first web app** for poor service areas. **NO REGRESSIONS ALLOWED**. **MARKETABLE BY 12PM**.
+
+## ABSOLUTE RULES (Break = IMMEDIATE REJECT)
+
+```
+1. NO CODE CHANGES WITHOUT TESTS FIRST
+2. SHOW BEFORE/AFTER SCREENSHOTS (20 lines context each)
+3. MAXIMUM 1 FILE CHANGED PER FIX
+4. DELETE LEGACY CODE (NEVER COMMENT OUT)
+5. PROVE IT WORKS (test command output REQUIRED)
+6. ONE-CLICK DEPLOY COMMANDS
+7. NO "THIS SHOULD WORK" - ONLY PROOF
+8. JSON OUTPUT FORMAT ONLY (no prose explanations)
+9. UAT SCRIPT REQUIRED FOR EVERY FIX
+```
+
+## OFFLINE-FIRST MANDATES (Every Form MUST Have)
+```
+Dexie/IndexedDB draft saving (every keystroke)
+Offline submit queue via syncQueue.ts
+Network status awareness (navigator.onLine)
+Optimistic UI updates with status indicators
+Airplane mode -> app restart -> data survives
+Form drafts auto-load on screen mount
+```
+
+## MANDATORY JSON OUTPUT FORMAT
+
+```json
+{
+  "issue": "job_not_found",
+  "rootCause": "exact cause from code analysis",
+  "files": {
+    "before": "exact screenshot path or 20 lines",
+    "after": "exact screenshot path or 20 lines",
+    "changed": ["src/components/JobInvite.tsx"]
+  },
+  "tests": {
+    "added": ["tests/integration/jobInvite.spec.ts"],
+    "commands_run": ["npm test", "npm run test:offline"],
+    "results": "paste COMPLETE test output here"
+  },
+  "cleanup": {
+    "deleted_files": ["old-broken-file.tsx"],
+    "removed_imports": ["list them"],
+    "legacy_code_gone": true
+  },
+  "deploy": {
+    "preview": "vercel deploy --previews",
+    "prod": "vercel --prod",
+    "env_vars": ["VITE_APP_URL=https://yourapp.vercel.app"]
+  },
+  "uat_script": "1. Admin creates job invite\n2. Copy link -> incognito\n3. Click -> expect onboarding\n4. Submit -> expect job assigned",
+  "status": "TestsPassed_UATPending",
+  "risk_level": "LOW|MEDIUM|HIGH",
+  "next_fix": "offline_forms|navigation|ci_cd"
+}
+```
+
+## DAILY PREVENTION RITUAL (30 mins REQUIRED)
+
+```
+MORNING (before Claude work):
+$ npm run lint -- --fix
+$ npm test
+$ npx depcheck | grep "Unused" || echo "CLEAN"
+$ git status | grep -v "claude\|temp" || echo "CLEANUP"
+
+AFTER EVERY CLAUDE FIX:
+$ npm test && echo "TESTS PASS" || echo "TESTS FAIL"
+$ npm run dev
+$ Toggle airplane -> test forms -> toggle back -> verify sync
+$ vercel deploy -> test preview URL
+
+WEEKLY CLEANUP:
+$ find . -name "*.bak" -delete
+$ find . -name "claude-*" -delete
+$ grep -r "// TODO\|FIXME" src/ | wc -l  # MUST = 0
+```
+
+## EMERGENCY RESET COMMANDS
+
+```
+# When Claude breaks everything:
+$ git stash push -m "claude broke it"
+$ npm test  # diagnose failures
+$ git stash pop  # only if tests pass
+
+# Nuclear cleanup:
+$ rm -rf node_modules/.cache
+$ npm ci
+$ npm run build
+```
+
+## SUCCESS METRICS (12PM TARGETS)
+
+```
+CRITICAL (MUST BE BY NOON):
+[ ] npm test = 100% green
+[ ] Airplane mode: ALL forms persist + sync
+[ ] 10x technician invites = 10/10 success (incognito)
+[ ] "Job not found" errors = 0
+[ ] Preview deploy passes all flows
+
+NICE TO HAVE:
+[ ] Legacy files = 0 (grep -r "// TODO" src/ = 0)
+[ ] Sentry monitoring active
+[ ] E2E tests passing
+```
+
+## STANDARD DIAGNOSTIC COMMANDS
+
+```
+# Find broken patterns:
+grep -r "supabase.*insert.*onSubmit" src/  # direct API calls
+grep -r "job.*not.*found" src/            # error messages
+grep -r "router.push.*operations" src/    # broken nav
+grep -r "Dexie\|IndexedDB" lib/ | wc -l  # offline support (should > 10)
+
+# Verify clean state:
+npm test && npm run lint && echo "PRODUCTION READY"
+```
+
+## ATOMIC FIX SEQUENCE (Execute This Order)
+
+```
+1. FIX #1: "Job not found" -> technician invite flow
+2. FIX #2: Offline form persistence -> ALL forms
+3. FIX #3: Navigation back buttons
+4. FIX #4: CI/CD test cleanup
+5. FIX #5: Production deploy + monitoring
+```
+
+## CLAUDE BEHAVIOR CONSTRAINTS
+
+```
+NEVER ALLOW:
+- "This should fix it" (no proof)
+- Rewrite working code
+- Leave TODO/FIXME comments
+- Suggest multiple approaches (pick ONE)
+- Change core architecture mid-project
+- More than 1 file per fix
+
+MANDATORY:
+- Tests written BEFORE code changes
+- Before/after screenshots (20 lines context)
+- Legacy code DELETED (not commented)
+- Deploy commands that work copy/paste
+- UAT script human can execute
+- Risk assessment per fix
+```
+
+---
+
+# ALL RESPONSES MUST FOLLOW JSON FORMAT OR REJECTED
+
+*This is your project constitution. Every Claude response must obey these rules.*
+
+---
+---
+
+# CLAUDE.md - JobProof Production AI Builder Guide
+
+**Last Updated:** January 26, 2026
+**Status:** Production-Ready
+**Stack:** Vite + React 18 + TypeScript + Supabase + Dexie
+
+---
+
+## Quick Reference
+
+```bash
+# Daily workflow
+npm run dev              # Start dev server (port 3000)
+npm test                 # Run unit tests (watch mode)
+npm run lint             # ESLint check
+npm run type-check       # TypeScript validation
+npm run build            # Production build
+
+# Full verification
+npm test && npm run lint && npm run type-check && npm run build
+```
+
+---
 
 ## Project Overview
-JobProof is a field service evidence management application built with:
-- **Frontend**: Vite + React 18 + TypeScript
-- **Styling**: Tailwind CSS 3.4 with CSS variable theming
-- **Animations**: Framer Motion
-- **Auth**: Supabase Auth
-- **Database**: Supabase + Dexie (offline IndexedDB)
-- **Testing**: Vitest (unit) + Playwright (e2e)
 
-## Dark Mode System
+JobProof is an **offline-first field service evidence management platform** built for:
+- Contractors managing field technicians
+- Technicians capturing job evidence with GPS/W3W verification
+- Clients reviewing sealed, tamper-proof job reports
 
-### Theme Provider (`lib/theme.tsx`)
-Four theme modes available:
-- `light` - Manual light mode
-- `dark` - Manual dark mode
-- `auto` - **Default** - Time-based (6 PM - 6 AM = dark)
-- `system` - Follows OS preference
+### Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Frontend | Vite + React 18 | Fast dev, optimized builds |
+| Language | TypeScript 5.8 (strict) | Type safety |
+| Styling | Tailwind CSS 3.4 | Utility-first responsive design |
+| Routing | React Router 6 | Hash-based routing (`/#/...`) |
+| Animations | Framer Motion 12 | Declarative motion |
+| Auth | Supabase Auth | Email + magic links + OAuth |
+| Database | Supabase (PostgreSQL) | Cloud storage + RLS |
+| Offline | Dexie (IndexedDB) | Local-first storage |
+| Testing | Vitest + Playwright | Unit + E2E |
+
+---
+
+## Quality Standards
+
+### Before Every Commit
+
+```bash
+npm test                 # All tests pass
+npm run lint             # No lint errors
+npm run type-check       # No type errors
+npm run build            # Build succeeds
+```
+
+### Code Change Rules
+
+1. **Read before modifying** - Always read files before changing them
+2. **One concern per fix** - Keep changes focused and atomic
+3. **Delete, don't comment** - Remove unused code completely
+4. **Test first** - Write/update tests before implementation when possible
+5. **Prove it works** - Verify changes with test output
+
+### Offline-First Mandates
+
+Every form and data operation MUST have:
+- Dexie/IndexedDB draft saving
+- Offline submit queue via sync system
+- Network status awareness (navigator.onLine)
+- Optimistic UI updates with status indicators
+- Data survives app restart in offline mode
+
+---
+
+## Architecture Guidelines (CRITICAL)
+
+These patterns prevent regressions. **All code MUST follow these.**
+
+### 1. State Management - Use DataContext
 
 ```tsx
-// Usage
+// CORRECT
+import { useData } from '../lib/DataContext';
+const { jobs, clients, addJob, updateJob } = useData();
+
+// WRONG - Creates duplicate state
+const [jobs, setJobs] = useState<Job[]>([]);
+```
+
+### 2. Authentication - Use AuthContext
+
+```tsx
+// CORRECT
+import { useAuth } from '../lib/AuthContext';
+const { isAuthenticated, userId, session } = useAuth();
+
+// WRONG - Causes excessive API calls (877 req/hr bug)
+const { data } = await supabase.auth.getUser();
+```
+
+### 3. Protected Routes - Use ProtectedRoute Wrapper
+
+```tsx
+// CORRECT
+<ProtectedRoute sectionName="Dashboard" fallbackRoute="/home">
+  <Dashboard />
+</ProtectedRoute>
+
+// WRONG - No error isolation
+<Route element={isAuthenticated ? <Dashboard /> : <Navigate to="/auth" />} />
+```
+
+### 4. Animation Objects - Use Shared Constants
+
+```tsx
+// CORRECT
+import { fadeInUp, hoverLiftQuick } from '../lib/animations';
+<motion.div variants={fadeInUp} whileHover={hoverLiftQuick}>
+
+// WRONG - Creates new object every render
+<motion.div animate={{ opacity: 1 }} whileHover={{ y: -5 }}>
+```
+
+### 5. List Keys - Use Stable IDs
+
+```tsx
+// CORRECT
+{photos.map(photo => <img key={photo.id} src={photo.url} />)}
+
+// WRONG - Causes re-render issues
+{photos.map((photo, index) => <img key={index} src={photo.url} />)}
+```
+
+### 6. Expensive Computations - Use useMemo
+
+```tsx
+// CORRECT
+const clientsById = useMemo(() =>
+  new Map(clients.map(c => [c.id, c])),
+  [clients]
+);
+
+// WRONG - Recomputes every render
+const clientsById = new Map(clients.map(c => [c.id, c]));
+```
+
+### 7. Navigation Components - Use React.memo
+
+```tsx
+// CORRECT
+export const Sidebar = memo(function Sidebar({ ... }) { ... });
+
+// WRONG - Re-renders on every parent update
+export const Sidebar = ({ ... }) => { ... };
+```
+
+### 8. Lazy Loading - Use Dynamic Imports
+
+```tsx
+// CORRECT - Route components
+const Dashboard = lazy(() => import('./views/Dashboard'));
+
+// CORRECT - Heavy libraries
+const auth = await import('../lib/auth');
+
+// WRONG - Increases initial bundle
+import { Dashboard } from './views/Dashboard';
+```
+
+### 9. Error Handling - Use ErrorState Component
+
+```tsx
+// CORRECT
+import { ErrorState } from '../components/ui/ErrorState';
+if (error) return <ErrorState message={error} onRetry={loadData} />;
+
+// WRONG - No recovery option
+if (error) return <div>Error: {error}</div>;
+```
+
+### 10. Supabase Access - Through Auth Module
+
+```tsx
+// CORRECT
+const auth = await import('../lib/auth');
+const supabase = auth.getSupabaseClient();
+
+// WRONG - Breaks code splitting
+import { getSupabase } from '../lib/supabase';
+```
+
+### 11. Magic Link Auth - Use Callback Route
+
+```tsx
+// CORRECT (in lib/auth.ts)
+emailRedirectTo: getAuthRedirectUrl('/#/auth/callback')
+
+// WRONG - Race condition with auth state
+emailRedirectTo: getAuthRedirectUrl('/#/')
+```
+
+### 12. Code Splitting - Update vite.config.ts
+
+When adding new views, add them to appropriate chunk in `manualChunks`:
+
+```js
+// vite.config.ts
+'admin-routes': ['./views/NewAdminView.tsx', ...],
+'public-routes': ['./views/NewPublicView.tsx', ...],
+```
+
+---
+
+## File Structure
+
+```
+/home/user/trust_by_design/
+├── components/
+│   ├── ui/                    # Reusable UI components
+│   │   ├── ActionButton.tsx   # Primary buttons with press-spring
+│   │   ├── Card.tsx           # Container with glassmorphism
+│   │   ├── Modal.tsx          # Dialog overlay
+│   │   ├── Tooltip.tsx        # Radix UI tooltips
+│   │   ├── InfoBox.tsx        # Dismissible callout boxes
+│   │   ├── StatusBadge.tsx    # Status indicators
+│   │   ├── ErrorState.tsx     # Error display with retry
+│   │   ├── Breadcrumbs.tsx    # Navigation breadcrumbs
+│   │   └── ConfirmDialog.tsx  # Confirmation dialogs
+│   ├── layout/                # Layout components
+│   │   ├── AppShell.tsx       # Main app container
+│   │   ├── BottomNav.tsx      # Mobile bottom navigation
+│   │   ├── PageHeader.tsx     # Page header with actions
+│   │   └── Sidebar.tsx        # Desktop sidebar
+│   ├── branding/              # Logo & brand assets
+│   ├── ProtectedRoute.tsx     # Auth error boundary wrapper
+│   ├── RouteErrorBoundary.tsx # Route-level error boundary
+│   └── *.tsx                  # Feature components
+│
+├── views/                     # Page-level components
+│   ├── app/                   # Modern nested route structure
+│   │   ├── Dashboard.tsx
+│   │   ├── clients/           # Client CRUD views
+│   │   ├── jobs/              # Job management views
+│   │   ├── technicians/       # Technician management
+│   │   └── settings/          # Settings views
+│   ├── tech/                  # Technician portal views
+│   │   ├── TechPortal.tsx
+│   │   ├── TechJobDetail.tsx
+│   │   └── EvidenceCapture.tsx
+│   ├── AuthView.tsx           # Email + magic link auth
+│   ├── AuthCallback.tsx       # Magic link handler
+│   ├── LandingPage.tsx        # Public landing
+│   └── *.tsx                  # Other views
+│
+├── lib/                       # Core business logic
+│   ├── AuthContext.tsx        # Auth state (session memoization)
+│   ├── DataContext.tsx        # Centralized data state
+│   ├── auth.ts                # Supabase auth helpers
+│   ├── supabase.ts            # Supabase client config
+│   ├── db.ts                  # Dexie IndexedDB schema
+│   ├── theme.tsx              # Theme provider
+│   ├── animations.ts          # Shared Framer Motion constants
+│   ├── syncQueue.ts           # Offline sync queue
+│   ├── syncRecovery.ts        # Conflict resolution
+│   ├── encryption.ts          # AES-256-GCM encryption
+│   ├── sealing.ts             # RSA-2048 evidence sealing
+│   ├── magicLinkService.ts    # Multi-channel magic links
+│   ├── audit.ts               # Audit trail logging
+│   ├── validation.ts          # Input validation
+│   └── redirects.ts           # Safe redirect allowlist
+│
+├── hooks/                     # Custom React hooks
+│   ├── useJobGuard.ts         # Client-first validation
+│   ├── useAuthFlow.ts         # Auth state machine
+│   ├── useNavigation.ts       # Navigation helpers
+│   └── useWorkspaceData.ts    # Workspace data fetching
+│
+├── tests/
+│   ├── unit/                  # Vitest unit tests
+│   │   ├── architecture.test.ts  # Pattern enforcement
+│   │   ├── components/        # Component tests
+│   │   ├── lib/               # Library tests
+│   │   └── hooks/             # Hook tests
+│   ├── e2e/                   # Playwright E2E tests
+│   │   ├── auth-flows.spec.ts
+│   │   └── critical-path.spec.ts
+│   ├── mocks/                 # MSW mock handlers
+│   └── setup.ts               # Test setup
+│
+├── supabase/
+│   ├── migrations/            # SQL migrations (20+)
+│   └── functions/             # Edge Functions
+│       ├── seal-evidence/     # RSA signing
+│       └── verify-evidence/   # Signature verification
+│
+├── src/styles/
+│   └── theme.css              # CSS variables & utilities
+│
+├── types.ts                   # TypeScript type definitions (400+ lines)
+├── App.tsx                    # Root app with lazy routes
+├── vite.config.ts             # Build config with code splitting
+├── tailwind.config.js         # Tailwind configuration
+├── vitest.config.ts           # Unit test config
+└── playwright.config.ts       # E2E test config
+```
+
+---
+
+## Theme System
+
+### Theme Provider (`lib/theme.tsx`)
+
+```tsx
 import { useTheme } from '../lib/theme';
 
 const {
-  theme,           // Current mode: 'light' | 'dark' | 'auto' | 'system'
+  theme,           // 'light' | 'dark' | 'auto' | 'system'
   setTheme,        // Set theme mode
   resolvedTheme,   // Actual applied: 'light' | 'dark'
   isEvening,       // Boolean: is it evening (6PM-6AM)?
-  toggleDayNight   // Quick toggle between light/dark
+  toggleDayNight   // Quick toggle
 } = useTheme();
 ```
 
-### Tailwind Configuration
-```js
-// tailwind.config.js
-darkMode: ["class"]  // Uses .dark class on <html>
-```
-
-### Theme-Aware Components Pattern
-Always use conditional classes based on `resolvedTheme`:
+### Theme-Aware Components
 
 ```tsx
 const { resolvedTheme } = useTheme();
@@ -52,9 +505,8 @@ const isDark = resolvedTheme === 'dark';
 `}>
 ```
 
-## CSS Variables (`src/styles/theme.css`)
+### CSS Variables (`src/styles/theme.css`)
 
-### Light Mode Colors
 ```css
 :root {
   --background: 0 0% 98%;
@@ -65,38 +517,21 @@ const isDark = resolvedTheme === 'dark';
   --warning: 38 92% 50%;
   --danger: 0 84.2% 60.2%;
 }
-```
 
-### Dark Mode Colors
-```css
 .dark {
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;  /* Brighter for dark bg */
+  --primary: 217.2 91.2% 59.8%;
   --accent: 14 91% 65%;
 }
 ```
 
-## Component Library
+---
 
-### UI Components (`components/ui/`)
-- `ActionButton.tsx` - Primary buttons with press-spring animation
-- `Card.tsx` - Container with glassmorphism support
-- `Modal.tsx` - Dialog overlay
-- `Tooltip.tsx` - Smart tooltips with Radix UI (see Tooltip System below)
-- `StatusBadge.tsx` - Status indicators
-- `LoadingSkeleton.tsx` - Loading placeholders
+## Component Patterns
 
-## Tooltip System (Phase 2)
+### Tooltip System (Radix UI)
 
-### Components (`components/ui/Tooltip.tsx`)
-Built on Radix UI for accessibility:
-- `Tooltip` - Main component with all options
-- `SimpleTooltip` - Quick usage for basic hints
-- `InfoTooltip` - For form fields (auto-dismiss + close button)
-- `HelpTooltip` - Standalone help icon with tooltip
-
-### Usage
 ```tsx
 import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/ui';
 
@@ -105,56 +540,19 @@ import { Tooltip, SimpleTooltip, InfoTooltip, HelpTooltip } from '../components/
   <button>Hover me</button>
 </Tooltip>
 
-// Simple tooltip shorthand
-<SimpleTooltip content="Quick tip">
-  <span>Info</span>
-</SimpleTooltip>
-
-// Form field with auto-dismiss (60s) and close button
+// Form field with auto-dismiss (60s)
 <InfoTooltip content="This field is required">
   <input type="text" />
 </InfoTooltip>
 
-// Help icon that shows tooltip
+// Standalone help icon
 <HelpTooltip content="Click here for more info" />
 ```
 
-### Props
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| content | ReactNode | - | Tooltip content |
-| position | 'top' \| 'bottom' \| 'left' \| 'right' | 'top' | Position |
-| variant | 'default' \| 'highlighted' \| 'warning' \| 'success' \| 'info' | 'default' | Color scheme |
-| showClose | boolean | false | Show X button |
-| autoDismiss | boolean | false | Auto-hide after delay |
-| autoDismissDelay | number | 60000 | Auto-hide delay (ms) |
-| delayDuration | number | 300 | Show delay (ms) |
+### InfoBox Component
 
-### Variants
-- `default` - High-contrast (dark bg in light mode, white bg in dark mode)
-- `highlighted` - Amber/orange for important hints
-- `warning` - Orange for warnings
-- `success` - Emerald for success messages
-- `info` - Blue for informational tooltips
-
-### Behavior
-- **300ms hover delay** before showing
-- **60s auto-dismiss** when `autoDismiss` is enabled
-- **Slide-out-right** animation on dismiss
-- **Keyboard accessible** (focus triggers tooltip)
-
-## InfoBox Component (Phase 2.1)
-
-Compact, dismissible callout boxes for hints and notices. Uses cyan/teal (not primary blue) to visually distinguish from active UI states.
-
-### Usage
 ```tsx
 import { InfoBox } from '../components/ui';
-
-// Basic info box with dismiss button
-<InfoBox title="Tip" variant="info">
-  This is helpful information you can dismiss.
-</InfoBox>
 
 // Persistent dismissal (saved to localStorage)
 <InfoBox
@@ -165,115 +563,9 @@ import { InfoBox } from '../components/ui';
 >
   Once dismissed, this won't show again.
 </InfoBox>
-
-// Non-dismissible warning
-<InfoBox
-  title="Warning"
-  variant="warning"
-  dismissible={false}
->
-  This cannot be dismissed.
-</InfoBox>
 ```
 
-### Props
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| children | ReactNode | - | Box content |
-| icon | string | auto | Material symbol icon name |
-| title | string | - | Optional bold title |
-| variant | 'info' \| 'warning' \| 'success' \| 'tip' | 'info' | Color scheme |
-| dismissible | boolean | true | Show X close button |
-| onDismiss | () => void | - | Callback when dismissed |
-| persistKey | string | - | localStorage key for persistent dismissal |
-
-### Variants
-- `info` - Cyan/teal (distinct from primary blue)
-- `warning` - Amber/orange
-- `success` - Emerald green
-- `tip` - Violet/purple for helpful tips
-
-### Navigation Components
-- `Breadcrumbs.tsx` - Navigation breadcrumbs with theme support
-- `BackButton` - Quick "back to X" navigation
-
-### Layout Components (`components/layout/`)
-- `AppShell.tsx` - Main app container
-- `BottomNav.tsx` - Mobile bottom navigation
-- `PageHeader.tsx` - Page header with title/actions
-- `Sidebar.tsx` - Desktop sidebar navigation
-
-### Theme Components
-- `ThemeToggle.tsx` - Full day/night toggle with mode selector
-- `ThemeToggleCompact.tsx` - Navbar-friendly single button
-- `DayNightCarousel.tsx` - Feature carousel with alternating aesthetics
-
-## Job Creation Guards (Phase 3)
-
-### useJobGuard Hook (`hooks/useJobGuard.ts`)
-Enforces client-first flow for job creation:
-
-```tsx
-import { useJobGuard } from '../hooks/useJobGuard';
-
-// In job creation page
-const {
-  isLoading,
-  clients,
-  technicians,
-  hasClients,
-  hasTechnicians,
-  canCreateJob,
-  checkAndRedirect,
-  showClientRequiredToast,
-  showNoTechnicianWarning,
-  refresh
-} = useJobGuard(redirectOnFail);
-
-// Auto-redirect mode: pass true to automatically redirect when no clients
-const guard = useJobGuard(true);
-
-// Manual check mode: validate before action
-const handleCreateJob = async () => {
-  const canProceed = await guard.checkAndRedirect();
-  if (canProceed) {
-    // Proceed with job creation
-  }
-};
-```
-
-### Guard Behavior
-- **Client required**: Redirects to `/admin/clients/new` with returnTo param
-- **Technician optional**: Shows info toast, allows unassigned jobs
-- **Toast messages**: "Create a client first before adding jobs"
-
-### Breadcrumbs (`components/ui/Breadcrumbs.tsx`)
-Navigation breadcrumbs with theme-aware styling:
-
-```tsx
-import { Breadcrumbs, BackButton, JobCreationBreadcrumbs } from '../components/ui';
-
-// Custom breadcrumbs
-<Breadcrumbs
-  items={[
-    { label: 'Jobs', href: '/admin/jobs', icon: 'work' },
-    { label: 'New Job' }
-  ]}
-  separator="chevron"  // 'chevron' | 'slash' | 'arrow'
-  showHome={true}      // Adds Dashboard link
-/>
-
-// Preset breadcrumbs
-<JobCreationBreadcrumbs currentStep="Select Client" />
-<ClientCreationBreadcrumbs currentStep="Details" />
-<TechnicianCreationBreadcrumbs />
-
-// Back button
-<BackButton to="/admin/jobs" label="Back to Jobs" />
-```
-
-## Glassmorphism Pattern
-Standard glassmorphism container:
+### Glassmorphism Pattern
 
 ```tsx
 <div className={`
@@ -285,34 +577,141 @@ Standard glassmorphism container:
 `}>
 ```
 
-## Animation Patterns
+### Job Creation Guards
 
-### Framer Motion Entry
 ```tsx
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5, delay: 0.1 }}
->
+import { useJobGuard } from '../hooks/useJobGuard';
+
+const {
+  hasClients,
+  hasTechnicians,
+  canCreateJob,
+  checkAndRedirect,
+} = useJobGuard(redirectOnFail);
+
+// Validates client-first flow before job creation
+const handleCreateJob = async () => {
+  const canProceed = await checkAndRedirect();
+  if (canProceed) {
+    // Proceed with job creation
+  }
+};
 ```
 
-### Press Spring (CSS)
+---
+
+## Offline Sync System
+
+### Sync Queue (`lib/syncQueue.ts`)
+
+```typescript
+// Retry strategy: exponential backoff
+const RETRY_DELAYS = [2000, 5000, 15000, 30000, 60000, 120000, 180000, 300000];
+const MAX_RETRIES = 8;
+
+// Operations
+pullJobs()              // Fetch from Supabase
+syncJobToSupabase()     // Upload job + photos + signature
+```
+
+### Dexie Database (`lib/db.ts`)
+
+```typescript
+// IndexedDB stores for offline data
+const db = new Dexie('JobProofDB');
+db.version(1).stores({
+  media: 'id, jobId, type, timestamp',
+  syncQueue: 'id, operation, status, retries',
+});
+```
+
+### Conflict Resolution
+
+- Last-write-wins with timestamp comparison
+- Audit logging for all conflicts
+- Manual resolution UI for critical data
+
+---
+
+## Security Features
+
+### Encryption (`lib/encryption.ts`)
+
+- **Algorithm:** AES-256-GCM
+- **Key Derivation:** PBKDF2 (32-byte entropy)
+- **Storage:** In-memory, NON-EXTRACTABLE keys
+
+### Evidence Sealing (`lib/sealing.ts`)
+
+- **Algorithm:** RSA-2048 + SHA-256
+- **Server-Side:** Edge Function signs with private key
+- **Verification:** Detects tampering in sealed jobs
+
+### Magic Link Service (`lib/magicLinkService.ts`)
+
+- Multi-channel delivery: Email, SMS, QR, Copy
+- 7-day expiry with rate limiting detection
+- Cross-browser validation (HashRouter compatible)
+
+### Row-Level Security (RLS)
+
+- All 14+ tables have RLS policies
+- Workspace isolation enforced at DB level
+- Role-based permissions: Admin, Member, Token
+
+---
+
+## Testing Infrastructure
+
+### Unit Tests (Vitest)
+
+```bash
+npm test                 # Watch mode
+npm run test:unit        # Single run
+npm run test:coverage    # With coverage report
+```
+
+Coverage thresholds: Lines 80%, Functions 75%, Branches 75%
+
+### E2E Tests (Playwright)
+
+```bash
+npm run test:e2e         # Headless
+npm run test:e2e:ui      # Interactive UI mode
+```
+
+Browsers: Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari, iPad Pro
+
+### Architecture Tests
+
+```bash
+# tests/unit/architecture.test.ts enforces:
+# - No direct supabase.auth.getUser() in components
+# - No useState for jobs/clients/technicians
+# - All routes lazy-loaded
+# - Animation constants used
+```
+
+---
+
+## Accessibility (WCAG AAA)
+
+### Touch Targets
+
+- Minimum 44x44px for interactive elements
+- 56x56px for field worker buttons (gloved hands)
+
+### Focus Indicators
+
 ```css
-.press-spring {
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.press-spring:active {
-  transform: scale(0.95);
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 ```
 
-### Hover Lift
-```tsx
-whileHover={{ y: -5, transition: { duration: 0.2 } }}
-```
+### Icon System
 
-## Icon System
-Uses Google Material Symbols Outlined:
 ```tsx
 <span className="material-symbols-outlined">icon_name</span>
 
@@ -325,302 +724,177 @@ Uses Google Material Symbols Outlined:
 </span>
 ```
 
-## Accessibility Requirements (WCAG AAA)
-
-### Touch Targets
-- Minimum 44x44px for all interactive elements
-- 56x56px for field worker buttons (gloved hands)
-
-### Focus Indicators
-```css
-:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
-```
-
-### High Contrast Support
-```css
-@media (prefers-contrast: high) {
-  :root {
-    --foreground: 0 0% 0%;
-    --background: 0 0% 100%;
-  }
-}
-```
-
-## File Structure
-```
-/home/user/trust_by_design/
-├── components/
-│   ├── ui/              # Reusable UI components
-│   ├── layout/          # Layout components
-│   ├── branding/        # Logo & brand assets
-│   └── *.tsx            # Feature components
-├── views/               # Page-level components
-├── lib/
-│   ├── theme.tsx        # Theme provider
-│   ├── supabase.ts      # Supabase client
-│   └── db.ts            # Dexie local database
-├── src/styles/
-│   └── theme.css        # CSS variables & utilities
-├── tests/
-│   ├── unit/            # Vitest unit tests
-│   └── e2e/             # Playwright e2e tests
-├── tailwind.config.js   # Tailwind configuration
-└── vite.config.ts       # Vite configuration
-```
-
-## Testing Commands
-```bash
-npm test              # Run Vitest unit tests
-npm run test:e2e      # Run Playwright e2e tests
-npm run test:coverage # Run with coverage report
-```
-
-## Development Commands
-```bash
-npm run dev           # Start dev server (port 3000)
-npm run build         # Production build
-npm run preview       # Preview production build
-npm run lint          # ESLint check
-npm run type-check    # TypeScript check
-```
-
-## Phase Implementation Status
-
-### Phase 1: Core UI Foundation ✅
-- [x] Landing page glassmorphism design
-- [x] Day/Night carousel (Framer Motion, accessible)
-- [x] Auto-dark mode (time-based 6PM-6AM default)
-- [x] Global theme with Tailwind dark:`class`
-- [x] Theme persisted in localStorage
-
-### Phase 2: Tooltip UX Polish ✅
-- [x] Radix UI tooltips with accessibility
-- [x] High-contrast variants (dark bg/white text or inverse)
-- [x] 300ms hover delay to show
-- [x] 60s auto-dismiss option
-- [x] Close button (X) option
-- [x] Slide-out-right animation
-
-### Phase 3: Job Creation Guards ✅
-- [x] useJobGuard hook for client-first validation
-- [x] Auto-redirect to client creation when no clients exist
-- [x] Toast notifications for guard warnings
-- [x] Breadcrumbs component with theme support
-- [x] Preset breadcrumbs (Job, Client, Technician creation)
-
-### Phase 4: Job Flexibility (pending)
-### Phase 5: Job Lifecycle + Navbar (pending)
-### Phase 6: Polish + Integrations (pending)
-
 ---
 
-## Architecture Guidelines (CRITICAL - Do Not Violate)
+## Diagnostic Commands
 
-These patterns were established during the 14-item architecture remediation.
-**All future code MUST follow these patterns to prevent regressions.**
+```bash
+# Find architecture violations
+grep -r "supabase.auth.getUser" components/    # Should be 0
+grep -r "useState.*Job\[\]" components/        # Should be 0
+grep -r "key={index}" components/              # Should be 0
 
-### 1. State Management - Use DataContext
+# Verify offline support
+grep -r "Dexie\|IndexedDB" lib/ | wc -l        # Should be > 10
 
-**DO NOT** create new useState for jobs/clients/technicians in components.
-**ALWAYS** use the centralized DataContext.
+# Check for debug artifacts
+grep -r "console.log\|debugger" src/ | wc -l   # Should be 0 in prod
 
-```tsx
-// ✅ CORRECT
-import { useData } from '../lib/DataContext';
-const { jobs, clients, addJob, updateJob } = useData();
-
-// ❌ WRONG - Creates duplicate state
-const [jobs, setJobs] = useState<Job[]>([]);
-```
-
-### 2. Authentication - Use AuthContext
-
-**DO NOT** call `supabase.auth.getUser()` directly in components.
-**ALWAYS** use AuthContext for auth state.
-
-```tsx
-// ✅ CORRECT
-import { useAuth } from '../lib/AuthContext';
-const { isAuthenticated, userId, session } = useAuth();
-
-// ❌ WRONG - Causes excessive API calls
-const { data } = await supabase.auth.getUser();
-```
-
-### 3. Protected Routes - Use ProtectedRoute Wrapper
-
-**ALWAYS** wrap authenticated routes with error boundaries.
-
-```tsx
-// ✅ CORRECT
-import { ProtectedRoute } from '../components/ProtectedRoute';
-
-<ProtectedRoute sectionName="Dashboard" fallbackRoute="/home">
-  <Dashboard />
-</ProtectedRoute>
-
-// ❌ WRONG - No error isolation
-<Route path="/admin" element={isAuthenticated ? <Dashboard /> : <Navigate to="/auth" />} />
-```
-
-### 4. Animation Objects - Use Shared Constants
-
-**DO NOT** define animation objects inline in JSX.
-**ALWAYS** use constants from `lib/animations.ts`.
-
-```tsx
-// ✅ CORRECT
-import { fadeInUp, hoverLiftQuick } from '../lib/animations';
-<motion.div variants={fadeInUp} whileHover={hoverLiftQuick}>
-
-// ❌ WRONG - Creates new object every render
-<motion.div animate={{ opacity: 1 }} whileHover={{ y: -5 }}>
-```
-
-### 5. List Keys - Use Stable IDs
-
-**DO NOT** use array index as React key.
-**ALWAYS** use stable identifiers (id, url, timestamp).
-
-```tsx
-// ✅ CORRECT
-{photos.map(photo => <img key={photo.id} src={photo.url} />)}
-
-// ❌ WRONG - Causes re-render issues
-{photos.map((photo, index) => <img key={index} src={photo.url} />)}
-```
-
-### 6. Expensive Computations - Use useMemo
-
-**ALWAYS** memoize expensive list operations and lookups.
-
-```tsx
-// ✅ CORRECT
-const clientsById = useMemo(() =>
-  new Map(clients.map(c => [c.id, c])),
-  [clients]
-);
-
-// ❌ WRONG - Recomputes every render
-const clientsById = new Map(clients.map(c => [c.id, c]));
-```
-
-### 7. Navigation Components - Use React.memo
-
-**ALWAYS** wrap navigation components (Sidebar, BottomNav, PageHeader) with memo.
-
-```tsx
-// ✅ CORRECT
-export const Sidebar = memo(function Sidebar({ ... }) { ... });
-
-// ❌ WRONG - Re-renders on every parent update
-export const Sidebar = ({ ... }) => { ... };
-```
-
-### 8. Lazy Loading - Use Dynamic Imports
-
-**ALWAYS** lazy-load route components and heavy libraries.
-
-```tsx
-// ✅ CORRECT - Route components
-const Dashboard = lazy(() => import('./views/Dashboard'));
-
-// ✅ CORRECT - Heavy libraries
-const getAuth = () => import('./lib/auth');
-const auth = await getAuth();
-
-// ❌ WRONG - Increases initial bundle
-import { Dashboard } from './views/Dashboard';
-```
-
-### 9. Error Handling - Use ErrorState Component
-
-**ALWAYS** provide retry UI for failed operations.
-
-```tsx
-// ✅ CORRECT
-import { ErrorState } from '../components/ui/ErrorState';
-
-if (error) {
-  return <ErrorState message={error} onRetry={loadData} />;
-}
-
-// ❌ WRONG - No recovery option
-if (error) return <div>Error: {error}</div>;
-```
-
-### 10. Supabase Access - Through Auth Module
-
-**DO NOT** import supabase directly in components.
-**ALWAYS** access through lazy-loaded auth module.
-
-```tsx
-// ✅ CORRECT
-const auth = await import('../lib/auth');
-const supabase = auth.getSupabaseClient();
-
-// ❌ WRONG - Breaks code splitting
-import { getSupabase } from '../lib/supabase';
-```
-
-### 11. Magic Link Auth - Use Callback Route
-
-**ALWAYS** redirect magic links to `/auth/callback`.
-
-```tsx
-// ✅ CORRECT (in lib/auth.ts)
-emailRedirectTo: getAuthRedirectUrl('/#/auth/callback')
-
-// ❌ WRONG - Race condition with auth state
-emailRedirectTo: getAuthRedirectUrl('/#/')
-```
-
-### 12. Code Splitting - Check vite.config.ts
-
-When adding new views, **ALWAYS** add them to appropriate chunk in `manualChunks`.
-
-```js
-// vite.config.ts - Add new views to appropriate chunks
-'admin-routes': ['./views/NewAdminView.tsx', ...],
-'public-routes': ['./views/NewPublicView.tsx', ...],
+# Production readiness
+npm test && npm run lint && npm run type-check && npm run build
 ```
 
 ---
 
-## Architecture Test Commands
-
-Run these before committing to catch violations:
+## Environment Variables
 
 ```bash
-# Type check
-npm run type-check
+# Required (.env)
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbG...
+VITE_APP_URL=https://yourapp.vercel.app
 
-# Lint (includes architecture rules)
-npm run lint
+# Optional
+VITE_W3W_API_KEY=xxx                    # What3Words
+VITE_GOOGLE_CLIENT_ID=xxx               # Google OAuth
+```
 
-# Unit tests
-npm test
+### Supabase Secrets (Server-side)
 
-# Build (catches chunk issues)
-npm run build
+```bash
+SEAL_PRIVATE_KEY=base64...              # RSA-2048 private key
+SEAL_PUBLIC_KEY=base64...               # RSA-2048 public key
+SUPABASE_SERVICE_ROLE_KEY=auto          # Auto-configured
 ```
 
 ---
 
-## PR Checklist for Architecture Compliance
+## Deployment
+
+### Vercel Deployment
+
+```bash
+vercel deploy            # Preview deployment
+vercel --prod            # Production deployment
+```
+
+### Build Verification
+
+```bash
+npm run build            # Must complete without errors
+npm run preview          # Test production build locally
+```
+
+### Database Migrations
+
+```bash
+# Migrations are in supabase/migrations/
+# Apply via Supabase Dashboard or CLI
+supabase db push
+```
+
+---
+
+## PR Checklist
 
 Before merging any PR, verify:
 
+- [ ] `npm test` passes (all tests green)
+- [ ] `npm run lint` passes (no errors)
+- [ ] `npm run type-check` passes (no type errors)
+- [ ] `npm run build` succeeds
 - [ ] No direct `supabase.auth.getUser()` calls in components
 - [ ] No `useState` for jobs/clients/technicians (use DataContext)
 - [ ] All route components lazy-loaded
-- [ ] All protected routes wrapped with ProtectedRoute or RouteErrorBoundary
+- [ ] All protected routes wrapped with ProtectedRoute
 - [ ] No inline animation objects in Framer Motion
 - [ ] No array index as React key
 - [ ] New views added to vite.config.ts manualChunks
 - [ ] Navigation components wrapped with React.memo
 - [ ] Expensive list operations use useMemo
 - [ ] Failed operations have ErrorState with retry
+- [ ] Offline functionality verified (airplane mode test)
+
+---
+
+## Phase Implementation Status
+
+### Completed Phases
+
+- **Phase 1:** Core UI Foundation (glassmorphism, dark mode, theme)
+- **Phase 2:** Tooltip UX Polish (Radix UI, 300ms delay, auto-dismiss)
+- **Phase 3:** Job Creation Guards (client-first flow, breadcrumbs)
+- **Phase 15:** TechProofScreen (field evidence capture)
+- **Phase 23:** Technician-Initiated Jobs (self-employed mode)
+- **Phase C.3:** Cryptographic Evidence Sealing (RSA-2048)
+
+### Recent Updates (January 2026)
+
+- Magic link cross-browser validation fixes
+- Form auto-draft persistence
+- Navigation consistency improvements
+- Session memoization (fixed 877 req/hr auth loop)
+- Comprehensive RLS security hardening
+
+### Pending Phases
+
+- Phase 4: Job Flexibility
+- Phase 5: Job Lifecycle + Navbar
+- Phase 6: Polish + Integrations
+
+---
+
+## Key Type Definitions
+
+```typescript
+// Job status lifecycle
+type JobStatus = 'Pending' | 'In Progress' | 'Complete' | 'Submitted'
+               | 'Archived' | 'Paused' | 'Cancelled' | 'Draft';
+
+// Job creation origin (Phase 23)
+type JobCreationOrigin = 'manager' | 'technician' | 'self_employed';
+
+// Technician work mode
+type TechnicianWorkMode = 'employed' | 'self_employed';
+
+// Photo metadata
+interface PhotoMetadata {
+  id: string;
+  url: string;
+  gps?: { lat: number; lng: number; accuracy?: number };
+  w3w?: string;
+  timestamp: string;
+  type: 'before' | 'during' | 'after';
+}
+```
+
+---
+
+## Emergency Procedures
+
+### If Tests Fail After Changes
+
+```bash
+git stash push -m "work in progress"
+npm test                 # Verify baseline passes
+git stash pop            # Restore changes
+# Fix the specific failing test
+```
+
+### If Build Fails
+
+```bash
+rm -rf node_modules/.cache
+npm ci                   # Clean install
+npm run build            # Retry build
+```
+
+### If Auth Loop Detected
+
+Check AuthContext.tsx - session memoization should prevent re-renders:
+- Token refresh updates ref, not state
+- Only user ID changes trigger component re-renders
+
+---
+
+*This document is the source of truth for JobProof development patterns. All AI-assisted development must follow these guidelines.*

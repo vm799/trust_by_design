@@ -259,7 +259,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     };
 
     loadJob();
-  }, [token, jobId, jobIdFromUrl, jobs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, jobId, jobIdFromUrl]); // FIXED: Removed 'jobs' - prevents re-runs causing "job not found"
 
   // Immutable State Protection: Block access if job is already submitted or sealed
   useEffect(() => {
