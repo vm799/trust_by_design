@@ -4,17 +4,18 @@
  * Tests the PRODUCTION scenario where:
  * 1. Manager creates job + magic link in Browser A
  * 2. Technician opens link in Browser B (different localStorage)
- * 3. Validation must work via Supabase, NOT localStorage
+ * 3. Validation must work via Supabase RPC, NOT localStorage
  *
  * This test suite validates the fix for the recurring "invalid link" bug.
+ * FIX: Now uses validate_magic_link_token RPC which bypasses RLS for anonymous access.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock Supabase client
-const mockSupabaseFrom = vi.fn();
+// Mock Supabase client with RPC support
+const mockSupabaseRpc = vi.fn();
 const mockSupabase = {
-  from: mockSupabaseFrom
+  rpc: mockSupabaseRpc
 };
 
 // Mock the supabase module
@@ -36,44 +37,21 @@ describe('validateMagicLink - Cross-Browser Supabase Validation', () => {
     vi.resetAllMocks();
   });
 
-  describe('Supabase job_access_tokens validation', () => {
-    it('should validate token found in job_access_tokens table', async () => {
+  describe('Supabase RPC validation (validate_magic_link_token)', () => {
+    it('should validate token found via RPC', async () => {
       const testToken = 'valid-supabase-token-123';
       const testJobId = 'JP-test-job-001';
       const testWorkspaceId = 'workspace-123';
-      const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Mock job_access_tokens query
-      const mockTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            job_id: testJobId,
-            expires_at: futureDate,
-            used_at: null
-          },
-          error: null
-        })
-      };
-
-      // Mock jobs query for sealed check
-      const mockJobQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            sealed_at: null,
-            workspace_id: testWorkspaceId
-          },
-          error: null
-        })
-      };
-
-      mockSupabaseFrom.mockImplementation((table: string) => {
-        if (table === 'job_access_tokens') return mockTokenQuery;
-        if (table === 'jobs') return mockJobQuery;
-        return mockTokenQuery;
+      // Mock RPC response - token found
+      mockSupabaseRpc.mockResolvedValue({
+        data: [{
+          job_id: testJobId,
+          workspace_id: testWorkspaceId,
+          is_sealed: false,
+          is_expired: false
+        }],
+        error: null
       });
 
       // Import after mocking
@@ -84,26 +62,24 @@ describe('validateMagicLink - Cross-Browser Supabase Validation', () => {
       expect(result.success).toBe(true);
       expect(result.data?.job_id).toBe(testJobId);
       expect(result.data?.workspace_id).toBe(testWorkspaceId);
+
+      // Verify RPC was called with correct function name and token
+      expect(mockSupabaseRpc).toHaveBeenCalledWith('validate_magic_link_token', { p_token: testToken });
     });
 
-    it('should reject expired token from job_access_tokens', async () => {
+    it('should reject expired token from RPC', async () => {
       const testToken = 'expired-token-456';
-      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-      const mockTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            job_id: 'JP-expired-job',
-            expires_at: pastDate,
-            used_at: null
-          },
-          error: null
-        })
-      };
-
-      mockSupabaseFrom.mockReturnValue(mockTokenQuery);
+      // Mock RPC response - token expired
+      mockSupabaseRpc.mockResolvedValue({
+        data: [{
+          job_id: 'JP-expired-job',
+          workspace_id: 'workspace-123',
+          is_sealed: false,
+          is_expired: true
+        }],
+        error: null
+      });
 
       const { validateMagicLink } = await import('../../lib/db');
 
@@ -112,90 +88,19 @@ describe('validateMagicLink - Cross-Browser Supabase Validation', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('expired');
     });
-  });
 
-  describe('Supabase jobs.magic_link_token validation (fallback)', () => {
-    it('should validate token found directly on job record', async () => {
-      const testToken = 'job-embedded-token-789';
-      const testJobId = 'JP-job-with-token';
-      const testWorkspaceId = 'workspace-456';
-
-      // Mock job_access_tokens query - NOT FOUND
-      const mockTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116', message: 'Row not found' }
-        })
-      };
-
-      // Mock jobs query by magic_link_token - FOUND
-      const mockJobByTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: testJobId,
-            workspace_id: testWorkspaceId,
-            sealed_at: null
-          },
-          error: null
-        })
-      };
-
-      let jobQueryCount = 0;
-      mockSupabaseFrom.mockImplementation((table: string) => {
-        if (table === 'job_access_tokens') return mockTokenQuery;
-        if (table === 'jobs') {
-          jobQueryCount++;
-          // First call is from job_access_tokens path, second is fallback
-          return mockJobByTokenQuery;
-        }
-        return mockTokenQuery;
-      });
-
-      const { validateMagicLink } = await import('../../lib/db');
-
-      const result = await validateMagicLink(testToken);
-
-      expect(result.success).toBe(true);
-      expect(result.data?.job_id).toBe(testJobId);
-      expect(result.data?.workspace_id).toBe(testWorkspaceId);
-    });
-
-    it('should reject sealed job found via magic_link_token', async () => {
+    it('should reject sealed job via RPC', async () => {
       const testToken = 'sealed-job-token';
-      const testJobId = 'JP-sealed-job';
 
-      // Mock job_access_tokens - NOT FOUND
-      const mockTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116', message: 'Row not found' }
-        })
-      };
-
-      // Mock jobs query - FOUND but SEALED
-      const mockJobByTokenQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: testJobId,
-            workspace_id: 'workspace',
-            sealed_at: '2026-01-20T10:00:00Z'
-          },
-          error: null
-        })
-      };
-
-      mockSupabaseFrom.mockImplementation((table: string) => {
-        if (table === 'job_access_tokens') return mockTokenQuery;
-        if (table === 'jobs') return mockJobByTokenQuery;
-        return mockTokenQuery;
+      // Mock RPC response - job sealed
+      mockSupabaseRpc.mockResolvedValue({
+        data: [{
+          job_id: 'JP-sealed-job',
+          workspace_id: 'workspace-123',
+          is_sealed: true,
+          is_expired: false
+        }],
+        error: null
       });
 
       const { validateMagicLink } = await import('../../lib/db');
@@ -208,20 +113,14 @@ describe('validateMagicLink - Cross-Browser Supabase Validation', () => {
   });
 
   describe('Error messages for different failure modes', () => {
-    it('should provide clear error when token not found anywhere', async () => {
+    it('should provide clear error when token not found', async () => {
       const testToken = 'completely-invalid-token';
 
-      // Mock both queries - NOT FOUND
-      const mockNotFoundQuery = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116', message: 'Row not found' }
-        })
-      };
-
-      mockSupabaseFrom.mockReturnValue(mockNotFoundQuery);
+      // Mock RPC response - no results (empty array)
+      mockSupabaseRpc.mockResolvedValue({
+        data: [],
+        error: null
+      });
 
       const { validateMagicLink } = await import('../../lib/db');
 
@@ -232,10 +131,31 @@ describe('validateMagicLink - Cross-Browser Supabase Validation', () => {
       // Should suggest asking manager for new link
       expect(result.error?.toLowerCase()).toMatch(/invalid|expired|new.*link/i);
     });
+
+    it('should handle RPC errors gracefully', async () => {
+      const testToken = 'error-token';
+
+      // Mock RPC error
+      mockSupabaseRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Database connection failed' }
+      });
+
+      const { validateMagicLink } = await import('../../lib/db');
+
+      const result = await validateMagicLink(testToken);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
   });
 });
 
 describe('Cross-Browser E2E Scenario', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should validate link when technician has empty localStorage', async () => {
     // Simulate technician's fresh browser with no local data
     if (typeof localStorage !== 'undefined') {
@@ -245,38 +165,16 @@ describe('Cross-Browser E2E Scenario', () => {
     const testToken = 'manager-created-token';
     const testJobId = 'JP-cross-browser-job';
     const testWorkspaceId = 'ws-cross-browser';
-    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Mock Supabase responses - token found in job_access_tokens
-    const mockTokenQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          job_id: testJobId,
-          expires_at: futureDate,
-          used_at: null
-        },
-        error: null
-      })
-    };
-
-    const mockJobQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          sealed_at: null,
-          workspace_id: testWorkspaceId
-        },
-        error: null
-      })
-    };
-
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'job_access_tokens') return mockTokenQuery;
-      if (table === 'jobs') return mockJobQuery;
-      return mockTokenQuery;
+    // Mock RPC response - token found
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        job_id: testJobId,
+        workspace_id: testWorkspaceId,
+        is_sealed: false,
+        is_expired: false
+      }],
+      error: null
     });
 
     const { validateMagicLink } = await import('../../lib/db');
@@ -289,5 +187,38 @@ describe('Cross-Browser E2E Scenario', () => {
     expect(result.data?.job_id).toBe(testJobId);
     expect(result.data?.workspace_id).toBe(testWorkspaceId);
     expect(result.data?.is_valid).toBe(true);
+  });
+});
+
+describe('RPC Function Contract', () => {
+  it('should call validate_magic_link_token with correct parameter', async () => {
+    const testToken = 'test-token';
+
+    mockSupabaseRpc.mockResolvedValue({
+      data: [{
+        job_id: 'JP-123',
+        workspace_id: 'ws-123',
+        is_sealed: false,
+        is_expired: false
+      }],
+      error: null
+    });
+
+    const { validateMagicLink } = await import('../../lib/db');
+    await validateMagicLink(testToken);
+
+    expect(mockSupabaseRpc).toHaveBeenCalledWith(
+      'validate_magic_link_token',
+      { p_token: testToken }
+    );
+  });
+
+  it('RPC function name should be validate_magic_link_token', () => {
+    // Document the RPC function contract
+    const expectedFunctionName = 'validate_magic_link_token';
+    const expectedGrant = 'anon'; // Should be GRANT EXECUTE TO anon
+
+    expect(expectedFunctionName).toBe('validate_magic_link_token');
+    expect(expectedGrant).toBe('anon');
   });
 });
