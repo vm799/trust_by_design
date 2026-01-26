@@ -1,3 +1,169 @@
+# PRODUCTION AI BUILDER CONSTITUTION
+**Date: Jan 26, 2026** | **Status: ENFORCE ALL RULES** | **Creator: Solo AI Builder**
+
+## CORE MISSION
+Build bulletproof **offline-first mobile app** for poor service areas. **NO REGRESSIONS ALLOWED**. **MARKETABLE BY 12PM**.
+
+## ABSOLUTE RULES (Break = IMMEDIATE REJECT)
+
+```
+1. NO CODE CHANGES WITHOUT TESTS FIRST
+2. SHOW BEFORE/AFTER SCREENSHOTS (20 lines context each)
+3. MAXIMUM 1 FILE CHANGED PER FIX
+4. DELETE LEGACY CODE (NEVER COMMENT OUT)
+5. PROVE IT WORKS (test command output REQUIRED)
+6. ONE-CLICK DEPLOY COMMANDS
+7. NO "THIS SHOULD WORK" - ONLY PROOF
+8. JSON OUTPUT FORMAT ONLY (no prose explanations)
+9. UAT SCRIPT REQUIRED FOR EVERY FIX
+```
+
+## OFFLINE-FIRST MANDATES (Every Form MUST Have)
+```
+AsyncStorage draft saving (every keystroke)
+Offline submit queue ('pendingSync' in AsyncStorage)
+Background sync worker (NetInfo listener)
+Optimistic UI updates with status indicators
+Airplane mode -> app restart -> data survives
+Form drafts auto-load on screen mount
+```
+
+## MANDATORY JSON OUTPUT FORMAT
+
+```json
+{
+  "issue": "job_not_found",
+  "rootCause": "exact cause from code analysis",
+  "files": {
+    "before": "exact screenshot path or 20 lines",
+    "after": "exact screenshot path or 20 lines",
+    "changed": ["src/components/JobInvite.tsx"]
+  },
+  "tests": {
+    "added": ["tests/integration/jobInvite.spec.ts"],
+    "commands_run": ["npm test", "npm run test:offline"],
+    "results": "paste COMPLETE test output here"
+  },
+  "cleanup": {
+    "deleted_files": ["old-broken-file.tsx"],
+    "removed_imports": ["list them"],
+    "legacy_code_gone": true
+  },
+  "deploy": {
+    "preview": "vercel deploy --previews",
+    "prod": "vercel --prod",
+    "env_vars": ["NEXT_PUBLIC_APP_URL=https://yourapp.vercel.app"]
+  },
+  "uat_script": "1. Admin creates job invite\n2. Copy link -> incognito\n3. Click -> expect onboarding\n4. Submit -> expect job assigned",
+  "status": "TestsPassed_UATPending",
+  "risk_level": "LOW|MEDIUM|HIGH",
+  "next_fix": "offline_forms|navigation|ci_cd"
+}
+```
+
+## DAILY PREVENTION RITUAL (30 mins REQUIRED)
+
+```
+MORNING (before Claude work):
+$ npm run lint -- --fix
+$ npm test
+$ npx depcheck | grep "Unused" || echo "CLEAN"
+$ git status | grep -v "claude\|temp" || echo "CLEANUP"
+
+AFTER EVERY CLAUDE FIX:
+$ npm test && echo "TESTS PASS" || echo "TESTS FAIL"
+$ npm run dev
+$ Toggle airplane -> test forms -> toggle back -> verify sync
+$ vercel deploy -> test preview URL
+
+WEEKLY CLEANUP:
+$ find . -name "*.bak" -delete
+$ find . -name "claude-*" -delete
+$ grep -r "// TODO\|FIXME" src/ | wc -l  # MUST = 0
+```
+
+## EMERGENCY RESET COMMANDS
+
+```
+# When Claude breaks everything:
+$ git stash push -m "claude broke it"
+$ npm test  # diagnose failures
+$ git stash pop  # only if tests pass
+
+# Nuclear cleanup:
+$ rm -rf node_modules/.cache
+$ npm ci
+$ npm run build
+```
+
+## SUCCESS METRICS (12PM TARGETS)
+
+```
+CRITICAL (MUST BE BY NOON):
+[ ] npm test = 100% green
+[ ] Airplane mode: ALL forms persist + sync
+[ ] 10x technician invites = 10/10 success (incognito)
+[ ] "Job not found" errors = 0
+[ ] Preview deploy passes all flows
+
+NICE TO HAVE:
+[ ] Legacy files = 0 (grep -r "// TODO" src/ = 0)
+[ ] Sentry monitoring active
+[ ] E2E tests passing
+```
+
+## STANDARD DIAGNOSTIC COMMANDS
+
+```
+# Find broken patterns:
+grep -r "supabase.*insert.*onSubmit" src/  # direct API calls
+grep -r "job.*not.*found" src/            # error messages
+grep -r "router.push.*operations" src/    # broken nav
+grep -r "AsyncStorage\|NetInfo" src/ | wc -l  # offline support (should > 50)
+
+# Verify clean state:
+npm test && npm run lint && echo "PRODUCTION READY"
+```
+
+## ATOMIC FIX SEQUENCE (Execute This Order)
+
+```
+1. FIX #1: "Job not found" -> technician invite flow
+2. FIX #2: Offline form persistence -> ALL forms
+3. FIX #3: Navigation back buttons
+4. FIX #4: CI/CD test cleanup
+5. FIX #5: Production deploy + monitoring
+```
+
+## CLAUDE BEHAVIOR CONSTRAINTS
+
+```
+NEVER ALLOW:
+- "This should fix it" (no proof)
+- Rewrite working code
+- Leave TODO/FIXME comments
+- Suggest multiple approaches (pick ONE)
+- Change core architecture mid-project
+- More than 1 file per fix
+
+MANDATORY:
+- Tests written BEFORE code changes
+- Before/after screenshots (20 lines context)
+- Legacy code DELETED (not commented)
+- Deploy commands that work copy/paste
+- UAT script human can execute
+- Risk assessment per fix
+```
+
+---
+
+# ALL RESPONSES MUST FOLLOW JSON FORMAT OR REJECTED
+
+*This is your project constitution. Every Claude response must obey these rules.*
+
+---
+---
+
 # CLAUDE.md - JobProof Production AI Builder Guide
 
 **Last Updated:** January 26, 2026
