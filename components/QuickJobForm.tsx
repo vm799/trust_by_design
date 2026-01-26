@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Job, TechJobMetadata } from '../types';
 import { InfoBox } from './ui';
 import {
@@ -38,6 +39,8 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   onCancel,
   existingClients = []
 }) => {
+  const navigate = useNavigate();
+
   // Form state
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
@@ -220,7 +223,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
   // UAT Fix #15: Handle view dashboard
   const handleViewDashboard = () => {
-    window.location.href = '/dashboard';
+    navigate('/contractor');
   };
 
   // UAT Fix #15: Handle share magic link

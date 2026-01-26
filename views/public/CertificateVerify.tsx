@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Card, ActionButton, LoadingSkeleton } from '../../components/ui';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { verifyEvidence, getSealStatus, formatHash, formatSealDate } from '../../lib/sealing';
@@ -197,9 +197,9 @@ const CertificateVerify: React.FC = () => {
 
         {/* Back Link */}
         <div className="text-center mt-6">
-          <a href="/" className="text-sm text-slate-500 hover:text-white transition-colors">
+          <Link to="/" className="text-sm text-slate-500 hover:text-white transition-colors">
             Powered by JobProof
-          </a>
+          </Link>
         </div>
       </div>
     </div>
