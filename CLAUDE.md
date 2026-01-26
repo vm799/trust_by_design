@@ -2,7 +2,7 @@
 **Date: Jan 26, 2026** | **Status: ENFORCE ALL RULES** | **Creator: Solo AI Builder**
 
 ## CORE MISSION
-Build bulletproof **offline-first mobile app** for poor service areas. **NO REGRESSIONS ALLOWED**. **MARKETABLE BY 12PM**.
+Build bulletproof **offline-first web app** for poor service areas. **NO REGRESSIONS ALLOWED**. **MARKETABLE BY 12PM**.
 
 ## ABSOLUTE RULES (Break = IMMEDIATE REJECT)
 
@@ -20,9 +20,9 @@ Build bulletproof **offline-first mobile app** for poor service areas. **NO REGR
 
 ## OFFLINE-FIRST MANDATES (Every Form MUST Have)
 ```
-AsyncStorage draft saving (every keystroke)
-Offline submit queue ('pendingSync' in AsyncStorage)
-Background sync worker (NetInfo listener)
+Dexie/IndexedDB draft saving (every keystroke)
+Offline submit queue via syncQueue.ts
+Network status awareness (navigator.onLine)
 Optimistic UI updates with status indicators
 Airplane mode -> app restart -> data survives
 Form drafts auto-load on screen mount
@@ -52,7 +52,7 @@ Form drafts auto-load on screen mount
   "deploy": {
     "preview": "vercel deploy --previews",
     "prod": "vercel --prod",
-    "env_vars": ["NEXT_PUBLIC_APP_URL=https://yourapp.vercel.app"]
+    "env_vars": ["VITE_APP_URL=https://yourapp.vercel.app"]
   },
   "uat_script": "1. Admin creates job invite\n2. Copy link -> incognito\n3. Click -> expect onboarding\n4. Submit -> expect job assigned",
   "status": "TestsPassed_UATPending",
@@ -119,7 +119,7 @@ NICE TO HAVE:
 grep -r "supabase.*insert.*onSubmit" src/  # direct API calls
 grep -r "job.*not.*found" src/            # error messages
 grep -r "router.push.*operations" src/    # broken nav
-grep -r "AsyncStorage\|NetInfo" src/ | wc -l  # offline support (should > 50)
+grep -r "Dexie\|IndexedDB" lib/ | wc -l  # offline support (should > 10)
 
 # Verify clean state:
 npm test && npm run lint && echo "PRODUCTION READY"
