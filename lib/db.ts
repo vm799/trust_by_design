@@ -1692,7 +1692,7 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
     };
   }
 
-  // 4. Try Supabase
+  // 4. Try Supabase via RPC (bypasses RLS for anonymous magic link access)
   const supabase = getSupabase();
   if (!supabase) {
     return {
@@ -1702,15 +1702,26 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .eq('id', validation.data.job_id)
-      .single();
+    // FIX: Use RPC function that bypasses RLS for anonymous access
+    // Direct table query is blocked by RLS for anonymous users
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc('get_job_by_magic_link_token', { p_token: token });
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (rpcError) {
+      console.error('[getJobByToken] RPC error:', rpcError.message);
+      return { success: false, error: rpcError.message };
     }
+
+    // RPC returns array, get first result
+    const data = rpcResult && rpcResult.length > 0 ? rpcResult[0] : null;
+
+    if (!data || !data.is_valid) {
+      const errorMsg = data?.error_message || 'Job not found';
+      console.log('[getJobByToken] RPC returned invalid/not found:', errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
+    console.log(`[getJobByToken] Job loaded via RPC: ${data.id}`);
 
     const job: Job = {
       id: data.id,
@@ -1736,20 +1747,23 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       completedAt: data.completed_at,
       templateId: data.template_id,
       syncStatus: data.sync_status || 'synced',
-      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
+      lastUpdated: data.last_updated || Date.now(),
       price: data.price,
       workspaceId: data.workspace_id,
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
       isSealed: !!data.sealed_at,
-      // Magic link token for cross-browser access
       magicLinkToken: data.magic_link_token,
       magicLinkUrl: data.magic_link_url
     };
 
+    // Cache to mockDatabase for faster future lookups
+    mockDatabase.jobs.set(job.id, job);
+
     return { success: true, data: job };
   } catch (error) {
+    console.error('[getJobByToken] Exception:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch job'

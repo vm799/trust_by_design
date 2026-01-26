@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
-import { validateMagicLink, getJobByToken, updateJob, getJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
+import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
@@ -119,41 +119,32 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             console.log('[TechnicianPortal] Job loaded from local cache');
           }
 
-          // 2. Validate token to get workspace_id
+          // 2. Load job via token RPC (validates AND returns full job, bypasses RLS)
           if (!loadedJob) {
-            const validation = await validateMagicLink(token);
-            if (validation.success && validation.data) {
-              const { job_id, workspace_id } = validation.data;
-
-              // Verify jobId from URL matches the token's job_id
-              if (job_id !== jobIdFromUrl) {
+            const result = await getJobByToken(token);
+            if (result.success && result.data) {
+              // Verify jobId from URL matches the loaded job
+              if (result.data.id !== jobIdFromUrl) {
                 setTokenError('Token does not match the requested job');
                 setTokenErrorType('invalid');
                 setIsLoadingJob(false);
                 return;
               }
-
-              // Load job by ID from database
-              if (workspace_id) {
-                const result = await getJob(jobIdFromUrl, workspace_id);
-                if (result.success && result.data) {
-                  loadedJob = result.data;
-                  // Cache to Local DB with proper LocalJob type
-                  await saveJobLocal({
-                    ...loadedJob,
-                    syncStatus: loadedJob.syncStatus || 'synced',
-                    lastUpdated: Date.now()
-                  });
-                  console.log('[TechnicianPortal] Job loaded from database via deep-link');
-                } else {
-                  setTokenError(result.error || 'Job not found');
-                }
-              }
+              loadedJob = result.data;
+              // Cache to Local DB with proper LocalJob type
+              await saveJobLocal({
+                ...loadedJob,
+                syncStatus: loadedJob.syncStatus || 'synced',
+                lastUpdated: Date.now()
+              });
+              console.log('[TechnicianPortal] Job loaded from database via deep-link RPC');
             } else {
-              // Determine error type from validation error message
-              const errorMsg = validation.error || 'Invalid or expired link';
+              // Determine error type from error message
+              const errorMsg = result.error || 'Invalid or expired link';
               if (errorMsg.toLowerCase().includes('expired')) {
                 setTokenErrorType('expired');
+              } else if (errorMsg.toLowerCase().includes('not found')) {
+                setTokenErrorType('not_found');
               } else {
                 setTokenErrorType('invalid');
               }
