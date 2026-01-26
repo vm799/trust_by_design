@@ -152,7 +152,7 @@ describe('lib/db - Database Operations', () => {
         expect(result.data).toHaveProperty('token');
         expect(result.data).toHaveProperty('url');
         expect(result.data).toHaveProperty('expiresAt');
-        expect(result.data?.url).toContain('/#/track/');
+        expect(result.data?.url).toContain('/#/technician/');
       });
 
       it('should generate token with 24-hour expiry', async () => {

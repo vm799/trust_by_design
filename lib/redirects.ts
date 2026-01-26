@@ -56,15 +56,19 @@ export const getAuthRedirectUrl = (path: string = ''): string => {
 };
 
 /**
- * Get secure redirect URL for magic links
+ * Get secure redirect URL for magic links (simple invite system)
  * @param token - Magic link token
- * @param jobId - Optional job ID to include as query parameter for deep-linking
+ * @param jobId - Optional job ID (kept for backwards compatibility, but not used in URL)
+ *
+ * Simple invite system: URL contains only the token.
+ * The token is validated server-side via RPC which returns full job data.
+ * Route: /#/technician/{token}
  */
-export const getMagicLinkUrl = (token: string, jobId?: string): string => {
-  // URL encode parameters to prevent injection attacks
+export const getMagicLinkUrl = (token: string, _jobId?: string): string => {
+  // URL encode token to prevent injection attacks
   const encodedToken = encodeURIComponent(token);
-  const baseUrl = `${getSecureOrigin()}/#/track/${encodedToken}`;
-  return jobId ? `${baseUrl}?jobId=${encodeURIComponent(jobId)}` : baseUrl;
+  // Simple path: /technician/{token} - no query params needed
+  return `${getSecureOrigin()}/#/technician/${encodedToken}`;
 };
 
 /**
