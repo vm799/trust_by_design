@@ -193,7 +193,10 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
         sync_status: jobData.syncStatus || 'synced',
         last_updated: jobData.lastUpdated || Date.now(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // Magic link token for cross-browser technician access
+        magic_link_token: jobData.magicLinkToken || null,
+        magic_link_url: jobData.magicLinkUrl || null
       })
       .select()
       .single();
@@ -229,7 +232,10 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
-      isSealed: !!data.sealed_at
+      isSealed: !!data.sealed_at,
+      // Magic link token for cross-browser access
+      magicLinkToken: data.magic_link_token,
+      magicLinkUrl: data.magic_link_url
     };
 
     // Invalidate cache for jobs list
@@ -322,7 +328,10 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       sealedAt: row.sealed_at,
       sealedBy: row.sealed_by,
       evidenceHash: row.evidence_hash,
-      isSealed: !!row.sealed_at
+      isSealed: !!row.sealed_at,
+      // Magic link token for cross-browser access
+      magicLinkToken: row.magic_link_token,
+      magicLinkUrl: row.magic_link_url
     }));
 
     return { success: true, data: jobs };
@@ -418,7 +427,10 @@ const _getJobImpl = async (jobId: string, workspaceId: string): Promise<DbResult
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
-      isSealed: !!data.sealed_at
+      isSealed: !!data.sealed_at,
+      // Magic link token for cross-browser access
+      magicLinkToken: data.magic_link_token,
+      magicLinkUrl: data.magic_link_url
     };
 
     return { success: true, data: job };
@@ -512,6 +524,9 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
     if (updates.price !== undefined) updateData.price = updates.price;
     if (updates.syncStatus !== undefined) updateData.sync_status = updates.syncStatus;
     if (updates.lastUpdated !== undefined) updateData.last_updated = updates.lastUpdated;
+    // Magic link token for cross-browser technician access
+    if (updates.magicLinkToken !== undefined) updateData.magic_link_token = updates.magicLinkToken;
+    if (updates.magicLinkUrl !== undefined) updateData.magic_link_url = updates.magicLinkUrl;
 
     // Security: Prevent updating seal-related fields directly. 
     // These must be set via the seal-evidence Edge Function.
@@ -560,7 +575,10 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
-      isSealed: !!data.sealed_at
+      isSealed: !!data.sealed_at,
+      // Magic link token for cross-browser access
+      magicLinkToken: data.magic_link_token,
+      magicLinkUrl: data.magic_link_url
     };
 
     // Invalidate cache for jobs list and individual job
@@ -847,69 +865,99 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
     console.warn('Failed to check jobs for magic link token:', e);
   }
 
-  // 4. If in mock mode and not found anywhere local, token is invalid
-  if (shouldUseMockDB()) {
-    return { success: false, error: 'Invalid token - link may have been opened in a different browser. Please ask your manager to resend the link.' };
+  // 4. Try Supabase - ALWAYS try before returning local-only errors
+  // This is critical for cross-browser access where technician has no local data
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      // 4a. First try job_access_tokens table
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('job_access_tokens')
+        .select('job_id, expires_at, used_at')
+        .eq('token', token)
+        .single();
+
+      if (!tokenError && tokenData) {
+        const now = new Date();
+        const expiresAt = new Date(tokenData.expires_at);
+
+        if (now > expiresAt) {
+          return { success: false, error: 'This link has expired. Please ask your manager to send a new link.' };
+        }
+
+        const { data: job } = await supabase
+          .from('jobs')
+          .select('sealed_at, workspace_id')
+          .eq('id', tokenData.job_id)
+          .single();
+
+        if (job?.sealed_at) {
+          return { success: false, error: 'This job has been sealed and can no longer be modified.' };
+        }
+
+        console.log(`[validateMagicLink] Validated token via job_access_tokens: job_id=${tokenData.job_id}`);
+        return {
+          success: true,
+          data: {
+            job_id: tokenData.job_id,
+            workspace_id: job?.workspace_id,
+            is_valid: true
+          }
+        };
+      }
+
+      // 4b. CRITICAL FIX: Also check jobs table directly by magic_link_token
+      // This handles the case where token was stored on job but not in job_access_tokens
+      const { data: jobByToken, error: jobError } = await supabase
+        .from('jobs')
+        .select('id, workspace_id, sealed_at')
+        .eq('magic_link_token', token)
+        .single();
+
+      if (!jobError && jobByToken) {
+        if (jobByToken.sealed_at) {
+          return { success: false, error: 'This job has been sealed and can no longer be modified.' };
+        }
+
+        console.log(`[validateMagicLink] Validated token via jobs.magic_link_token: job_id=${jobByToken.id}`);
+        return {
+          success: true,
+          data: {
+            job_id: jobByToken.id,
+            workspace_id: jobByToken.workspace_id,
+            is_valid: true
+          }
+        };
+      }
+
+      // Token not found in Supabase
+      console.log('[validateMagicLink] Token not found in Supabase (job_access_tokens or jobs.magic_link_token)');
+    } catch (error) {
+      console.warn('[validateMagicLink] Supabase check failed:', error);
+      // Continue to fallback error below
+    }
   }
 
-  // 4. Try Supabase
-  const supabase = getSupabase();
+  // 5. If we get here, token is invalid (not found anywhere)
+  // Provide a clear, actionable error message
+  if (shouldUseMockDB()) {
+    return {
+      success: false,
+      error: 'Invalid link. This may happen if the link was opened in a different browser than where the job was created. Please ask your manager to resend the job link.'
+    };
+  }
+
   if (!supabase) {
     return {
       success: false,
-      error: 'Token not found locally and Supabase not configured.'
+      error: 'Cannot validate link: No internet connection and link not cached locally. Please try again when online.'
     };
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('job_access_tokens')
-      .select('job_id, expires_at, used_at')
-      .eq('token', token)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return { success: false, error: 'Invalid or expired link' };
-      }
-      return { success: false, error: error.message };
-    }
-
-    if (!data) {
-      return { success: false, error: 'Invalid or expired link' };
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(data.expires_at);
-
-    if (now > expiresAt) {
-      return { success: false, error: 'This link has expired' };
-    }
-
-    const { data: job } = await supabase
-      .from('jobs')
-      .select('sealed_at, workspace_id')
-      .eq('id', data.job_id)
-      .single();
-
-    if (job?.sealed_at) {
-      return { success: false, error: 'This job has been sealed and can no longer be modified' };
-    }
-
-    return {
-      success: true,
-      data: {
-        job_id: data.job_id,
-        workspace_id: job?.workspace_id,
-        is_valid: true
-      }
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to validate token'
-    };
-  }
+  return {
+    success: false,
+    error: 'Invalid or expired link. Please ask your manager to send a new job link.'
+  };
 };
 
 // ============================================================================
@@ -1721,7 +1769,10 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
-      isSealed: !!data.sealed_at
+      isSealed: !!data.sealed_at,
+      // Magic link token for cross-browser access
+      magicLinkToken: data.magic_link_token,
+      magicLinkUrl: data.magic_link_url
     };
 
     return { success: true, data: job };
