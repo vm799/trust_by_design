@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
@@ -688,13 +688,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Clients Found</p>
                       <p className="text-xs text-slate-400 mt-1">You need to create a client first before creating a job.</p>
-                      <a
-                        href="/admin/clients/new"
+                      <Link
+                        to="/admin/clients/new"
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>
                         Create Client First
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -707,13 +707,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Technicians Found</p>
                       <p className="text-xs text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
-                      <a
-                        href="/admin/technicians/new"
+                      <Link
+                        to="/admin/technicians/new"
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>
                         Add Technician First
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
