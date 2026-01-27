@@ -1,0 +1,1084 @@
+/**
+ * JobRunner.tsx - Bunker-Proof MVP "God Component"
+ *
+ * A completely self-contained, offline-first job evidence capture component.
+ * Designed to work in cement bunkers with zero cell service.
+ *
+ * Features:
+ * - Load job via URL param (?jobId=123) or manual entry
+ * - IndexedDB caching via Dexie (survives refresh/restart)
+ * - 4-step wizard: Before Photo → After Photo → Signature → Review
+ * - Photo compression (<1MB before storage)
+ * - Auto-sync when online (navigator.onLine detection)
+ * - Status indicator: Red = Offline/Unsynced, Green = Synced
+ *
+ * @author Claude Code - Bunker-Proof MVP
+ * @date 2026-01-27
+ */
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Dexie, { type Table } from 'dexie';
+
+// ============================================================================
+// TYPES - Self-contained, no external dependencies
+// ============================================================================
+
+type BunkerSyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
+type WizardStep = 'load' | 'before' | 'after' | 'signature' | 'review';
+
+interface BunkerPhoto {
+  id: string;
+  type: 'before' | 'after';
+  dataUrl: string; // Compressed base64
+  timestamp: string;
+  lat?: number;
+  lng?: number;
+  sizeBytes: number;
+}
+
+interface BunkerSignature {
+  dataUrl: string;
+  timestamp: string;
+  signerName: string;
+}
+
+interface BunkerJob {
+  id: string;
+  title: string;
+  client: string;
+  address: string;
+  notes: string;
+
+  // Evidence
+  beforePhoto?: BunkerPhoto;
+  afterPhoto?: BunkerPhoto;
+  signature?: BunkerSignature;
+
+  // State
+  currentStep: WizardStep;
+  syncStatus: BunkerSyncStatus;
+  lastUpdated: number;
+  completedAt?: string;
+}
+
+interface BunkerState {
+  job: BunkerJob | null;
+  isOnline: boolean;
+  isSyncing: boolean;
+  loadError: string | null;
+  gpsLocation: { lat: number; lng: number } | null;
+}
+
+// ============================================================================
+// DEXIE DATABASE - Isolated IndexedDB for bunker mode
+// ============================================================================
+
+class BunkerDatabase extends Dexie {
+  jobs!: Table<BunkerJob, string>;
+
+  constructor() {
+    super('BunkerProofDB');
+    this.version(1).stores({
+      jobs: 'id, syncStatus, lastUpdated'
+    });
+  }
+}
+
+const bunkerDb = new BunkerDatabase();
+
+// ============================================================================
+// IMAGE COMPRESSION - Keep photos <1MB
+// ============================================================================
+
+async function compressImage(dataUrl: string, maxSizeKB: number = 800): Promise<{ dataUrl: string; sizeBytes: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+
+      // Calculate dimensions (max 1200px on longest side)
+      let { width, height } = img;
+      const maxDim = 1200;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = (height / width) * maxDim;
+          width = maxDim;
+        } else {
+          width = (width / height) * maxDim;
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Try different quality levels until under maxSizeKB
+      let quality = 0.8;
+      let compressed = canvas.toDataURL('image/jpeg', quality);
+
+      while (compressed.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
+        quality -= 0.1;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+      }
+
+      resolve({
+        dataUrl: compressed,
+        sizeBytes: Math.round(compressed.length * 0.75) // Approximate actual bytes
+      });
+    };
+    img.src = dataUrl;
+  });
+}
+
+// ============================================================================
+// SYNC ENGINE - Auto-sync when online
+// ============================================================================
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+async function syncJobToCloud(job: BunkerJob): Promise<boolean> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.warn('[BunkerSync] No Supabase credentials configured');
+    return false;
+  }
+
+  try {
+    // Update local status to syncing
+    await bunkerDb.jobs.update(job.id, { syncStatus: 'syncing' });
+
+    // Build payload for Supabase
+    const payload = {
+      id: job.id,
+      title: job.title,
+      client: job.client,
+      address: job.address,
+      notes: job.notes,
+      status: job.completedAt ? 'Complete' : 'In Progress',
+      before_photo_data: job.beforePhoto?.dataUrl,
+      after_photo_data: job.afterPhoto?.dataUrl,
+      signature_data: job.signature?.dataUrl,
+      signer_name: job.signature?.signerName,
+      completed_at: job.completedAt,
+      last_updated: new Date(job.lastUpdated).toISOString()
+    };
+
+    // Sync to Supabase
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/bunker_jobs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      await bunkerDb.jobs.update(job.id, { syncStatus: 'synced' });
+      console.log('[BunkerSync] Job synced successfully:', job.id);
+      return true;
+    } else {
+      throw new Error(`Sync failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('[BunkerSync] Sync error:', error);
+    await bunkerDb.jobs.update(job.id, { syncStatus: 'failed' });
+    return false;
+  }
+}
+
+async function retryPendingSyncs(): Promise<void> {
+  const pendingJobs = await bunkerDb.jobs
+    .where('syncStatus')
+    .anyOf(['pending', 'failed'])
+    .toArray();
+
+  for (const job of pendingJobs) {
+    await syncJobToCloud(job);
+  }
+}
+
+// ============================================================================
+// SIGNATURE CANVAS COMPONENT
+// ============================================================================
+
+interface SignatureCanvasProps {
+  onSave: (dataUrl: string) => void;
+  onClear: () => void;
+}
+
+function SignatureCanvas({ onSave, onClear }: SignatureCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawing = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }, []);
+
+  const getPosition = (e: React.TouchEvent | React.MouseEvent) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+
+    if ('touches' in e) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    isDrawing.current = true;
+    lastPos.current = getPosition(e);
+  };
+
+  const draw = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDrawing.current) return;
+    e.preventDefault();
+
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
+    const pos = getPosition(e);
+
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+
+    lastPos.current = pos;
+  };
+
+  const stopDrawing = () => {
+    isDrawing.current = false;
+  };
+
+  const handleClear = () => {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    onClear();
+  };
+
+  const handleSave = () => {
+    const canvas = canvasRef.current!;
+    onSave(canvas.toDataURL('image/png'));
+  };
+
+  return (
+    <div className="space-y-4">
+      <canvas
+        ref={canvasRef}
+        width={350}
+        height={200}
+        className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+      />
+      <div className="flex gap-3">
+        <button
+          onClick={handleClear}
+          className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+        >
+          Clear
+        </button>
+        <button
+          onClick={handleSave}
+          className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+        >
+          Save Signature
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// CAMERA COMPONENT
+// ============================================================================
+
+interface CameraProps {
+  onCapture: (dataUrl: string) => void;
+  onCancel: () => void;
+}
+
+function Camera({ onCapture, onCancel }: CameraProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, []);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      setError('Camera access denied. Please enable camera permissions.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current!;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(video, 0, 0);
+    onCapture(canvas.toDataURL('image/jpeg', 0.9));
+    stopCamera();
+  };
+
+  if (error) {
+    return (
+      <div className="p-6 bg-red-900/50 rounded-xl text-center">
+        <p className="text-red-300 mb-4">{error}</p>
+        <button
+          onClick={onCancel}
+          className="px-6 py-3 bg-slate-700 text-white rounded-lg"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full rounded-xl bg-black"
+      />
+      <div className="flex gap-3">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={capturePhoto}
+          className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
+        >
+          📸 CAPTURE
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SYNC STATUS INDICATOR
+// ============================================================================
+
+interface SyncStatusProps {
+  isOnline: boolean;
+  syncStatus: BunkerSyncStatus;
+  isSyncing: boolean;
+}
+
+function SyncStatus({ isOnline, syncStatus, isSyncing }: SyncStatusProps) {
+  const getStatusColor = () => {
+    if (!isOnline) return 'bg-red-500';
+    if (isSyncing) return 'bg-yellow-500 animate-pulse';
+    if (syncStatus === 'synced') return 'bg-green-500';
+    if (syncStatus === 'failed') return 'bg-red-500';
+    return 'bg-yellow-500';
+  };
+
+  const getStatusText = () => {
+    if (!isOnline) return 'OFFLINE';
+    if (isSyncing) return 'SYNCING...';
+    if (syncStatus === 'synced') return 'SYNCED ✓';
+    if (syncStatus === 'failed') return 'SYNC FAILED';
+    return 'PENDING SYNC';
+  };
+
+  return (
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-700">
+      <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
+      <span className="text-xs font-medium text-slate-300">{getStatusText()}</span>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN JOB RUNNER COMPONENT
+// ============================================================================
+
+export default function JobRunner() {
+  // State
+  const [state, setState] = useState<BunkerState>({
+    job: null,
+    isOnline: navigator.onLine,
+    isSyncing: false,
+    loadError: null,
+    gpsLocation: null
+  });
+
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
+  const [manualJobId, setManualJobId] = useState('');
+  const [signerName, setSignerName] = useState('');
+
+  // Get job ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlJobId = urlParams.get('jobId');
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  // Online/offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setState(s => ({ ...s, isOnline: true }));
+      retryPendingSyncs();
+    };
+    const handleOffline = () => setState(s => ({ ...s, isOnline: false }));
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load job from IndexedDB on mount
+  useEffect(() => {
+    const loadFromIndexedDB = async () => {
+      const jobId = urlJobId || localStorage.getItem('bunker_current_job');
+      if (!jobId) return;
+
+      const savedJob = await bunkerDb.jobs.get(jobId);
+      if (savedJob) {
+        setState(s => ({ ...s, job: savedJob }));
+        console.log('[Bunker] Restored job from IndexedDB:', jobId);
+      }
+    };
+
+    loadFromIndexedDB();
+  }, [urlJobId]);
+
+  // Get GPS location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setState(s => ({
+            ...s,
+            gpsLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          }));
+        },
+        (err) => console.warn('[Bunker] GPS error:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }, []);
+
+  // Auto-save to IndexedDB whenever job changes
+  useEffect(() => {
+    if (state.job) {
+      bunkerDb.jobs.put(state.job);
+      localStorage.setItem('bunker_current_job', state.job.id);
+    }
+  }, [state.job]);
+
+  // Auto-sync when online and job is pending
+  useEffect(() => {
+    if (state.isOnline && state.job?.syncStatus === 'pending') {
+      handleSync();
+    }
+  }, [state.isOnline, state.job?.syncStatus]);
+
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
+  const updateJob = useCallback((updates: Partial<BunkerJob>) => {
+    setState(s => {
+      if (!s.job) return s;
+      return {
+        ...s,
+        job: {
+          ...s.job,
+          ...updates,
+          lastUpdated: Date.now(),
+          syncStatus: 'pending' as BunkerSyncStatus
+        }
+      };
+    });
+  }, []);
+
+  const loadJob = async (jobId: string) => {
+    setState(s => ({ ...s, loadError: null }));
+
+    // First, check IndexedDB for cached job
+    const cachedJob = await bunkerDb.jobs.get(jobId);
+    if (cachedJob) {
+      setState(s => ({ ...s, job: cachedJob }));
+      return;
+    }
+
+    // If online, try to fetch from API
+    if (state.isOnline && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/jobs?id=eq.${jobId}&select=*`,
+          {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          }
+        );
+
+        if (response.ok) {
+          const [jobData] = await response.json();
+          if (jobData) {
+            const newJob: BunkerJob = {
+              id: jobData.id,
+              title: jobData.title || 'Untitled Job',
+              client: jobData.client || 'Unknown Client',
+              address: jobData.address || '',
+              notes: jobData.notes || '',
+              currentStep: 'before',
+              syncStatus: 'synced',
+              lastUpdated: Date.now()
+            };
+            await bunkerDb.jobs.put(newJob);
+            setState(s => ({ ...s, job: newJob }));
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('[Bunker] API fetch error:', error);
+      }
+    }
+
+    // Create new job if not found
+    const newJob: BunkerJob = {
+      id: jobId,
+      title: `Job ${jobId}`,
+      client: 'Manual Entry',
+      address: '',
+      notes: '',
+      currentStep: 'before',
+      syncStatus: 'pending',
+      lastUpdated: Date.now()
+    };
+    await bunkerDb.jobs.put(newJob);
+    setState(s => ({ ...s, job: newJob }));
+  };
+
+  const handlePhotoCapture = async (dataUrl: string) => {
+    const { dataUrl: compressed, sizeBytes } = await compressImage(dataUrl);
+
+    const photo: BunkerPhoto = {
+      id: `${cameraType}_${Date.now()}`,
+      type: cameraType,
+      dataUrl: compressed,
+      timestamp: new Date().toISOString(),
+      lat: state.gpsLocation?.lat,
+      lng: state.gpsLocation?.lng,
+      sizeBytes
+    };
+
+    if (cameraType === 'before') {
+      updateJob({ beforePhoto: photo, currentStep: 'after' });
+    } else {
+      updateJob({ afterPhoto: photo, currentStep: 'signature' });
+    }
+
+    setShowCamera(false);
+  };
+
+  const handleSignatureSave = (dataUrl: string) => {
+    if (!signerName.trim()) {
+      alert('Please enter the signer name');
+      return;
+    }
+
+    const signature: BunkerSignature = {
+      dataUrl,
+      timestamp: new Date().toISOString(),
+      signerName: signerName.trim()
+    };
+
+    updateJob({
+      signature,
+      currentStep: 'review',
+      completedAt: new Date().toISOString()
+    });
+  };
+
+  const handleSync = async () => {
+    if (!state.job || state.isSyncing) return;
+
+    setState(s => ({ ...s, isSyncing: true }));
+    const success = await syncJobToCloud(state.job);
+
+    if (success) {
+      setState(s => ({
+        ...s,
+        isSyncing: false,
+        job: s.job ? { ...s.job, syncStatus: 'synced' } : null
+      }));
+    } else {
+      setState(s => ({
+        ...s,
+        isSyncing: false,
+        job: s.job ? { ...s.job, syncStatus: 'failed' } : null
+      }));
+    }
+  };
+
+  const goToStep = (step: WizardStep) => {
+    updateJob({ currentStep: step });
+  };
+
+  const resetJob = async () => {
+    if (state.job) {
+      await bunkerDb.jobs.delete(state.job.id);
+    }
+    localStorage.removeItem('bunker_current_job');
+    setState(s => ({ ...s, job: null }));
+    setManualJobId('');
+    setSignerName('');
+  };
+
+  // ============================================================================
+  // RENDER HELPERS
+  // ============================================================================
+
+  const renderLoadStep = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-white mb-2">🔒 Bunker Mode</h1>
+        <p className="text-slate-400">Works offline. Your data is safe.</p>
+      </div>
+
+      <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
+          Enter Job ID
+        </label>
+        <input
+          type="text"
+          value={manualJobId}
+          onChange={(e) => setManualJobId(e.target.value)}
+          placeholder="e.g., JOB-001"
+          className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <button
+          onClick={() => manualJobId.trim() && loadJob(manualJobId.trim())}
+          disabled={!manualJobId.trim()}
+          className="w-full mt-4 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
+        >
+          LOAD JOB
+        </button>
+      </div>
+
+      {state.loadError && (
+        <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-300">
+          {state.loadError}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderBeforeStep = () => (
+    <div className="space-y-6">
+      <StepHeader step={1} title="Before Photo" subtitle="Document the starting condition" />
+
+      {showCamera && cameraType === 'before' ? (
+        <Camera
+          onCapture={handlePhotoCapture}
+          onCancel={() => setShowCamera(false)}
+        />
+      ) : state.job?.beforePhoto ? (
+        <div className="space-y-4">
+          <img
+            src={state.job.beforePhoto.dataUrl}
+            alt="Before"
+            className="w-full rounded-xl border border-slate-700"
+          />
+          <PhotoMeta photo={state.job.beforePhoto} />
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setCameraType('before'); setShowCamera(true); }}
+              className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+            >
+              Retake
+            </button>
+            <button
+              onClick={() => goToStep('after')}
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
+            >
+              NEXT →
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => { setCameraType('before'); setShowCamera(true); }}
+          className="w-full py-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xl transition-colors btn-field"
+        >
+          📸 TAKE BEFORE PHOTO
+        </button>
+      )}
+    </div>
+  );
+
+  const renderAfterStep = () => (
+    <div className="space-y-6">
+      <StepHeader step={2} title="After Photo" subtitle="Document the completed work" />
+
+      {showCamera && cameraType === 'after' ? (
+        <Camera
+          onCapture={handlePhotoCapture}
+          onCancel={() => setShowCamera(false)}
+        />
+      ) : state.job?.afterPhoto ? (
+        <div className="space-y-4">
+          <img
+            src={state.job.afterPhoto.dataUrl}
+            alt="After"
+            className="w-full rounded-xl border border-slate-700"
+          />
+          <PhotoMeta photo={state.job.afterPhoto} />
+          <div className="flex gap-3">
+            <button
+              onClick={() => goToStep('before')}
+              className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={() => { setCameraType('after'); setShowCamera(true); }}
+              className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+            >
+              Retake
+            </button>
+            <button
+              onClick={() => goToStep('signature')}
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
+            >
+              NEXT →
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <button
+            onClick={() => { setCameraType('after'); setShowCamera(true); }}
+            className="w-full py-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xl transition-colors btn-field"
+          >
+            📸 TAKE AFTER PHOTO
+          </button>
+          <button
+            onClick={() => goToStep('before')}
+            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+          >
+            ← Back to Before Photo
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSignatureStep = () => (
+    <div className="space-y-6">
+      <StepHeader step={3} title="Client Signature" subtitle="Get client approval" />
+
+      {state.job?.signature ? (
+        <div className="space-y-4">
+          <img
+            src={state.job.signature.dataUrl}
+            alt="Signature"
+            className="w-full rounded-xl border border-slate-700 bg-white"
+          />
+          <p className="text-center text-slate-400">
+            Signed by: <span className="text-white font-medium">{state.job.signature.signerName}</span>
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => goToStep('after')}
+              className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={() => updateJob({ signature: undefined })}
+              className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+            >
+              Re-sign
+            </button>
+            <button
+              onClick={() => goToStep('review')}
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
+            >
+              NEXT →
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Signer Name *
+            </label>
+            <input
+              type="text"
+              value={signerName}
+              onChange={(e) => setSignerName(e.target.value)}
+              placeholder="Enter client name"
+              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <SignatureCanvas
+            onSave={handleSignatureSave}
+            onClear={() => {}}
+          />
+
+          <button
+            onClick={() => goToStep('after')}
+            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+          >
+            ← Back to After Photo
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderReviewStep = () => (
+    <div className="space-y-6">
+      <StepHeader step={4} title="Review & Submit" subtitle="Verify all evidence" />
+
+      <div className="grid grid-cols-2 gap-4">
+        {state.job?.beforePhoto && (
+          <div>
+            <p className="text-xs text-slate-400 mb-1">BEFORE</p>
+            <img
+              src={state.job.beforePhoto.dataUrl}
+              alt="Before"
+              className="w-full rounded-lg border border-slate-700"
+            />
+          </div>
+        )}
+        {state.job?.afterPhoto && (
+          <div>
+            <p className="text-xs text-slate-400 mb-1">AFTER</p>
+            <img
+              src={state.job.afterPhoto.dataUrl}
+              alt="After"
+              className="w-full rounded-lg border border-slate-700"
+            />
+          </div>
+        )}
+      </div>
+
+      {state.job?.signature && (
+        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+          <p className="text-xs text-slate-400 mb-2">CLIENT SIGNATURE</p>
+          <img
+            src={state.job.signature.dataUrl}
+            alt="Signature"
+            className="w-full max-w-xs rounded-lg bg-white"
+          />
+          <p className="mt-2 text-sm text-slate-300">
+            Signed by: {state.job.signature.signerName}
+          </p>
+        </div>
+      )}
+
+      <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+        <h3 className="text-sm font-medium text-slate-300 mb-2">Job Details</h3>
+        <p className="text-white font-medium">{state.job?.title}</p>
+        <p className="text-slate-400 text-sm">{state.job?.client}</p>
+        {state.job?.address && (
+          <p className="text-slate-400 text-sm">{state.job.address}</p>
+        )}
+      </div>
+
+      {/* Sync Status */}
+      <div className={`p-4 rounded-xl border ${
+        state.job?.syncStatus === 'synced'
+          ? 'bg-green-900/30 border-green-700'
+          : state.job?.syncStatus === 'failed'
+          ? 'bg-red-900/30 border-red-700'
+          : 'bg-yellow-900/30 border-yellow-700'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-4 h-4 rounded-full ${
+            state.job?.syncStatus === 'synced' ? 'bg-green-500' :
+            state.job?.syncStatus === 'failed' ? 'bg-red-500' :
+            'bg-yellow-500 animate-pulse'
+          }`} />
+          <span className="font-medium text-white">
+            {state.job?.syncStatus === 'synced' ? 'Data Safely Synced to Cloud' :
+             state.job?.syncStatus === 'failed' ? 'Sync Failed - Will Retry' :
+             'Pending Cloud Sync'}
+          </span>
+        </div>
+        {state.job?.syncStatus !== 'synced' && (
+          <p className="mt-2 text-sm text-slate-400">
+            Your data is safely stored locally and will sync when online.
+          </p>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => goToStep('signature')}
+          className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+        >
+          ← Back
+        </button>
+        {state.job?.syncStatus !== 'synced' && state.isOnline && (
+          <button
+            onClick={handleSync}
+            disabled={state.isSyncing}
+            className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg font-bold btn-field"
+          >
+            {state.isSyncing ? 'SYNCING...' : 'SYNC NOW'}
+          </button>
+        )}
+        <button
+          onClick={resetJob}
+          className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
+        >
+          ✓ COMPLETE
+        </button>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      <SyncStatus
+        isOnline={state.isOnline}
+        syncStatus={state.job?.syncStatus || 'pending'}
+        isSyncing={state.isSyncing}
+      />
+
+      <div className="max-w-lg mx-auto p-4 pb-24">
+        {/* Progress Bar */}
+        {state.job && (
+          <ProgressBar currentStep={state.job.currentStep} />
+        )}
+
+        {/* Content */}
+        <div className="mt-6">
+          {!state.job && renderLoadStep()}
+          {state.job?.currentStep === 'before' && renderBeforeStep()}
+          {state.job?.currentStep === 'after' && renderAfterStep()}
+          {state.job?.currentStep === 'signature' && renderSignatureStep()}
+          {state.job?.currentStep === 'review' && renderReviewStep()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+function StepHeader({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
+  return (
+    <div className="text-center">
+      <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-400 text-sm font-medium mb-2">
+        Step {step} of 4
+      </div>
+      <h2 className="text-xl font-bold text-white">{title}</h2>
+      <p className="text-slate-400 text-sm">{subtitle}</p>
+    </div>
+  );
+}
+
+function ProgressBar({ currentStep }: { currentStep: WizardStep }) {
+  const steps: WizardStep[] = ['before', 'after', 'signature', 'review'];
+  const currentIndex = steps.indexOf(currentStep);
+
+  return (
+    <div className="flex items-center gap-2">
+      {steps.map((step, index) => (
+        <React.Fragment key={step}>
+          <div
+            className={`flex-1 h-2 rounded-full transition-colors ${
+              index <= currentIndex ? 'bg-blue-500' : 'bg-slate-700'
+            }`}
+          />
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+function PhotoMeta({ photo }: { photo: BunkerPhoto }) {
+  return (
+    <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+      <span className="px-2 py-1 bg-slate-800 rounded">
+        {new Date(photo.timestamp).toLocaleString()}
+      </span>
+      {photo.lat && photo.lng && (
+        <span className="px-2 py-1 bg-slate-800 rounded">
+          📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}
+        </span>
+      )}
+      <span className="px-2 py-1 bg-slate-800 rounded">
+        {(photo.sizeBytes / 1024).toFixed(0)} KB
+      </span>
+    </div>
+  );
+}

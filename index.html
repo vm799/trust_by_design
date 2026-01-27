@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2563EB">
   <meta name="description" content="Track jobs, prove delivery, win repeat business. Professional field evidence management for contractors.">
 
@@ -74,5 +74,32 @@
 <body class="antialiased">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
+
+  <!-- Service Worker Registration for Bunker Mode (Offline-First) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('[SW] Service Worker registered:', registration.scope);
+
+            // Listen for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[SW] New version available - refresh to update');
+                  }
+                });
+              }
+            });
+          })
+          .catch((error) => {
+            console.warn('[SW] Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

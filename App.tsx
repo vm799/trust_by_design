@@ -56,6 +56,8 @@ const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector')
 const JobsList = lazy(() => import('./views/app/jobs/JobsList'));
 const ClientForm = lazy(() => import('./views/app/clients/ClientForm'));
 const TechnicianForm = lazy(() => import('./views/app/technicians/TechnicianForm'));
+// Bunker Mode: Offline-first "God Component" for cement bunker operation
+const JobRunner = lazy(() => import('./views/bunker/JobRunner'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -618,6 +620,14 @@ const AppContent: React.FC = () => {
         <Route path="/report/:jobId" element={
           <RouteErrorBoundary sectionName="Report" fallbackRoute="/home">
             <JobReport jobs={jobs} invoices={invoices} publicView />
+          </RouteErrorBoundary>
+        } />
+
+        {/* Bunker Mode: Offline-first "God Component" - NO AUTH REQUIRED */}
+        {/* Works in cement bunkers with zero cell service */}
+        <Route path="/bunker" element={
+          <RouteErrorBoundary sectionName="Bunker Mode" fallbackRoute="/home">
+            <JobRunner />
           </RouteErrorBoundary>
         } />
 
