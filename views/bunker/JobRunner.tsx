@@ -49,6 +49,11 @@ interface BunkerJob {
   address: string;
   notes: string;
 
+  // Manager info for report delivery
+  managerEmail?: string;
+  managerName?: string;
+  technicianName?: string;
+
   // Evidence
   beforePhoto?: BunkerPhoto;
   afterPhoto?: BunkerPhoto;
@@ -59,6 +64,10 @@ interface BunkerJob {
   syncStatus: BunkerSyncStatus;
   lastUpdated: number;
   completedAt?: string;
+
+  // Report
+  reportUrl?: string;
+  reportGeneratedAt?: string;
 }
 
 interface BunkerState {
@@ -157,6 +166,9 @@ async function syncJobToCloud(job: BunkerJob): Promise<boolean> {
       client: job.client,
       address: job.address,
       notes: job.notes,
+      manager_email: job.managerEmail,
+      manager_name: job.managerName,
+      technician_name: job.technicianName,
       status: job.completedAt ? 'Complete' : 'In Progress',
       before_photo_data: job.beforePhoto?.dataUrl,
       after_photo_data: job.afterPhoto?.dataUrl,
@@ -181,6 +193,12 @@ async function syncJobToCloud(job: BunkerJob): Promise<boolean> {
     if (response.ok) {
       await bunkerDb.jobs.update(job.id, { syncStatus: 'synced' });
       console.log('[BunkerSync] Job synced successfully:', job.id);
+
+      // Trigger report generation if job is complete and manager email is set
+      if (job.completedAt && job.managerEmail) {
+        triggerReportGeneration(job);
+      }
+
       return true;
     } else {
       throw new Error(`Sync failed: ${response.status}`);
@@ -189,6 +207,73 @@ async function syncJobToCloud(job: BunkerJob): Promise<boolean> {
     console.error('[BunkerSync] Sync error:', error);
     await bunkerDb.jobs.update(job.id, { syncStatus: 'failed' });
     return false;
+  }
+}
+
+/**
+ * Trigger cloud-based PDF report generation
+ * This calls the generate-report Edge Function
+ */
+async function triggerReportGeneration(job: BunkerJob): Promise<void> {
+  if (!SUPABASE_URL || !job.managerEmail) return;
+
+  try {
+    console.log('[BunkerSync] Triggering report generation for:', job.id);
+
+    const reportPayload = {
+      jobId: job.id,
+      title: job.title,
+      client: job.client,
+      address: job.address,
+      managerEmail: job.managerEmail,
+      managerName: job.managerName,
+      technicianName: job.technicianName,
+      beforePhoto: job.beforePhoto ? {
+        dataUrl: job.beforePhoto.dataUrl,
+        timestamp: job.beforePhoto.timestamp,
+        lat: job.beforePhoto.lat,
+        lng: job.beforePhoto.lng,
+      } : undefined,
+      afterPhoto: job.afterPhoto ? {
+        dataUrl: job.afterPhoto.dataUrl,
+        timestamp: job.afterPhoto.timestamp,
+        lat: job.afterPhoto.lat,
+        lng: job.afterPhoto.lng,
+      } : undefined,
+      signature: job.signature ? {
+        dataUrl: job.signature.dataUrl,
+        timestamp: job.signature.timestamp,
+        signerName: job.signature.signerName,
+      } : undefined,
+      completedAt: job.completedAt,
+    };
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(reportPayload),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('[BunkerSync] Report generated:', result);
+
+      // Update local job with report URL
+      if (result.pdfUrl) {
+        await bunkerDb.jobs.update(job.id, {
+          reportUrl: result.pdfUrl,
+          reportGeneratedAt: new Date().toISOString(),
+        });
+      }
+    } else {
+      console.error('[BunkerSync] Report generation failed:', await response.text());
+    }
+  } catch (error) {
+    console.error('[BunkerSync] Report generation error:', error);
+    // Don't fail the sync if report generation fails
   }
 }
 
@@ -462,6 +547,8 @@ export default function JobRunner() {
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
   const [manualJobId, setManualJobId] = useState('');
   const [signerName, setSignerName] = useState('');
+  const [managerEmail, setManagerEmail] = useState('');
+  const [technicianName, setTechnicianName] = useState('');
 
   // Get job ID from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -607,6 +694,8 @@ export default function JobRunner() {
       client: 'Manual Entry',
       address: '',
       notes: '',
+      managerEmail: managerEmail.trim() || undefined,
+      technicianName: technicianName.trim() || undefined,
       currentStep: 'before',
       syncStatus: 'pending',
       lastUpdated: Date.now()
@@ -702,23 +791,55 @@ export default function JobRunner() {
         <p className="text-slate-400">Works offline. Your data is safe.</p>
       </div>
 
-      <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-        <label className="block text-sm font-medium text-slate-300 mb-2">
-          Enter Job ID
-        </label>
-        <input
-          type="text"
-          value={manualJobId}
-          onChange={(e) => setManualJobId(e.target.value)}
-          placeholder="e.g., JOB-001"
-          className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+      <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Job ID *
+          </label>
+          <input
+            type="text"
+            value={manualJobId}
+            onChange={(e) => setManualJobId(e.target.value)}
+            placeholder="e.g., JOB-001"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Your Name (Technician)
+          </label>
+          <input
+            type="text"
+            value={technicianName}
+            onChange={(e) => setTechnicianName(e.target.value)}
+            placeholder="e.g., John Smith"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Manager Email (for report delivery)
+          </label>
+          <input
+            type="email"
+            value={managerEmail}
+            onChange={(e) => setManagerEmail(e.target.value)}
+            placeholder="e.g., manager@company.com"
+            className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            PDF report will be emailed here after sync completes
+          </p>
+        </div>
+
         <button
           onClick={() => manualJobId.trim() && loadJob(manualJobId.trim())}
           disabled={!manualJobId.trim()}
-          className="w-full mt-4 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
+          className="w-full mt-2 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
         >
-          LOAD JOB
+          START JOB
         </button>
       </div>
 

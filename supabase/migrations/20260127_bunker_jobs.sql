@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS bunker_jobs (
   address TEXT,
   notes TEXT,
 
+  -- Manager info for report delivery
+  manager_email TEXT,
+  manager_name TEXT,
+  technician_name TEXT,
+
   -- Status
   status TEXT NOT NULL DEFAULT 'In Progress'
     CHECK (status IN ('Pending', 'In Progress', 'Complete', 'Submitted')),
@@ -45,6 +50,11 @@ CREATE TABLE IF NOT EXISTS bunker_jobs (
   completed_at TIMESTAMPTZ,
   last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  -- Report generation
+  report_url TEXT,           -- URL to generated PDF report
+  report_generated_at TIMESTAMPTZ,
+  report_emailed BOOLEAN DEFAULT FALSE,
 
   -- Sync metadata
   sync_source TEXT DEFAULT 'mobile' CHECK (sync_source IN ('mobile', 'web', 'api')),
@@ -171,6 +181,9 @@ CREATE OR REPLACE FUNCTION upsert_bunker_job(
   p_client TEXT DEFAULT NULL,
   p_address TEXT DEFAULT NULL,
   p_notes TEXT DEFAULT NULL,
+  p_manager_email TEXT DEFAULT NULL,
+  p_manager_name TEXT DEFAULT NULL,
+  p_technician_name TEXT DEFAULT NULL,
   p_status TEXT DEFAULT NULL,
   p_before_photo_data TEXT DEFAULT NULL,
   p_after_photo_data TEXT DEFAULT NULL,
@@ -184,8 +197,9 @@ DECLARE
   result bunker_jobs;
 BEGIN
   INSERT INTO bunker_jobs (
-    id, title, client, address, notes, status,
-    before_photo_data, after_photo_data,
+    id, title, client, address, notes,
+    manager_email, manager_name, technician_name,
+    status, before_photo_data, after_photo_data,
     signature_data, signer_name,
     completed_at, last_updated
   )
@@ -195,6 +209,9 @@ BEGIN
     COALESCE(p_client, 'Unknown Client'),
     p_address,
     p_notes,
+    p_manager_email,
+    p_manager_name,
+    p_technician_name,
     COALESCE(p_status, 'In Progress'),
     p_before_photo_data,
     p_after_photo_data,
@@ -208,6 +225,9 @@ BEGIN
     client = COALESCE(EXCLUDED.client, bunker_jobs.client),
     address = COALESCE(EXCLUDED.address, bunker_jobs.address),
     notes = COALESCE(EXCLUDED.notes, bunker_jobs.notes),
+    manager_email = COALESCE(EXCLUDED.manager_email, bunker_jobs.manager_email),
+    manager_name = COALESCE(EXCLUDED.manager_name, bunker_jobs.manager_name),
+    technician_name = COALESCE(EXCLUDED.technician_name, bunker_jobs.technician_name),
     status = COALESCE(EXCLUDED.status, bunker_jobs.status),
     before_photo_data = COALESCE(EXCLUDED.before_photo_data, bunker_jobs.before_photo_data),
     after_photo_data = COALESCE(EXCLUDED.after_photo_data, bunker_jobs.after_photo_data),
