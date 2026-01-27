@@ -1,12 +1,14 @@
 {
   "name": "JobProof - Compliance & Safety Management",
   "short_name": "JobProof",
-  "description": "Professional compliance certificates and safety management for contractors",
+  "description": "Offline-first field service evidence capture. Works in cement bunkers with zero cell service.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#020617",
   "theme_color": "#3b82f6",
   "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -24,18 +26,29 @@
   "categories": ["business", "productivity", "utilities"],
   "shortcuts": [
     {
+      "name": "Bunker Mode",
+      "short_name": "Bunker",
+      "description": "Offline-first job capture - works without signal",
+      "url": "/#/bunker",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Create Job",
       "short_name": "New Job",
       "description": "Create a new job",
-      "url": "/admin/create",
+      "url": "/#/admin/create",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View dashboard",
-      "url": "/dashboard",
+      "url": "/#/admin",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }
