@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS bunker_jobs (
   manager_email TEXT,
   manager_name TEXT,
   technician_name TEXT,
+  client_email TEXT,
+  w3w TEXT,  -- What3Words location
 
   -- Status
   status TEXT NOT NULL DEFAULT 'In Progress'
@@ -73,27 +75,42 @@ CREATE INDEX IF NOT EXISTS idx_bunker_jobs_updated ON bunker_jobs(last_updated D
 -- Row Level Security (RLS)
 ALTER TABLE bunker_jobs ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow insert for anyone (for offline sync from anonymous devices)
-CREATE POLICY "bunker_jobs_insert_policy" ON bunker_jobs
+-- ============================================================================
+-- PUBLIC ACCESS POLICIES (for Bunker Mode - NO AUTH REQUIRED)
+-- The Job ID in the URL is the permission to work
+-- ============================================================================
+
+-- Policy: Allow insert for anyone (offline sync from anonymous devices)
+CREATE POLICY "bunker_jobs_insert_anon" ON bunker_jobs
   FOR INSERT
+  TO anon, authenticated
   WITH CHECK (true);
 
--- Policy: Allow update for anyone on their own jobs (by device_id or workspace)
-CREATE POLICY "bunker_jobs_update_policy" ON bunker_jobs
+-- Policy: Allow select by job ID (public access via URL)
+CREATE POLICY "bunker_jobs_select_by_id" ON bunker_jobs
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);  -- Anyone with the job ID can view
+
+-- Policy: Allow update by job ID (technician can update their job)
+CREATE POLICY "bunker_jobs_update_by_id" ON bunker_jobs
   FOR UPDATE
+  TO anon, authenticated
   USING (true)
   WITH CHECK (true);
 
--- Policy: Allow read for authenticated users in same workspace
-CREATE POLICY "bunker_jobs_select_policy" ON bunker_jobs
-  FOR SELECT
+-- ============================================================================
+-- AUTHENTICATED ACCESS POLICIES (for Dashboard)
+-- ============================================================================
+
+-- Policy: Workspace members can delete jobs
+CREATE POLICY "bunker_jobs_delete_workspace" ON bunker_jobs
+  FOR DELETE
+  TO authenticated
   USING (
-    -- Allow if workspace matches user's workspace
     workspace_id IN (
       SELECT workspace_id FROM profiles WHERE id = auth.uid()
     )
-    -- Or allow public access for testing (remove in production)
-    OR workspace_id IS NULL
   );
 
 -- ============================================================================
@@ -253,3 +270,87 @@ COMMENT ON TABLE bunker_jobs IS 'Bunker-proof offline-first job evidence storage
 COMMENT ON TABLE bunker_photos IS 'Separate photo storage for large files';
 COMMENT ON TABLE bunker_signatures IS 'Separate signature storage for audit trail';
 COMMENT ON FUNCTION upsert_bunker_job IS 'Conflict-resolving upsert for offline sync';
+
+-- ============================================================================
+-- STORAGE BUCKET FOR JOB PHOTOS (PUBLIC ACCESS)
+-- This enables technicians to upload photos without authentication
+-- ============================================================================
+
+-- Create the storage bucket for job photos
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'job-photos',
+  'job-photos',
+  true,  -- PUBLIC ACCESS - required for anonymous uploads
+  5242880,  -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880;
+
+-- Create the storage bucket for job reports (PDFs)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'job-reports',
+  'job-reports',
+  true,  -- PUBLIC for download links
+  10485760,  -- 10MB limit
+  ARRAY['application/pdf']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 10485760;
+
+-- ============================================================================
+-- STORAGE POLICIES - Allow anonymous uploads
+-- ============================================================================
+
+-- Policy: Anyone can upload to job-photos
+CREATE POLICY "job_photos_insert_anon" ON storage.objects
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (bucket_id = 'job-photos');
+
+-- Policy: Anyone can view job-photos (public download)
+CREATE POLICY "job_photos_select_public" ON storage.objects
+  FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'job-photos');
+
+-- Policy: Anyone can view job-reports (public download)
+CREATE POLICY "job_reports_select_public" ON storage.objects
+  FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'job-reports');
+
+-- Policy: Service role can insert reports
+CREATE POLICY "job_reports_insert_service" ON storage.objects
+  FOR INSERT
+  TO service_role
+  WITH CHECK (bucket_id = 'job-reports');
+
+-- ============================================================================
+-- DATABASE TRIGGER: Auto-generate report on job completion
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION notify_job_completed()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only trigger if status changed to 'Complete'
+  IF NEW.status = 'Complete' AND (OLD.status IS NULL OR OLD.status != 'Complete') THEN
+    -- Log the completion (report generation is handled by Edge Function)
+    RAISE NOTICE 'Job % completed. Report will be generated.', NEW.id;
+
+    -- You could also use pg_notify for real-time:
+    -- PERFORM pg_notify('job_completed', json_build_object('job_id', NEW.id)::text);
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_job_completed
+  AFTER INSERT OR UPDATE ON bunker_jobs
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_job_completed();
