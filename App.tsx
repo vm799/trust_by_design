@@ -58,10 +58,11 @@ const ClientForm = lazy(() => import('./views/app/clients/ClientForm'));
 const TechnicianForm = lazy(() => import('./views/app/technicians/TechnicianForm'));
 // Bunker Mode: Offline-first "God Component" for cement bunker operation
 const JobRunner = lazy(() => import('./views/bunker/JobRunner'));
-// End-to-End Recovery: Quick Create + Run + Log pages
+// End-to-End Recovery: Quick Create + Run + Log + Success pages
 const QuickCreateJob = lazy(() => import('./views/QuickCreateJob'));
 const BunkerRun = lazy(() => import('./views/BunkerRun'));
 const JobLog = lazy(() => import('./views/JobLog'));
+const BunkerSuccess = lazy(() => import('./views/BunkerSuccess'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -654,6 +655,13 @@ const AppContent: React.FC = () => {
         <Route path="/job-log" element={
           <RouteErrorBoundary sectionName="Job Log" fallbackRoute="/home">
             <JobLog />
+          </RouteErrorBoundary>
+        } />
+
+        {/* End-to-End Recovery: Success Page - Shows after job sync (NO AUTH) */}
+        <Route path="/success" element={
+          <RouteErrorBoundary sectionName="Job Success" fallbackRoute="/job-log">
+            <BunkerSuccess />
           </RouteErrorBoundary>
         } />
 

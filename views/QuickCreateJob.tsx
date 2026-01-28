@@ -14,10 +14,10 @@
  */
 
 import React, { useState } from 'react';
+import { getBunkerRunUrl } from '../lib/redirects';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
 interface JobFormData {
   jobName: string;
@@ -95,8 +95,8 @@ export default function QuickCreateJob() {
         }
       }
 
-      // Generate bunker link
-      const bunkerLink = `${APP_URL}/#/run/${jobId}`;
+      // Generate bunker link (NO auth tokens, NO timers - just clean job ID)
+      const bunkerLink = getBunkerRunUrl(jobId);
 
       setCreatedJob({ id: jobId, bunkerLink });
 

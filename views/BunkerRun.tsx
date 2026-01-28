@@ -21,6 +21,16 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
+// ============================================================================
+// LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
+// ============================================================================
+const STORAGE_KEYS = {
+  MANAGER_EMAIL: 'bunker_manager_email',
+  CLIENT_EMAIL: 'bunker_client_email',
+  JOB_ID: 'bunker_current_job_id',
+  JOB_TITLE: 'bunker_job_title',
+} as const;
 import Dexie, { type Table } from 'dexie';
 
 // ============================================================================
@@ -285,6 +295,30 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
   }
 }
 
+/**
+ * Store job details in localStorage for the success page
+ * This enables the Public-Private handshake - sync knows where to send report
+ */
+function storeJobDetailsForSync(job: RunJob): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.JOB_ID, job.id);
+    localStorage.setItem(STORAGE_KEYS.JOB_TITLE, job.title);
+    if (job.managerEmail) {
+      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, job.managerEmail);
+    }
+    if (job.clientEmail) {
+      localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, job.clientEmail);
+    }
+    console.log('[BunkerRun] Stored job details for sync:', {
+      id: job.id,
+      managerEmail: job.managerEmail,
+      clientEmail: job.clientEmail,
+    });
+  } catch (error) {
+    console.warn('[BunkerRun] Failed to store job details:', error);
+  }
+}
+
 async function triggerReportGeneration(job: RunJob): Promise<void> {
   if (!SUPABASE_URL || !job.managerEmail) return;
 
@@ -460,6 +494,8 @@ export default function BunkerRun() {
     const cached = await runDb.jobs.get(id);
     if (cached) {
       setJob(cached);
+      // Store emails in localStorage for sync handshake
+      storeJobDetailsForSync(cached);
       console.log('[BunkerRun] Loaded from cache:', id);
       return;
     }
@@ -495,6 +531,8 @@ export default function BunkerRun() {
             };
             await runDb.jobs.put(loadedJob);
             setJob(loadedJob);
+            // Store emails in localStorage for sync handshake
+            storeJobDetailsForSync(loadedJob);
             console.log('[BunkerRun] Loaded from Supabase:', id);
             return;
           }
@@ -517,6 +555,8 @@ export default function BunkerRun() {
     };
     await runDb.jobs.put(newJob);
     setJob(newJob);
+    // Store in localStorage (even without emails, so success page knows job ID)
+    storeJobDetailsForSync(newJob);
     console.log('[BunkerRun] Created new job:', id);
   };
 
@@ -596,10 +636,20 @@ export default function BunkerRun() {
     };
 
     // Use relentless sync with retries
-    await relentlessSync(job, onStatusChange);
+    const success = await relentlessSync(job, onStatusChange);
 
     setIsSyncing(false);
     setSyncMessage(null);
+
+    // Navigate to success page after successful sync
+    if (success) {
+      // Store final job state before navigation
+      storeJobDetailsForSync(job);
+      // Give toast time to show, then navigate
+      setTimeout(() => {
+        navigate('/success');
+      }, 1000);
+    }
   };
 
   // Auto-sync when job is complete and we have connection
