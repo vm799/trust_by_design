@@ -345,6 +345,14 @@ export default function BunkerRun() {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // DEBUG: Log when BunkerRun component loads
+  // This helps verify the route is working and not being hijacked
+  useEffect(() => {
+    console.log('[BunkerRun] Component loaded for ID:', jobId);
+    console.log('[BunkerRun] Current URL:', window.location.href);
+    console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
+  }, [jobId]);
+
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
