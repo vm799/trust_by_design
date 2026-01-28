@@ -264,6 +264,7 @@ export default function BunkerRun() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isJobFinished, setIsJobFinished] = useState(false); // LOOP-BREAKER: Hard exit for completed jobs
 
   const [showCamera, setShowCamera] = useState(false);
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
@@ -331,6 +332,13 @@ export default function BunkerRun() {
     // 1. Check IndexedDB first (instant, works offline)
     const cached = await runDb.jobs.get(id);
     if (cached) {
+      // LOOP-BREAKER: If job is already complete and synced, show success screen
+      if (cached.completedAt && cached.syncStatus === 'synced') {
+        console.log('[BunkerRun] Job already complete, showing success:', id);
+        setJob(cached);
+        setIsJobFinished(true);
+        return;
+      }
       setJob(cached);
       console.log('[BunkerRun] Loaded from cache:', id);
       return;
@@ -352,6 +360,8 @@ export default function BunkerRun() {
         if (response.ok) {
           const [data] = await response.json();
           if (data) {
+            // LOOP-BREAKER: Check if job is already complete in database
+            const isComplete = data.status === 'Complete' || data.status === 'Submitted';
             const loadedJob: RunJob = {
               id: data.id,
               title: data.title || `Job ${id}`,
@@ -361,13 +371,22 @@ export default function BunkerRun() {
               address: data.address || '',
               w3w: data.w3w,
               notes: data.notes || '',
-              currentStep: 'before',
+              currentStep: isComplete ? 'review' : 'before',
               syncStatus: 'synced',
-              lastUpdated: Date.now()
+              lastUpdated: Date.now(),
+              completedAt: data.completed_at,
+              reportUrl: data.report_url
             };
             await runDb.jobs.put(loadedJob);
             setJob(loadedJob);
-            console.log('[BunkerRun] Loaded from Supabase:', id);
+
+            // If already complete, show success screen
+            if (isComplete) {
+              console.log('[BunkerRun] Job already complete in DB, showing success:', id);
+              setIsJobFinished(true);
+            } else {
+              console.log('[BunkerRun] Loaded from Supabase:', id);
+            }
             return;
           }
         }
@@ -458,11 +477,23 @@ export default function BunkerRun() {
 
     if (success) {
       setJob(prev => prev ? { ...prev, syncStatus: 'synced' } : prev);
+      // LOOP-BREAKER: Mark job as finished to trigger success screen
+      if (job.completedAt) {
+        setIsJobFinished(true);
+      }
     } else {
       setJob(prev => prev ? { ...prev, syncStatus: 'failed' } : prev);
     }
 
     setIsSyncing(false);
+  };
+
+  // Handler to finalize job and show success screen
+  const handleFinishJob = async () => {
+    if (!job) return;
+    // Clear the job from active memory so it can't restart
+    await runDb.jobs.delete(job.id);
+    setIsJobFinished(true);
   };
 
   const goToStep = (step: WizardStep) => {
@@ -513,15 +544,127 @@ export default function BunkerRun() {
   }
 
   // ============================================================================
+  // RENDER: SUCCESS SCREEN (LOOP-BREAKER)
+  // ============================================================================
+
+  if (isJobFinished && job) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        {/* Navigation Header */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+            <span className="text-sm text-slate-400">Job Complete</span>
+            <a
+              href="/#/job-log"
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+            >
+              View Job Log
+            </a>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto p-4 pt-20 pb-24">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-600/20 rounded-full mb-4">
+              <span className="text-5xl">✅</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Mission Accomplished!</h1>
+            <p className="text-slate-400">Your job evidence has been synced to the cloud.</p>
+          </div>
+
+          {/* Job Summary */}
+          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-6">
+            <p className="text-xs text-slate-400">JOB</p>
+            <p className="text-lg font-bold text-white">{job.title}</p>
+            <p className="text-sm text-slate-400">{job.client}</p>
+            {job.address && <p className="text-sm text-slate-500">{job.address}</p>}
+            {job.completedAt && (
+              <p className="text-xs text-green-400 mt-2">
+                Completed: {new Date(job.completedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {/* Photos Preview */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {job.beforePhoto && (
+              <div>
+                <p className="text-xs text-slate-400 mb-1">BEFORE</p>
+                <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-700" />
+              </div>
+            )}
+            {job.afterPhoto && (
+              <div>
+                <p className="text-xs text-slate-400 mb-1">AFTER</p>
+                <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-700" />
+              </div>
+            )}
+          </div>
+
+          {/* Report Link */}
+          {job.reportUrl && (
+            <a
+              href={job.reportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-center mb-4"
+            >
+              📄 View Final Report
+            </a>
+          )}
+
+          {job.managerEmail && (
+            <div className="bg-green-900/30 border border-green-700 p-4 rounded-xl mb-6">
+              <p className="text-sm text-green-400">
+                ✓ Report sent to <span className="font-medium text-white">{job.managerEmail}</span>
+              </p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <a
+              href="/#/job-log"
+              className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-center"
+            >
+              View Job Log
+            </a>
+            <a
+              href="/#/create-job"
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-center"
+            >
+              + New Job
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
   // RENDER: MAIN WIZARD
   // ============================================================================
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      {/* Navigation Header with Job Log Link */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <span className="text-sm text-slate-400">Job Runner</span>
+          <a
+            href="/#/job-log"
+            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+          >
+            My Jobs
+          </a>
+        </div>
+      </div>
+
       {/* Sync Status Indicator */}
       <StatusIndicator isOnline={isOnline} syncStatus={job.syncStatus} isSyncing={isSyncing} />
 
-      <div className="max-w-lg mx-auto p-4 pb-24">
+      <div className="max-w-lg mx-auto p-4 pt-16 pb-24">
         {/* Progress Bar */}
         <ProgressBar currentStep={job.currentStep} />
 
@@ -586,6 +729,7 @@ export default function BunkerRun() {
               isSyncing={isSyncing}
               onSync={handleSync}
               onBack={() => goToStep('signature')}
+              onFinish={handleFinishJob}
             />
           )}
         </div>
@@ -774,7 +918,7 @@ function SignatureStep({
   );
 }
 
-function ReviewStep({ job, isOnline, isSyncing, onSync, onBack }: { job: RunJob; isOnline: boolean; isSyncing: boolean; onSync: () => void; onBack: () => void }) {
+function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { job: RunJob; isOnline: boolean; isSyncing: boolean; onSync: () => void; onBack: () => void; onFinish: () => void }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -838,9 +982,9 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack }: { job: RunJob;
           </button>
         )}
         {job.syncStatus === 'synced' && (
-          <a href="/#/create-job" className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-center">
-            ✓ DONE - NEW JOB
-          </a>
+          <button onClick={onFinish} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold">
+            ✓ COMPLETE
+          </button>
         )}
       </div>
     </div>

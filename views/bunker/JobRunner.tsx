@@ -542,6 +542,7 @@ export default function JobRunner() {
     loadError: null,
     gpsLocation: null
   });
+  const [isJobFinished, setIsJobFinished] = useState(false); // LOOP-BREAKER: Hard exit for completed jobs
 
   const [showCamera, setShowCamera] = useState(false);
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
@@ -583,6 +584,13 @@ export default function JobRunner() {
 
       const savedJob = await bunkerDb.jobs.get(jobId);
       if (savedJob) {
+        // LOOP-BREAKER: If job is already complete and synced, show success screen
+        if (savedJob.completedAt && savedJob.syncStatus === 'synced') {
+          console.log('[Bunker] Job already complete, showing success:', jobId);
+          setState(s => ({ ...s, job: savedJob }));
+          setIsJobFinished(true);
+          return;
+        }
         setState(s => ({ ...s, job: savedJob }));
         console.log('[Bunker] Restored job from IndexedDB:', jobId);
       }
@@ -757,6 +765,10 @@ export default function JobRunner() {
         isSyncing: false,
         job: s.job ? { ...s.job, syncStatus: 'synced' } : null
       }));
+      // LOOP-BREAKER: Mark job as finished to trigger success screen
+      if (state.job.completedAt) {
+        setIsJobFinished(true);
+      }
     } else {
       setState(s => ({
         ...s,
@@ -770,7 +782,17 @@ export default function JobRunner() {
     updateJob({ currentStep: step });
   };
 
-  const resetJob = async () => {
+  // Handler to finalize job and show success screen
+  const handleFinishJob = async () => {
+    if (!state.job) return;
+    // Clear the job from active memory so it can't restart
+    await bunkerDb.jobs.delete(state.job.id);
+    localStorage.removeItem('bunker_current_job');
+    setIsJobFinished(true);
+  };
+
+  // Handler to start a new job (clears everything)
+  const startNewJob = async () => {
     if (state.job) {
       await bunkerDb.jobs.delete(state.job.id);
     }
@@ -778,6 +800,7 @@ export default function JobRunner() {
     setState(s => ({ ...s, job: null }));
     setManualJobId('');
     setSignerName('');
+    setIsJobFinished(false);
   };
 
   // ============================================================================
@@ -1110,15 +1133,116 @@ export default function JobRunner() {
             {state.isSyncing ? 'SYNCING...' : 'SYNC NOW'}
           </button>
         )}
-        <button
-          onClick={resetJob}
-          className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
-        >
-          ✓ COMPLETE
-        </button>
+        {state.job?.syncStatus === 'synced' && (
+          <button
+            onClick={handleFinishJob}
+            className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold btn-field"
+          >
+            ✓ COMPLETE
+          </button>
+        )}
       </div>
     </div>
   );
+
+  // ============================================================================
+  // RENDER: SUCCESS SCREEN (LOOP-BREAKER)
+  // ============================================================================
+
+  if (isJobFinished && state.job) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        {/* Navigation Header */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+            <span className="text-sm text-slate-400">Job Complete</span>
+            <a
+              href="/#/job-log"
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+            >
+              View Job Log
+            </a>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto p-4 pt-20 pb-24">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-600/20 rounded-full mb-4">
+              <span className="text-5xl">✅</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Mission Accomplished!</h1>
+            <p className="text-slate-400">Your job evidence has been synced to the cloud.</p>
+          </div>
+
+          {/* Job Summary */}
+          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-6">
+            <p className="text-xs text-slate-400">JOB</p>
+            <p className="text-lg font-bold text-white">{state.job.title}</p>
+            <p className="text-sm text-slate-400">{state.job.client}</p>
+            {state.job.address && <p className="text-sm text-slate-500">{state.job.address}</p>}
+            {state.job.completedAt && (
+              <p className="text-xs text-green-400 mt-2">
+                Completed: {new Date(state.job.completedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {/* Photos Preview */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {state.job.beforePhoto && (
+              <div>
+                <p className="text-xs text-slate-400 mb-1">BEFORE</p>
+                <img src={state.job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-700" />
+              </div>
+            )}
+            {state.job.afterPhoto && (
+              <div>
+                <p className="text-xs text-slate-400 mb-1">AFTER</p>
+                <img src={state.job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-700" />
+              </div>
+            )}
+          </div>
+
+          {/* Report Link */}
+          {state.job.reportUrl && (
+            <a
+              href={state.job.reportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-center mb-4"
+            >
+              📄 View Final Report
+            </a>
+          )}
+
+          {state.job.managerEmail && (
+            <div className="bg-green-900/30 border border-green-700 p-4 rounded-xl mb-6">
+              <p className="text-sm text-green-400">
+                ✓ Report sent to <span className="font-medium text-white">{state.job.managerEmail}</span>
+              </p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <a
+              href="/#/job-log"
+              className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-center"
+            >
+              View Job Log
+            </a>
+            <button
+              onClick={startNewJob}
+              className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold"
+            >
+              + New Job
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================================================
   // MAIN RENDER
@@ -1126,13 +1250,26 @@ export default function JobRunner() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      {/* Navigation Header with Job Log Link */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <span className="text-sm text-slate-400">Bunker Mode</span>
+          <a
+            href="/#/job-log"
+            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+          >
+            My Jobs
+          </a>
+        </div>
+      </div>
+
       <SyncStatus
         isOnline={state.isOnline}
         syncStatus={state.job?.syncStatus || 'pending'}
         isSyncing={state.isSyncing}
       />
 
-      <div className="max-w-lg mx-auto p-4 pb-24">
+      <div className="max-w-lg mx-auto p-4 pt-16 pb-24">
         {/* Progress Bar */}
         {state.job && (
           <ProgressBar currentStep={state.job.currentStep} />
