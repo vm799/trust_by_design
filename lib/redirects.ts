@@ -80,6 +80,28 @@ export const getReportUrl = (jobId: string): string => {
 };
 
 /**
+ * Get bunker-proof run link for technicians
+ * NO AUTH REQUIRED - Job ID is the only permission needed
+ * Works offline, syncs when back online
+ *
+ * @param jobId - Job ID (e.g., 'JOB-ABC123')
+ * @returns URL like https://app.com/#/run/JOB-ABC123
+ */
+export const getBunkerRunUrl = (jobId: string): string => {
+  // URL encode jobId to prevent injection attacks
+  const encodedId = encodeURIComponent(jobId);
+  return `${getSecureOrigin()}/#/run/${encodedId}`;
+};
+
+/**
+ * Get quick create job URL for managers
+ * Creates a job and returns a bunker link for technicians
+ */
+export const getQuickCreateUrl = (): string => {
+  return `${getSecureOrigin()}/#/create-job`;
+};
+
+/**
  * Validate if a URL is in the allowlist
  */
 export const isAllowedRedirect = (url: string): boolean => {

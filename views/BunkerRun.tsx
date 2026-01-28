@@ -21,6 +21,16 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
+// ============================================================================
+// LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
+// ============================================================================
+const STORAGE_KEYS = {
+  MANAGER_EMAIL: 'bunker_manager_email',
+  CLIENT_EMAIL: 'bunker_client_email',
+  JOB_ID: 'bunker_current_job_id',
+  JOB_TITLE: 'bunker_job_title',
+} as const;
 import Dexie, { type Table } from 'dexie';
 
 // ============================================================================
@@ -90,6 +100,92 @@ const runDb = new RunDatabase();
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// ============================================================================
+// NETWORK PING TEST - Don't trust navigator.onLine alone
+// ============================================================================
+
+const RETRY_DELAYS = [1000, 2000, 4000, 8000, 15000, 30000]; // Exponential backoff
+const MAX_RETRIES = 6;
+
+/**
+ * Ping Supabase to verify REAL network connectivity
+ * navigator.onLine can lie (cached WiFi, captive portals, etc.)
+ */
+async function checkConnection(): Promise<boolean> {
+  if (!SUPABASE_URL) return false;
+
+  try {
+    // Ping Supabase health endpoint with short timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+      method: 'HEAD',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY || '',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    return response.ok || response.status === 400; // 400 = auth required but reachable
+  } catch (error) {
+    console.log('[BunkerRun] Ping failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Relentless Sync - Retry with exponential backoff
+ * Won't give up until data is safe in the cloud
+ */
+async function relentlessSync(
+  job: RunJob,
+  onStatusChange: (status: SyncStatus, message?: string) => void,
+  retryCount = 0
+): Promise<boolean> {
+  // First, verify we have REAL network
+  const isConnected = await checkConnection();
+
+  if (!isConnected) {
+    if (retryCount < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
+      console.log(`[BunkerRun] No connection, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
+      onStatusChange('pending', `Waiting for connection... (${retryCount + 1}/${MAX_RETRIES})`);
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return relentlessSync(job, onStatusChange, retryCount + 1);
+    } else {
+      console.log('[BunkerRun] Max retries reached, will sync later');
+      onStatusChange('failed', 'No connection - will sync when online');
+      return false;
+    }
+  }
+
+  // We have connection - attempt sync
+  onStatusChange('syncing', 'Uploading...');
+
+  const success = await syncJobToCloud(job);
+
+  if (success) {
+    onStatusChange('synced', 'Data safe in cloud!');
+    return true;
+  } else {
+    // Sync failed even with connection - retry
+    if (retryCount < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
+      console.log(`[BunkerRun] Sync failed, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
+      onStatusChange('pending', `Retrying sync... (${retryCount + 1}/${MAX_RETRIES})`);
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return relentlessSync(job, onStatusChange, retryCount + 1);
+    } else {
+      onStatusChange('failed', 'Sync failed - tap to retry');
+      return false;
+    }
+  }
+}
 
 // ============================================================================
 // IMAGE COMPRESSION
@@ -199,6 +295,30 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
   }
 }
 
+/**
+ * Store job details in localStorage for the success page
+ * This enables the Public-Private handshake - sync knows where to send report
+ */
+function storeJobDetailsForSync(job: RunJob): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.JOB_ID, job.id);
+    localStorage.setItem(STORAGE_KEYS.JOB_TITLE, job.title);
+    if (job.managerEmail) {
+      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, job.managerEmail);
+    }
+    if (job.clientEmail) {
+      localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, job.clientEmail);
+    }
+    console.log('[BunkerRun] Stored job details for sync:', {
+      id: job.id,
+      managerEmail: job.managerEmail,
+      clientEmail: job.clientEmail,
+    });
+  } catch (error) {
+    console.warn('[BunkerRun] Failed to store job details:', error);
+  }
+}
+
 async function triggerReportGeneration(job: RunJob): Promise<void> {
   if (!SUPABASE_URL || !job.managerEmail) return;
 
@@ -259,31 +379,73 @@ export default function BunkerRun() {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // DEBUG: Log when BunkerRun component loads
+  // This helps verify the route is working and not being hijacked
+  useEffect(() => {
+    console.log('[BunkerRun] Component loaded for ID:', jobId);
+    console.log('[BunkerRun] Current URL:', window.location.href);
+    console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
+  }, [jobId]);
+
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isJobFinished, setIsJobFinished] = useState(false); // LOOP-BREAKER: Hard exit for completed jobs
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [showCamera, setShowCamera] = useState(false);
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
   const [signerName, setSignerName] = useState('');
   const [techName, setTechName] = useState('');
 
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  // Online/offline detection
+  // Online/offline detection with REAL ping test
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = async () => {
+      // Don't trust navigator.onLine alone - verify with ping
+      const reallyOnline = await checkConnection();
+      setIsOnline(reallyOnline);
+
+      if (reallyOnline) {
+        setToastMessage({ text: 'Connection restored!', type: 'success' });
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setToastMessage({ text: 'You are offline', type: 'info' });
+    };
+
+    // Initial connection check
+    checkConnection().then(setIsOnline);
+
+    // Periodic connection check every 30 seconds
+    const intervalId = setInterval(async () => {
+      const connected = await checkConnection();
+      if (connected !== isOnline) {
+        setIsOnline(connected);
+      }
+    }, 30000);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
+      clearInterval(intervalId);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
@@ -340,6 +502,8 @@ export default function BunkerRun() {
         return;
       }
       setJob(cached);
+      // Store emails in localStorage for sync handshake
+      storeJobDetailsForSync(cached);
       console.log('[BunkerRun] Loaded from cache:', id);
       return;
     }
@@ -379,8 +543,10 @@ export default function BunkerRun() {
             };
             await runDb.jobs.put(loadedJob);
             setJob(loadedJob);
+            // Store emails in localStorage for sync handshake
+            storeJobDetailsForSync(loadedJob);
 
-            // If already complete, show success screen
+            // If already complete, show success screen (LOOP-BREAKER)
             if (isComplete) {
               console.log('[BunkerRun] Job already complete in DB, showing success:', id);
               setIsJobFinished(true);
@@ -408,6 +574,8 @@ export default function BunkerRun() {
     };
     await runDb.jobs.put(newJob);
     setJob(newJob);
+    // Store in localStorage (even without emails, so success page knows job ID)
+    storeJobDetailsForSync(newJob);
     console.log('[BunkerRun] Created new job:', id);
   };
 
@@ -473,28 +641,55 @@ export default function BunkerRun() {
     if (!job || isSyncing) return;
 
     setIsSyncing(true);
-    const success = await syncJobToCloud(job);
+    setSyncMessage('Checking connection...');
 
-    if (success) {
-      setJob(prev => prev ? { ...prev, syncStatus: 'synced' } : prev);
-      // LOOP-BREAKER: Mark job as finished to trigger success screen
-      if (job.completedAt) {
-        setIsJobFinished(true);
+    const onStatusChange = (status: SyncStatus, message?: string) => {
+      setSyncMessage(message || null);
+      setJob(prev => prev ? { ...prev, syncStatus: status } : prev);
+
+      if (status === 'synced') {
+        setToastMessage({ text: 'Data synced to cloud!', type: 'success' });
+      } else if (status === 'failed') {
+        setToastMessage({ text: message || 'Sync failed', type: 'error' });
       }
-    } else {
-      setJob(prev => prev ? { ...prev, syncStatus: 'failed' } : prev);
-    }
+    };
+
+    // Use relentless sync with retries
+    const success = await relentlessSync(job, onStatusChange);
 
     setIsSyncing(false);
+    setSyncMessage(null);
+
+    // Navigate to success page after successful sync
+    if (success) {
+      // Store final job state before navigation
+      storeJobDetailsForSync(job);
+      // Give toast time to show, then navigate
+      setTimeout(() => {
+        navigate('/success');
+      }, 1000);
+    }
   };
 
-  // Handler to finalize job and show success screen
+  // Handler to finalize job and show success screen (LOOP-BREAKER)
   const handleFinishJob = async () => {
     if (!job) return;
     // Clear the job from active memory so it can't restart
     await runDb.jobs.delete(job.id);
     setIsJobFinished(true);
   };
+
+  // Auto-sync when job is complete and we have connection
+  useEffect(() => {
+    if (job?.completedAt && job.syncStatus === 'pending' && !isSyncing) {
+      // Check connection and sync automatically
+      checkConnection().then(connected => {
+        if (connected) {
+          handleSync();
+        }
+      });
+    }
+  }, [job?.completedAt, job?.syncStatus]);
 
   const goToStep = (step: WizardStep) => {
     updateJob({ currentStep: step });
@@ -662,7 +857,10 @@ export default function BunkerRun() {
       </div>
 
       {/* Sync Status Indicator */}
-      <StatusIndicator isOnline={isOnline} syncStatus={job.syncStatus} isSyncing={isSyncing} />
+      <StatusIndicator isOnline={isOnline} syncStatus={job.syncStatus} isSyncing={isSyncing} message={syncMessage} />
+
+      {/* Toast Notification */}
+      {toastMessage && <Toast message={toastMessage.text} type={toastMessage.type} />}
 
       <div className="max-w-lg mx-auto p-4 pt-16 pb-24">
         {/* Progress Bar */}
@@ -742,7 +940,7 @@ export default function BunkerRun() {
 // SUB-COMPONENTS
 // ============================================================================
 
-function StatusIndicator({ isOnline, syncStatus, isSyncing }: { isOnline: boolean; syncStatus: SyncStatus; isSyncing: boolean }) {
+function StatusIndicator({ isOnline, syncStatus, isSyncing, message }: { isOnline: boolean; syncStatus: SyncStatus; isSyncing: boolean; message?: string | null }) {
   const getColor = () => {
     if (!isOnline) return 'bg-red-500';
     if (isSyncing) return 'bg-yellow-500 animate-pulse';
@@ -752,10 +950,11 @@ function StatusIndicator({ isOnline, syncStatus, isSyncing }: { isOnline: boolea
   };
 
   const getText = () => {
+    if (message) return message;
     if (!isOnline) return 'OFFLINE';
     if (isSyncing) return 'SYNCING...';
     if (syncStatus === 'synced') return 'SYNCED ✓';
-    if (syncStatus === 'failed') return 'SYNC FAILED';
+    if (syncStatus === 'failed') return 'TAP TO RETRY';
     return 'PENDING';
   };
 
@@ -763,6 +962,27 @@ function StatusIndicator({ isOnline, syncStatus, isSyncing }: { isOnline: boolea
     <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-700">
       <div className={`w-3 h-3 rounded-full ${getColor()}`} />
       <span className="text-xs font-medium text-slate-300">{getText()}</span>
+    </div>
+  );
+}
+
+function Toast({ message, type }: { message: string; type: 'success' | 'error' | 'info' }) {
+  const bgColor = {
+    success: 'bg-green-600',
+    error: 'bg-red-600',
+    info: 'bg-blue-600',
+  }[type];
+
+  const icon = {
+    success: '✓',
+    error: '✗',
+    info: 'ℹ',
+  }[type];
+
+  return (
+    <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 ${bgColor} text-white rounded-xl shadow-lg animate-in`}>
+      <span>{icon}</span>
+      <span className="text-sm font-medium">{message}</span>
     </div>
   );
 }
