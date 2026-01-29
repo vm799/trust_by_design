@@ -144,7 +144,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         }
 
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from('users')
           .select('workspace_id')
           .eq('id', userId)
           .single();
