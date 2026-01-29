@@ -66,12 +66,12 @@ const Modal: React.FC<ModalProps> = ({
         onClick={onClose}
       />
 
-      {/* Modal Content */}
+      {/* Modal Content - Theme-aware */}
       <div
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-slate-900 border border-white/10 rounded-2xl
-          shadow-2xl shadow-black/50
+          bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl
+          shadow-2xl shadow-slate-300/50 dark:shadow-black/50
           animate-in zoom-in-95 fade-in
         `}
         role="dialog"
@@ -80,21 +80,21 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* Header */}
         {(title || showClose) && (
-          <div className="flex items-start justify-between p-5 border-b border-white/5">
+          <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/5">
             <div>
               {title && (
-                <h2 id="modal-title" className="text-lg font-semibold text-white">
+                <h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-white">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="text-sm text-slate-400 mt-1">{description}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{description}</p>
               )}
             </div>
             {showClose && (
               <button
                 onClick={onClose}
-                className="min-w-[48px] min-h-[48px] p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors flex items-center justify-center"
+                className="min-w-[48px] min-h-[48px] p-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors flex items-center justify-center"
                 aria-label="Close modal"
               >
                 <span className="material-symbols-outlined">close</span>

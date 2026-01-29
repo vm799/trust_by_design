@@ -25,11 +25,12 @@ const Card: React.FC<CardProps> = ({
 }) => {
   const baseClasses = 'rounded-2xl transition-all';
 
+  // Theme-aware variants: light mode uses white bg with dark text, dark mode uses slate bg with light text
   const variantClasses = {
-    default: 'bg-slate-900 border border-white/5',
-    outlined: 'bg-transparent border border-white/10',
-    elevated: 'bg-slate-900 border border-white/5 shadow-xl shadow-black/20',
-    interactive: 'bg-slate-900 border border-white/5 hover:border-white/20 hover:bg-slate-800/50 cursor-pointer',
+    default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white',
+    outlined: 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white',
+    elevated: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 text-slate-900 dark:text-white',
+    interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 hover:border-slate-400 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer text-slate-900 dark:text-white',
   };
 
   const paddingClasses = {
