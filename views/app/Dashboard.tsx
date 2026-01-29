@@ -6,12 +6,12 @@
  * Phase C: Dashboard Redesign
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useAuth } from '../../lib/AuthContext';
-import { getJobs, getClients, getTechnicians } from '../../hooks/useWorkspaceData';
+import { useWorkspaceData } from '../../hooks/useWorkspaceData';
 import { Job, Client, Technician } from '../../types';
 import { route, ROUTES } from '../../lib/routes';
 
@@ -35,31 +35,9 @@ interface AttentionItem {
 
 const Dashboard: React.FC = () => {
   const { userId, userEmail } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [jobsData, clientsData, techsData] = await Promise.all([
-          getJobs(),
-          getClients(),
-          getTechnicians(),
-        ]);
-        setJobs(jobsData);
-        setClients(clientsData);
-        setTechnicians(techsData);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  // Use reactive DataContext hook instead of deprecated standalone functions
+  // This ensures dashboard updates when data changes elsewhere in the app
+  const { jobs, clients, technicians, isLoading: loading } = useWorkspaceData();
 
   // Calculate stats with clickable links
   const stats: QuickStat[] = [

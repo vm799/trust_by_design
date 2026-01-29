@@ -53,18 +53,24 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
-  // Get enriched link data with job and tech info
+  // FIX: Create Map-based lookups for O(1) access instead of O(n) find() calls
+  // This fixes the N+1 performance issue that caused slow loading with many links
+  const jobsById = useMemo(() => new Map(jobs.map(j => [j.id, j])), [jobs]);
+  const techsById = useMemo(() => new Map(technicians.map(t => [t.id, t])), [technicians]);
+  const clientsById = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
+
+  // Get enriched link data with job and tech info using O(1) Map lookups
   const enrichedLinks = useMemo(() => {
     return links.map(link => {
-      const job = jobs.find(j => j.id === link.job_id);
-      const tech = job ? technicians.find(t => t.id === job.techId) : null;
-      const client = job ? clients.find(c => c.id === job.clientId) : null;
+      const job = jobsById.get(link.job_id);
+      const tech = job ? techsById.get(job.techId) : undefined;
+      const client = job ? clientsById.get(job.clientId) : undefined;
       const sentAge = link.sent_at
         ? Math.floor((Date.now() - new Date(link.sent_at).getTime()) / (1000 * 60 * 60))
         : 0;
       return { link, job, tech, client, sentAge, isUrgent: sentAge >= 4 };
     }).filter(item => item.job);
-  }, [links, jobs, technicians, clients]);
+  }, [links, jobsById, techsById, clientsById]);
 
   const handleSelectAll = () => {
     if (selectedJobs.size === enrichedLinks.length) {
