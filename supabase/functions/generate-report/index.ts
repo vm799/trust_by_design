@@ -1,16 +1,17 @@
 /**
  * generate-report Edge Function
  *
- * Cloud-triggered PDF report generation for completed jobs.
- * Called when a bunker job syncs successfully.
+ * SECURE PDF report generation for completed jobs.
+ * All data is VERIFIED from the database - never trusts request payload.
  *
  * Flow:
- * 1. Receive job data (photos, signature, metadata)
- * 2. Generate professional PDF with timestamps + GPS overlay
- * 3. Upload PDF to Supabase Storage
- * 4. Send email to manager with download link
+ * 1. Receive jobId from request
+ * 2. VERIFY job exists in bunker_jobs table
+ * 3. Generate PDF with DATABASE data (not request data)
+ * 4. Upload PDF to Supabase Storage
+ * 5. Send email to manager with download link
  *
- * @author Claude Code - Bunker-Proof MVP
+ * @author Claude Code - Security Hardened
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -27,30 +28,7 @@ const corsHeaders = {
 
 interface ReportRequest {
   jobId: string;
-  title: string;
-  client: string;
-  address?: string;
-  managerEmail: string;
-  managerName?: string;
-  technicianName?: string;
-  beforePhoto?: {
-    dataUrl: string;
-    timestamp: string;
-    lat?: number;
-    lng?: number;
-  };
-  afterPhoto?: {
-    dataUrl: string;
-    timestamp: string;
-    lat?: number;
-    lng?: number;
-  };
-  signature?: {
-    dataUrl: string;
-    timestamp: string;
-    signerName: string;
-  };
-  completedAt: string;
+  // All other data will be fetched from database for verification
 }
 
 serve(async (req) => {
@@ -64,14 +42,53 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
+    console.log('[GenerateReport] RESEND_API_KEY configured:', !!resendApiKey);
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const data: ReportRequest = await req.json();
+    const requestData: ReportRequest = await req.json();
+    const { jobId } = requestData;
 
-    console.log(`[GenerateReport] Processing job: ${data.jobId}`);
+    if (!jobId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'jobId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[GenerateReport] Processing job: ${jobId}`);
 
     // =========================================================================
-    // STEP 1: Generate PDF
+    // STEP 0: VERIFY JOB EXISTS IN DATABASE (CRITICAL SECURITY)
+    // =========================================================================
+
+    const { data: job, error: jobError } = await supabase
+      .from('bunker_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single();
+
+    if (jobError || !job) {
+      console.error('[GenerateReport] Job not found:', jobId, jobError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: `Job not found: ${jobId}` }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[GenerateReport] Job verified from database:', {
+      id: job.id,
+      title: job.title,
+      client: job.client,
+      status: job.status,
+      hasBeforePhoto: !!job.before_photo_data,
+      hasAfterPhoto: !!job.after_photo_data,
+      hasSignature: !!job.signature_data,
+      managerEmail: job.manager_email,
+    });
+
+    // =========================================================================
+    // STEP 1: Generate PDF with VERIFIED DATABASE DATA
     // =========================================================================
 
     const pdfDoc = await PDFDocument.create();
@@ -86,22 +103,26 @@ serve(async (req) => {
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
     let yPosition = pageHeight - margin;
 
+    // Track what evidence was included
+    let beforePhotoIncluded = false;
+    let afterPhotoIncluded = false;
+    let signatureIncluded = false;
+
     // -------------------------------------------------------------------------
     // HEADER
     // -------------------------------------------------------------------------
 
-    // Title
     page.drawText('JOB COMPLETION REPORT', {
       x: margin,
       y: yPosition,
       size: 24,
       font: helveticaBold,
-      color: rgb(0.13, 0.38, 0.85), // Primary blue
+      color: rgb(0.13, 0.38, 0.85),
     });
     yPosition -= 35;
 
-    // Job ID and Date
-    page.drawText(`Job ID: ${data.jobId}`, {
+    // Job ID and Date (from DATABASE)
+    page.drawText(`Job ID: ${job.id}`, {
       x: margin,
       y: yPosition,
       size: 12,
@@ -109,14 +130,17 @@ serve(async (req) => {
       color: rgb(0.2, 0.2, 0.2),
     });
 
-    const completedDate = new Date(data.completedAt).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const completedDate = job.completed_at
+      ? new Date(job.completed_at).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : 'In Progress';
+
     page.drawText(`Completed: ${completedDate}`, {
       x: pageWidth - margin - 250,
       y: yPosition,
@@ -126,18 +150,21 @@ serve(async (req) => {
     });
     yPosition -= 20;
 
-    // Client and Address
-    page.drawText(`Client: ${data.client}`, {
-      x: margin,
-      y: yPosition,
-      size: 11,
-      font: helvetica,
-      color: rgb(0.2, 0.2, 0.2),
-    });
-    yPosition -= 15;
+    // Client (from DATABASE)
+    if (job.client) {
+      page.drawText(`Client: ${job.client}`, {
+        x: margin,
+        y: yPosition,
+        size: 11,
+        font: helvetica,
+        color: rgb(0.2, 0.2, 0.2),
+      });
+      yPosition -= 15;
+    }
 
-    if (data.address) {
-      page.drawText(`Location: ${data.address}`, {
+    // Address (from DATABASE)
+    if (job.address) {
+      page.drawText(`Location: ${job.address}`, {
         x: margin,
         y: yPosition,
         size: 10,
@@ -147,8 +174,9 @@ serve(async (req) => {
       yPosition -= 15;
     }
 
-    if (data.technicianName) {
-      page.drawText(`Technician: ${data.technicianName}`, {
+    // Technician (from DATABASE)
+    if (job.technician_name) {
+      page.drawText(`Technician: ${job.technician_name}`, {
         x: margin,
         y: yPosition,
         size: 10,
@@ -169,7 +197,7 @@ serve(async (req) => {
     yPosition -= 30;
 
     // -------------------------------------------------------------------------
-    // PHOTOS SECTION
+    // PHOTOS SECTION (from DATABASE)
     // -------------------------------------------------------------------------
 
     page.drawText('EVIDENCE PHOTOS', {
@@ -184,11 +212,13 @@ serve(async (req) => {
     const photoWidth = 240;
     const photoHeight = 180;
 
-    // Before Photo
-    if (data.beforePhoto?.dataUrl) {
+    // Before Photo (from DATABASE: before_photo_data)
+    if (job.before_photo_data) {
       try {
-        const beforeImageBytes = base64ToBytes(data.beforePhoto.dataUrl);
-        const beforeImage = data.beforePhoto.dataUrl.includes('image/png')
+        console.log('[GenerateReport] Embedding before photo from database...');
+        const beforeImageBytes = base64ToBytes(job.before_photo_data);
+        const imageType = detectImageType(job.before_photo_data);
+        const beforeImage = imageType === 'png'
           ? await pdfDoc.embedPng(beforeImageBytes)
           : await pdfDoc.embedJpg(beforeImageBytes);
 
@@ -197,7 +227,7 @@ serve(async (req) => {
           y: yPosition,
           size: 10,
           font: helveticaBold,
-          color: rgb(0.9, 0.3, 0.2), // Red accent
+          color: rgb(0.9, 0.3, 0.2),
         });
         yPosition -= 5;
 
@@ -208,18 +238,21 @@ serve(async (req) => {
           height: photoHeight,
         });
 
-        // Timestamp overlay info below photo
-        const beforeTimestamp = new Date(data.beforePhoto.timestamp).toLocaleString();
-        page.drawText(`Captured: ${beforeTimestamp}`, {
-          x: margin,
-          y: yPosition - photoHeight - 12,
-          size: 8,
-          font: helvetica,
-          color: rgb(0.5, 0.5, 0.5),
-        });
+        // Timestamp from DATABASE
+        if (job.before_photo_timestamp) {
+          const beforeTimestamp = new Date(job.before_photo_timestamp).toLocaleString();
+          page.drawText(`Captured: ${beforeTimestamp}`, {
+            x: margin,
+            y: yPosition - photoHeight - 12,
+            size: 8,
+            font: helvetica,
+            color: rgb(0.5, 0.5, 0.5),
+          });
+        }
 
-        if (data.beforePhoto.lat && data.beforePhoto.lng) {
-          page.drawText(`GPS: ${data.beforePhoto.lat.toFixed(6)}, ${data.beforePhoto.lng.toFixed(6)}`, {
+        // GPS from DATABASE
+        if (job.before_photo_lat && job.before_photo_lng) {
+          page.drawText(`GPS: ${Number(job.before_photo_lat).toFixed(6)}, ${Number(job.before_photo_lng).toFixed(6)}`, {
             x: margin,
             y: yPosition - photoHeight - 22,
             size: 8,
@@ -227,16 +260,38 @@ serve(async (req) => {
             color: rgb(0.5, 0.5, 0.5),
           });
         }
+
+        beforePhotoIncluded = true;
+        console.log('[GenerateReport] Before photo embedded successfully');
       } catch (e) {
-        console.error('[GenerateReport] Failed to embed before photo:', e);
+        console.error('[GenerateReport] FAILED to embed before photo:', e);
+        // Draw placeholder for failed photo
+        page.drawText('BEFORE PHOTO - FAILED TO LOAD', {
+          x: margin,
+          y: yPosition - photoHeight / 2,
+          size: 10,
+          font: helvetica,
+          color: rgb(0.8, 0.2, 0.2),
+        });
       }
+    } else {
+      console.log('[GenerateReport] No before photo in database');
+      page.drawText('NO BEFORE PHOTO', {
+        x: margin,
+        y: yPosition - 10,
+        size: 10,
+        font: helvetica,
+        color: rgb(0.6, 0.6, 0.6),
+      });
     }
 
-    // After Photo (side by side)
-    if (data.afterPhoto?.dataUrl) {
+    // After Photo (from DATABASE: after_photo_data)
+    if (job.after_photo_data) {
       try {
-        const afterImageBytes = base64ToBytes(data.afterPhoto.dataUrl);
-        const afterImage = data.afterPhoto.dataUrl.includes('image/png')
+        console.log('[GenerateReport] Embedding after photo from database...');
+        const afterImageBytes = base64ToBytes(job.after_photo_data);
+        const imageType = detectImageType(job.after_photo_data);
+        const afterImage = imageType === 'png'
           ? await pdfDoc.embedPng(afterImageBytes)
           : await pdfDoc.embedJpg(afterImageBytes);
 
@@ -247,7 +302,7 @@ serve(async (req) => {
           y: yPosition,
           size: 10,
           font: helveticaBold,
-          color: rgb(0.2, 0.7, 0.3), // Green accent
+          color: rgb(0.2, 0.7, 0.3),
         });
 
         page.drawImage(afterImage, {
@@ -257,18 +312,21 @@ serve(async (req) => {
           height: photoHeight,
         });
 
-        // Timestamp overlay info below photo
-        const afterTimestamp = new Date(data.afterPhoto.timestamp).toLocaleString();
-        page.drawText(`Captured: ${afterTimestamp}`, {
-          x: afterX,
-          y: yPosition - photoHeight - 12,
-          size: 8,
-          font: helvetica,
-          color: rgb(0.5, 0.5, 0.5),
-        });
+        // Timestamp from DATABASE
+        if (job.after_photo_timestamp) {
+          const afterTimestamp = new Date(job.after_photo_timestamp).toLocaleString();
+          page.drawText(`Captured: ${afterTimestamp}`, {
+            x: afterX,
+            y: yPosition - photoHeight - 12,
+            size: 8,
+            font: helvetica,
+            color: rgb(0.5, 0.5, 0.5),
+          });
+        }
 
-        if (data.afterPhoto.lat && data.afterPhoto.lng) {
-          page.drawText(`GPS: ${data.afterPhoto.lat.toFixed(6)}, ${data.afterPhoto.lng.toFixed(6)}`, {
+        // GPS from DATABASE
+        if (job.after_photo_lat && job.after_photo_lng) {
+          page.drawText(`GPS: ${Number(job.after_photo_lat).toFixed(6)}, ${Number(job.after_photo_lng).toFixed(6)}`, {
             x: afterX,
             y: yPosition - photoHeight - 22,
             size: 8,
@@ -276,19 +334,23 @@ serve(async (req) => {
             color: rgb(0.5, 0.5, 0.5),
           });
         }
+
+        afterPhotoIncluded = true;
+        console.log('[GenerateReport] After photo embedded successfully');
       } catch (e) {
-        console.error('[GenerateReport] Failed to embed after photo:', e);
+        console.error('[GenerateReport] FAILED to embed after photo:', e);
       }
+    } else {
+      console.log('[GenerateReport] No after photo in database');
     }
 
     yPosition -= photoHeight + 50;
 
     // -------------------------------------------------------------------------
-    // SIGNATURE SECTION
+    // SIGNATURE SECTION (from DATABASE)
     // -------------------------------------------------------------------------
 
-    if (data.signature) {
-      // Divider
+    if (job.signature_data) {
       page.drawLine({
         start: { x: margin, y: yPosition },
         end: { x: pageWidth - margin, y: yPosition },
@@ -306,65 +368,75 @@ serve(async (req) => {
       });
       yPosition -= 20;
 
-      if (data.signature.dataUrl) {
-        try {
-          const sigBytes = base64ToBytes(data.signature.dataUrl);
-          const sigImage = await pdfDoc.embedPng(sigBytes);
+      try {
+        console.log('[GenerateReport] Embedding signature from database...');
+        const sigBytes = base64ToBytes(job.signature_data);
+        const sigImage = await pdfDoc.embedPng(sigBytes);
 
-          page.drawImage(sigImage, {
-            x: margin,
-            y: yPosition - 60,
-            width: 200,
-            height: 60,
-          });
-        } catch (e) {
-          console.error('[GenerateReport] Failed to embed signature:', e);
-        }
+        page.drawImage(sigImage, {
+          x: margin,
+          y: yPosition - 60,
+          width: 200,
+          height: 60,
+        });
+
+        signatureIncluded = true;
+        console.log('[GenerateReport] Signature embedded successfully');
+      } catch (e) {
+        console.error('[GenerateReport] FAILED to embed signature:', e);
       }
 
-      page.drawText(`Signed by: ${data.signature.signerName}`, {
-        x: margin,
-        y: yPosition - 75,
-        size: 10,
-        font: helvetica,
-        color: rgb(0.3, 0.3, 0.3),
-      });
+      if (job.signer_name) {
+        page.drawText(`Signed by: ${job.signer_name}`, {
+          x: margin,
+          y: yPosition - 75,
+          size: 10,
+          font: helvetica,
+          color: rgb(0.3, 0.3, 0.3),
+        });
+      }
 
-      const sigTimestamp = new Date(data.signature.timestamp).toLocaleString();
-      page.drawText(`Date: ${sigTimestamp}`, {
-        x: margin,
-        y: yPosition - 88,
-        size: 9,
-        font: helvetica,
-        color: rgb(0.5, 0.5, 0.5),
-      });
+      if (job.signature_timestamp) {
+        const sigTimestamp = new Date(job.signature_timestamp).toLocaleString();
+        page.drawText(`Date: ${sigTimestamp}`, {
+          x: margin,
+          y: yPosition - 88,
+          size: 9,
+          font: helvetica,
+          color: rgb(0.5, 0.5, 0.5),
+        });
+      }
 
       yPosition -= 110;
     }
 
     // -------------------------------------------------------------------------
-    // VERIFICATION BADGE
+    // STATUS BADGE (Honest - not fake "verified")
     // -------------------------------------------------------------------------
 
-    // Draw verification badge at bottom
     const badgeY = margin + 30;
+    const hasEvidence = beforePhotoIncluded || afterPhotoIncluded || signatureIncluded;
 
     page.drawRectangle({
       x: margin,
       y: badgeY,
       width: pageWidth - margin * 2,
       height: 40,
-      color: rgb(0.95, 0.98, 0.95),
-      borderColor: rgb(0.2, 0.7, 0.3),
+      color: hasEvidence ? rgb(0.95, 0.98, 0.95) : rgb(0.98, 0.95, 0.95),
+      borderColor: hasEvidence ? rgb(0.2, 0.7, 0.3) : rgb(0.7, 0.2, 0.2),
       borderWidth: 1,
     });
 
-    page.drawText('✓ VERIFIED IMMUTABLE EVIDENCE', {
+    const badgeText = hasEvidence
+      ? `Evidence: ${[beforePhotoIncluded && 'Before Photo', afterPhotoIncluded && 'After Photo', signatureIncluded && 'Signature'].filter(Boolean).join(' • ')}`
+      : 'NO EVIDENCE PHOTOS AVAILABLE';
+
+    page.drawText(badgeText, {
       x: margin + 15,
       y: badgeY + 15,
-      size: 12,
+      size: 10,
       font: helveticaBold,
-      color: rgb(0.2, 0.6, 0.3),
+      color: hasEvidence ? rgb(0.2, 0.6, 0.3) : rgb(0.6, 0.2, 0.2),
     });
 
     page.drawText(`Report generated: ${new Date().toISOString()}`, {
@@ -378,19 +450,19 @@ serve(async (req) => {
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
 
-    console.log(`[GenerateReport] PDF generated: ${pdfBytes.length} bytes`);
+    console.log(`[GenerateReport] PDF generated: ${pdfBytes.length} bytes, evidence: before=${beforePhotoIncluded}, after=${afterPhotoIncluded}, sig=${signatureIncluded}`);
 
     // =========================================================================
     // STEP 2: Upload to Supabase Storage
     // =========================================================================
 
-    const fileName = `reports/${data.jobId}_${Date.now()}.pdf`;
+    const fileName = `reports/${job.id}_${Date.now()}.pdf`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('job-reports')
       .upload(fileName, pdfBytes, {
         contentType: 'application/pdf',
-        cacheControl: '31536000', // 1 year cache
+        cacheControl: '31536000',
       });
 
     if (uploadError) {
@@ -411,10 +483,30 @@ serve(async (req) => {
     // =========================================================================
 
     let emailSent = false;
+    let emailError = null;
 
-    if (resendApiKey && data.managerEmail) {
+    const managerEmail = job.manager_email;
+
+    if (!resendApiKey) {
+      console.error('[GenerateReport] RESEND_API_KEY not configured!');
+      emailError = 'RESEND_API_KEY not configured';
+    } else if (!managerEmail) {
+      console.error('[GenerateReport] No manager email in job record');
+      emailError = 'No manager email';
+    } else {
       try {
-        const emailHtml = generateEmailHtml(data, pdfUrl);
+        console.log(`[GenerateReport] Sending email to: ${managerEmail}`);
+
+        const emailHtml = generateEmailHtml(job, pdfUrl, { beforePhotoIncluded, afterPhotoIncluded, signatureIncluded });
+
+        const emailPayload = {
+          from: 'JobProof <reports@jobproof.pro>',
+          to: [managerEmail],
+          subject: `Job ${job.id} Complete - Evidence Report Ready`,
+          html: emailHtml,
+        };
+
+        console.log('[GenerateReport] Email payload:', JSON.stringify({ ...emailPayload, html: '[HTML CONTENT]' }));
 
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -422,22 +514,21 @@ serve(async (req) => {
             'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            from: 'JobProof <reports@jobproof.pro>',
-            to: [data.managerEmail],
-            subject: `✓ Job ${data.jobId} Complete - Evidence Report Ready`,
-            html: emailHtml,
-          }),
+          body: JSON.stringify(emailPayload),
         });
+
+        const responseText = await emailResponse.text();
+        console.log(`[GenerateReport] Resend response (${emailResponse.status}):`, responseText);
 
         if (emailResponse.ok) {
           emailSent = true;
-          console.log(`[GenerateReport] Email sent to: ${data.managerEmail}`);
+          console.log(`[GenerateReport] Email sent successfully to: ${managerEmail}`);
         } else {
-          const errorText = await emailResponse.text();
-          console.error('[GenerateReport] Email failed:', errorText);
+          emailError = responseText;
+          console.error('[GenerateReport] Email failed:', responseText);
         }
       } catch (e) {
+        emailError = e.message;
         console.error('[GenerateReport] Email error:', e);
       }
     }
@@ -453,14 +544,16 @@ serve(async (req) => {
         report_generated_at: new Date().toISOString(),
         report_emailed: emailSent,
       })
-      .eq('id', data.jobId);
+      .eq('id', job.id);
 
     return new Response(
       JSON.stringify({
         success: true,
         pdfUrl,
         emailSent,
-        message: `Report generated for job ${data.jobId}`,
+        emailError,
+        evidenceIncluded: { beforePhotoIncluded, afterPhotoIncluded, signatureIncluded },
+        message: `Report generated for job ${job.id}`,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -498,21 +591,42 @@ function base64ToBytes(dataUrl: string): Uint8Array {
   return bytes;
 }
 
-function generateEmailHtml(data: ReportRequest, pdfUrl: string): string {
+function detectImageType(dataUrl: string): 'png' | 'jpeg' {
+  if (dataUrl.startsWith('data:image/png')) return 'png';
+  if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return 'jpeg';
+  // Check magic bytes as fallback
+  const base64 = dataUrl.split(',')[1] || dataUrl;
+  if (base64.startsWith('iVBOR')) return 'png';   // PNG magic bytes in base64
+  if (base64.startsWith('/9j/')) return 'jpeg';   // JPEG magic bytes in base64
+  return 'jpeg'; // default to JPEG
+}
+
+interface EvidenceStatus {
+  beforePhotoIncluded: boolean;
+  afterPhotoIncluded: boolean;
+  signatureIncluded: boolean;
+}
+
+function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): string {
+  const evidenceItems = [];
+  if (evidence.beforePhotoIncluded) evidenceItems.push('Before photo with GPS + timestamp');
+  if (evidence.afterPhotoIncluded) evidenceItems.push('After photo with GPS + timestamp');
+  if (evidence.signatureIncluded && job.signer_name) evidenceItems.push(`Client signature by ${job.signer_name}`);
+
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Complete - ${data.jobId}</title>
+  <title>Job Complete - ${job.id}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
       <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">
-        ✓ Job Complete
+        Job Complete
       </h1>
       <p style="color: #bfdbfe; margin: 8px 0 0 0; font-size: 14px;">
         Evidence report is ready for review
@@ -527,53 +641,67 @@ function generateEmailHtml(data: ReportRequest, pdfUrl: string): string {
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Job ID</td>
-            <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600;">${data.jobId}</td>
+            <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600;">${job.id}</td>
           </tr>
+          ${job.client ? `
           <tr>
             <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Client</td>
-            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${data.client}</td>
+            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${job.client}</td>
           </tr>
-          ${data.address ? `
+          ` : ''}
+          ${job.address ? `
           <tr>
             <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Location</td>
-            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${data.address}</td>
+            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${job.address}</td>
           </tr>
           ` : ''}
-          ${data.technicianName ? `
+          ${job.technician_name ? `
           <tr>
             <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Technician</td>
-            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${data.technicianName}</td>
+            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${job.technician_name}</td>
           </tr>
           ` : ''}
+          ${job.completed_at ? `
           <tr>
             <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Completed</td>
-            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${new Date(data.completedAt).toLocaleString()}</td>
+            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${new Date(job.completed_at).toLocaleString()}</td>
           </tr>
+          ` : ''}
         </table>
       </div>
 
+      ${evidenceItems.length > 0 ? `
       <!-- Evidence Summary -->
       <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
         <h3 style="color: #166534; font-size: 14px; margin: 0 0 12px 0; font-weight: 600;">
-          ✓ Evidence Captured
+          Evidence Captured
         </h3>
         <ul style="margin: 0; padding: 0 0 0 20px; color: #15803d; font-size: 13px;">
-          ${data.beforePhoto ? '<li style="margin-bottom: 4px;">Before photo with GPS + timestamp</li>' : ''}
-          ${data.afterPhoto ? '<li style="margin-bottom: 4px;">After photo with GPS + timestamp</li>' : ''}
-          ${data.signature ? `<li style="margin-bottom: 4px;">Client signature by ${data.signature.signerName}</li>` : ''}
+          ${evidenceItems.map(item => `<li style="margin-bottom: 4px;">${item}</li>`).join('')}
         </ul>
       </div>
+      ` : `
+      <!-- No Evidence Warning -->
+      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+        <h3 style="color: #991b1b; font-size: 14px; margin: 0 0 12px 0; font-weight: 600;">
+          No Evidence Photos
+        </h3>
+        <p style="margin: 0; color: #b91c1c; font-size: 13px;">
+          This report does not contain photo evidence.
+        </p>
+      </div>
+      `}
 
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <a href="${pdfUrl}"
            style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.4);">
-          📄 Download Full Report (PDF)
+          Download Report (PDF)
         </a>
       </div>
 
       <p style="color: #64748b; font-size: 12px; text-align: center; margin: 24px 0 0 0;">
-        This report contains immutable evidence with GPS coordinates and timestamps.
+        This report contains job completion evidence from the database.
       </p>
     </div>
 
