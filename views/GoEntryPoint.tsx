@@ -45,6 +45,36 @@ const GoEntryPoint: React.FC = () => {
   const isDark = resolvedTheme === 'dark';
 
   const [state, setState] = useState<ValidationState>({ status: 'validating' });
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false);
+
+  // Handler for force unlock action
+  const handleForceUnlock = () => {
+    HandshakeService.forceUnlock();
+    setShowUnlockConfirm(false);
+
+    // Re-validate the current access code now that lock is cleared
+    if (accessCode) {
+      const result = HandshakeService.validate(accessCode);
+      if (result.success && result.context) {
+        HandshakeService.commit(result.context);
+        setState({ status: 'success', jobId: result.context.jobId });
+
+        // Redirect to internal workspace after short delay
+        setTimeout(() => {
+          const params = new URLSearchParams();
+          params.set('c', result.context!.checksum);
+          params.set('me', result.context!.deliveryEmail);
+          if (result.context!.clientEmail) {
+            params.set('ce', result.context!.clientEmail);
+          }
+          navigate(`/run/${result.context!.jobId}?${params.toString()}`, { replace: true });
+        }, 500);
+      } else {
+        // Still failed for other reasons, show the error
+        setState({ status: 'error', error: result.error! });
+      }
+    }
+  };
 
   // Theme-aware classes
   const bgClass = isDark ? 'bg-slate-950' : 'bg-slate-100';
@@ -207,10 +237,16 @@ const GoEntryPoint: React.FC = () => {
               Make sure you copied the full link
             </li>
             {state.error.type === 'LOCKED' && (
-              <li className="flex items-start gap-2">
-                <span className="material-symbols-outlined text-primary text-sm mt-0.5">arrow_forward</span>
-                Complete your current job first
-              </li>
+              <>
+                <li className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-primary text-sm mt-0.5">arrow_forward</span>
+                  Complete your current job first, OR
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-amber-500 text-sm mt-0.5">warning</span>
+                  Start fresh if you abandoned that job (unsaved work will be lost)
+                </li>
+              </>
             )}
           </ul>
         </div>
@@ -227,6 +263,20 @@ const GoEntryPoint: React.FC = () => {
             <span className="material-symbols-outlined align-middle mr-2">search</span>
             Enter Link Manually
           </a>
+
+          {/* Start Fresh button - only for LOCKED errors */}
+          {state.error.type === 'LOCKED' && (
+            <button
+              onClick={() => setShowUnlockConfirm(true)}
+              className={`w-full py-4 min-h-[56px] ${isDark
+                ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                : 'bg-amber-500 hover:bg-amber-400 text-slate-900 border-2 border-slate-900'
+              } font-bold rounded-xl transition-all active:scale-[0.98]`}
+            >
+              <span className="material-symbols-outlined align-middle mr-2">lock_open</span>
+              Start Fresh (Abandon Previous Job)
+            </button>
+          )}
 
           {/* Contact Manager - Large touch target */}
           <button
@@ -254,6 +304,41 @@ const GoEntryPoint: React.FC = () => {
           If problems persist, ask your manager to create a new job link.
         </p>
       </div>
+
+      {/* Force Unlock Confirmation Dialog */}
+      {showUnlockConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`max-w-sm w-full ${cardClass} rounded-2xl border p-6 space-y-4`}>
+            <div className="text-center">
+              <div className="size-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-amber-500 text-4xl">warning</span>
+              </div>
+              <h2 className={`text-xl font-bold ${textClass}`}>Abandon Previous Job?</h2>
+              <p className={`text-sm mt-2 ${subtextClass}`}>
+                Any photos, signatures, or work from the previous job that wasn&apos;t synced will be lost.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleForceUnlock}
+                className="w-full py-4 min-h-[56px] bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
+              >
+                Yes, Start Fresh
+              </button>
+              <button
+                onClick={() => setShowUnlockConfirm(false)}
+                className={`w-full py-4 min-h-[56px] ${isDark
+                  ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                  : 'bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-300'
+                } font-bold rounded-xl transition-all active:scale-[0.98]`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

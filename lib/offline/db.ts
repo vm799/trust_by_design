@@ -2,7 +2,8 @@ import Dexie, { type Table } from 'dexie';
 import { Job, Photo, SyncStatus } from '../../types';
 
 // Database schema version - increment when schema changes
-const DB_SCHEMA_VERSION = 2;
+// v3: Added clients and technicians tables for offline persistence
+const DB_SCHEMA_VERSION = 3;
 const DB_NAME = 'JobProofOfflineDB';
 
 export interface LocalJob extends Job {
@@ -33,16 +34,48 @@ export interface FormDraft {
     savedAt: number;
 }
 
+// CLAUDE.md mandate: Clients must persist offline
+export interface LocalClient {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    totalJobs: number;
+    type?: string;
+    notes?: string;
+    workspaceId: string;
+    syncStatus: SyncStatus;
+    lastUpdated: number;
+}
+
+// CLAUDE.md mandate: Technicians must persist offline
+export interface LocalTechnician {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
+    rating: number;
+    jobsCompleted: number;
+    specialty?: string;
+    workspaceId: string;
+    syncStatus: SyncStatus;
+    lastUpdated: number;
+}
+
 export class JobProofDatabase extends Dexie {
     jobs!: Table<LocalJob, string>;
     queue!: Table<OfflineAction, number>;
     media!: Table<LocalMedia, string>;
-    formDrafts!: Table<FormDraft, string>; // CLAUDE.md: Dexie/IndexedDB draft saving
+    formDrafts!: Table<FormDraft, string>;
+    clients!: Table<LocalClient, string>;       // v3: CLAUDE.md offline mandate
+    technicians!: Table<LocalTechnician, string>; // v3: CLAUDE.md offline mandate
 
     constructor() {
         super(DB_NAME);
         this.version(1).stores({
-            jobs: 'id, syncStatus, workspaceId, status', // Indexes
+            jobs: 'id, syncStatus, workspaceId, status',
             queue: '++id, type, synced, createdAt',
             media: 'id, jobId'
         });
@@ -51,7 +84,16 @@ export class JobProofDatabase extends Dexie {
             jobs: 'id, syncStatus, workspaceId, status',
             queue: '++id, type, synced, createdAt',
             media: 'id, jobId',
-            formDrafts: 'formType, savedAt' // Primary key: formType
+            formDrafts: 'formType, savedAt'
+        });
+        // Version 3: Add clients and technicians for CLAUDE.md offline mandate
+        this.version(3).stores({
+            jobs: 'id, syncStatus, workspaceId, status',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name'
         });
 
         // Handle version change from other tabs
@@ -304,4 +346,108 @@ export async function getFormDraft(formType: string): Promise<FormDraft | undefi
  */
 export async function clearFormDraft(formType: string): Promise<void> {
     await db.formDrafts.delete(formType);
+}
+
+// ============================================================================
+// CLIENT LOCAL PERSISTENCE (CLAUDE.md Mandate: Offline-first)
+// ============================================================================
+
+/**
+ * Save a single client to IndexedDB
+ */
+export async function saveClientLocal(client: LocalClient): Promise<string> {
+    return await db.clients.put(client);
+}
+
+/**
+ * Get a single client by ID
+ */
+export async function getClientLocal(id: string): Promise<LocalClient | undefined> {
+    return await db.clients.get(id);
+}
+
+/**
+ * Get all clients for a workspace
+ */
+export async function getClientsLocal(workspaceId: string): Promise<LocalClient[]> {
+    return await db.clients
+        .where('workspaceId')
+        .equals(workspaceId)
+        .sortBy('name');
+}
+
+/**
+ * Batch save clients (for initial sync from Supabase)
+ */
+export async function saveClientsBatch(clients: LocalClient[]): Promise<void> {
+    await db.clients.bulkPut(clients);
+}
+
+/**
+ * Delete a client from local storage
+ */
+export async function deleteClientLocal(id: string): Promise<void> {
+    await db.clients.delete(id);
+}
+
+/**
+ * Count clients in a workspace
+ */
+export async function countClientsLocal(workspaceId: string): Promise<number> {
+    return await db.clients
+        .where('workspaceId')
+        .equals(workspaceId)
+        .count();
+}
+
+// ============================================================================
+// TECHNICIAN LOCAL PERSISTENCE (CLAUDE.md Mandate: Offline-first)
+// ============================================================================
+
+/**
+ * Save a single technician to IndexedDB
+ */
+export async function saveTechnicianLocal(technician: LocalTechnician): Promise<string> {
+    return await db.technicians.put(technician);
+}
+
+/**
+ * Get a single technician by ID
+ */
+export async function getTechnicianLocal(id: string): Promise<LocalTechnician | undefined> {
+    return await db.technicians.get(id);
+}
+
+/**
+ * Get all technicians for a workspace
+ */
+export async function getTechniciansLocal(workspaceId: string): Promise<LocalTechnician[]> {
+    return await db.technicians
+        .where('workspaceId')
+        .equals(workspaceId)
+        .sortBy('name');
+}
+
+/**
+ * Batch save technicians (for initial sync from Supabase)
+ */
+export async function saveTechniciansBatch(technicians: LocalTechnician[]): Promise<void> {
+    await db.technicians.bulkPut(technicians);
+}
+
+/**
+ * Delete a technician from local storage
+ */
+export async function deleteTechnicianLocal(id: string): Promise<void> {
+    await db.technicians.delete(id);
+}
+
+/**
+ * Count technicians in a workspace
+ */
+export async function countTechniciansLocal(workspaceId: string): Promise<number> {
+    return await db.technicians
+        .where('workspaceId')
+        .equals(workspaceId)
+        .count();
 }
