@@ -74,7 +74,7 @@ serve(async (req) => {
     const recipients = Array.isArray(data.to) ? data.to : [data.to];
 
     // Default sender
-    const from = data.from || 'JobProof <notifications@jobproof.io>';
+    const from = data.from || 'JobProof <notifications@jobproof.pro>';
 
     console.log(`[SendEmail] Sending to: ${recipients.join(', ')}`);
     console.log(`[SendEmail] Subject: ${data.subject}`);
