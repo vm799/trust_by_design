@@ -145,14 +145,64 @@ export function validateChecksum(jobId: string, checksum: string): boolean {
  * Works offline, syncs when back online
  *
  * @param jobId - Job ID (e.g., 'JOB-ABC123')
- * @returns URL like https://app.com/#/run/JOB-ABC123?c=abc123
+ * @param options - Optional params to embed in URL (manager/client email)
+ * @returns URL like https://app.com/#/run/JOB-ABC123?c=abc123&me=manager@example.com
+ *
+ * NOTE: Query params are INSIDE the hash for HashRouter compatibility.
+ * Use parseHashParams() to extract them on the receiving end.
  */
-export const getBunkerRunUrl = (jobId: string): string => {
+export const getBunkerRunUrl = (
+  jobId: string,
+  options?: { managerEmail?: string; clientEmail?: string }
+): string => {
   // URL encode jobId to prevent injection attacks
   const encodedId = encodeURIComponent(jobId);
+  let url = `${getSecureOrigin()}/#/run/${encodedId}`;
+
+  // Add query params INSIDE the hash (HashRouter compatible)
+  const params = new URLSearchParams();
+
   // Add checksum to prevent ID guessing attacks
-  const checksum = generateChecksum(jobId);
-  return `${getSecureOrigin()}/#/run/${encodedId}?c=${checksum}`;
+  params.set('c', generateChecksum(jobId));
+
+  if (options?.managerEmail) {
+    params.set('me', options.managerEmail); // me = manager email
+  }
+  if (options?.clientEmail) {
+    params.set('ce', options.clientEmail); // ce = client email
+  }
+
+  const paramString = params.toString();
+  if (paramString) {
+    url += `?${paramString}`;
+  }
+
+  return url;
+};
+
+/**
+ * Parse query params from hash URL (HashRouter compatible)
+ * Standard window.location.search is EMPTY with HashRouter when params are in hash
+ *
+ * @example
+ * URL: https://app.com/#/run/JOB-123?c=abc123&me=manager@example.com
+ * parseHashParams() returns { c: 'abc123', me: 'manager@example.com' }
+ */
+export const parseHashParams = (): URLSearchParams => {
+  if (typeof window === 'undefined') {
+    return new URLSearchParams();
+  }
+
+  const hash = window.location.hash; // e.g., "#/run/JOB-123?c=abc123&me=test@example.com"
+  const queryIndex = hash.indexOf('?');
+
+  if (queryIndex === -1) {
+    return new URLSearchParams();
+  }
+
+  // Extract everything after the ? in the hash
+  const queryString = hash.substring(queryIndex + 1);
+  return new URLSearchParams(queryString);
 };
 
 /**
