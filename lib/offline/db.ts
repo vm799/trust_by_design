@@ -1,6 +1,10 @@
 import Dexie, { type Table } from 'dexie';
 import { Job, Photo, SyncStatus } from '../../types';
 
+// Database schema version - increment when schema changes
+const DB_SCHEMA_VERSION = 2;
+const DB_NAME = 'JobProofOfflineDB';
+
 export interface LocalJob extends Job {
     syncStatus: SyncStatus;
     lastUpdated: number;
@@ -36,7 +40,7 @@ export class JobProofDatabase extends Dexie {
     formDrafts!: Table<FormDraft, string>; // CLAUDE.md: Dexie/IndexedDB draft saving
 
     constructor() {
-        super('JobProofOfflineDB');
+        super(DB_NAME);
         this.version(1).stores({
             jobs: 'id, syncStatus, workspaceId, status', // Indexes
             queue: '++id, type, synced, createdAt',
@@ -49,10 +53,176 @@ export class JobProofDatabase extends Dexie {
             media: 'id, jobId',
             formDrafts: 'formType, savedAt' // Primary key: formType
         });
+
+        // Handle version change from other tabs
+        this.on('versionchange', () => {
+            console.log('[DB] Version change detected from another tab, closing...');
+            this.close();
+            // Notify user or auto-reload
+            if (typeof window !== 'undefined') {
+                window.location.reload();
+            }
+        });
     }
 }
 
+// Create singleton instance
+let dbInstance: JobProofDatabase | null = null;
+
+/**
+ * Get database instance with automatic error recovery
+ * Handles UpgradeError and DatabaseClosedError gracefully
+ */
+export async function getDatabase(): Promise<JobProofDatabase> {
+    if (dbInstance && dbInstance.isOpen()) {
+        return dbInstance;
+    }
+
+    dbInstance = new JobProofDatabase();
+
+    try {
+        await dbInstance.open();
+        console.log('[DB] Database opened successfully');
+        return dbInstance;
+    } catch (error: any) {
+        // Handle UpgradeError - schema mismatch, need to delete and recreate
+        if (error.name === 'UpgradeError' || error.message?.includes('UpgradeError')) {
+            console.warn('[DB] Schema mismatch detected. Purging legacy database...');
+            await purgeAndRecreateDatabase();
+            return dbInstance!;
+        }
+
+        // Handle DatabaseClosedError - try to reopen
+        if (error.name === 'DatabaseClosedError' || error.message?.includes('DatabaseClosedError')) {
+            console.warn('[DB] Database was closed unexpectedly. Reopening...');
+            dbInstance = new JobProofDatabase();
+            await dbInstance.open();
+            return dbInstance;
+        }
+
+        // Handle other IndexedDB errors
+        if (error.name === 'InvalidStateError' || error.name === 'QuotaExceededError') {
+            console.error('[DB] IndexedDB error:', error.name, '- Purging database...');
+            await purgeAndRecreateDatabase();
+            return dbInstance!;
+        }
+
+        console.error('[DB] Failed to open database:', error);
+        throw error;
+    }
+}
+
+/**
+ * Purge corrupted/outdated database and recreate fresh
+ */
+async function purgeAndRecreateDatabase(): Promise<void> {
+    console.log('[DB] Purging legacy database...');
+
+    // Close existing instance if open
+    if (dbInstance) {
+        try {
+            dbInstance.close();
+        } catch (e) {
+            // Ignore close errors
+        }
+    }
+
+    // Delete the database entirely
+    try {
+        await Dexie.delete(DB_NAME);
+        console.log('[DB] Legacy database deleted');
+    } catch (e) {
+        console.warn('[DB] Could not delete database:', e);
+    }
+
+    // Clear any localStorage schema version markers
+    try {
+        localStorage.removeItem('jobproof_db_version');
+    } catch (e) {
+        // Ignore localStorage errors
+    }
+
+    // Create fresh instance
+    dbInstance = new JobProofDatabase();
+    await dbInstance.open();
+    console.log('[DB] Fresh database created successfully');
+
+    // Store current schema version
+    try {
+        localStorage.setItem('jobproof_db_version', String(DB_SCHEMA_VERSION));
+    } catch (e) {
+        // Ignore localStorage errors
+    }
+}
+
+/**
+ * Check if database needs migration on app startup
+ * Call this early in app initialization
+ */
+export async function checkDatabaseHealth(): Promise<boolean> {
+    try {
+        // Check stored schema version
+        const storedVersion = localStorage.getItem('jobproof_db_version');
+        const currentVersion = String(DB_SCHEMA_VERSION);
+
+        if (storedVersion && storedVersion !== currentVersion) {
+            console.log(`[DB] Schema version mismatch: stored=${storedVersion}, current=${currentVersion}`);
+            await purgeAndRecreateDatabase();
+            return true;
+        }
+
+        // Try to open and verify database health
+        const database = await getDatabase();
+        await database.jobs.count(); // Simple health check query
+
+        // Store current version if not set
+        if (!storedVersion) {
+            localStorage.setItem('jobproof_db_version', currentVersion);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('[DB] Health check failed:', error);
+        return false;
+    }
+}
+
+/**
+ * Force clear all IndexedDB data (nuclear option)
+ * Use when user needs a complete reset
+ */
+export async function clearAllData(): Promise<void> {
+    console.log('[DB] Clearing all IndexedDB data...');
+
+    if (dbInstance) {
+        try {
+            dbInstance.close();
+        } catch (e) {
+            // Ignore
+        }
+    }
+
+    await Dexie.delete(DB_NAME);
+    localStorage.removeItem('jobproof_db_version');
+
+    dbInstance = null;
+    console.log('[DB] All data cleared');
+}
+
+// Legacy export for backward compatibility - auto-opens on first use
 export const db = new JobProofDatabase();
+
+// Initialize database with error handling on module load
+if (typeof window !== 'undefined') {
+    db.open().catch((error: any) => {
+        if (error.name === 'UpgradeError' || error.message?.includes('UpgradeError')) {
+            console.warn('[DB] UpgradeError on init - will purge on next access');
+            purgeAndRecreateDatabase().catch(console.error);
+        } else {
+            console.error('[DB] Failed to open database on init:', error);
+        }
+    });
+}
 
 export async function saveJobLocal(job: LocalJob) {
     return await db.jobs.put(job);
