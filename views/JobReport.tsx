@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
@@ -946,11 +947,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
 
                   <div className="bg-white p-6 rounded-3xl flex items-center justify-center">
-                     <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getReportUrl(job.id))}`}
-                        alt="QR Code"
-                        className="w-48 h-48"
-                     />
+                     <QRCodeSVG value={getReportUrl(job.id)} size={192} level="M" />
                   </div>
 
                   <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
