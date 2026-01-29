@@ -45,21 +45,24 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     active:scale-[0.98]
   `;
 
+  // Theme-aware variants: proper contrast in both light and dark modes
   const variantClasses = {
     primary: `
       bg-primary hover:bg-primary/90 text-white
       shadow-lg shadow-primary/20
     `,
     secondary: `
-      bg-white/5 hover:bg-white/10 text-white
-      border border-white/10 hover:border-white/20
+      bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10
+      text-slate-900 dark:text-white
+      border border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20
     `,
     danger: `
-      bg-red-500/10 hover:bg-red-500/20 text-red-400
+      bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400
       border border-red-500/20 hover:border-red-500/30
     `,
     ghost: `
-      bg-transparent hover:bg-white/5 text-slate-300 hover:text-white
+      bg-transparent hover:bg-slate-100 dark:hover:bg-white/5
+      text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white
     `,
   };
 

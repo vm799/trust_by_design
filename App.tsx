@@ -63,6 +63,10 @@ const QuickCreateJob = lazy(() => import('./views/QuickCreateJob'));
 const BunkerRun = lazy(() => import('./views/BunkerRun'));
 const JobLog = lazy(() => import('./views/JobLog'));
 const BunkerSuccess = lazy(() => import('./views/BunkerSuccess'));
+// Tech Portal: Technician job list and detail views (Phase G)
+const TechPortal = lazy(() => import('./views/tech/TechPortal'));
+const TechJobDetail = lazy(() => import('./views/tech/TechJobDetail'));
+const EvidenceCapture = lazy(() => import('./views/tech/EvidenceCapture'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -606,6 +610,23 @@ const AppContent: React.FC = () => {
         <Route path="/track/:token" element={
           <RouteErrorBoundary sectionName="Job Tracking" fallbackRoute="/track-lookup">
             <TechnicianPortal jobs={jobs} onUpdateJob={updateJob} />
+          </RouteErrorBoundary>
+        } />
+
+        {/* Tech Portal Routes - Modern technician flow (Phase G) */}
+        <Route path="/tech" element={
+          <RouteErrorBoundary sectionName="Tech Portal" fallbackRoute="/home">
+            <TechPortal />
+          </RouteErrorBoundary>
+        } />
+        <Route path="/tech/job/:jobId" element={
+          <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/tech">
+            <TechJobDetail />
+          </RouteErrorBoundary>
+        } />
+        <Route path="/tech/job/:jobId/capture" element={
+          <RouteErrorBoundary sectionName="Evidence Capture" fallbackRoute="/tech">
+            <EvidenceCapture />
           </RouteErrorBoundary>
         } />
 
