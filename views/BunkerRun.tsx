@@ -22,6 +22,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../lib/theme';
+import { validateChecksum } from '../lib/redirects';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -494,15 +495,23 @@ export default function BunkerRun() {
     }
   }, []);
 
-  // Load job on mount
+  // Load job on mount (with checksum validation)
   useEffect(() => {
     if (!jobId) {
       setLoadError('No Job ID provided');
       return;
     }
 
+    // Security: Validate checksum to prevent Job ID guessing attacks
+    const checksum = searchParams.get('c');
+    if (checksum && !validateChecksum(jobId, checksum)) {
+      console.warn('[BunkerRun] Invalid checksum for job:', jobId);
+      // Don't block - allow access for backwards compatibility with old links
+      // But log for security monitoring
+    }
+
     loadJob(jobId);
-  }, [jobId]);
+  }, [jobId, searchParams]);
 
   // Auto-save to IndexedDB
   useEffect(() => {

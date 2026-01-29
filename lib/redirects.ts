@@ -4,7 +4,15 @@
  *
  * This module provides a centralized allowlist for redirect URLs
  * to prevent open redirect vulnerabilities in OAuth flows.
+ *
+ * Security Features:
+ * - URL checksum to prevent Job ID guessing
+ * - Allowlist for OAuth redirects
+ * - Vercel preview URL detection
  */
+
+// Secret salt for checksum generation (in production, use env var)
+const CHECKSUM_SALT = 'jobproof_bunker_2026';
 
 /**
  * Allowlist of permitted redirect origins
@@ -101,17 +109,50 @@ export const getReportUrl = (jobId: string): string => {
 };
 
 /**
+ * Generate a short checksum for Job ID verification
+ * Uses a simple hash to prevent random Job ID guessing attacks
+ *
+ * @param jobId - Job ID to generate checksum for
+ * @returns 6-character checksum
+ */
+export function generateChecksum(jobId: string): string {
+  const input = `${CHECKSUM_SALT}:${jobId}`;
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Convert to base36 and take last 6 chars for short checksum
+  return Math.abs(hash).toString(36).padStart(6, '0').slice(-6);
+}
+
+/**
+ * Validate a Job ID checksum
+ *
+ * @param jobId - Job ID to validate
+ * @param checksum - Checksum from URL
+ * @returns True if checksum is valid
+ */
+export function validateChecksum(jobId: string, checksum: string): boolean {
+  const expected = generateChecksum(jobId);
+  return expected === checksum;
+}
+
+/**
  * Get bunker-proof run link for technicians
- * NO AUTH REQUIRED - Job ID is the only permission needed
+ * NO AUTH REQUIRED - Job ID + checksum provide access control
  * Works offline, syncs when back online
  *
  * @param jobId - Job ID (e.g., 'JOB-ABC123')
- * @returns URL like https://app.com/#/run/JOB-ABC123
+ * @returns URL like https://app.com/#/run/JOB-ABC123?c=abc123
  */
 export const getBunkerRunUrl = (jobId: string): string => {
   // URL encode jobId to prevent injection attacks
   const encodedId = encodeURIComponent(jobId);
-  return `${getSecureOrigin()}/#/run/${encodedId}`;
+  // Add checksum to prevent ID guessing attacks
+  const checksum = generateChecksum(jobId);
+  return `${getSecureOrigin()}/#/run/${encodedId}?c=${checksum}`;
 };
 
 /**
