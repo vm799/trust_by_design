@@ -23,6 +23,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/theme';
 import { validateChecksum, parseHashParams } from '../lib/redirects';
+import { useHandshake } from '../hooks/useHandshake';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -402,43 +403,42 @@ export default function BunkerRun() {
     ? 'bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900'
     : 'bg-slate-700 hover:bg-slate-600 text-white';
 
+  // ============================================================================
+  // HASH PARAM HANDSHAKE - PhD-level defensive URL parsing
+  // ============================================================================
+  // Uses useHandshake hook for robust parsing of HashRouter query params
+  // Provides fallback UI when technician arrives without required params
+  const {
+    data: handshake,
+    isLoading: isHandshakeLoading,
+    setManagerEmail: setHandshakeManagerEmail,
+  } = useHandshake(jobId);
+
+  // State for fallback email input UI
+  const [showEmailFallback, setShowEmailFallback] = useState(false);
+  const [fallbackEmailInput, setFallbackEmailInput] = useState('');
+
   // DEBUG: Log when BunkerRun component loads
   useEffect(() => {
     console.log('[BunkerRun] Component loaded for ID:', jobId);
     console.log('[BunkerRun] Current URL:', window.location.href);
     console.log('[BunkerRun] Theme:', resolvedTheme, 'isDaylight:', isDaylight);
+    console.log('[BunkerRun] Handshake:', handshake);
     console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
-  }, [jobId, resolvedTheme, isDaylight]);
+  }, [jobId, resolvedTheme, isDaylight, handshake]);
 
-  // ============================================================================
-  // HASH PARAM HANDSHAKE - Extract emails from URL hash query params
-  // ============================================================================
-  // CRITICAL: With HashRouter, query params are INSIDE the hash (e.g., #/run/ID?me=email)
-  // Standard window.location.search is EMPTY - must parse hash directly
+  // Sync handshake data to STORAGE_KEYS for backward compatibility
   useEffect(() => {
-    const hashParams = parseHashParams();
-    const managerEmail = hashParams.get('me'); // me = manager email
-    const clientEmail = hashParams.get('ce');  // ce = client email
-
-    console.log('[BunkerRun] Hash param handshake:', {
-      managerEmail,
-      clientEmail,
-      fullHash: window.location.hash,
-    });
-
-    // Store emails in localStorage for the success page and sync
-    if (managerEmail) {
-      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, managerEmail);
-      console.log('[BunkerRun] Stored manager email from URL:', managerEmail);
+    if (handshake.managerEmail) {
+      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, handshake.managerEmail);
     }
-    if (clientEmail) {
-      localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, clientEmail);
-      console.log('[BunkerRun] Stored client email from URL:', clientEmail);
+    if (handshake.clientEmail) {
+      localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, handshake.clientEmail);
     }
     if (jobId) {
       localStorage.setItem(STORAGE_KEYS.JOB_ID, jobId);
     }
-  }, [jobId]); // Run once on mount when jobId is available
+  }, [handshake, jobId]);
 
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -516,27 +516,27 @@ export default function BunkerRun() {
   }, []);
 
   // Load job on mount (with checksum validation)
+  // Wait for handshake to load first so we have email data
   useEffect(() => {
     if (!jobId) {
       setLoadError('No Job ID provided');
       return;
     }
 
-    // Parse hash params (HashRouter compatible)
-    const hashParams = parseHashParams();
+    // Wait for handshake hook to finish parsing
+    if (isHandshakeLoading) {
+      return;
+    }
 
-    // Security: Validate checksum to prevent Job ID guessing attacks
-    const checksum = hashParams.get('c');
-    if (checksum && !validateChecksum(jobId, checksum)) {
+    // Security: Validate checksum using handshake data
+    if (handshake.checksum && !handshake.isChecksumValid) {
       console.warn('[BunkerRun] Invalid checksum for job:', jobId);
       // Don't block - allow access for backwards compatibility with old links
       // But log for security monitoring
     }
 
-    // Email params are handled by the HASH PARAM HANDSHAKE effect above
-
     loadJob(jobId);
-  }, [jobId]);
+  }, [jobId, isHandshakeLoading, handshake.managerEmail, handshake.clientEmail]);
 
   // Auto-save to IndexedDB
   useEffect(() => {
@@ -628,10 +628,13 @@ export default function BunkerRun() {
     }
 
     // 3. Create new job from URL (fallback)
+    // Use handshake data for manager/client emails
     const newJob: RunJob = {
       id,
       title: `Job ${id}`,
       client: 'Client',
+      clientEmail: handshake.clientEmail || undefined,
+      managerEmail: handshake.managerEmail || undefined,
       address: '',
       notes: '',
       currentStep: 'before',
@@ -642,7 +645,7 @@ export default function BunkerRun() {
     setJob(newJob);
     // Store in localStorage (even without emails, so success page knows job ID)
     storeJobDetailsForSync(newJob);
-    console.log('[BunkerRun] Created new job:', id);
+    console.log('[BunkerRun] Created new job with handshake:', id, { managerEmail: handshake.managerEmail, clientEmail: handshake.clientEmail });
   };
 
   // ============================================================================
@@ -760,6 +763,95 @@ export default function BunkerRun() {
   const goToStep = (step: WizardStep) => {
     updateJob({ currentStep: step });
   };
+
+  // ============================================================================
+  // RENDER: EMAIL FALLBACK UI (Ghost Link Recovery)
+  // ============================================================================
+  // If technician arrives without email params, show a fallback form
+  // This is the "PhD" defensive pattern for handling broken links
+
+  const handleFallbackEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (fallbackEmailInput.trim()) {
+      setHandshakeManagerEmail(fallbackEmailInput.trim());
+      setShowEmailFallback(false);
+    }
+  };
+
+  // Show fallback UI if no email found and job is loaded but missing handshake data
+  if (showEmailFallback || (!handshake.hasEmail && !isHandshakeLoading && job)) {
+    return (
+      <div className={`min-h-screen ${themeClasses} flex items-center justify-center p-4`}>
+        <div className="max-w-md w-full space-y-6">
+          {/* Warning Header */}
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-600/20 rounded-full mb-4">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Link Missing Information</h1>
+            <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+              This link is missing some required data. Please enter the manager's email
+              to continue so we can send the report when you're done.
+            </p>
+          </div>
+
+          {/* Email Input Form */}
+          <form onSubmit={handleFallbackEmailSubmit} className={`${cardClasses} p-6 rounded-xl border space-y-4`}>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+                Manager's Email Address
+              </label>
+              <input
+                type="email"
+                value={fallbackEmailInput}
+                onChange={(e) => setFallbackEmailInput(e.target.value)}
+                placeholder="manager@company.com"
+                required
+                className={`w-full px-4 py-3 rounded-lg border ${isDaylight
+                  ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                  : 'bg-slate-900 border-slate-600 text-white placeholder-slate-500'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                autoFocus
+              />
+              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>
+                The completed job report will be sent to this email.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!fallbackEmailInput.trim()}
+              className={`w-full py-4 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${buttonPrimaryClasses}`}
+            >
+              Continue to Job
+            </button>
+          </form>
+
+          {/* Skip Option */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                // Allow skipping but warn that report delivery may fail
+                setShowEmailFallback(false);
+              }}
+              className={`text-sm ${isDaylight ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 hover:text-white'} transition-colors`}
+            >
+              Skip (report may not be delivered)
+            </button>
+          </div>
+
+          {/* Job Info */}
+          {job && (
+            <div className={`${cardClasses} p-4 rounded-xl border`}>
+              <p className={`text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>JOB</p>
+              <p className="text-lg font-bold">{job.title}</p>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ============================================================================
   // RENDER: LOADING STATE

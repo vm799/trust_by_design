@@ -10,6 +10,7 @@ import { Modal, ActionButton, ConfirmDialog } from './ui';
 import { Job, Technician } from '../types';
 import { showToast } from '../lib/microInteractions';
 import { generateMagicLink, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
+import { getBunkerRunUrl } from '../lib/redirects';
 
 interface UnopenedLinksActionCenterProps {
   isOpen: boolean;
@@ -123,7 +124,12 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
     const newLinkResult = await generateMagicLink(job.id);
 
     // Share via native share if available, otherwise copy to clipboard
-    const linkUrl = newLinkResult.data?.url || `${window.location.origin}/#/tech/${job.id}`;
+    // CRITICAL: Use getBunkerRunUrl for fallback to include checksum + email params
+    // The old fallback /#/tech/${job.id} was missing query params (ghost link bug)
+    const client = clients.find(c => c.id === job.clientId);
+    const linkUrl = newLinkResult.data?.url || getBunkerRunUrl(job.id, {
+      clientEmail: client?.email,
+    });
 
     if (navigator.share) {
       try {
