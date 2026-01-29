@@ -13,7 +13,7 @@ const securityHeaders = {
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live", // Required for React + Vercel
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "font-src 'self' https://fonts.gstatic.com https://vercel.live",
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://worldtimeapi.org https://fonts.googleapis.com https://fonts.gstatic.com https://vercel.live wss://vercel.live",
     "worker-src 'self' blob:",
