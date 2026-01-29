@@ -21,7 +21,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { parseHashParams } from '../lib/redirects';
+import { useTheme } from '../lib/theme';
+import { validateChecksum, parseHashParams } from '../lib/redirects';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -379,7 +380,6 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
 export default function BunkerRun() {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { resolvedTheme, isDaylightMode, setDaylightMode } = useTheme();
 
   // Determine if we're in daylight/construction mode
@@ -401,15 +401,6 @@ export default function BunkerRun() {
   const buttonSecondaryClasses = isDaylight
     ? 'bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900'
     : 'bg-slate-700 hover:bg-slate-600 text-white';
-
-  // Extract email from URL params (PhD Fix: store immediately for sync handshake)
-  useEffect(() => {
-    const email = searchParams.get('email');
-    if (email) {
-      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, email);
-      console.log('[BunkerRun] Stored manager email from URL:', email);
-    }
-  }, [searchParams]);
 
   // DEBUG: Log when BunkerRun component loads
   useEffect(() => {
@@ -524,12 +515,25 @@ export default function BunkerRun() {
     }
   }, []);
 
-  // Load job on mount
+  // Load job on mount (with checksum validation)
   useEffect(() => {
     if (!jobId) {
       setLoadError('No Job ID provided');
       return;
     }
+
+    // Parse hash params (HashRouter compatible)
+    const hashParams = parseHashParams();
+
+    // Security: Validate checksum to prevent Job ID guessing attacks
+    const checksum = hashParams.get('c');
+    if (checksum && !validateChecksum(jobId, checksum)) {
+      console.warn('[BunkerRun] Invalid checksum for job:', jobId);
+      // Don't block - allow access for backwards compatibility with old links
+      // But log for security monitoring
+    }
+
+    // Email params are handled by the HASH PARAM HANDSHAKE effect above
 
     loadJob(jobId);
   }, [jobId]);
