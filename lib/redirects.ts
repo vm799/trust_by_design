@@ -85,19 +85,64 @@ export const getAuthRedirectUrl = (path: string = ''): string => {
 };
 
 /**
- * Get secure redirect URL for magic links (simple invite system)
- * @param token - Magic link token
- * @param jobId - Optional job ID (kept for backwards compatibility, but not used in URL)
+ * Get validated handshake URL for technician job access
+ * @param jobId - The job ID
+ * @param deliveryEmail - Manager/creator email for report delivery (REQUIRED)
+ * @param clientEmail - Optional client email for CC on report
  *
- * Simple invite system: URL contains only the token.
- * The token is validated server-side via RPC which returns full job data.
- * Route: /#/technician/{token}
+ * The URL contains an access code that embeds all required handshake data:
+ * - Job ID
+ * - Checksum (tamper detection)
+ * - Delivery email
+ * - Optional client email
+ *
+ * Route: /#/go/{accessCode}
+ *
+ * This replaces the legacy getMagicLinkUrl which used /technician/:token
+ * and had the "ghost link" problem where emails were missing.
  */
-export const getMagicLinkUrl = (token: string, _jobId?: string): string => {
-  // URL encode token to prevent injection attacks
-  const encodedToken = encodeURIComponent(token);
-  // Simple path: /technician/{token} - no query params needed
-  return `${getSecureOrigin()}/#/technician/${encodedToken}`;
+export const getValidatedHandshakeUrl = (
+  jobId: string,
+  deliveryEmail: string,
+  clientEmail?: string
+): string => {
+  // VALIDATION: Require valid deliveryEmail to prevent ghost links
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error(
+      '[getValidatedHandshakeUrl] ERROR: Called without valid deliveryEmail. ' +
+      'This will create a ghost link that cannot deliver reports. ' +
+      `JobId: ${jobId}, deliveryEmail: ${deliveryEmail}, Stack:`,
+      new Error().stack
+    );
+    throw new Error('Valid deliveryEmail with @ is required for technician links');
+  }
+
+  // Generate checksum for tamper detection
+  const checksum = generateChecksum(jobId);
+
+  // Create access code payload
+  const payload = {
+    jobId,
+    checksum,
+    deliveryEmail,
+    clientEmail,
+    createdAt: Date.now(),
+  };
+
+  // Unicode-safe base64 encoding
+  let accessCode: string;
+  try {
+    // Try standard btoa first (faster for ASCII)
+    accessCode = btoa(JSON.stringify(payload));
+  } catch {
+    // Fallback for Unicode characters (e.g., international emails like manager@例え.jp)
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(JSON.stringify(payload));
+    accessCode = btoa(String.fromCharCode(...bytes));
+  }
+  const encodedAccessCode = encodeURIComponent(accessCode);
+
+  return `${getSecureOrigin()}/#/go/${encodedAccessCode}`;
 };
 
 /**

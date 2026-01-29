@@ -51,7 +51,7 @@ const JobCreationWizard = lazy(() => import('./views/JobCreationWizard'));
 const InvoicesView = lazy(() => import('./views/InvoicesView'));
 const RoadmapView = lazy(() => import('./views/RoadmapView'));
 const TrackLookup = lazy(() => import('./views/TrackLookup'));
-const TechnicianInvite = lazy(() => import('./views/TechnicianInvite'));
+const GoEntryPoint = lazy(() => import('./views/GoEntryPoint'));
 const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector'));
 const JobsList = lazy(() => import('./views/app/jobs/JobsList'));
 const ClientForm = lazy(() => import('./views/app/clients/ClientForm'));
@@ -595,10 +595,10 @@ const AppContent: React.FC = () => {
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
 
-        {/* Technician Invite - Simple entry point (no auth required) */}
-        <Route path="/technician/:token" element={
-          <RouteErrorBoundary sectionName="Job Invite" fallbackRoute="/track-lookup">
-            <TechnicianInvite />
+        {/* Validated Handshake Entry Point - Public (replaces legacy /technician/:token) */}
+        <Route path="/go/:accessCode" element={
+          <RouteErrorBoundary sectionName="Job Access" fallbackRoute="/track-lookup">
+            <GoEntryPoint />
           </RouteErrorBoundary>
         } />
 

@@ -23,6 +23,8 @@ interface UnopenedLinksActionCenterProps {
   onDeleteJob?: (jobId: string) => void;
   onDismissLink: (token: string) => void;
   onRefreshLinks: () => void;
+  /** Manager email for link generation - required for validated handshake URLs */
+  managerEmail?: string;
 }
 
 type JobAction = 'pause' | 'cancel' | 'delete' | 'reassign';
@@ -38,6 +40,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   onDeleteJob,
   onDismissLink,
   onRefreshLinks,
+  managerEmail,
 }) => {
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [showReassignDropdown, setShowReassignDropdown] = useState<string | null>(null);
@@ -111,8 +114,12 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
     };
     onUpdateJob(updatedJob);
 
-    // Generate new magic link for new technician
-    const newLinkResult = await generateMagicLink(job.id);
+    // Generate new magic link for new technician with manager email for report delivery
+    if (!managerEmail) {
+      showToast('Cannot reassign: Manager email not available. Please try again later.', 'error', 4000);
+      return;
+    }
+    const newLinkResult = await generateMagicLink(job.id, managerEmail);
 
     showToast(`Reassigned to ${newTech.name}${newTech.phone ? ` (${newTech.phone})` : ''}`, 'success', 4000);
     setShowReassignDropdown(null);
@@ -120,14 +127,19 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   };
 
   const handleResendLink = async (job: Job, link: MagicLinkInfo) => {
-    // Generate a fresh magic link
-    const newLinkResult = await generateMagicLink(job.id);
+    // Generate a fresh magic link with manager email for report delivery
+    if (!managerEmail) {
+      showToast('Cannot resend: Manager email not available. Please try again later.', 'error', 4000);
+      return;
+    }
+    const newLinkResult = await generateMagicLink(job.id, managerEmail);
 
     // Share via native share if available, otherwise copy to clipboard
     // CRITICAL: Use getBunkerRunUrl for fallback to include checksum + email params
     // The old fallback /#/tech/${job.id} was missing query params (ghost link bug)
     const client = clients.find(c => c.id === job.clientId);
     const linkUrl = newLinkResult.data?.url || getBunkerRunUrl(job.id, {
+      managerEmail: managerEmail,
       clientEmail: client?.email,
     });
 

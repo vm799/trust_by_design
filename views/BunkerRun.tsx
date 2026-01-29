@@ -24,9 +24,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/theme';
 import { validateChecksum, parseHashParams } from '../lib/redirects';
 import { useHandshake } from '../hooks/useHandshake';
+import { HandshakeService } from '../lib/handshakeService';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
+// ============================================================================
+// DUAL-SYSTEM NOTE:
+// - OLD system (useHandshake hook): bunker_manager_email, bunker_client_email, etc.
+// - NEW system (HandshakeService): handshake_context, handshake_locked, etc.
+// GoEntryPoint commits to handshake_*, but BunkerRun reads from bunker_*
+// We sync from HandshakeService -> bunker_* keys for backward compatibility
 // ============================================================================
 const STORAGE_KEYS = {
   MANAGER_EMAIL: 'bunker_manager_email',
@@ -439,6 +446,39 @@ export default function BunkerRun() {
       localStorage.setItem(STORAGE_KEYS.JOB_ID, jobId);
     }
   }, [handshake, jobId]);
+
+  // ============================================================================
+  // HANDSHAKE SERVICE INTEGRATION - Bridge NEW system to OLD system
+  // ============================================================================
+  // Check if there's a locked handshake for a DIFFERENT job (prevents job switching mid-work)
+  useEffect(() => {
+    const lockedContext = HandshakeService.get();
+    if (lockedContext?.isLocked && lockedContext.jobId !== jobId) {
+      console.warn('[BunkerRun] Blocked: handshake locked to different job', lockedContext.jobId);
+      // Redirect to the locked job
+      navigate(`/run/${lockedContext.jobId}`);
+    }
+  }, [jobId, navigate]);
+
+  // Sync from HandshakeService (new system) to useHandshake (old system)
+  // This bridges the gap where GoEntryPoint commits to handshake_* but BunkerRun reads bunker_*
+  useEffect(() => {
+    const hsContext = HandshakeService.get();
+    if (hsContext && hsContext.jobId === jobId) {
+      console.log('[BunkerRun] Found HandshakeService context for this job:', hsContext);
+      // Use data from HandshakeService if available and hook doesn't have it
+      if (hsContext.deliveryEmail && !handshake.managerEmail) {
+        console.log('[BunkerRun] Syncing deliveryEmail from HandshakeService:', hsContext.deliveryEmail);
+        setHandshakeManagerEmail(hsContext.deliveryEmail);
+        // Also write directly to localStorage for immediate availability
+        localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, hsContext.deliveryEmail);
+      }
+      if (hsContext.clientEmail && !handshake.clientEmail) {
+        console.log('[BunkerRun] Syncing clientEmail from HandshakeService:', hsContext.clientEmail);
+        localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, hsContext.clientEmail);
+      }
+    }
+  }, [jobId, handshake.managerEmail, handshake.clientEmail, setHandshakeManagerEmail]);
 
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);

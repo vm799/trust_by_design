@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
-import { getMagicLinkUrl, getSecureOrigin } from '../lib/redirects';
+import { getValidatedHandshakeUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 
 interface CreateJobProps {
@@ -382,7 +382,13 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         setCreatedJobId(newId);
 
         // Generate a proper magic link with token for local jobs
-        const localMagicLink = storeMagicLinkLocal(newId, user?.workspace?.id || 'local');
+        // deliveryEmail is required for validated handshake URLs
+        if (!user?.email) {
+          setError('Cannot create job: Your email is not available. Please log in again.');
+          setIsCreating(false);
+          return;
+        }
+        const localMagicLink = storeMagicLinkLocal(newId, user.email, user?.workspace?.id || 'local');
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
         console.log(`[CreateJob] Generated local magic link: ${localMagicLink.url}`);
@@ -397,16 +403,21 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       const createdJob = result.data!;
       setCreatedJobId(createdJob.id);
 
-      // Generate magic link
-      const magicLinkResult = await generateMagicLink(createdJob.id);
+      // Generate magic link with manager's email for report delivery
+      if (!user?.email) {
+        setError('Cannot create job: Your email is not available. Please log in again.');
+        setIsCreating(false);
+        return;
+      }
+      const magicLinkResult = await generateMagicLink(createdJob.id, user.email);
 
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
         setMagicLinkToken(magicLinkResult.data.token);
         console.log(`[CreateJob] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
-        // Fallback to local token generation if DB token generation fails
-        const localMagicLink = storeMagicLinkLocal(createdJob.id, workspaceId);
+        // Fallback to local token generation if DB token generation fails (user.email already validated above)
+        const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
         console.log(`[CreateJob] Generated fallback local magic link: ${localMagicLink.url}`);
@@ -429,25 +440,36 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
   // getMagicLink should always return the properly generated URL
   // The fallback generates a new local token if somehow magicLinkUrl wasn't set
-  const getMagicLinkWithToken = (): { url: string; token: string } => {
+  const getMagicLinkWithToken = (): { url: string; token: string } | null => {
     if (magicLinkUrl && magicLinkToken) {
       return { url: magicLinkUrl, token: magicLinkToken };
     }
     // Emergency fallback: generate a local magic link on the fly
     console.warn('[CreateJob] magicLinkUrl was not set, generating emergency local link');
-    const emergencyLink = storeMagicLinkLocal(createdJobId, user?.workspace?.id || 'local');
+    if (!user?.email) {
+      console.error('[CreateJob] Cannot generate emergency link: user email not available');
+      return null;
+    }
+    const emergencyLink = storeMagicLinkLocal(createdJobId, user.email, user?.workspace?.id || 'local');
     return { url: emergencyLink.url, token: emergencyLink.token };
   };
 
-  const getMagicLink = () => getMagicLinkWithToken().url;
+  const getMagicLink = () => {
+    const result = getMagicLinkWithToken();
+    return result?.url || '';
+  };
 
   const copyMagicLink = () => {
-    const { url, token } = getMagicLinkWithToken();
-    navigator.clipboard.writeText(url);
+    const result = getMagicLinkWithToken();
+    if (!result) {
+      setError('Cannot copy link: Your email is not available. Please log in again.');
+      return;
+    }
+    navigator.clipboard.writeText(result.url);
 
     // Track that link was sent via copy
-    if (token) {
-      markLinkAsSent(token, 'copy');
+    if (result.token) {
+      markLinkAsSent(result.token, 'copy');
     }
 
     setCopySuccess(true);
@@ -456,11 +478,15 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
   // Native share API with fallback to clipboard
   const shareMagicLink = async () => {
-    const { url, token } = getMagicLinkWithToken();
+    const result = getMagicLinkWithToken();
+    if (!result) {
+      setError('Cannot share link: Your email is not available. Please log in again.');
+      return;
+    }
     const shareData = {
       title: `Job Assignment: ${formData.title}`,
       text: `You have been assigned a new job. Click the link to start: `,
-      url: url
+      url: result.url
     };
 
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
@@ -468,8 +494,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         await navigator.share(shareData);
 
         // Track that link was sent via native share
-        if (token) {
-          markLinkAsSent(token, 'share');
+        if (result.token) {
+          markLinkAsSent(result.token, 'share');
         }
 
         setShareSuccess(true);

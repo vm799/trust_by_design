@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase';
-import { getMagicLinkUrl } from './redirects';
+import { getValidatedHandshakeUrl, getBunkerRunUrl } from './redirects';
 import type { Job, Client, Technician } from '../types';
 import { mockJobs } from '../tests/mocks/mockData';
 import { requestCache, generateCacheKey } from './performanceUtils';
@@ -667,7 +667,17 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
  * Generate a job invite token (Simple Invite System)
  * Inserts into `invites` table and returns URL
  */
-export const generateMagicLink = async (jobId: string, email?: string): Promise<DbResult<MagicLinkData>> => {
+export const generateMagicLink = async (
+  jobId: string,
+  deliveryEmail: string,
+  clientEmail?: string
+): Promise<DbResult<MagicLinkData>> => {
+  // VALIDATION: deliveryEmail is now required to prevent ghost links
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[generateMagicLink] Invalid deliveryEmail:', deliveryEmail);
+    return { success: false, error: 'Valid deliveryEmail with @ is required for technician links' };
+  }
+
   // Offline/mock mode: generate local token
   if (shouldUseMockDB()) {
     const job = mockDatabase.jobs.get(jobId);
@@ -678,7 +688,8 @@ export const generateMagicLink = async (jobId: string, email?: string): Promise<
 
     const token = crypto.randomUUID().replace(/-/g, '').slice(0, 32);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const url = getMagicLinkUrl(token);
+    // Use validated handshake URL with required email
+    const url = getValidatedHandshakeUrl(jobId, deliveryEmail, clientEmail);
 
     mockDatabase.magicLinks.set(token, {
       job_id: jobId,
@@ -701,7 +712,7 @@ export const generateMagicLink = async (jobId: string, email?: string): Promise<
       .from('invites')
       .insert({
         job_id: jobId,
-        granted_to_email: email || null
+        granted_to_email: deliveryEmail
       })
       .select('token, expires_at')
       .single();
@@ -714,7 +725,8 @@ export const generateMagicLink = async (jobId: string, email?: string): Promise<
       return { success: false, error: 'Failed to create invite' };
     }
 
-    const url = getMagicLinkUrl(data.token);
+    // Use validated handshake URL with required email
+    const url = getValidatedHandshakeUrl(jobId, deliveryEmail, clientEmail);
 
     return {
       success: true,
@@ -736,11 +748,28 @@ export const generateMagicLink = async (jobId: string, email?: string): Promise<
  * Store a magic link locally (for offline/local-only mode)
  * This creates a token and stores the mapping directly in mockDatabase
  * Use this when the database is unavailable but you need a working magic link
+ *
+ * @param jobId - The job ID
+ * @param deliveryEmail - Manager email for report delivery (REQUIRED)
+ * @param workspaceId - Workspace ID (default: 'local')
+ * @param clientEmail - Optional client email for CC
  */
-export const storeMagicLinkLocal = (jobId: string, workspaceId: string = 'local'): MagicLinkData => {
+export const storeMagicLinkLocal = (
+  jobId: string,
+  deliveryEmail: string,
+  workspaceId: string = 'local',
+  clientEmail?: string
+): MagicLinkData => {
+  // VALIDATION: deliveryEmail is required with basic format check
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[storeMagicLinkLocal] Invalid deliveryEmail:', deliveryEmail);
+    throw new Error('Valid deliveryEmail with @ is required for storeMagicLinkLocal');
+  }
+
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days for local links
-  const url = getMagicLinkUrl(token, jobId);
+  // Use validated handshake URL with required email
+  const url = getValidatedHandshakeUrl(jobId, deliveryEmail, clientEmail);
 
   // Store in mockDatabase for later validation
   mockDatabase.magicLinks.set(token, {
@@ -1074,15 +1103,28 @@ export const revokeAllLinksForJob = (jobId: string): DbResult<{ revokedCount: nu
  * Regenerate magic link for a job
  * This revokes all existing links and creates a new one
  * Use for reassignment or when a link needs to be refreshed
+ *
+ * @param jobId - The job ID
+ * @param workspaceId - The workspace ID
+ * @param deliveryEmail - Manager email for report delivery (REQUIRED)
+ * @param options - Additional options (expiration, techId, clientEmail)
  */
 export const regenerateMagicLink = (
   jobId: string,
   workspaceId: string,
+  deliveryEmail: string,
   options?: {
     expirationMs?: number | null; // null = no expiration until sealed
     techId?: string; // Track which technician this link is for
+    clientEmail?: string; // Optional client email for CC
   }
 ): DbResult<MagicLinkData> => {
+  // VALIDATION: deliveryEmail is required with basic format check
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[regenerateMagicLink] Invalid deliveryEmail:', deliveryEmail);
+    return { success: false, error: 'Valid deliveryEmail with @ is required for technician links' };
+  }
+
   // Revoke all existing links for this job
   revokeAllLinksForJob(jobId);
 
@@ -1093,7 +1135,8 @@ export const regenerateMagicLink = (
     ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year as "no expiration"
     : new Date(Date.now() + expirationMs).toISOString();
 
-  const url = getMagicLinkUrl(token, jobId);
+  // Use validated handshake URL with required email
+  const url = getValidatedHandshakeUrl(jobId, deliveryEmail, options?.clientEmail);
 
   const linkData = {
     job_id: jobId,

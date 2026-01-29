@@ -13,6 +13,7 @@ import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
 import { getJobs, getClients, getTechnicians, deleteJob, updateJob } from '../../../hooks/useWorkspaceData';
 import { generateMagicLink } from '../../../lib/db';
+import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
@@ -20,6 +21,7 @@ import SealBadge from '../../../components/SealBadge';
 const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userEmail } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState<Job | null>(null);
@@ -112,7 +114,13 @@ const JobDetail: React.FC = () => {
 
     setGeneratingLink(true);
     try {
-      const result = await generateMagicLink(job.id);
+      // deliveryEmail is required for validated handshake URLs
+      if (!userEmail) {
+        alert('Cannot generate link: Your email is not available. Please log in again.');
+        setGeneratingLink(false);
+        return;
+      }
+      const result = await generateMagicLink(job.id, userEmail);
       if (result.success && result.data) {
         setMagicLink(result.data.url);
         // Store magic link on job for later reference

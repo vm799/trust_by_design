@@ -7,7 +7,7 @@ import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
 import LegalDisclaimer from '../components/LegalDisclaimer';
 import ClientReceiptView from '../components/ClientReceiptView';
-import { getReportUrl, getMagicLinkUrl } from '../lib/redirects';
+import { getReportUrl, getValidatedHandshakeUrl } from '../lib/redirects';
 import { generateSecureInvoiceId } from '../lib/secureId';
 import {
   getMagicLinksForJob,
@@ -134,7 +134,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
       setLinkActionLoading(true);
       try {
-         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', {
+         // deliveryEmail is required for validated handshake URLs
+         if (!user?.email) {
+            setLinkActionMessage({ type: 'error', text: 'Cannot generate link: Your email is not available. Please log in again.' });
+            setLinkActionLoading(false);
+            return;
+         }
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', user.email, {
             expirationMs: LINK_EXPIRATION.STANDARD,
             techId: job.techId
          });
@@ -224,14 +230,19 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    const handleCopyLink = useCallback(() => {
       if (!magicLinkInfo) return;
 
-      const url = getMagicLinkUrl(magicLinkInfo.token, magicLinkInfo.job_id);
+      // Use validated handshake URL with manager's email for report delivery
+      if (!user?.email) {
+         setLinkActionMessage({ type: 'error', text: 'Cannot copy link: Your email is not available. Please log in again.' });
+         return;
+      }
+      const url = getValidatedHandshakeUrl(magicLinkInfo.job_id, user.email);
       navigator.clipboard.writeText(url);
 
       // Track that link was sent via copy
       markLinkAsSent(magicLinkInfo.token, 'copy');
 
       setLinkActionMessage({ type: 'success', text: 'Link copied to clipboard!' });
-   }, [magicLinkInfo]);
+   }, [magicLinkInfo, user?.email]);
 
    const handleReassignJob = useCallback((newTechId: string, newTechName: string) => {
       if (!job) return;
@@ -239,7 +250,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       setLinkActionLoading(true);
       try {
          // Regenerate link with new technician
-         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', {
+         // deliveryEmail is required for validated handshake URLs
+         if (!user?.email) {
+            setLinkActionMessage({ type: 'error', text: 'Cannot reassign: Your email is not available. Please log in again.' });
+            setLinkActionLoading(false);
+            return;
+         }
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', user.email, {
             expirationMs: LINK_EXPIRATION.STANDARD,
             techId: newTechId
          });

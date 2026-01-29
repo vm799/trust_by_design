@@ -145,18 +145,20 @@ describe('lib/db - Database Operations', () => {
 
   describe('Magic Link System', () => {
     describe('generateMagicLink', () => {
-      it('should generate a valid magic link token', async () => {
-        const result = await generateMagicLink('job-1');
+      it('should generate a valid magic link token with validated handshake URL', async () => {
+        // deliveryEmail is now required for validated handshake URLs
+        const result = await generateMagicLink('job-1', 'manager@test.com');
 
         expect(result.success).toBe(true);
         expect(result.data).toHaveProperty('token');
         expect(result.data).toHaveProperty('url');
         expect(result.data).toHaveProperty('expiresAt');
-        expect(result.data?.url).toContain('/#/technician/');
+        // URL now uses /go/:accessCode pattern instead of /technician/:token
+        expect(result.data?.url).toContain('/#/go/');
       });
 
       it('should generate token with 7-day expiry', async () => {
-        const result = await generateMagicLink('job-1');
+        const result = await generateMagicLink('job-1', 'manager@test.com');
         const expiresAt = new Date(result.data!.expiresAt);
         const now = new Date();
         const daysDiff = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
@@ -166,10 +168,18 @@ describe('lib/db - Database Operations', () => {
       });
 
       it('should return error when job does not exist', async () => {
-        const result = await generateMagicLink('non-existent-job');
+        const result = await generateMagicLink('non-existent-job', 'manager@test.com');
 
         expect(result.success).toBe(false);
         expect(result.error).toBeDefined();
+      });
+
+      it('should return error when deliveryEmail is not provided', async () => {
+        // @ts-expect-error - Testing missing required parameter
+        const result = await generateMagicLink('job-1');
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain('Valid deliveryEmail with @');
       });
     });
 
