@@ -186,6 +186,18 @@ serve(async (req) => {
       yPosition -= 15;
     }
 
+    // What3Words location (from DATABASE)
+    if (job.w3w) {
+      page.drawText(`What3Words: ///${job.w3w}`, {
+        x: margin,
+        y: yPosition,
+        size: 10,
+        font: helveticaBold,
+        color: rgb(0.88, 0.14, 0.22), // W3W red color
+      });
+      yPosition -= 15;
+    }
+
     // Divider line
     yPosition -= 10;
     page.drawLine({
