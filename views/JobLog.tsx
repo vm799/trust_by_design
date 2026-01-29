@@ -284,13 +284,20 @@ export default function JobLog() {
           ))}
         </div>
 
-        {/* Back Link */}
-        <div className="mt-8 text-center">
+        {/* Action Links */}
+        <div className="mt-8 text-center space-y-3">
           <a
-            href="/#/home"
+            href="/#/track-lookup"
+            className="block px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors"
+          >
+            <span className="material-symbols-outlined align-middle mr-2">add_circle</span>
+            Start New Job
+          </a>
+          <a
+            href="/#/contractor"
             className="text-slate-400 hover:text-white text-sm transition-colors"
           >
-            ← Back to Home
+            ← Back to Dashboard
           </a>
         </div>
       </div>

@@ -490,6 +490,15 @@ const AppContent: React.FC = () => {
           ) : <Navigate to="/auth" replace />
         } />
 
+        {/* Contractor Job Detail - FIX: Missing route that ContractorDashboard navigates to */}
+        <Route path="/contractor/job/:jobId" element={
+          isAuthenticated ? (
+            <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/contractor">
+              <TechJobDetail />
+            </RouteErrorBoundary>
+          ) : <Navigate to="/auth" replace />
+        } />
+
         {/* Client Persona Flow - REMEDIATION #3: Error boundary */}
         <Route path="/client" element={
           isAuthenticated ? (
