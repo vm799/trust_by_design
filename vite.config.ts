@@ -17,7 +17,8 @@ const securityHeaders = {
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://worldtimeapi.org https://fonts.googleapis.com https://fonts.gstatic.com https://vercel.live wss://vercel.live",
     "worker-src 'self' blob:",
-    "frame-ancestors 'none'",
+    "frame-src 'self' https://vercel.live", // Allow Vercel toolbar iframes
+    "frame-ancestors 'none'", // Prevent embedding by other sites (header only - ignored in meta tags)
     "base-uri 'self'",
     "form-action 'self'"
   ].join('; ')
