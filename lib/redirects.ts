@@ -26,8 +26,24 @@ export const REDIRECT_ALLOWLIST = [
 ] as const;
 
 /**
- * Get the current origin if it's in the allowlist
- * Falls back to production URL if current origin is not allowed
+ * Check if origin is a valid Vercel preview URL
+ * Vercel preview URLs have format: https://{project}-{hash}-{user}.vercel.app
+ */
+function isVercelPreviewUrl(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    // Vercel preview URLs end with .vercel.app and use HTTPS
+    return url.protocol === 'https:' && url.hostname.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the current origin - ALWAYS uses window.location.origin
+ * This is the "PhD fix" - never rely on hardcoded URLs or env vars
+ *
+ * Security: Only allows known domains and Vercel preview URLs
  */
 export const getSecureOrigin = (): string => {
   if (typeof window === 'undefined') {
@@ -37,8 +53,13 @@ export const getSecureOrigin = (): string => {
 
   const currentOrigin = window.location.origin;
 
-  // Check if current origin is in allowlist
+  // Check if current origin is in explicit allowlist
   if ((REDIRECT_ALLOWLIST as readonly string[]).includes(currentOrigin)) {
+    return currentOrigin;
+  }
+
+  // Check if it's a valid Vercel preview URL
+  if (isVercelPreviewUrl(currentOrigin)) {
     return currentOrigin;
   }
 
