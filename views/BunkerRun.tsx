@@ -20,7 +20,8 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTheme } from '../lib/theme';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -378,14 +379,45 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
 export default function BunkerRun() {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { resolvedTheme, isDaylightMode, setDaylightMode } = useTheme();
+
+  // Determine if we're in daylight/construction mode
+  const isDaylight = resolvedTheme === 'daylight' || isDaylightMode;
+
+  // Theme-aware CSS classes
+  const themeClasses = isDaylight
+    ? 'bg-slate-100 text-slate-900' // Daylight: Anti-glare gray background
+    : 'bg-slate-950 text-white';    // Dark: Standard dark mode
+
+  const cardClasses = isDaylight
+    ? 'bg-white border-slate-300 shadow-md'
+    : 'bg-slate-800/50 border-slate-700';
+
+  const buttonPrimaryClasses = isDaylight
+    ? 'bg-orange-500 hover:bg-orange-400 text-slate-900 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] font-bold'
+    : 'bg-blue-600 hover:bg-blue-500 text-white';
+
+  const buttonSecondaryClasses = isDaylight
+    ? 'bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900'
+    : 'bg-slate-700 hover:bg-slate-600 text-white';
+
+  // Extract email from URL params (PhD Fix: store immediately for sync handshake)
+  useEffect(() => {
+    const email = searchParams.get('email');
+    if (email) {
+      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, email);
+      console.log('[BunkerRun] Stored manager email from URL:', email);
+    }
+  }, [searchParams]);
 
   // DEBUG: Log when BunkerRun component loads
-  // This helps verify the route is working and not being hijacked
   useEffect(() => {
     console.log('[BunkerRun] Component loaded for ID:', jobId);
     console.log('[BunkerRun] Current URL:', window.location.href);
+    console.log('[BunkerRun] Theme:', resolvedTheme, 'isDaylight:', isDaylight);
     console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
-  }, [jobId]);
+  }, [jobId, resolvedTheme, isDaylight]);
 
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -702,23 +734,23 @@ export default function BunkerRun() {
   if (!job) {
     if (loadError) {
       return (
-        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+        <div className={`min-h-screen ${themeClasses} flex items-center justify-center p-4`}>
           <div className="text-center space-y-6">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600/20 rounded-full">
               <span className="text-3xl">⚠️</span>
             </div>
             <h1 className="text-2xl font-bold">{loadError}</h1>
-            <p className="text-slate-400">The job could not be found or loaded.</p>
+            <p className={isDaylight ? 'text-slate-600' : 'text-slate-400'}>The job could not be found or loaded.</p>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                className={`px-6 py-3 rounded-lg min-h-[56px] ${buttonSecondaryClasses}`}
               >
                 Retry
               </button>
               <a
                 href="/#/create-job"
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className={`px-6 py-3 rounded-lg min-h-[56px] ${buttonPrimaryClasses}`}
               >
                 Create New Job
               </a>
@@ -729,10 +761,10 @@ export default function BunkerRun() {
     }
 
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className={`min-h-screen ${themeClasses} flex items-center justify-center`}>
         <div className="text-center space-y-4">
-          <div className="size-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-400">Loading job...</p>
+          <div className={`size-12 border-4 ${isDaylight ? 'border-orange-500/30 border-t-orange-500' : 'border-blue-500/30 border-t-blue-500'} rounded-full animate-spin mx-auto`}></div>
+          <p className={isDaylight ? 'text-slate-600' : 'text-slate-400'}>Loading job...</p>
         </div>
       </div>
     );
@@ -744,14 +776,14 @@ export default function BunkerRun() {
 
   if (isJobFinished && job) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className={`min-h-screen ${themeClasses}`}>
         {/* Navigation Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-slate-400">Job Complete</span>
+            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Complete</span>
             <a
               href="/#/job-log"
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
             >
               View Job Log
             </a>
@@ -842,14 +874,28 @@ export default function BunkerRun() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      {/* Navigation Header with Job Log Link */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+    <div className={`min-h-screen ${themeClasses}`}>
+      {/* Navigation Header with Job Log Link + Theme Toggle */}
+      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="text-sm text-slate-400">Job Runner</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
+            {/* Daylight Mode Toggle */}
+            <button
+              onClick={() => setDaylightMode(!isDaylightMode)}
+              className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
+                isDaylight
+                  ? 'bg-orange-500 text-slate-900'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+              title={isDaylight ? 'Switch to Dark Mode' : 'Switch to Daylight Mode (outdoor visibility)'}
+            >
+              {isDaylight ? '☀️' : '🌙'}
+            </button>
+          </div>
           <a
             href="/#/job-log"
-            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
           >
             My Jobs
           </a>
@@ -867,11 +913,11 @@ export default function BunkerRun() {
         <ProgressBar currentStep={job.currentStep} />
 
         {/* Job Info Header */}
-        <div className="mt-4 mb-6 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-          <p className="text-xs text-slate-400">JOB</p>
-          <p className="text-lg font-bold text-white">{job.title}</p>
-          <p className="text-sm text-slate-400">{job.client}</p>
-          {job.address && <p className="text-sm text-slate-500">{job.address}</p>}
+        <div className={`mt-4 mb-6 p-4 rounded-xl border ${cardClasses}`}>
+          <p className={`text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>JOB</p>
+          <p className="text-lg font-bold">{job.title}</p>
+          <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
+          {job.address && <p className={`text-sm ${isDaylight ? 'text-slate-500' : 'text-slate-500'}`}>{job.address}</p>}
         </div>
 
         {/* Wizard Steps */}
