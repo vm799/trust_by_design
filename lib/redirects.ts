@@ -155,6 +155,16 @@ export const getBunkerRunUrl = (
   jobId: string,
   options?: { managerEmail?: string; clientEmail?: string }
 ): string => {
+  // VALIDATION: Log if called without any email - helps catch "ghost link" issues in UAT
+  if (!options?.managerEmail && !options?.clientEmail) {
+    console.error(
+      '[getBunkerRunUrl] WARNING: Called without email params. ' +
+      'This link may not support the Public-Private handshake. ' +
+      `JobId: ${jobId}, Stack:`,
+      new Error().stack
+    );
+  }
+
   // URL encode jobId to prevent injection attacks
   const encodedId = encodeURIComponent(jobId);
   let url = `${getSecureOrigin()}/#/run/${encodedId}`;
