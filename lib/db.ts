@@ -1,5 +1,8 @@
 import { getSupabase } from './supabase';
 import { getValidatedHandshakeUrl, getBunkerRunUrl } from './redirects';
+
+// Re-export getSupabase for modules that lazy-load db (like DataContext)
+export { getSupabase };
 import type { Job, Client, Technician } from '../types';
 import { mockJobs } from '../tests/mocks/mockData';
 import { requestCache, generateCacheKey } from './performanceUtils';
