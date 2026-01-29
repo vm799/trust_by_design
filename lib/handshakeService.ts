@@ -288,6 +288,31 @@ class HandshakeServiceClass {
   }
 
   /**
+   * Force unlock the handshake - Emergency escape hatch
+   *
+   * Use Case: Technician abandoned a job mid-flow and needs to start fresh.
+   * This clears all handshake state unconditionally, allowing new magic links.
+   *
+   * WARNING: This discards any in-progress work that hasn't been synced.
+   * The UI should warn the user before calling this.
+   *
+   * @returns The jobId that was unlocked (for logging/UI feedback), or null if nothing was locked
+   */
+  forceUnlock(): string | null {
+    const existingContext = this.get();
+    const unlockedJobId = existingContext?.jobId ?? null;
+
+    // Clear all handshake storage
+    localStorage.removeItem(STORAGE_KEYS.CONTEXT);
+    localStorage.removeItem(STORAGE_KEYS.LOCKED);
+    localStorage.removeItem(STORAGE_KEYS.CREATED_AT);
+
+    console.log('[HandshakeService] Force unlock executed:', unlockedJobId ? `Unlocked from job ${unlockedJobId}` : 'No job was locked');
+
+    return unlockedJobId;
+  }
+
+  /**
    * Get the job ID from the current context
    * Convenience method for routing
    */
