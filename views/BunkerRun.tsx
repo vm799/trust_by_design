@@ -265,7 +265,8 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
       address: job.address,
       w3w: job.w3w,
       notes: job.notes,
-      status: job.completedAt ? 'Complete' : 'In Progress',
+      // FIX: Only set 'In Progress' when work has started, preserve 'Pending' for fresh jobs
+      status: job.completedAt ? 'Complete' : (job.beforePhoto ? 'In Progress' : (job.status || 'Pending')),
       before_photo_data: job.beforePhoto?.dataUrl,
       after_photo_data: job.afterPhoto?.dataUrl,
       signature_data: job.signature?.dataUrl,
@@ -1008,9 +1009,11 @@ export default function BunkerRun() {
           )}
 
           {job.managerEmail && (
-            <div className="bg-green-900/30 border border-green-700 p-4 rounded-xl mb-6">
-              <p className="text-sm text-green-400">
-                ✓ Report sent to <span className="font-medium text-white">{job.managerEmail}</span>
+            <div className="bg-blue-900/30 border border-blue-700 p-4 rounded-xl mb-6">
+              <p className="text-sm text-blue-400">
+                <span className="material-symbols-outlined align-middle text-sm mr-1">schedule_send</span>
+                Report queued for <span className="font-medium text-white">{job.managerEmail}</span>
+                <span className="block text-xs text-blue-400/70 mt-1">Check your email shortly. Contact manager if not received.</span>
               </p>
             </div>
           )}
@@ -1402,7 +1405,7 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { jo
           </span>
         </div>
         {job.syncStatus === 'synced' && job.managerEmail && (
-          <p className="mt-2 text-sm text-green-400">Report sent to {job.managerEmail}</p>
+          <p className="mt-2 text-sm text-blue-400">Report queued for {job.managerEmail}</p>
         )}
       </div>
 

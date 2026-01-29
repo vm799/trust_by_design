@@ -618,10 +618,17 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      {signatureDataUrl ? (
                         <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
                            <img src={signatureDataUrl} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
-                           <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
-                              <span className="size-2 bg-success rounded-full animate-pulse"></span>
-                              <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
-                           </div>
+                           {job.sealedAt ? (
+                              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
+                                 <span className="size-2 bg-success rounded-full animate-pulse"></span>
+                                 <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
+                              </div>
+                           ) : (
+                              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-200 shadow-sm">
+                                 <span className="size-2 bg-amber-500 rounded-full"></span>
+                                 <span className="text-[9px] font-black text-amber-600 uppercase">Pending Seal</span>
+                              </div>
+                           )}
                         </div>
                      ) : isLoadingMedia ? (
                         <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col items-center justify-center text-slate-300">
@@ -645,12 +652,20 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                      </div>
                   </div>
-                  <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
-                     <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                     <span className="material-symbols-outlined text-6xl mb-3 text-primary font-black relative z-10">verified</span>
-                     <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Verified Record</p>
-                     <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Job Verified</p>
-                  </div>
+                  {job.sealedAt ? (
+                     <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
+                        <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <span className="material-symbols-outlined text-6xl mb-3 text-primary font-black relative z-10">verified</span>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Verified Record</p>
+                        <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Job Verified</p>
+                     </div>
+                  ) : (
+                     <div className="bg-amber-900/20 text-amber-100 p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-amber-500/20 relative group overflow-hidden">
+                        <span className="material-symbols-outlined text-6xl mb-3 text-amber-500 font-black relative z-10">pending</span>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">Awaiting Seal</p>
+                        <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Draft Report</p>
+                     </div>
+                  )}
                </div>
 
                {/* Legal Disclaimer - Phase C.5 */}
@@ -905,8 +920,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      <div className="pt-8 border-t border-white/5">
                         <h3 className="text-[10px] font-black text-slate-300 mb-4 uppercase tracking-[0.2em]">System Status</h3>
                         <div className="space-y-3">
-                           <StatusLine label="Integrity Check" value="Pass" success />
-                           <StatusLine label="Sync Status" value="Vaulted" success />
+                           <StatusLine label="Integrity Check" value={job.sealedAt ? "Pass" : "Pending"} success={!!job.sealedAt} />
+                           <StatusLine label="Sync Status" value={job.sealedAt ? "Vaulted" : "Draft"} success={!!job.sealedAt} />
                            {magicLinkInfo && (
                               <StatusLine
                                  label="Tech Link"
