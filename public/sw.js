@@ -10,10 +10,15 @@
  * - Photos/Media: Cache-first (large files)
  */
 
-const CACHE_VERSION = 'bunker-v1';
+// Cache version - increment to force cache refresh on deployment
+// v2.0.0: Added CSP fix, database error handling
+const CACHE_VERSION = 'bunker-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const MEDIA_CACHE = `${CACHE_VERSION}-media`;
+
+// Track if we've done a fresh install/update
+let isNewInstall = false;
 
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -58,18 +63,49 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
+        // Find and delete ALL old caches (not just bunker- prefix)
+        const cachesToDelete = cacheNames.filter((name) => {
+          // Delete any cache that doesn't match current version
+          const isOldBunkerCache = name.startsWith('bunker-') &&
+            name !== STATIC_CACHE &&
+            name !== DYNAMIC_CACHE &&
+            name !== MEDIA_CACHE;
+
+          // Also delete any other caches that might be stale
+          const isUnknownCache = !name.startsWith('bunker-v2');
+
+          return isOldBunkerCache || isUnknownCache;
+        });
+
+        if (cachesToDelete.length > 0) {
+          console.log('[SW] Purging old caches:', cachesToDelete);
+          isNewInstall = true;
+        }
+
         return Promise.all(
-          cacheNames
-            .filter((name) => name.startsWith('bunker-') && name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== MEDIA_CACHE)
-            .map((name) => {
-              console.log('[SW] Deleting old cache:', name);
-              return caches.delete(name);
-            })
+          cachesToDelete.map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
         );
       })
       .then(() => {
         console.log('[SW] Activation complete');
         return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients about the update
+        if (isNewInstall) {
+          return self.clients.matchAll().then((clients) => {
+            clients.forEach((client) => {
+              client.postMessage({
+                type: 'SW_UPDATED',
+                version: CACHE_VERSION,
+                message: 'Service worker updated - caches cleared'
+              });
+            });
+          });
+        }
       })
   );
 });
@@ -285,6 +321,55 @@ self.addEventListener('message', (event) => {
       names.forEach((name) => caches.delete(name));
     });
   }
+
+  // Nuclear option: Clear all caches AND IndexedDB
+  if (event.data.type === 'CLEAR_ALL_DATA') {
+    console.log('[SW] Clearing ALL data (caches + IndexedDB)...');
+
+    // Clear all caches
+    caches.keys().then((names) => {
+      return Promise.all(names.map((name) => {
+        console.log('[SW] Deleting cache:', name);
+        return caches.delete(name);
+      }));
+    }).then(() => {
+      // Clear IndexedDB databases
+      if (typeof indexedDB !== 'undefined' && indexedDB.databases) {
+        return indexedDB.databases().then((dbs) => {
+          return Promise.all(dbs.map((db) => {
+            console.log('[SW] Deleting IndexedDB:', db.name);
+            return new Promise((resolve) => {
+              const req = indexedDB.deleteDatabase(db.name);
+              req.onsuccess = resolve;
+              req.onerror = resolve;
+              req.onblocked = resolve;
+            });
+          }));
+        });
+      }
+    }).then(() => {
+      // Notify client that clear is complete
+      event.source.postMessage({
+        type: 'DATA_CLEARED',
+        success: true
+      });
+    }).catch((error) => {
+      console.error('[SW] Error clearing data:', error);
+      event.source.postMessage({
+        type: 'DATA_CLEARED',
+        success: false,
+        error: error.message
+      });
+    });
+  }
+
+  // Get current cache version
+  if (event.data.type === 'GET_VERSION') {
+    event.source.postMessage({
+      type: 'VERSION_INFO',
+      version: CACHE_VERSION
+    });
+  }
 });
 
-console.log('[SW] Service worker loaded - Bunker Mode Ready');
+console.log('[SW] Service worker loaded - Bunker Mode Ready (v2.0.0)');
