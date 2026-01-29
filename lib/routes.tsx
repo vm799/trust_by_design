@@ -10,8 +10,6 @@ import { lazy } from 'react';
 
 // Lazy load views for code splitting
 // Auth views
-export const EmailFirstAuth = lazy(() => import('../views/EmailFirstAuth'));
-export const OAuthCallback = lazy(() => import('../views/OAuthCallback'));
 export const OAuthSetup = lazy(() => import('../views/OAuthSetup'));
 export const CompleteOnboarding = lazy(() => import('../views/CompleteOnboarding'));
 
@@ -39,13 +37,9 @@ export const TechProofScreen = lazy(() => import('../views/TechProofScreen'));
 
 // Public views
 export const CertificateVerify = lazy(() => import('../views/public/CertificateVerify'));
-export const Landing = lazy(() => import('../views/Landing'));
 
-// Legacy views (will be deprecated)
+// Active views (used in App.tsx)
 export const AdminDashboard = lazy(() => import('../views/AdminDashboard'));
-export const Clients = lazy(() => import('../views/Clients'));
-export const Jobs = lazy(() => import('../views/Jobs'));
-export const Invoices = lazy(() => import('../views/Invoices'));
 export const TechnicianPortal = lazy(() => import('../views/TechnicianPortal'));
 
 /**

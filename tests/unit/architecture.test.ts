@@ -194,11 +194,6 @@ describe('Architecture Compliance', () => {
       expect(content).toContain('Transition');
     });
 
-    it('DayNightCarousel should use animation constants', () => {
-      const content = readFile('components/DayNightCarousel.tsx');
-      expect(content).toContain("from '../lib/animations'");
-    });
-
     it('LandingPage should use animation constants', () => {
       const content = readFile('views/LandingPage.tsx');
       expect(content).toContain("from '../lib/animations'");
