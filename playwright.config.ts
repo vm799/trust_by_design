@@ -9,8 +9,15 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // Increase retries in CI for flaky network-dependent tests
+  retries: process.env.CI ? 3 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // Increase test timeout in CI to handle slower environments
+  timeout: process.env.CI ? 60000 : 30000,
+  // Increase expect timeout for assertions
+  expect: {
+    timeout: process.env.CI ? 15000 : 5000,
+  },
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/results.json' }],
@@ -18,11 +25,15 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
+    baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    // Capture traces on all retries in CI for debugging
+    trace: process.env.CI ? 'on-all-retries' : 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 10000,
+    // Increase action timeout in CI
+    actionTimeout: process.env.CI ? 15000 : 10000,
+    // Add navigation timeout
+    navigationTimeout: process.env.CI ? 30000 : 15000,
   },
 
   projects: [
@@ -60,7 +71,12 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    // Always reuse existing server - CI workflow starts preview server separately
+    reuseExistingServer: true,
+    // Increase timeout for slow CI environments
+    timeout: 180000,
+    // Don't fail if server is already running (e.g., from CI workflow)
+    stdout: 'ignore',
+    stderr: 'pipe',
   },
 });

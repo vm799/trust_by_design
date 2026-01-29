@@ -774,6 +774,12 @@ export default function BunkerRun() {
     if (success) {
       // Store final job state before navigation
       storeJobDetailsForSync(job);
+
+      // CRITICAL FIX: Clear handshake lock to allow next technician to access new jobs
+      // This ensures subsequent magic links are not blocked by stale locks
+      HandshakeService.clear();
+      console.log('[BunkerRun] Handshake cleared after successful sync');
+
       // Give toast time to show, then navigate
       setTimeout(() => {
         navigate('/success');

@@ -14,8 +14,8 @@
 
 import { test, expect } from '@playwright/test';
 
-// Test configuration
-const BASE_URL = process.env.VITE_APP_URL || 'http://localhost:3000';
+// Test configuration - Use port 5173 to match playwright.config.ts webServer
+const BASE_URL = process.env.VITE_APP_URL || process.env.BASE_URL || 'http://localhost:5173';
 const TEST_EMAIL = `test-${Date.now()}@jobproof-test.com`;
 const TEST_PASSWORD = 'SecureTest123!@#';
 const TEST_WORKSPACE = 'JobProof Test Workspace';
