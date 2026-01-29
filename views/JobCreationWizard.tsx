@@ -315,8 +315,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
         // Generate magic link FIRST so we can store it on the job
         // deliveryEmail is required for validated handshake URLs
-        const deliveryEmail = user?.email || 'unknown@local.dev';
-        const localMagicLink = storeMagicLinkLocal(newId, deliveryEmail, workspaceId);
+        if (!user?.email) {
+          showToast('Cannot create job: Your email is not available. Please log in again.', 'error');
+          setIsCreating(false);
+          return;
+        }
+        const localMagicLink = storeMagicLinkLocal(newId, user.email, workspaceId);
 
         // Create job with magic link token embedded (CRITICAL for cross-browser access)
         const localJob: Job = {
@@ -352,8 +356,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       setCreatedJobId(createdJob.id);
 
       // Generate magic link with manager's email for report delivery
-      const managerEmail = user?.email || 'unknown@local.dev';
-      const magicLinkResult = await generateMagicLink(createdJob.id, managerEmail);
+      if (!user?.email) {
+        showToast('Cannot create job: Your email is not available. Please log in again.', 'error');
+        setIsCreating(false);
+        return;
+      }
+      const magicLinkResult = await generateMagicLink(createdJob.id, user.email);
       let jobWithToken = createdJob;
 
       if (magicLinkResult.success && magicLinkResult.data?.url) {
@@ -367,8 +375,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         };
         console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
-        // Fallback to local token generation
-        const localMagicLink = storeMagicLinkLocal(createdJob.id, managerEmail, workspaceId);
+        // Fallback to local token generation (user.email already validated above)
+        const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
         // Store token on job for cross-browser access
@@ -414,8 +422,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     let tokenToTrack = magicLinkToken;
     if (!urlToCopy && createdJobId) {
       console.warn('[JobCreationWizard] magicLinkUrl was not set, generating emergency local link');
-      const emergencyEmail = user?.email || 'unknown@local.dev';
-      const emergencyLink = storeMagicLinkLocal(createdJobId, emergencyEmail, user?.workspace?.id || 'local');
+      if (!user?.email) {
+        showToast('Cannot copy link: Your email is not available. Please log in again.', 'error');
+        return;
+      }
+      const emergencyLink = storeMagicLinkLocal(createdJobId, user.email, user?.workspace?.id || 'local');
       urlToCopy = emergencyLink.url;
       tokenToTrack = emergencyLink.token;
     }

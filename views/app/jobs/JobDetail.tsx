@@ -115,8 +115,12 @@ const JobDetail: React.FC = () => {
     setGeneratingLink(true);
     try {
       // deliveryEmail is required for validated handshake URLs
-      const deliveryEmail = userEmail || 'unknown@local.dev';
-      const result = await generateMagicLink(job.id, deliveryEmail);
+      if (!userEmail) {
+        alert('Cannot generate link: Your email is not available. Please log in again.');
+        setGeneratingLink(false);
+        return;
+      }
+      const result = await generateMagicLink(job.id, userEmail);
       if (result.success && result.data) {
         setMagicLink(result.data.url);
         // Store magic link on job for later reference

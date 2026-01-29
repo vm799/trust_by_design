@@ -673,9 +673,9 @@ export const generateMagicLink = async (
   clientEmail?: string
 ): Promise<DbResult<MagicLinkData>> => {
   // VALIDATION: deliveryEmail is now required to prevent ghost links
-  if (!deliveryEmail) {
-    console.error('[generateMagicLink] deliveryEmail is required to create valid technician links');
-    return { success: false, error: 'deliveryEmail is required for technician links' };
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[generateMagicLink] Invalid deliveryEmail:', deliveryEmail);
+    return { success: false, error: 'Valid deliveryEmail with @ is required for technician links' };
   }
 
   // Offline/mock mode: generate local token
@@ -760,9 +760,10 @@ export const storeMagicLinkLocal = (
   workspaceId: string = 'local',
   clientEmail?: string
 ): MagicLinkData => {
-  // VALIDATION: deliveryEmail is required
-  if (!deliveryEmail) {
-    throw new Error('deliveryEmail is required for storeMagicLinkLocal');
+  // VALIDATION: deliveryEmail is required with basic format check
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[storeMagicLinkLocal] Invalid deliveryEmail:', deliveryEmail);
+    throw new Error('Valid deliveryEmail with @ is required for storeMagicLinkLocal');
   }
 
   const token = crypto.randomUUID();
@@ -1118,10 +1119,10 @@ export const regenerateMagicLink = (
     clientEmail?: string; // Optional client email for CC
   }
 ): DbResult<MagicLinkData> => {
-  // VALIDATION: deliveryEmail is required
-  if (!deliveryEmail) {
-    console.error('[regenerateMagicLink] deliveryEmail is required');
-    return { success: false, error: 'deliveryEmail is required for technician links' };
+  // VALIDATION: deliveryEmail is required with basic format check
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
+    console.error('[regenerateMagicLink] Invalid deliveryEmail:', deliveryEmail);
+    return { success: false, error: 'Valid deliveryEmail with @ is required for technician links' };
   }
 
   // Revoke all existing links for this job

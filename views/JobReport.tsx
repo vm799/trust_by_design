@@ -135,8 +135,12 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       setLinkActionLoading(true);
       try {
          // deliveryEmail is required for validated handshake URLs
-         const deliveryEmail = user?.email || 'unknown@local.dev';
-         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', deliveryEmail, {
+         if (!user?.email) {
+            setLinkActionMessage({ type: 'error', text: 'Cannot generate link: Your email is not available. Please log in again.' });
+            setLinkActionLoading(false);
+            return;
+         }
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', user.email, {
             expirationMs: LINK_EXPIRATION.STANDARD,
             techId: job.techId
          });
@@ -227,8 +231,11 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       if (!magicLinkInfo) return;
 
       // Use validated handshake URL with manager's email for report delivery
-      const deliveryEmail = user?.email || 'unknown@local.dev';
-      const url = getValidatedHandshakeUrl(magicLinkInfo.job_id, deliveryEmail);
+      if (!user?.email) {
+         setLinkActionMessage({ type: 'error', text: 'Cannot copy link: Your email is not available. Please log in again.' });
+         return;
+      }
+      const url = getValidatedHandshakeUrl(magicLinkInfo.job_id, user.email);
       navigator.clipboard.writeText(url);
 
       // Track that link was sent via copy
@@ -244,8 +251,12 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       try {
          // Regenerate link with new technician
          // deliveryEmail is required for validated handshake URLs
-         const deliveryEmail = user?.email || 'unknown@local.dev';
-         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', deliveryEmail, {
+         if (!user?.email) {
+            setLinkActionMessage({ type: 'error', text: 'Cannot reassign: Your email is not available. Please log in again.' });
+            setLinkActionLoading(false);
+            return;
+         }
+         const result = regenerateMagicLink(job.id, job.workspaceId || user?.workspace?.id || 'local', user.email, {
             expirationMs: LINK_EXPIRATION.STANDARD,
             techId: newTechId
          });

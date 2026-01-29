@@ -106,15 +106,15 @@ export const getValidatedHandshakeUrl = (
   deliveryEmail: string,
   clientEmail?: string
 ): string => {
-  // VALIDATION: Require deliveryEmail to prevent ghost links
-  if (!deliveryEmail) {
+  // VALIDATION: Require valid deliveryEmail to prevent ghost links
+  if (!deliveryEmail || deliveryEmail.trim() === '' || !deliveryEmail.includes('@')) {
     console.error(
-      '[getValidatedHandshakeUrl] ERROR: Called without deliveryEmail. ' +
+      '[getValidatedHandshakeUrl] ERROR: Called without valid deliveryEmail. ' +
       'This will create a ghost link that cannot deliver reports. ' +
-      `JobId: ${jobId}, Stack:`,
+      `JobId: ${jobId}, deliveryEmail: ${deliveryEmail}, Stack:`,
       new Error().stack
     );
-    throw new Error('deliveryEmail is required for technician links');
+    throw new Error('Valid deliveryEmail with @ is required for technician links');
   }
 
   // Generate checksum for tamper detection
@@ -126,33 +126,23 @@ export const getValidatedHandshakeUrl = (
     checksum,
     deliveryEmail,
     clientEmail,
+    createdAt: Date.now(),
   };
 
-  // Base64 encode for URL safety
-  const accessCode = btoa(JSON.stringify(payload));
+  // Unicode-safe base64 encoding
+  let accessCode: string;
+  try {
+    // Try standard btoa first (faster for ASCII)
+    accessCode = btoa(JSON.stringify(payload));
+  } catch {
+    // Fallback for Unicode characters (e.g., international emails like manager@例え.jp)
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(JSON.stringify(payload));
+    accessCode = btoa(String.fromCharCode(...bytes));
+  }
   const encodedAccessCode = encodeURIComponent(accessCode);
 
   return `${getSecureOrigin()}/#/go/${encodedAccessCode}`;
-};
-
-/**
- * @deprecated Use getValidatedHandshakeUrl instead.
- * This function is kept for backwards compatibility during migration.
- * It will be removed in the next release.
- */
-export const getMagicLinkUrl = (token: string, jobId?: string): string => {
-  console.warn(
-    '[getMagicLinkUrl] DEPRECATED: This function creates ghost links without email. ' +
-    'Use getValidatedHandshakeUrl(jobId, deliveryEmail) instead.'
-  );
-  // If we have a jobId but no email, we can't create a proper link
-  // Fall back to the bunker run URL without email validation
-  if (jobId) {
-    return getBunkerRunUrl(jobId);
-  }
-  // Legacy behavior - create a track URL with token
-  const encodedToken = encodeURIComponent(token);
-  return `${getSecureOrigin()}/#/track/${encodedToken}`;
 };
 
 /**

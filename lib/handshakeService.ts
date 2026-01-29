@@ -76,6 +76,13 @@ const STORAGE_KEYS = {
 import { generateChecksum, validateChecksum as validateChecksumFn } from './redirects';
 
 // ============================================================================
+// LINK EXPIRY CONFIGURATION
+// ============================================================================
+
+/** Link expiry window: 24 hours in milliseconds */
+const LINK_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+// ============================================================================
 // HANDSHAKE SERVICE CLASS
 // ============================================================================
 
@@ -89,6 +96,7 @@ class HandshakeServiceClass {
     checksum: string;
     deliveryEmail: string;
     clientEmail?: string;
+    createdAt?: number;
   } | null {
     try {
       // Access code format: base64(JSON)
@@ -105,6 +113,7 @@ class HandshakeServiceClass {
         checksum: data.checksum,
         deliveryEmail: data.deliveryEmail,
         clientEmail: data.clientEmail,
+        createdAt: data.createdAt,
       };
     } catch (error) {
       console.error('[HandshakeService] Failed to parse access code:', error);
@@ -163,6 +172,21 @@ class HandshakeServiceClass {
           message: 'The access code is malformed or corrupted.',
         },
       };
+    }
+
+    // Check link expiry (if createdAt is present)
+    if (parsed.createdAt) {
+      const age = Date.now() - parsed.createdAt;
+      if (age > LINK_EXPIRY_MS) {
+        const hoursAgo = Math.floor(age / (60 * 60 * 1000));
+        return {
+          success: false,
+          error: {
+            type: 'EXPIRED_LINK',
+            message: `This link expired ${hoursAgo} hours ago. Please request a new link from your manager.`,
+          },
+        };
+      }
     }
 
     // Validate required fields

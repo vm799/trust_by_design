@@ -179,7 +179,7 @@ describe('lib/db - Database Operations', () => {
         const result = await generateMagicLink('job-1');
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('deliveryEmail is required');
+        expect(result.error).toContain('Valid deliveryEmail with @');
       });
     });
 
