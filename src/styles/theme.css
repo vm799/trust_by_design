@@ -103,6 +103,60 @@
   --ring: 212.7 26.8% 83.9%;
 }
 
+/* ============================================
+   DAYLIGHT MODE - High-Visibility Construction Theme
+   Optimized for outdoor use in 100% sunlight
+   PhD-Level Spec: Luminance Contrast over Color
+   ============================================ */
+.daylight,
+[data-theme="daylight"] {
+  /* Background - Anti-glare Gray (#F8FAFC) - reduces eye strain in sunlight */
+  --background: 210 40% 98%;
+  --foreground: 222 47% 17%;
+
+  /* Primary - Safety Orange (#FF8C00) - maximum visibility CTAs */
+  --primary: 33 100% 50%;
+  --primary-foreground: 222 47% 11%;
+
+  /* Secondary - High-contrast Slate for supporting UI */
+  --secondary: 215 25% 27%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* Accent - Vibrant Safety Orange for critical actions */
+  --accent: 33 100% 50%;
+  --accent-foreground: 222 47% 11%;
+
+  /* Success - High-saturation Emerald for outdoor visibility */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+
+  /* Warning - Pure Safety Yellow - maximum visibility */
+  --warning: 45 100% 51%;
+  --warning-foreground: 222 47% 11%;
+
+  /* Danger - High-contrast Red */
+  --danger: 0 84% 60%;
+  --danger-foreground: 0 0% 100%;
+
+  /* Muted - Subtle gray that maintains contrast */
+  --muted: 210 40% 93%;
+  --muted-foreground: 215 25% 40%;
+
+  /* Card - Pure white with subtle distinction */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 17%;
+
+  /* Borders - Thick, visible borders for sunlight */
+  --border: 215 25% 75%;
+  --input: 215 25% 85%;
+  --ring: 33 100% 50%;
+
+  /* Daylight-specific tokens */
+  --daylight-shadow: 4px 4px 0px hsl(222 47% 11%);
+  --daylight-border-width: 2px;
+  --daylight-touch-target: 56px;
+}
+
 /* High Contrast Mode for Enhanced Accessibility */
 @media (prefers-contrast: high) {
   :root {
@@ -441,6 +495,152 @@
 .light .border-white\/5,
 .light .border-white\/10 {
   border-color: hsl(214.3 31.8% 91.4%);
+}
+
+/* ============================================
+   DAYLIGHT MODE UTILITY CLASSES
+   Neobrutalist design for outdoor visibility
+   ============================================ */
+
+/* Daylight mode text overrides */
+.daylight .text-white {
+  color: hsl(222 47% 17%);
+}
+
+.daylight .bg-slate-900 {
+  background-color: hsl(0 0% 100%);
+  border: 2px solid hsl(215 25% 75%);
+}
+
+.daylight .bg-slate-950 {
+  background-color: hsl(210 40% 98%);
+}
+
+.daylight .text-slate-300,
+.daylight .text-slate-400 {
+  color: hsl(215 25% 40%);
+}
+
+.daylight .border-white\/5,
+.daylight .border-white\/10 {
+  border-color: hsl(215 25% 75%);
+}
+
+/* Neobrutalist Button - Hard shadow for sun visibility */
+.btn-neobrutalist {
+  position: relative;
+  border: 2px solid currentColor;
+  box-shadow: 4px 4px 0px hsl(222 47% 11%);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+}
+
+.btn-neobrutalist:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px hsl(222 47% 11%);
+}
+
+.btn-neobrutalist:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px hsl(222 47% 11%);
+}
+
+/* Daylight Primary Button - Safety Orange */
+.daylight .btn-primary,
+.btn-daylight-primary {
+  background-color: hsl(33 100% 50%);
+  color: hsl(222 47% 11%);
+  border: 2px solid hsl(222 47% 11%);
+  box-shadow: 4px 4px 0px hsl(222 47% 11%);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.daylight .btn-primary:hover,
+.btn-daylight-primary:hover {
+  background-color: hsl(33 100% 55%);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px hsl(222 47% 11%);
+}
+
+/* Daylight Secondary Button */
+.daylight .btn-secondary,
+.btn-daylight-secondary {
+  background-color: hsl(0 0% 100%);
+  color: hsl(222 47% 17%);
+  border: 2px solid hsl(222 47% 17%);
+  box-shadow: 4px 4px 0px hsl(222 47% 17%);
+}
+
+/* Daylight Danger Button */
+.daylight .btn-danger,
+.btn-daylight-danger {
+  background-color: hsl(0 84% 60%);
+  color: hsl(0 0% 100%);
+  border: 2px solid hsl(222 47% 11%);
+  box-shadow: 4px 4px 0px hsl(222 47% 11%);
+}
+
+/* Daylight Field Button - 56px touch target for gloved hands */
+.btn-daylight-field {
+  min-height: 56px;
+  min-width: 56px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid hsl(222 47% 11%);
+  box-shadow: 4px 4px 0px hsl(222 47% 11%);
+  background-color: hsl(33 100% 50%);
+  color: hsl(222 47% 11%);
+}
+
+.btn-daylight-field:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px hsl(222 47% 11%);
+}
+
+/* Daylight Card - High contrast borders */
+.card-daylight {
+  background-color: hsl(0 0% 100%);
+  border: 2px solid hsl(215 25% 75%);
+  box-shadow: 4px 4px 0px hsl(215 25% 85%);
+}
+
+/* Daylight Input Fields - Thick borders for visibility */
+.daylight input,
+.daylight textarea,
+.daylight select {
+  border-width: 2px;
+  border-color: hsl(215 25% 65%);
+  background-color: hsl(0 0% 100%);
+}
+
+.daylight input:focus,
+.daylight textarea:focus,
+.daylight select:focus {
+  border-color: hsl(33 100% 50%);
+  box-shadow: 0 0 0 3px hsla(33, 100%, 50%, 0.3);
+}
+
+/* Thick-stroke icon support for daylight mode */
+.daylight .material-symbols-outlined {
+  font-variation-settings: 'wght' 500;
+}
+
+/* Icon container for daylight visibility */
+.icon-daylight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid currentColor;
+  border-radius: 8px;
 }
 
 /* ============================================

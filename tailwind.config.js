@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: [
     './*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -74,6 +74,20 @@ export default {
           500: "hsl(221, 83%, 53%)",
           600: "hsl(221, 83%, 45%)",
           700: "hsl(221, 83%, 37%)",
+        },
+        // Construction/Daylight Mode Colors - High Visibility
+        "daylight": {
+          primary: "hsl(33, 100%, 50%)",      // Safety Orange #FF8C00
+          background: "hsl(210, 40%, 98%)",   // Anti-glare Gray #F8FAFC
+          text: "hsl(222, 47%, 17%)",         // High-contrast Slate #1E293B
+          border: "hsl(215, 25%, 75%)",       // Visible border gray
+          ring: "hsl(33, 100%, 50%)",         // Focus ring - Safety Orange
+        },
+        "construction": {
+          orange: "hsl(33, 100%, 50%)",       // #FF8C00 - Primary CTA
+          yellow: "hsl(45, 100%, 51%)",       // Safety Yellow - Warning
+          slate: "hsl(222, 47%, 17%)",        // High-contrast text
+          gray: "hsl(210, 40%, 98%)",         // Anti-glare background
         },
         success: {
           DEFAULT: "hsl(142, 71%, 45%)", // Muted Green
