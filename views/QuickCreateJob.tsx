@@ -95,8 +95,12 @@ export default function QuickCreateJob() {
         }
       }
 
-      // Generate bunker link (NO auth tokens, NO timers - just clean job ID)
-      const bunkerLink = getBunkerRunUrl(jobId);
+      // Generate bunker link with emails embedded in hash URL
+      // This enables the Public-Private handshake - tech receives emails in URL
+      const bunkerLink = getBunkerRunUrl(jobId, {
+        managerEmail: formData.managerEmail,
+        clientEmail: formData.clientEmail || undefined,
+      });
 
       setCreatedJob({ id: jobId, bunkerLink });
 

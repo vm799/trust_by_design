@@ -20,8 +20,8 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { useTheme } from '../lib/theme';
+import { useParams, useNavigate } from 'react-router-dom';
+import { parseHashParams } from '../lib/redirects';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -418,6 +418,36 @@ export default function BunkerRun() {
     console.log('[BunkerRun] Theme:', resolvedTheme, 'isDaylight:', isDaylight);
     console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
   }, [jobId, resolvedTheme, isDaylight]);
+
+  // ============================================================================
+  // HASH PARAM HANDSHAKE - Extract emails from URL hash query params
+  // ============================================================================
+  // CRITICAL: With HashRouter, query params are INSIDE the hash (e.g., #/run/ID?me=email)
+  // Standard window.location.search is EMPTY - must parse hash directly
+  useEffect(() => {
+    const hashParams = parseHashParams();
+    const managerEmail = hashParams.get('me'); // me = manager email
+    const clientEmail = hashParams.get('ce');  // ce = client email
+
+    console.log('[BunkerRun] Hash param handshake:', {
+      managerEmail,
+      clientEmail,
+      fullHash: window.location.hash,
+    });
+
+    // Store emails in localStorage for the success page and sync
+    if (managerEmail) {
+      localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, managerEmail);
+      console.log('[BunkerRun] Stored manager email from URL:', managerEmail);
+    }
+    if (clientEmail) {
+      localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, clientEmail);
+      console.log('[BunkerRun] Stored client email from URL:', clientEmail);
+    }
+    if (jobId) {
+      localStorage.setItem(STORAGE_KEYS.JOB_ID, jobId);
+    }
+  }, [jobId]); // Run once on mount when jobId is available
 
   const [job, setJob] = useState<RunJob | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
