@@ -26,6 +26,9 @@ import { useAuth } from './AuthContext';
 // Dynamic import defers parsing until actually needed
 const getDbModule = () => import('./db');
 
+// CLAUDE.md mandate: Dexie for offline-first persistence
+const getOfflineDbModule = () => import('./offline/db');
+
 // Debounce utility for batched localStorage writes
 function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
@@ -163,18 +166,49 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     fetchProfile();
   }, [userId]);
 
-  // Load data from localStorage
-  const loadFromLocalStorage = useCallback(() => {
+  // Load data from localStorage with Dexie fallback for clients/technicians
+  const loadFromLocalStorage = useCallback(async (wsId?: string | null) => {
     try {
       const savedJobs = localStorage.getItem('jobproof_jobs_v2');
-      const savedClients = localStorage.getItem('jobproof_clients_v2');
-      const savedTechs = localStorage.getItem('jobproof_technicians_v2');
       const savedInvoices = localStorage.getItem('jobproof_invoices_v2');
 
       if (savedJobs) setJobs(JSON.parse(savedJobs));
-      if (savedClients) setClients(JSON.parse(savedClients));
-      if (savedTechs) setTechnicians(JSON.parse(savedTechs));
       if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
+
+      // CLAUDE.md mandate: Try Dexie first for clients/technicians (offline-first)
+      let clientsLoaded = false;
+      let techniciansLoaded = false;
+
+      if (wsId) {
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const dexieClients = await offlineDb.getClientsLocal(wsId);
+          const dexieTechs = await offlineDb.getTechniciansLocal(wsId);
+
+          if (dexieClients.length > 0) {
+            setClients(dexieClients);
+            clientsLoaded = true;
+            console.log('[DataContext] Loaded', dexieClients.length, 'clients from Dexie');
+          }
+          if (dexieTechs.length > 0) {
+            setTechnicians(dexieTechs);
+            techniciansLoaded = true;
+            console.log('[DataContext] Loaded', dexieTechs.length, 'technicians from Dexie');
+          }
+        } catch (dexieErr) {
+          console.warn('[DataContext] Dexie read failed, falling back to localStorage:', dexieErr);
+        }
+      }
+
+      // Fall back to localStorage if Dexie didn't have data
+      if (!clientsLoaded) {
+        const savedClients = localStorage.getItem('jobproof_clients_v2');
+        if (savedClients) setClients(JSON.parse(savedClients));
+      }
+      if (!techniciansLoaded) {
+        const savedTechs = localStorage.getItem('jobproof_technicians_v2');
+        if (savedTechs) setTechnicians(JSON.parse(savedTechs));
+      }
     } catch (err) {
       console.error('[DataContext] Failed to load from localStorage:', err);
     }
@@ -197,7 +231,83 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       ]);
 
       if (jobsResult.success && jobsResult.data) {
-        setJobs(jobsResult.data);
+        // FIX: Also fetch from bunker_jobs to include magic link completed jobs
+        // BunkerRun.tsx syncs completed jobs to bunker_jobs table, not jobs table
+        let allJobs = jobsResult.data;
+
+        try {
+          const supabase = db.getSupabase?.();
+          if (supabase) {
+            const { data: bunkerJobs, error: bunkerError } = await supabase
+              .from('bunker_jobs')
+              .select('*')
+              .order('last_updated', { ascending: false });
+
+            if (!bunkerError && bunkerJobs && bunkerJobs.length > 0) {
+              console.log(`[DataContext] Found ${bunkerJobs.length} jobs from bunker_jobs table`);
+
+              // Map bunker_jobs to Job type and merge with existing jobs
+              const bunkerJobsMapped: Job[] = bunkerJobs.map((row: any) => ({
+                id: row.id,
+                title: row.title || 'Untitled Job',
+                client: row.client || row.client_name || '',
+                clientId: row.client_id,
+                technician: row.technician_name || '',
+                techId: row.technician_id,
+                status: row.status || 'Complete',
+                date: row.scheduled_date || row.created_at?.split('T')[0],
+                address: row.address || '',
+                lat: row.lat,
+                lng: row.lng,
+                w3w: row.w3w,
+                notes: row.notes || '',
+                workSummary: row.work_summary,
+                photos: row.before_photo_data || row.after_photo_data ? [
+                  ...(row.before_photo_data ? [{ id: 'before', url: row.before_photo_data, type: 'before' as const, timestamp: row.created_at, verified: true, syncStatus: 'synced' as const }] : []),
+                  ...(row.after_photo_data ? [{ id: 'after', url: row.after_photo_data, type: 'after' as const, timestamp: row.completed_at || row.created_at, verified: true, syncStatus: 'synced' as const }] : [])
+                ] : [],
+                signature: row.signature_data || null,
+                signerName: row.signer_name,
+                safetyChecklist: [],
+                siteHazards: [],
+                completedAt: row.completed_at,
+                syncStatus: 'synced' as const,
+                lastUpdated: row.last_updated ? new Date(row.last_updated).getTime() : Date.now(),
+                workspaceId: wsId,
+                // Flag to indicate this came from bunker_jobs (magic link flow)
+                source: 'bunker' as const,
+              }));
+
+              // Merge: bunker jobs take precedence if same ID exists (they have the evidence)
+              const existingIds = new Set(allJobs.map(j => j.id));
+              const newBunkerJobs = bunkerJobsMapped.filter(bj => !existingIds.has(bj.id));
+
+              // For jobs that exist in both, prefer the one with more data (photos/signature)
+              const mergedJobs = allJobs.map(job => {
+                const bunkerVersion = bunkerJobsMapped.find(bj => bj.id === job.id);
+                if (bunkerVersion && (bunkerVersion.photos.length > 0 || bunkerVersion.signature)) {
+                  // Bunker version has evidence, merge it
+                  return {
+                    ...job,
+                    ...bunkerVersion,
+                    // Preserve original job metadata
+                    clientId: job.clientId || bunkerVersion.clientId,
+                    techId: job.techId || bunkerVersion.techId,
+                  };
+                }
+                return job;
+              });
+
+              allJobs = [...mergedJobs, ...newBunkerJobs];
+              console.log(`[DataContext] Merged jobs: ${allJobs.length} total (${newBunkerJobs.length} new from bunker)`);
+            }
+          }
+        } catch (bunkerErr) {
+          console.warn('[DataContext] bunker_jobs fetch failed (non-critical):', bunkerErr);
+          // Continue with regular jobs - bunker_jobs is additive, not required
+        }
+
+        setJobs(allJobs);
       } else {
         console.warn('[DataContext] Supabase jobs failed, using localStorage');
         const saved = localStorage.getItem('jobproof_jobs_v2');
@@ -206,18 +316,72 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
       if (clientsResult.success && clientsResult.data) {
         setClients(clientsResult.data);
+        // CLAUDE.md mandate: Persist to Dexie for offline access
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const localClients = clientsResult.data.map(c => ({
+            ...c,
+            workspaceId: wsId,
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now()
+          }));
+          await offlineDb.saveClientsBatch(localClients);
+          console.log('[DataContext] Persisted', localClients.length, 'clients to Dexie');
+        } catch (dexieErr) {
+          console.warn('[DataContext] Failed to persist clients to Dexie:', dexieErr);
+        }
       } else {
-        console.warn('[DataContext] Supabase clients failed, using localStorage');
-        const saved = localStorage.getItem('jobproof_clients_v2');
-        if (saved) setClients(JSON.parse(saved));
+        console.warn('[DataContext] Supabase clients failed, trying Dexie then localStorage');
+        // Try Dexie first, then localStorage
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const dexieClients = await offlineDb.getClientsLocal(wsId);
+          if (dexieClients.length > 0) {
+            setClients(dexieClients);
+            console.log('[DataContext] Loaded', dexieClients.length, 'clients from Dexie fallback');
+          } else {
+            const saved = localStorage.getItem('jobproof_clients_v2');
+            if (saved) setClients(JSON.parse(saved));
+          }
+        } catch (dexieErr) {
+          const saved = localStorage.getItem('jobproof_clients_v2');
+          if (saved) setClients(JSON.parse(saved));
+        }
       }
 
       if (techsResult.success && techsResult.data) {
         setTechnicians(techsResult.data);
+        // CLAUDE.md mandate: Persist to Dexie for offline access
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const localTechs = techsResult.data.map(t => ({
+            ...t,
+            workspaceId: wsId,
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now()
+          }));
+          await offlineDb.saveTechniciansBatch(localTechs);
+          console.log('[DataContext] Persisted', localTechs.length, 'technicians to Dexie');
+        } catch (dexieErr) {
+          console.warn('[DataContext] Failed to persist technicians to Dexie:', dexieErr);
+        }
       } else {
-        console.warn('[DataContext] Supabase technicians failed, using localStorage');
-        const saved = localStorage.getItem('jobproof_technicians_v2');
-        if (saved) setTechnicians(JSON.parse(saved));
+        console.warn('[DataContext] Supabase technicians failed, trying Dexie then localStorage');
+        // Try Dexie first, then localStorage
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const dexieTechs = await offlineDb.getTechniciansLocal(wsId);
+          if (dexieTechs.length > 0) {
+            setTechnicians(dexieTechs);
+            console.log('[DataContext] Loaded', dexieTechs.length, 'technicians from Dexie fallback');
+          } else {
+            const saved = localStorage.getItem('jobproof_technicians_v2');
+            if (saved) setTechnicians(JSON.parse(saved));
+          }
+        } catch (dexieErr) {
+          const saved = localStorage.getItem('jobproof_technicians_v2');
+          if (saved) setTechnicians(JSON.parse(saved));
+        }
       }
 
       // Invoices still localStorage only
@@ -228,7 +392,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     } catch (err) {
       console.error('[DataContext] Supabase load failed:', err);
       setError('Failed to load data from server');
-      loadFromLocalStorage();
+      await loadFromLocalStorage(wsId);
     } finally {
       setIsLoading(false);
       setIsInitialized(true);
@@ -240,9 +404,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     if (workspaceId && loadedWorkspaceRef.current !== workspaceId) {
       loadFromSupabase(workspaceId);
     } else if (!workspaceId) {
-      loadFromLocalStorage();
-      setIsLoading(false);
-      setIsInitialized(true);
+      // Handle async loadFromLocalStorage call
+      loadFromLocalStorage(workspaceId).then(() => {
+        setIsLoading(false);
+        setIsInitialized(true);
+      });
     }
   }, [workspaceId, loadFromSupabase, loadFromLocalStorage]);
 
@@ -348,7 +514,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         loadedWorkspaceRef.current = null; // Force reload
         await loadFromSupabase(workspaceId);
       } else {
-        loadFromLocalStorage();
+        await loadFromLocalStorage(workspaceId);
       }
     } finally {
       setIsRefreshing(false);
