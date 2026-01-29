@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
@@ -517,12 +518,6 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   // Check if native share is available
   const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
-  const getQRCodeDataURL = () => {
-    // Generate QR code using Google Chart API (no library needed)
-    const url = encodeURIComponent(getMagicLink());
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${url}`;
-  };
-
   const selectedClient = allClients.find(c => c.id === formData.clientId);
   const selectedTech = allTechnicians.find(t => t.id === formData.techId);
 
@@ -970,7 +965,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 <div className="bg-slate-800/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 flex flex-col items-center justify-center space-y-3">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">QR Code</p>
                   <div className="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl">
-                    <img src={getQRCodeDataURL()} alt="QR Code" className="w-24 h-24 sm:w-32 sm:h-32" />
+                    <QRCodeSVG value={getMagicLink()} size={128} level="M" />
                   </div>
                   <p className="text-[8px] text-slate-300 uppercase tracking-tight text-center">Scan to access</p>
                 </div>

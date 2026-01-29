@@ -14,6 +14,7 @@
  */
 
 import React, { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { getBunkerRunUrl } from '../lib/redirects';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -181,15 +182,10 @@ export default function QuickCreateJob() {
             </div>
           </div>
 
-          {/* QR Code placeholder */}
+          {/* QR Code */}
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 text-center">
             <div className="inline-block p-4 bg-white rounded-lg mb-3">
-              {/* Simple QR placeholder - in production use qrcode.react */}
-              <div className="w-32 h-32 bg-slate-200 flex items-center justify-center">
-                <span className="text-slate-500 text-xs text-center">
-                  QR Code<br/>for {createdJob.id}
-                </span>
-              </div>
+              <QRCodeSVG value={createdJob.bunkerLink} size={128} level="M" />
             </div>
             <p className="text-sm text-slate-400">Scan to open on technician's phone</p>
           </div>

@@ -423,7 +423,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'JobProof <reports@jobproof.io>',
+            from: 'JobProof <reports@jobproof.pro>',
             to: [data.managerEmail],
             subject: `✓ Job ${data.jobId} Complete - Evidence Report Ready`,
             html: emailHtml,

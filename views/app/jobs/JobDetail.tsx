@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
@@ -605,11 +606,9 @@ const JobDetail: React.FC = () => {
 
               {/* QR Code */}
               <div className="flex justify-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(magicLink)}`}
-                  alt="QR Code"
-                  className="rounded-xl bg-white p-2"
-                />
+                <div className="rounded-xl bg-white p-2">
+                  <QRCodeSVG value={magicLink} size={150} level="M" />
+                </div>
               </div>
 
               {/* Action Buttons */}
