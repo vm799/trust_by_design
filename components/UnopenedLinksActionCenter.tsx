@@ -23,6 +23,8 @@ interface UnopenedLinksActionCenterProps {
   onDeleteJob?: (jobId: string) => void;
   onDismissLink: (token: string) => void;
   onRefreshLinks: () => void;
+  /** Manager email for link generation - required for validated handshake URLs */
+  managerEmail?: string;
 }
 
 type JobAction = 'pause' | 'cancel' | 'delete' | 'reassign';
@@ -38,6 +40,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   onDeleteJob,
   onDismissLink,
   onRefreshLinks,
+  managerEmail,
 }) => {
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [showReassignDropdown, setShowReassignDropdown] = useState<string | null>(null);
@@ -111,8 +114,9 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
     };
     onUpdateJob(updatedJob);
 
-    // Generate new magic link for new technician
-    const newLinkResult = await generateMagicLink(job.id);
+    // Generate new magic link for new technician with manager email for report delivery
+    const deliveryEmail = managerEmail || 'unknown@local.dev';
+    const newLinkResult = await generateMagicLink(job.id, deliveryEmail);
 
     showToast(`Reassigned to ${newTech.name}${newTech.phone ? ` (${newTech.phone})` : ''}`, 'success', 4000);
     setShowReassignDropdown(null);
@@ -120,8 +124,9 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
   };
 
   const handleResendLink = async (job: Job, link: MagicLinkInfo) => {
-    // Generate a fresh magic link
-    const newLinkResult = await generateMagicLink(job.id);
+    // Generate a fresh magic link with manager email for report delivery
+    const deliveryEmail = managerEmail || 'unknown@local.dev';
+    const newLinkResult = await generateMagicLink(job.id, deliveryEmail);
 
     // Share via native share if available, otherwise copy to clipboard
     // CRITICAL: Use getBunkerRunUrl for fallback to include checksum + email params
