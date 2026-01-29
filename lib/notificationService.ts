@@ -239,32 +239,107 @@ async function sendInAppNotification(notification: NotificationPayload): Promise
 }
 
 /**
- * Send email notification
+ * Generate HTML email from notification payload
+ */
+function generateNotificationEmailHtml(notification: NotificationPayload): string {
+  const priorityColors: Record<NotificationPriority, string> = {
+    low: '#64748b',
+    normal: '#2563eb',
+    high: '#f59e0b',
+    urgent: '#ef4444',
+  };
+
+  const color = priorityColors[notification.priority] || '#2563eb';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 32px 16px;">
+        <tr>
+          <td align="center">
+            <table width="100%" style="max-width: 560px; background-color: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%); padding: 24px; border-radius: 12px 12px 0 0;">
+                  <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
+                    ${notification.title}
+                  </h1>
+                </td>
+              </tr>
+              <!-- Body -->
+              <tr>
+                <td style="padding: 24px;">
+                  <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
+                    ${notification.message}
+                  </p>
+                  ${notification.jobId ? `
+                  <p style="margin: 0; color: #64748b; font-size: 13px;">
+                    Job ID: <strong>${notification.jobId}</strong>
+                  </p>
+                  ` : ''}
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 16px 24px; background-color: #f8fafc; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
+                  <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center;">
+                    Powered by JobProof
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Send email notification via Supabase Edge Function
  *
- * NOTE: This is a placeholder that logs the intent.
- * In production, this would call a Supabase Edge Function or email service like:
- * - Resend (recommended)
- * - SendGrid
- * - AWS SES
+ * Calls the send-email edge function which uses Resend API.
+ * Falls back to localStorage queue if Supabase is not available.
  */
 async function sendEmailNotification(notification: NotificationPayload): Promise<void> {
-  console.log(`[NotificationService] EMAIL HOOK: Would send email to ${notification.recipientEmail}`);
+  console.log(`[NotificationService] Sending email to ${notification.recipientEmail}`);
   console.log(`  Subject: ${notification.title}`);
-  console.log(`  Body: ${notification.message}`);
 
-  // In production, call Supabase Edge Function:
-  // const supabase = getSupabase();
-  // if (supabase) {
-  //   await supabase.functions.invoke('send-email', {
-  //     body: {
-  //       to: notification.recipientEmail,
-  //       subject: notification.title,
-  //       html: generateEmailHtml(notification)
-  //     }
-  //   });
-  // }
+  // Try to send via Supabase Edge Function
+  const supabase = getSupabase();
+  if (supabase && isSupabaseAvailable() && notification.recipientEmail) {
+    try {
+      const emailHtml = generateNotificationEmailHtml(notification);
 
-  // For now, store email request for manual review
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: notification.recipientEmail,
+          subject: notification.title,
+          html: emailHtml,
+        }
+      });
+
+      if (error) {
+        console.error('[NotificationService] Edge function error:', error);
+        // Fall through to localStorage backup
+      } else if (data?.success) {
+        console.log(`[NotificationService] Email sent successfully: ${data.emailId}`);
+        return; // Success - don't queue to localStorage
+      } else {
+        console.warn('[NotificationService] Email send failed:', data?.error);
+      }
+    } catch (e) {
+      console.error('[NotificationService] Failed to invoke send-email:', e);
+    }
+  }
+
+  // Fallback: store email request in localStorage for retry
   try {
     const emailQueue = JSON.parse(localStorage.getItem('jobproof_email_requests') || '[]');
     emailQueue.push({
@@ -272,10 +347,13 @@ async function sendEmailNotification(notification: NotificationPayload): Promise
       to: notification.recipientEmail,
       subject: notification.title,
       body: notification.message,
+      html: generateNotificationEmailHtml(notification),
       jobId: notification.jobId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      status: 'pending_retry'
     });
     localStorage.setItem('jobproof_email_requests', JSON.stringify(emailQueue.slice(-50)));
+    console.log('[NotificationService] Email queued for retry');
   } catch (e) {
     console.warn('[NotificationService] Failed to queue email request:', e);
   }
