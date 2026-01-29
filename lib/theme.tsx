@@ -251,6 +251,10 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
     if (enabled) {
       setThemeInternal('daylight');
       storage.set(STORAGE_KEYS.THEME, 'daylight');
+    } else {
+      // Reset to dark when disabling daylight mode
+      setThemeInternal('dark');
+      storage.set(STORAGE_KEYS.THEME, 'dark');
     }
   }, []);
 
