@@ -12,7 +12,8 @@
 
 // Cache version - increment to force cache refresh on deployment
 // v2.0.0: Added CSP fix, database error handling
-const CACHE_VERSION = 'bunker-v2';
+// v2.1.0: Fixed stale asset detection - auto-clear on 404 JS/CSS
+const CACHE_VERSION = 'bunker-v2.1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const MEDIA_CACHE = `${CACHE_VERSION}-media`;
@@ -145,9 +146,14 @@ self.addEventListener('fetch', (event) => {
 /**
  * Cache-first strategy
  * Best for: Static assets, images, fonts
+ *
+ * CRITICAL FIX: Detects stale assets (404 on .js/.css) and triggers cache bust
  */
 async function cacheFirstStrategy(request, cacheName) {
   const cache = await caches.open(cacheName);
+  const url = new URL(request.url);
+  const isCriticalAsset = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+
   const cachedResponse = await cache.match(request);
 
   if (cachedResponse) {
@@ -158,6 +164,37 @@ async function cacheFirstStrategy(request, cacheName) {
 
   try {
     const networkResponse = await fetch(request);
+
+    // CRITICAL: If a JS/CSS file returns 404, the cached index.html is stale
+    // Clear all caches and notify clients to reload
+    if (!networkResponse.ok && isCriticalAsset) {
+      console.error('[SW] Critical asset 404 detected:', url.pathname);
+      console.log('[SW] Clearing stale caches and triggering reload...');
+
+      // Clear all caches
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+
+      // Notify all clients to reload
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'STALE_ASSETS_DETECTED',
+          message: 'New version available - reloading...',
+          failedAsset: url.pathname
+        });
+      });
+
+      // Return a special response that triggers reload
+      return new Response(
+        '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0"></head><body>Updating...</body></html>',
+        {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' }
+        }
+      );
+    }
+
     if (networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
