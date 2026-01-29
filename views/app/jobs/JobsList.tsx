@@ -17,6 +17,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import EmptyState from '../../../components/EmptyState';
 import { Job, UserProfile } from '../../../types';
+import { ROUTES, route } from '../../../lib/routes';
 
 type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'sync_issues';
 
@@ -217,7 +218,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => navigate('/admin')}
+                  onClick={() => navigate(ROUTES.DASHBOARD)}
                   className="size-10 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all"
                 >
                   <span className="material-symbols-outlined text-lg">arrow_back</span>

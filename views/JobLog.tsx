@@ -89,7 +89,8 @@ export default function JobLog() {
             client: j.client as string || 'Client',
             address: j.address as string,
             completedAt: j.completed_at as string || j.last_updated as string,
-            syncStatus: 'synced' as const,
+            // FIX: Read actual sync_status from API instead of hardcoding 'synced'
+            syncStatus: (j.sync_status as 'pending' | 'synced' | 'failed') || 'synced',
             beforePhotoUrl: j.before_photo_data as string,
             afterPhotoUrl: j.after_photo_data as string,
             signatureUrl: j.signature_data as string,
@@ -103,18 +104,8 @@ export default function JobLog() {
 
       // Fallback to IndexedDB
       const localJobs = await logDb.jobs.toArray();
-      const completed = localJobs.filter((j: Record<string, unknown>) => j.completedAt);
-      setJobs(completed.map((j: Record<string, unknown>) => ({
-        id: j.id as string,
-        title: j.title as string,
-        client: j.client as string,
-        address: j.address as string,
-        completedAt: j.completedAt as string,
-        syncStatus: j.syncStatus as 'pending' | 'synced' | 'failed',
-        beforePhotoUrl: (j.beforePhoto as Record<string, unknown>)?.dataUrl as string,
-        afterPhotoUrl: (j.afterPhoto as Record<string, unknown>)?.dataUrl as string,
-        signatureUrl: (j.signature as Record<string, unknown>)?.dataUrl as string,
-      })));
+      const completed = localJobs.filter(j => j.completedAt);
+      setJobs(completed);
     } catch (error) {
       console.error('[JobLog] Load error:', error);
     }
