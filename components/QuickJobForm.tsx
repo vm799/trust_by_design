@@ -15,6 +15,7 @@ import { generateSecureJobId } from '../lib/secureId';
 interface QuickJobFormProps {
   techId: string;
   techName: string;
+  techEmail?: string; // Email for magic link delivery (optional, uses fallback)
   workspaceId: string;
   onJobCreated: (job: Job) => void;
   onCancel: () => void;
@@ -34,6 +35,7 @@ interface QuickJobFormProps {
 const QuickJobForm: React.FC<QuickJobFormProps> = ({
   techId,
   techName,
+  techEmail,
   workspaceId,
   onJobCreated,
   onCancel,
@@ -178,7 +180,9 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
       };
 
       // Generate magic link for this job
-      const magicLink = storeMagicLinkLocal(jobId, workspaceId);
+      // Use technician email if provided, otherwise use a fallback for field-generated jobs
+      const deliveryEmail = techEmail || `${techId}@field.jobproof.local`;
+      const magicLink = storeMagicLinkLocal(jobId, deliveryEmail, workspaceId);
       jobWithMetadata.magicLinkToken = magicLink.token;
       jobWithMetadata.magicLinkUrl = magicLink.url;
 

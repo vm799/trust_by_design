@@ -814,6 +814,49 @@ export const loadMagicLinksFromStorage = (): void => {
 };
 
 /**
+ * Clean up expired magic links from localStorage
+ * Call this during app initialization to prevent localStorage bloat
+ * Returns the number of expired links removed
+ */
+export const cleanupExpiredMagicLinks = (): number => {
+  try {
+    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
+    const now = new Date();
+    let removedCount = 0;
+
+    // Filter out expired links
+    const validLinks: Record<string, any> = {};
+    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
+      if (new Date(data.expires_at) > now) {
+        validLinks[token] = data;
+      } else {
+        removedCount++;
+      }
+    });
+
+    // Only write back if we removed something
+    if (removedCount > 0) {
+      localStorage.setItem('jobproof_magic_links', JSON.stringify(validLinks));
+      console.log(`[MagicLink Cleanup] Removed ${removedCount} expired magic links`);
+    }
+
+    return removedCount;
+  } catch (e) {
+    console.warn('Failed to cleanup expired magic links:', e);
+    return 0;
+  }
+};
+
+/**
+ * Initialize magic link system on app load
+ * Cleans up expired links and loads valid ones into memory
+ */
+export const initializeMagicLinks = (): void => {
+  cleanupExpiredMagicLinks();
+  loadMagicLinksFromStorage();
+};
+
+/**
  * Validate a magic link token
  * Checks mockDatabase first, then localStorage, then Supabase
  */

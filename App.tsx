@@ -12,6 +12,7 @@ import RouteErrorBoundary from './components/RouteErrorBoundary';
 const getSyncQueue = () => import('./lib/syncQueue');
 const getAuth = () => import('./lib/auth');
 const getOfflineSync = () => import('./lib/offline/sync');
+const getDbModule = () => import('./lib/db');
 
 // REMEDIATION ITEM 13: Removed getSupabaseModule - supabase is statically imported
 // by auth.ts, db.ts, etc. so dynamic import provides no code splitting benefit.
@@ -333,6 +334,15 @@ const AppContent: React.FC = () => {
       syncQueue.startSyncWorker();
     };
     initSyncWorker();
+  }, []);
+
+  // Initialize magic link system - clean up expired links on app load
+  useEffect(() => {
+    const initMagicLinks = async () => {
+      const db = await getDbModule();
+      db.initializeMagicLinks();
+    };
+    initMagicLinks();
   }, []);
 
   // Save user profile to localStorage when it changes

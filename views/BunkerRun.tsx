@@ -597,6 +597,9 @@ export default function BunkerRun() {
   // LOAD JOB
   // ============================================================================
 
+  // Cache TTL: 1 hour (3600000ms) - if cache is older, refresh from Supabase when online
+  const CACHE_TTL_MS = 60 * 60 * 1000;
+
   const loadJob = async (id: string) => {
     // 1. Check IndexedDB first (instant, works offline)
     const cached = await runDb.jobs.get(id);
@@ -608,11 +611,24 @@ export default function BunkerRun() {
         setIsJobFinished(true);
         return;
       }
+
+      // Check if cache is stale (older than TTL)
+      const cacheAge = Date.now() - cached.lastUpdated;
+      const isStale = cacheAge > CACHE_TTL_MS;
+
+      // If cache is fresh OR we're offline, use cached data
+      if (!isStale || !isOnline) {
+        setJob(cached);
+        storeJobDetailsForSync(cached);
+        console.log('[BunkerRun] Loaded from cache:', id, { age: Math.round(cacheAge / 1000) + 's' });
+        return;
+      }
+
+      // Cache is stale and we're online - show cached data immediately but refresh in background
       setJob(cached);
-      // Store emails in localStorage for sync handshake
       storeJobDetailsForSync(cached);
-      console.log('[BunkerRun] Loaded from cache:', id);
-      return;
+      console.log('[BunkerRun] Cache stale, refreshing from server:', id);
+      // Continue to step 2 to refresh from Supabase
     }
 
     // 2. Try Supabase (if online)
