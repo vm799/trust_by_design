@@ -39,7 +39,7 @@ const JobDetail: React.FC = () => {
   const [magicLink, setMagicLink] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [mailClientOpened, setMailClientOpened] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -175,8 +175,9 @@ const JobDetail: React.FC = () => {
 
     const email = technician.email || '';
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
-    setEmailSent(true);
-    setTimeout(() => setEmailSent(false), 3000);
+    // Note: This only opens the mail client - we cannot confirm if user actually sends
+    setMailClientOpened(true);
+    setTimeout(() => setMailClientOpened(false), 3000);
   };
 
   // Share via Web Share API
@@ -631,15 +632,15 @@ const JobDetail: React.FC = () => {
                   <button
                     onClick={handleSendEmail}
                     className={`py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                      emailSent
-                        ? 'bg-emerald-500 text-white'
+                      mailClientOpened
+                        ? 'bg-amber-500 text-white'
                         : 'bg-primary hover:bg-primary-hover text-white'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">
-                      {emailSent ? 'check' : 'email'}
+                      {mailClientOpened ? 'open_in_new' : 'email'}
                     </span>
-                    {emailSent ? 'Email Opened!' : 'Send Email'}
+                    {mailClientOpened ? 'Mail App Opened' : 'Open Mail App'}
                   </button>
                 )}
               </div>
