@@ -60,16 +60,75 @@ serve(async (req) => {
 
     // =========================================================================
     // STEP 0: VERIFY JOB EXISTS IN DATABASE (CRITICAL SECURITY)
+    // Try bunker_jobs first, then fall back to jobs table
     // =========================================================================
 
-    const { data: job, error: jobError } = await supabase
+    let job: any = null;
+    let jobSource = '';
+
+    // Try bunker_jobs first (has inline photo data)
+    const { data: bunkerJob, error: bunkerError } = await supabase
       .from('bunker_jobs')
       .select('*')
       .eq('id', jobId)
       .single();
 
-    if (jobError || !job) {
-      console.error('[GenerateReport] Job not found:', jobId, jobError?.message);
+    if (bunkerJob) {
+      job = bunkerJob;
+      jobSource = 'bunker_jobs';
+    } else {
+      // Try main jobs table with photos
+      const { data: mainJob, error: mainError } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          photos (
+            id,
+            url,
+            type,
+            timestamp,
+            lat,
+            lng,
+            w3w
+          )
+        `)
+        .eq('id', jobId)
+        .single();
+
+      if (mainJob) {
+        job = mainJob;
+        jobSource = 'jobs';
+
+        // Convert photos array to inline data format for email compatibility
+        // Find before and after photos
+        const photos = mainJob.photos || [];
+        const beforePhoto = photos.find((p: any) => p.type === 'before' || p.type === 'Before');
+        const afterPhoto = photos.find((p: any) => p.type === 'after' || p.type === 'After');
+
+        // If photos are URLs (not base64), we can't inline them in email
+        // But we can still use the URL info for display
+        if (beforePhoto) {
+          job.before_photo_url = beforePhoto.url;
+          job.before_photo_timestamp = beforePhoto.timestamp;
+          job.before_photo_lat = beforePhoto.lat;
+          job.before_photo_lng = beforePhoto.lng;
+          // Note: before_photo_data will be null unless we fetch and convert
+        }
+        if (afterPhoto) {
+          job.after_photo_url = afterPhoto.url;
+          job.after_photo_timestamp = afterPhoto.timestamp;
+          job.after_photo_lat = afterPhoto.lat;
+          job.after_photo_lng = afterPhoto.lng;
+        }
+
+        // Map some field names for compatibility
+        job.signature_data = job.signature;
+        job.manager_email = job.managerEmail;
+      }
+    }
+
+    if (!job) {
+      console.error('[GenerateReport] Job not found in any table:', jobId);
       return new Response(
         JSON.stringify({ success: false, error: `Job not found: ${jobId}` }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -81,9 +140,11 @@ serve(async (req) => {
       title: job.title,
       client: job.client,
       status: job.status,
-      hasBeforePhoto: !!job.before_photo_data,
-      hasAfterPhoto: !!job.after_photo_data,
+      source: jobSource,
+      hasBeforePhoto: !!(job.before_photo_data || job.before_photo_url),
+      hasAfterPhoto: !!(job.after_photo_data || job.after_photo_url),
       hasSignature: !!job.signature_data,
+      hasW3W: !!job.w3w,
       managerEmail: job.manager_email,
     });
 
@@ -366,6 +427,17 @@ serve(async (req) => {
           color: rgb(0.8, 0.2, 0.2),
         });
       }
+    } else if (job.before_photo_url) {
+      // Photo exists but as URL (can't embed in PDF, but will show in email)
+      console.log('[GenerateReport] Before photo URL available (not embeddable in PDF):', job.before_photo_url);
+      page.drawText('BEFORE PHOTO - SEE EMAIL', {
+        x: margin,
+        y: yPosition - 10,
+        size: 10,
+        font: helvetica,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      beforePhotoIncluded = true; // Mark as included for email
     } else {
       console.log('[GenerateReport] No before photo in database');
       page.drawText('NO BEFORE PHOTO', {
@@ -377,7 +449,7 @@ serve(async (req) => {
       });
     }
 
-    // After Photo (from DATABASE: after_photo_data)
+    // After Photo (from DATABASE: after_photo_data or after_photo_url)
     if (job.after_photo_data) {
       try {
         console.log('[GenerateReport] Embedding after photo from database...');
@@ -432,6 +504,18 @@ serve(async (req) => {
       } catch (e) {
         console.error('[GenerateReport] FAILED to embed after photo:', e);
       }
+    } else if (job.after_photo_url) {
+      // Photo exists but as URL (can't embed in PDF, but will show in email)
+      console.log('[GenerateReport] After photo URL available (not embeddable in PDF):', job.after_photo_url);
+      const afterX = margin + (pageWidth - margin * 2) / 2 + 15;
+      page.drawText('AFTER PHOTO - SEE EMAIL', {
+        x: afterX,
+        y: yPosition - 10,
+        size: 10,
+        font: helvetica,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+      afterPhotoIncluded = true; // Mark as included for email
     } else {
       console.log('[GenerateReport] No after photo in database');
     }
@@ -1092,15 +1176,17 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
               ${evidence.beforePhotoIncluded ? `
               <td style="width: 50%; padding-right: 8px; vertical-align: top;">
                 <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden;">
-                  <!-- Photo placeholder with metadata -->
+                  <!-- Photo with metadata -->
                   <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 8px 12px;">
                     <span style="color: white; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">⬅ BEFORE</span>
                   </div>
                   ${job.before_photo_data ? `
-                  <img src="${job.before_photo_data}" alt="Before photo" style="width: 100%; height: auto; display: block;" />
+                  <img src="${job.before_photo_data}" alt="Before photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
+                  ` : job.before_photo_url ? `
+                  <img src="${job.before_photo_url}" alt="Before photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
                   ` : `
-                  <div style="background: #334155; height: 120px; display: flex; align-items: center; justify-content: center;">
-                    <span style="color: #64748b; font-size: 12px;">Photo in PDF</span>
+                  <div style="background: #334155; height: 120px; text-align: center; padding-top: 40px;">
+                    <span style="color: #64748b; font-size: 12px;">📷 Photo captured</span>
                   </div>
                   `}
                   <div style="padding: 10px 12px; background: #0f172a;">
@@ -1118,15 +1204,17 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
               ${evidence.afterPhotoIncluded ? `
               <td style="width: 50%; padding-left: 8px; vertical-align: top;">
                 <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden;">
-                  <!-- Photo placeholder with metadata -->
+                  <!-- Photo with metadata -->
                   <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 8px 12px;">
                     <span style="color: white; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">AFTER ➡</span>
                   </div>
                   ${job.after_photo_data ? `
-                  <img src="${job.after_photo_data}" alt="After photo" style="width: 100%; height: auto; display: block;" />
+                  <img src="${job.after_photo_data}" alt="After photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
+                  ` : job.after_photo_url ? `
+                  <img src="${job.after_photo_url}" alt="After photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
                   ` : `
-                  <div style="background: #334155; height: 120px; display: flex; align-items: center; justify-content: center;">
-                    <span style="color: #64748b; font-size: 12px;">Photo in PDF</span>
+                  <div style="background: #334155; height: 120px; text-align: center; padding-top: 40px;">
+                    <span style="color: #64748b; font-size: 12px;">📷 Photo captured</span>
                   </div>
                   `}
                   <div style="padding: 10px 12px; background: #0f172a;">
