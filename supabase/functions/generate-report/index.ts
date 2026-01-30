@@ -1194,7 +1194,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     <p style="color: #22c55e; font-size: 11px; font-weight: 700; margin: 0;">🕐 ${beforeTs.utc}</p>
                     ` : ''}
                     ${beforeGPS ? `
-                    <p style="color: #94a3b8; font-size: 10px; margin: 4px 0 0 0; font-family: monospace;">📍 ${beforeGPS}</p>
+                    <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${beforeGPS}</p>
                     ` : ''}
                   </div>
                 </div>
@@ -1222,7 +1222,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     <p style="color: #22c55e; font-size: 11px; font-weight: 700; margin: 0;">🕐 ${afterTs.utc}</p>
                     ` : ''}
                     ${afterGPS ? `
-                    <p style="color: #94a3b8; font-size: 10px; margin: 4px 0 0 0; font-family: monospace;">📍 ${afterGPS}</p>
+                    <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${afterGPS}</p>
                     ` : ''}
                   </div>
                 </div>
@@ -1246,9 +1246,9 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                 </div>
               </td>
               <td style="vertical-align: middle; padding-left: 12px;">
-                <p style="color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Client Approval</p>
+                <p style="color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Client Approval</p>
                 <p style="color: #f1f5f9; font-size: 15px; font-weight: 600; margin: 4px 0 0 0;">Signed by ${job.signer_name}</p>
-                ${job.signer_role ? `<p style="color: #64748b; font-size: 12px; margin: 2px 0 0 0;">${job.signer_role}</p>` : ''}
+                ${job.signer_role ? `<p style="color: #94a3b8; font-size: 12px; margin: 2px 0 0 0;">${job.signer_role}</p>` : ''}
               </td>
               <td style="text-align: right; vertical-align: middle;">
                 <span style="color: #22c55e; font-size: 20px;">✓</span>
@@ -1282,20 +1282,20 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                   <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                       <td style="padding: 4px 0;">
-                        <span style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Evidence Hash</span>
+                        <span style="color: #cbd5e1; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Evidence Hash</span>
                         <p style="color: #f1f5f9; font-size: 11px; font-family: monospace; margin: 2px 0 0 0;">${sealHash}</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding: 4px 0;">
-                        <span style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Algorithm</span>
+                        <span style="color: #cbd5e1; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Algorithm</span>
                         <p style="color: #f1f5f9; font-size: 11px; margin: 2px 0 0 0;">SHA-256 + RSA-2048</p>
                       </td>
                     </tr>
                     ${sealedTs ? `
                     <tr>
                       <td style="padding: 4px 0;">
-                        <span style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Sealed At</span>
+                        <span style="color: #cbd5e1; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Sealed At</span>
                         <p style="color: #f1f5f9; font-size: 11px; margin: 2px 0 0 0;">${sealedTs.date} ${sealedTs.time}</p>
                       </td>
                     </tr>

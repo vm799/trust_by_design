@@ -1658,19 +1658,28 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
 
   return (
     <div className="space-y-4">
-      <canvas
-        ref={canvasRef}
-        width={350}
-        height={200}
-        className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
-        onMouseDown={start}
-        onMouseMove={draw}
-        onMouseUp={stop}
-        onMouseLeave={stop}
-        onTouchStart={start}
-        onTouchMove={draw}
-        onTouchEnd={stop}
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={350}
+          height={200}
+          className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
+          onMouseDown={start}
+          onMouseMove={draw}
+          onMouseUp={stop}
+          onMouseLeave={stop}
+          onTouchStart={start}
+          onTouchMove={draw}
+          onTouchEnd={stop}
+        />
+        {/* Sign here affordance overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-2 text-slate-300">
+            <span className="material-symbols-outlined text-4xl">draw</span>
+            <span className="text-xl font-medium tracking-wide">Sign here</span>
+          </div>
+        </div>
+      </div>
       <div className="flex gap-3">
         <button onClick={clear} className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Clear</button>
         <button onClick={() => onSave(canvasRef.current!.toDataURL('image/png'))} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Save Signature</button>

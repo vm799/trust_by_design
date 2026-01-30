@@ -542,14 +542,14 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
                      <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.client}</p>
                      <div className="p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 space-y-2 shadow-inner">
-                        <p className="text-slate-300 text-[10px] sm:text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
+                        <p className="text-slate-700 text-[10px] sm:text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
                         {job.lat && (
                            <div className="border-t border-slate-200 pt-2 space-y-1">
                               <div className="flex items-center gap-1.5">
                                  <span className="text-red-500 font-black text-[9px]">///</span>
                                  <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-900 tracking-widest">{job.w3w?.replace('///', '')}</span>
                               </div>
-                              <p className="text-slate-400 text-[8px] font-mono uppercase">GPS: {job.lat.toFixed(6)}, {job.lng?.toFixed(6)}</p>
+                              <p className="text-slate-700 text-[8px] font-mono uppercase">GPS: {job.lat.toFixed(6)}, {job.lng?.toFixed(6)}</p>
                            </div>
                         )}
                      </div>
@@ -561,18 +561,18 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
-                              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                              <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
                            </div>
-                           <p className="text-[8px] text-slate-300 italic pl-6">
+                           <p className="text-[8px] text-slate-600 italic pl-6">
                               (GPS coordinates recorded, not verified against address)
                            </p>
                         </div>
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
-                              <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Account Verified (Email)</p>
+                              <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Account Verified (Email)</p>
                            </div>
-                           <p className="text-[8px] text-slate-300 italic pl-6">
+                           <p className="text-[8px] text-slate-600 italic pl-6">
                               (Account-based identity verification)
                            </p>
                         </div>
@@ -604,21 +604,21 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     </div>
                                     <div className="space-y-1.5 px-2">
                                        <div className="flex justify-between items-center">
-                                          <p className="text-[9px] text-slate-400 font-mono uppercase">UTC: {new Date(p.timestamp).toISOString().split('T')[1].substring(0, 8)}</p>
+                                          <p className="text-[9px] text-slate-700 font-mono uppercase">UTC: {new Date(p.timestamp).toISOString().split('T')[1].substring(0, 8)}</p>
                                           <div className="flex items-center gap-1">
-                                             <span className="material-symbols-outlined text-[10px] text-slate-300 font-black">location_on</span>
-                                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">GPS Captured</span>
+                                             <span className="material-symbols-outlined text-[10px] text-slate-700 font-black">location_on</span>
+                                             <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">GPS Captured</span>
                                           </div>
                                        </div>
                                        <div className="flex flex-col gap-0.5">
                                           {p.w3w && (
-                                             <div className="flex items-center gap-1 opacity-70">
+                                             <div className="flex items-center gap-1">
                                                 <span className="text-red-500 font-black text-[9px]">///</span>
-                                                <p className="text-slate-300 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
+                                                <p className="text-slate-700 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
                                              </div>
                                           )}
                                           {p.lat && (
-                                             <p className="text-[8px] font-mono text-slate-300 uppercase leading-none">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
+                                             <p className="text-[8px] font-mono text-slate-700 uppercase leading-none">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
                                           )}
                                        </div>
                                     </div>
