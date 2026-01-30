@@ -101,7 +101,7 @@ RETURNS BOOLEAN AS $$
   SELECT EXISTS(
     SELECT 1 FROM public.users
     WHERE id = (SELECT auth.uid())
-    AND role IN ('manager', 'admin', 'owner')
+    AND role::text IN ('manager', 'admin', 'owner')
   )
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
