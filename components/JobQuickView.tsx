@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Job } from '../types';
-import { getMagicLinkInfo, MagicLinkInfo } from '../lib/db';
+import { getMagicLinksForJob, type MagicLinkInfo } from '../lib/db';
 import Modal from './ui/Modal';
 import ActionButton from './ui/ActionButton';
 
@@ -48,8 +48,10 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
   useEffect(() => {
     if (job?.id && isOpen) {
       setIsLoadingLink(true);
-      const info = getMagicLinkInfo(job.id);
-      setMagicLinkInfo(info);
+      const links = getMagicLinksForJob(job.id);
+      // Get the most recent active link, or the first link if none active
+      const activeLink = links.find(l => l.status === 'active') || links[0] || null;
+      setMagicLinkInfo(activeLink);
       setIsLoadingLink(false);
     }
   }, [job?.id, isOpen]);

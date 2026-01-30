@@ -19,6 +19,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Modal from '../components/ui/Modal';
 import ActionButton from '../components/ui/ActionButton';
 import { InfoBox } from '../components/ui';
+import SealCertificate from '../components/SealCertificate';
 
 // Dialog state type for managing styled modals
 interface DialogState {
@@ -349,6 +350,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
   const [w3w, setW3w] = useState('');
   const [coords, setCoords] = useState<{ lat?: number, lng?: number }>({});
+  const [gpsCountdown, setGpsCountdown] = useState<number>(15);
+  const gpsWatchIdRef = useRef<number | null>(null);
+  const gpsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const gpsCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Dialog state for styled modals (replacing native alert/confirm/prompt)
   const [dialog, setDialog] = useState<DialogState>({ type: null, title: '', message: '' });
@@ -604,10 +609,60 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [locationVerified, setLocationVerified] = useState<boolean>(true);
   const [locationWarning, setLocationWarning] = useState<string | null>(null);
 
+  // Cancel GPS capture and cleanup
+  const cancelGpsCapture = useCallback(() => {
+    if (gpsWatchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+      gpsWatchIdRef.current = null;
+    }
+    if (gpsTimeoutRef.current) {
+      clearTimeout(gpsTimeoutRef.current);
+      gpsTimeoutRef.current = null;
+    }
+    if (gpsCountdownIntervalRef.current) {
+      clearInterval(gpsCountdownIntervalRef.current);
+      gpsCountdownIntervalRef.current = null;
+    }
+    setGpsCountdown(15);
+    setLocationStatus('idle');
+  }, []);
+
   const captureLocation = () => {
+    // Reset and start countdown
+    setGpsCountdown(15);
     setLocationStatus('capturing');
-    navigator.geolocation.getCurrentPosition(
+
+    // Start countdown interval
+    gpsCountdownIntervalRef.current = setInterval(() => {
+      setGpsCountdown(prev => {
+        if (prev <= 1) {
+          if (gpsCountdownIntervalRef.current) {
+            clearInterval(gpsCountdownIntervalRef.current);
+            gpsCountdownIntervalRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Use watchPosition for better accuracy and cancelability
+    gpsWatchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
+        // Clear the watch once we get a position
+        if (gpsWatchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+          gpsWatchIdRef.current = null;
+        }
+        if (gpsCountdownIntervalRef.current) {
+          clearInterval(gpsCountdownIntervalRef.current);
+          gpsCountdownIntervalRef.current = null;
+        }
+        if (gpsTimeoutRef.current) {
+          clearTimeout(gpsTimeoutRef.current);
+          gpsTimeoutRef.current = null;
+        }
+
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const accuracy = pos.coords.accuracy;
@@ -620,6 +675,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         setLocationVerified(locationResult.isVerified);
         setLocationWarning(locationResult.warning || null);
         setLocationStatus('captured');
+        setGpsCountdown(15);
         writeLocalDraft({
           w3w: locationResult.w3w,
           lat,
@@ -652,6 +708,16 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       },
       (error) => {
         console.error('Geolocation error:', error);
+        // Cleanup
+        if (gpsWatchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+          gpsWatchIdRef.current = null;
+        }
+        if (gpsCountdownIntervalRef.current) {
+          clearInterval(gpsCountdownIntervalRef.current);
+          gpsCountdownIntervalRef.current = null;
+        }
+        setGpsCountdown(15);
         setLocationStatus('denied');
         if (job) {
           logAuditEvent('LOCATION_DENIED', job.id, {
@@ -663,6 +729,20 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       // Extended timeout for better GPS accuracy in field conditions
       { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
     );
+
+    // Set timeout to handle case where GPS doesn't respond
+    gpsTimeoutRef.current = setTimeout(() => {
+      if (gpsWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+        gpsWatchIdRef.current = null;
+      }
+      if (gpsCountdownIntervalRef.current) {
+        clearInterval(gpsCountdownIntervalRef.current);
+        gpsCountdownIntervalRef.current = null;
+      }
+      setGpsCountdown(15);
+      setLocationStatus('denied');
+    }, 15000);
   };
 
   // State for manual location modal
@@ -672,6 +752,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [showSignaturePreview, setShowSignaturePreview] = useState(false);
   const [signaturePreviewData, setSignaturePreviewData] = useState<string | null>(null);
   const [showSealConfirmation, setShowSealConfirmation] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   // Generate signature preview
   const handlePreviewSignature = useCallback(() => {
@@ -1329,7 +1410,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           {/* UAT Fix #12: Report sharing options */}
           <div className="w-full max-w-xs space-y-3">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Share Report</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={handleEmailReport}
                 className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
@@ -1354,8 +1435,25 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 <span className="material-symbols-outlined text-primary text-xl">share</span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase">Share</span>
               </button>
+              <button
+                onClick={() => setShowCertificate(true)}
+                className="py-3 bg-success/10 hover:bg-success/20 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-success/30"
+                title="Download seal certificate"
+              >
+                <span className="material-symbols-outlined text-success text-xl">verified</span>
+                <span className="text-[9px] font-bold text-success uppercase">Cert</span>
+              </button>
             </div>
           </div>
+
+          {/* Seal Certificate Modal */}
+          {job && (
+            <SealCertificate
+              job={job}
+              isOpen={showCertificate}
+              onClose={() => setShowCertificate(false)}
+            />
+          )}
 
           <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
@@ -1620,7 +1718,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                         {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
                         <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
-                            locationStatus === 'capturing' ? 'Acquiring Signal...' :
+                            locationStatus === 'capturing' ? `Acquiring Signal... ${gpsCountdown}s` :
                               locationStatus === 'denied' ? 'Permission Denied' : 'Tap to Get Location'}
                         </p>
                       </div>
@@ -1635,7 +1733,63 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 </div>
                 {locationStatus === 'captured' && <span className="material-symbols-outlined text-success font-black">check_circle</span>}
                 {locationStatus === 'denied' && <span className="material-symbols-outlined text-warning font-black">error</span>}
+                {locationStatus === 'capturing' && (
+                  <div className="flex items-center gap-2">
+                    <div className="size-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                  </div>
+                )}
               </button>
+
+              {/* GPS Capture Progress with Cancel */}
+              {locationStatus === 'capturing' && (
+                <div className="bg-primary/10 border border-primary/30 rounded-[2rem] p-5 space-y-4 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-12">
+                        <svg className="size-12 -rotate-90">
+                          <circle
+                            cx="24"
+                            cy="24"
+                            r="20"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            className="text-slate-700"
+                          />
+                          <circle
+                            cx="24"
+                            cy="24"
+                            r="20"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeDasharray={2 * Math.PI * 20}
+                            strokeDashoffset={2 * Math.PI * 20 * (1 - gpsCountdown / 15)}
+                            className="text-primary transition-all duration-1000"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-primary">
+                          {gpsCountdown}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-black text-primary uppercase tracking-tight">Acquiring GPS Signal</p>
+                        <p className="text-[9px] text-slate-400 uppercase tracking-tight">Please wait while we verify your location</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cancelGpsCapture();
+                      }}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-wider transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {locationStatus === 'denied' && (
                 <div className="bg-warning/10 border border-warning/30 rounded-[2rem] p-6 space-y-4 animate-in">
