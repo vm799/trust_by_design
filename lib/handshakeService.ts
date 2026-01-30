@@ -67,7 +67,21 @@ const STORAGE_KEYS = {
   CONTEXT: `${STORAGE_PREFIX}context`,
   LOCKED: `${STORAGE_PREFIX}locked`,
   CREATED_AT: `${STORAGE_PREFIX}created_at`,
+  PAUSED_JOBS: `${STORAGE_PREFIX}paused_jobs`,
 } as const;
+
+/**
+ * Paused job context - stored separately from active handshake
+ */
+export interface PausedJobContext {
+  jobId: string;
+  deliveryEmail: string;
+  clientEmail?: string;
+  accessCode: string;
+  checksum: string;
+  pausedAt: number;
+  pauseReason?: 'emergency' | 'parts_unavailable' | 'weather' | 'client_unavailable' | 'other';
+}
 
 // ============================================================================
 // CHECKSUM UTILITIES - Imported from redirects for consistency
@@ -327,6 +341,144 @@ class HandshakeServiceClass {
   getDeliveryEmail(): string | null {
     const context = this.get();
     return context?.deliveryEmail ?? null;
+  }
+
+  /**
+   * Pause the current job - saves context and clears lock for new job access
+   *
+   * Use Case: Technician needs to switch to an emergency job mid-work.
+   * All drafts are preserved in IndexedDB, handshake context is saved to paused list.
+   *
+   * @param reason Optional reason for pausing (for audit trail)
+   * @returns The paused job context, or null if no job was locked
+   */
+  pauseCurrentJob(reason?: PausedJobContext['pauseReason']): PausedJobContext | null {
+    const existingContext = this.get();
+    if (!existingContext || !existingContext.isLocked) {
+      console.log('[HandshakeService] No locked job to pause');
+      return null;
+    }
+
+    // Create paused job entry
+    const pausedJob: PausedJobContext = {
+      jobId: existingContext.jobId,
+      deliveryEmail: existingContext.deliveryEmail,
+      clientEmail: existingContext.clientEmail,
+      accessCode: existingContext.accessCode,
+      checksum: existingContext.checksum,
+      pausedAt: Date.now(),
+      pauseReason: reason,
+    };
+
+    // Add to paused jobs list
+    const pausedJobs = this.getPausedJobs();
+    // Remove if already exists (re-pausing same job)
+    const filtered = pausedJobs.filter(p => p.jobId !== pausedJob.jobId);
+    filtered.push(pausedJob);
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(filtered));
+      console.log('[HandshakeService] Job paused:', pausedJob.jobId, 'Reason:', reason);
+    } catch (error) {
+      console.error('[HandshakeService] Failed to save paused job:', error);
+      return null;
+    }
+
+    // Clear the active lock (allows new job access)
+    this.clear();
+
+    return pausedJob;
+  }
+
+  /**
+   * Resume a paused job - restores context and re-locks
+   *
+   * @param jobId The job ID to resume
+   * @returns The restored handshake context, or null if job not found in paused list
+   */
+  resumeJob(jobId: string): HandshakeContext | null {
+    const pausedJobs = this.getPausedJobs();
+    const pausedJob = pausedJobs.find(p => p.jobId === jobId);
+
+    if (!pausedJob) {
+      console.log('[HandshakeService] Job not found in paused list:', jobId);
+      return null;
+    }
+
+    // Check if another job is currently locked
+    const currentContext = this.get();
+    if (currentContext?.isLocked && currentContext.jobId !== jobId) {
+      console.warn('[HandshakeService] Cannot resume - another job is locked:', currentContext.jobId);
+      return null;
+    }
+
+    // Restore the handshake context
+    const restoredContext: HandshakeContext = {
+      jobId: pausedJob.jobId,
+      deliveryEmail: pausedJob.deliveryEmail,
+      clientEmail: pausedJob.clientEmail,
+      accessCode: pausedJob.accessCode,
+      checksum: pausedJob.checksum,
+      isValid: true,
+      createdAt: pausedJob.pausedAt, // Use pause time as reference
+      isLocked: true,
+    };
+
+    // Commit the restored context
+    this.commit(restoredContext);
+
+    // Remove from paused list
+    const remaining = pausedJobs.filter(p => p.jobId !== jobId);
+    try {
+      localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(remaining));
+      console.log('[HandshakeService] Job resumed:', jobId);
+    } catch (error) {
+      console.error('[HandshakeService] Failed to update paused list:', error);
+    }
+
+    return restoredContext;
+  }
+
+  /**
+   * Get all paused jobs for the current technician
+   */
+  getPausedJobs(): PausedJobContext[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.PAUSED_JOBS);
+      if (!stored) return [];
+      return JSON.parse(stored) as PausedJobContext[];
+    } catch (error) {
+      console.error('[HandshakeService] Failed to get paused jobs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Remove a job from the paused list (e.g., after completion or deletion)
+   */
+  removePausedJob(jobId: string): boolean {
+    const pausedJobs = this.getPausedJobs();
+    const remaining = pausedJobs.filter(p => p.jobId !== jobId);
+
+    if (remaining.length === pausedJobs.length) {
+      return false; // Job wasn't in list
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(remaining));
+      console.log('[HandshakeService] Removed paused job:', jobId);
+      return true;
+    } catch (error) {
+      console.error('[HandshakeService] Failed to remove paused job:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if a specific job is paused
+   */
+  isJobPaused(jobId: string): boolean {
+    return this.getPausedJobs().some(p => p.jobId === jobId);
   }
 }
 
