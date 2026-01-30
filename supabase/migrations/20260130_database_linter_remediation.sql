@@ -88,14 +88,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix: auth.workspace_id() (HIGH - core auth function)
-CREATE OR REPLACE FUNCTION auth.workspace_id()
+-- NOTE: auth.workspace_id(), auth.is_manager(), auth.technician_id() are in protected
+-- auth schema. Create public schema equivalents instead:
+
+CREATE OR REPLACE FUNCTION public.get_workspace_id()
 RETURNS UUID AS $$
   SELECT workspace_id FROM public.users WHERE id = (SELECT auth.uid())
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
--- Fix: auth.is_manager() (HIGH - permission check)
-CREATE OR REPLACE FUNCTION auth.is_manager()
+CREATE OR REPLACE FUNCTION public.is_manager()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS(
     SELECT 1 FROM public.users
@@ -104,8 +105,7 @@ RETURNS BOOLEAN AS $$
   )
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
--- Fix: auth.technician_id() (HIGH - technician lookup)
-CREATE OR REPLACE FUNCTION auth.technician_id()
+CREATE OR REPLACE FUNCTION public.get_technician_id()
 RETURNS UUID AS $$
   SELECT id FROM public.technicians WHERE user_id = (SELECT auth.uid())
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
@@ -355,7 +355,7 @@ CREATE POLICY "bunker_jobs_delete_workspace" ON bunker_jobs
   TO authenticated
   USING (
     workspace_id IN (
-      SELECT workspace_id FROM profiles WHERE id = (SELECT auth.uid())
+      SELECT workspace_id FROM users WHERE id = (SELECT auth.uid())
     )
   );
 
@@ -376,10 +376,10 @@ CREATE POLICY "jobs_unified_select" ON jobs
   TO authenticated
   USING (
     -- User is in same workspace
-    workspace_id = (SELECT auth.workspace_id())
+    workspace_id = (SELECT public.get_workspace_id())
     OR
     -- Or user is assigned technician
-    assigned_technician_id = (SELECT auth.technician_id())
+    assigned_technician_id = (SELECT public.get_technician_id())
     OR
     -- Or has valid access token (for client view)
     EXISTS (
@@ -398,12 +398,12 @@ CREATE POLICY "jobs_manager_all" ON jobs
   FOR ALL
   TO authenticated
   USING (
-    workspace_id = (SELECT auth.workspace_id())
-    AND (SELECT auth.is_manager())
+    workspace_id = (SELECT public.get_workspace_id())
+    AND (SELECT public.is_manager())
   )
   WITH CHECK (
-    workspace_id = (SELECT auth.workspace_id())
-    AND (SELECT auth.is_manager())
+    workspace_id = (SELECT public.get_workspace_id())
+    AND (SELECT public.is_manager())
   );
 
 -- Consolidate: photos table SELECT policies
@@ -417,7 +417,7 @@ CREATE POLICY "photos_unified_select" ON photos
   USING (
     job_id IN (
       SELECT id FROM jobs
-      WHERE workspace_id = (SELECT auth.workspace_id())
+      WHERE workspace_id = (SELECT public.get_workspace_id())
     )
   );
 
@@ -430,15 +430,15 @@ CREATE POLICY "photos_manager_all" ON photos
   USING (
     job_id IN (
       SELECT id FROM jobs
-      WHERE workspace_id = (SELECT auth.workspace_id())
-      AND (SELECT auth.is_manager())
+      WHERE workspace_id = (SELECT public.get_workspace_id())
+      AND (SELECT public.is_manager())
     )
   )
   WITH CHECK (
     job_id IN (
       SELECT id FROM jobs
-      WHERE workspace_id = (SELECT auth.workspace_id())
-      AND (SELECT auth.is_manager())
+      WHERE workspace_id = (SELECT public.get_workspace_id())
+      AND (SELECT public.is_manager())
     )
   );
 
@@ -450,7 +450,7 @@ CREATE POLICY "technicians_unified_select" ON technicians
   FOR SELECT
   TO authenticated
   USING (
-    workspace_id = (SELECT auth.workspace_id())
+    workspace_id = (SELECT public.get_workspace_id())
     OR user_id = (SELECT auth.uid())
   );
 
@@ -462,19 +462,19 @@ CREATE POLICY "clients_unified_select" ON clients
   FOR SELECT
   TO authenticated
   USING (
-    workspace_id = (SELECT auth.workspace_id())
+    workspace_id = (SELECT public.get_workspace_id())
   );
 
 CREATE POLICY "clients_manager_all" ON clients
   FOR ALL
   TO authenticated
   USING (
-    workspace_id = (SELECT auth.workspace_id())
-    AND (SELECT auth.is_manager())
+    workspace_id = (SELECT public.get_workspace_id())
+    AND (SELECT public.is_manager())
   )
   WITH CHECK (
-    workspace_id = (SELECT auth.workspace_id())
-    AND (SELECT auth.is_manager())
+    workspace_id = (SELECT public.get_workspace_id())
+    AND (SELECT public.is_manager())
   );
 
 -- ============================================================================
