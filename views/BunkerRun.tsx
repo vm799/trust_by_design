@@ -389,7 +389,7 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
 export default function BunkerRun() {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { resolvedTheme, isDaylightMode, setDaylightMode } = useTheme();
+  const { resolvedTheme, isDaylightMode } = useTheme();
 
   // Determine if we're in daylight/construction mode
   const isDaylight = resolvedTheme === 'daylight' || isDaylightMode;
@@ -1050,24 +1050,10 @@ export default function BunkerRun() {
 
   return (
     <div className={`min-h-screen ${themeClasses}`}>
-      {/* Navigation Header with Job Log Link + Theme Toggle */}
+      {/* Navigation Header with Job Log Link */}
       <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
-            {/* Daylight Mode Toggle */}
-            <button
-              onClick={() => setDaylightMode(!isDaylightMode)}
-              className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isDaylight
-                  ? 'bg-orange-500 text-slate-900'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-              title={isDaylight ? 'Switch to Dark Mode' : 'Switch to Daylight Mode (outdoor visibility)'}
-            >
-              {isDaylight ? '☀️' : '🌙'}
-            </button>
-          </div>
+          <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
           <a
             href="/#/job-log"
             className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
