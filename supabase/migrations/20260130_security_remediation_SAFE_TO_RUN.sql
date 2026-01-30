@@ -279,18 +279,13 @@ GROUP BY date_trunc('day', created_at)
 ORDER BY created_date DESC
 LIMIT 10;
 
--- E2: Check for orphaned records
-SELECT 'bunker_photos without jobs' as check_type,
-  COUNT(*) as orphan_count
-FROM bunker_photos bp
-LEFT JOIN bunker_jobs bj ON bp.job_id = bj.id
-WHERE bj.id IS NULL
-UNION ALL
-SELECT 'bunker_signatures without jobs',
-  COUNT(*)
-FROM bunker_signatures bs
-LEFT JOIN bunker_jobs bj ON bs.job_id = bj.id
-WHERE bj.id IS NULL;
+-- E2: Check which tables exist in public schema
+SELECT
+  table_name,
+  CASE WHEN table_name LIKE 'bunker%' THEN 'bunker table' ELSE 'regular table' END as table_type
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
 
 -- ============================================================================
 -- END OF SAFE-TO-RUN DIAGNOSTICS
