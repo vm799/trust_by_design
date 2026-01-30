@@ -334,6 +334,30 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       </div>
    );
 
+   // =========================================================================
+   // EVIDENCE STATE DETECTION - Determines what UI to show
+   // =========================================================================
+   const hasPhotos = job.photos.length > 0;
+   const hasSignature = !!job.signature;
+   const isSealed = !!job.sealedAt;
+   const techLinkOpened = !!job.technicianLinkOpened || !!magicLinkInfo?.first_accessed_at;
+   const techLinkSent = !!magicLinkInfo?.sent_at || !!job.magicLinkToken;
+
+   // Calculate job completion state
+   const jobState = {
+      noWorkStarted: !hasPhotos && !hasSignature && !isSealed,
+      evidenceIncomplete: hasPhotos && !hasSignature && !isSealed,
+      readyForSeal: hasPhotos && hasSignature && !isSealed,
+      sealed: isSealed,
+   };
+
+   // What's blocking progress?
+   const blockers: string[] = [];
+   if (!techLinkSent) blockers.push('Technician link not generated');
+   else if (!techLinkOpened) blockers.push('Technician has not opened the link');
+   else if (!hasPhotos) blockers.push('No evidence photos captured');
+   else if (!hasSignature) blockers.push('Client signature not obtained');
+
    const groupedPhotos = (['Before', 'During', 'After', 'Evidence'] as PhotoType[]).map(type => ({
       type,
       items: job.photos.filter(p => p.type === type)
@@ -606,68 +630,101 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   ))}
                </div>
 
-               <div className="space-y-4 pt-4 relative z-10">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Narrative</h3>
-                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-slate-800 font-medium leading-relaxed text-sm uppercase tracking-tight shadow-inner">
-                     {job.notes || "Standard protocol followed. No exceptional site variances recorded."}
+               {/* Operational Narrative - Only show if notes exist OR job is sealed */}
+               {(job.notes || isSealed) && (
+                  <div className="space-y-4 pt-4 relative z-10">
+                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Narrative</h3>
+                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-slate-800 font-medium leading-relaxed text-sm uppercase tracking-tight shadow-inner">
+                        {job.notes || (isSealed ? "Work completed as per standard protocol." : "")}
+                     </div>
                   </div>
-               </div>
+               )}
 
-               <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-end gap-12 relative z-10">
-                  <div className="flex-1 w-full space-y-4">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attestation & Binding</h3>
-                     {signatureDataUrl ? (
-                        <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
-                           <img src={signatureDataUrl} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
-                           {job.sealedAt ? (
-                              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
-                                 <span className="size-2 bg-success rounded-full animate-pulse"></span>
-                                 <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
+               {/* Signature & Seal Section - Only show when there's evidence */}
+               {(hasPhotos || isSealed) && (
+                  <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-end gap-12 relative z-10">
+                     <div className="flex-1 w-full space-y-4">
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Attestation & Binding</h3>
+                        {signatureDataUrl ? (
+                           <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
+                              <img src={signatureDataUrl} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
+                              {isSealed ? (
+                                 <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
+                                    <span className="size-2 bg-success rounded-full animate-pulse"></span>
+                                    <span className="text-[9px] font-black text-success uppercase">Cryptographic Seal</span>
+                                 </div>
+                              ) : hasPhotos ? (
+                                 <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-success/10 rounded-full border border-success/30 shadow-sm">
+                                    <span className="size-2 bg-success rounded-full"></span>
+                                    <span className="text-[9px] font-black text-success uppercase">Ready to Seal</span>
+                                 </div>
+                              ) : null}
+                           </div>
+                        ) : isLoadingMedia ? (
+                           <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                              <div className="size-8 border-4 border-slate-300 border-t-primary rounded-full animate-spin"></div>
+                              <p className="text-[10px] font-black uppercase tracking-widest mt-3">Loading Signature</p>
+                           </div>
+                        ) : hasPhotos ? (
+                           <div className="h-44 w-full bg-amber-50 rounded-[2.5rem] border-2 border-dashed border-amber-300 flex flex-col items-center justify-center text-amber-600">
+                              <span className="material-symbols-outlined text-5xl mb-2 font-black">signature</span>
+                              <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Client Signature</p>
+                           </div>
+                        ) : null}
+                        {(signatureDataUrl || hasPhotos) && (
+                           <div className="flex justify-between text-[11px] font-black uppercase text-slate-600 px-4">
+                              <div className="flex flex-col">
+                                 <span className="text-slate-400 text-[9px] mb-1">Signatory</span>
+                                 <span className="text-slate-700">{job.signerName || 'Pending'}</span>
                               </div>
-                           ) : (
-                              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-200 shadow-sm">
-                                 <span className="size-2 bg-amber-500 rounded-full"></span>
-                                 <span className="text-[9px] font-black text-amber-600 uppercase">Pending Seal</span>
+                              <div className="flex flex-col text-right">
+                                 <span className="text-slate-400 text-[9px] mb-1">Capacity</span>
+                                 <span className="text-slate-700">{job.signerRole || 'Verified User'}</span>
                               </div>
-                           )}
+                           </div>
+                        )}
+                     </div>
+
+                     {/* Status Badge - Context-appropriate */}
+                     {isSealed ? (
+                        <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
+                           <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                           <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">verified</span>
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Cryptographically Sealed</p>
+                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Evidence Verified</p>
                         </div>
-                     ) : isLoadingMedia ? (
-                        <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col items-center justify-center text-slate-300">
-                           <div className="size-8 border-4 border-slate-300 border-t-primary rounded-full animate-spin"></div>
-                           <p className="text-[10px] font-black uppercase tracking-widest mt-3">Loading Signature</p>
+                     ) : hasSignature ? (
+                        <div className="bg-success/10 text-success p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-success/30 relative group overflow-hidden">
+                           <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">task_alt</span>
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">Complete</p>
+                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Ready to Seal</p>
                         </div>
                      ) : (
-                        <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">
-                           <span className="material-symbols-outlined text-5xl mb-2 font-black">signature</span>
-                           <p className="text-[10px] font-black uppercase tracking-widest">Waiting for Seal</p>
+                        <div className="bg-amber-900/20 text-amber-100 p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-amber-500/20 relative group overflow-hidden">
+                           <span className="material-symbols-outlined text-6xl mb-3 text-amber-500 font-black relative z-10">edit_document</span>
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">In Progress</p>
+                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Collecting Evidence</p>
                         </div>
                      )}
-                     <div className="flex justify-between text-[11px] font-black uppercase text-slate-400 px-4">
-                        <div className="flex flex-col">
-                           <span className="text-slate-400 text-[9px] mb-1">Signatory</span>
-                           <span>{job.signerName || 'Pending'}</span>
-                        </div>
-                        <div className="flex flex-col text-right">
-                           <span className="text-slate-400 text-[9px] mb-1">Capacity</span>
-                           <span>{job.signerRole || 'Verified User'}</span>
-                        </div>
+                  </div>
+               )}
+
+               {/* Empty State - When no work has been done */}
+               {!hasPhotos && !isSealed && (
+                  <div className="pt-12 border-t border-slate-100 relative z-10">
+                     <div className="bg-slate-100 rounded-[2.5rem] p-12 text-center">
+                        <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">hourglass_empty</span>
+                        <h3 className="text-xl font-black text-slate-500 uppercase tracking-tight mb-2">No Evidence Captured Yet</h3>
+                        <p className="text-sm text-slate-400 max-w-md mx-auto">
+                           {!techLinkSent
+                              ? "Generate and send a technician link to begin evidence collection."
+                              : !techLinkOpened
+                              ? "Waiting for technician to open the job link."
+                              : "Technician is working on the job. Evidence will appear here."}
+                        </p>
                      </div>
                   </div>
-                  {job.sealedAt ? (
-                     <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
-                        <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span className="material-symbols-outlined text-6xl mb-3 text-primary font-black relative z-10">verified</span>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Verified Record</p>
-                        <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Job Verified</p>
-                     </div>
-                  ) : (
-                     <div className="bg-amber-900/20 text-amber-100 p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-amber-500/20 relative group overflow-hidden">
-                        <span className="material-symbols-outlined text-6xl mb-3 text-amber-500 font-black relative z-10">pending</span>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">Awaiting Seal</p>
-                        <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Draft Report</p>
-                     </div>
-                  )}
-               </div>
+               )}
 
                {/* Legal Disclaimer - Phase C.5 */}
                <div className="mt-12 relative z-10">
@@ -684,16 +741,128 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
             {!publicView && (
                <aside className="w-full lg:w-80 space-y-6 no-print shrink-0">
                   <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
+
+                     {/* ============================================================ */}
+                     {/* PRIORITY SECTION: Job Status & Blockers (ALWAYS AT TOP) */}
+                     {/* ============================================================ */}
+                     {!isSealed && (
+                        <div className={`rounded-2xl p-5 border-2 ${
+                           jobState.noWorkStarted
+                              ? 'bg-danger/10 border-danger/30'
+                              : jobState.readyForSeal
+                              ? 'bg-success/10 border-success/30'
+                              : 'bg-warning/10 border-warning/30'
+                        }`}>
+                           <div className="flex items-start gap-3">
+                              <span className={`material-symbols-outlined text-2xl ${
+                                 jobState.noWorkStarted ? 'text-danger' : jobState.readyForSeal ? 'text-success' : 'text-warning'
+                              }`}>
+                                 {jobState.noWorkStarted ? 'error' : jobState.readyForSeal ? 'task_alt' : 'pending'}
+                              </span>
+                              <div className="flex-1">
+                                 <p className={`text-sm font-black uppercase tracking-tight ${
+                                    jobState.noWorkStarted ? 'text-danger' : jobState.readyForSeal ? 'text-success' : 'text-warning'
+                                 }`}>
+                                    {jobState.noWorkStarted ? 'No Work Recorded'
+                                     : jobState.readyForSeal ? 'Ready to Seal'
+                                     : 'Evidence Incomplete'}
+                                 </p>
+                                 {blockers.length > 0 && (
+                                    <p className="text-xs text-white/70 mt-1">{blockers[0]}</p>
+                                 )}
+                              </div>
+                           </div>
+
+                           {/* Quick Stats */}
+                           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10">
+                              <div className="text-center">
+                                 <p className={`text-lg font-black ${hasPhotos ? 'text-success' : 'text-white/30'}`}>
+                                    {job.photos.length}
+                                 </p>
+                                 <p className="text-[8px] font-bold text-white/50 uppercase">Photos</p>
+                              </div>
+                              <div className="text-center">
+                                 <p className={`text-lg font-black ${hasSignature ? 'text-success' : 'text-white/30'}`}>
+                                    {hasSignature ? '✓' : '—'}
+                                 </p>
+                                 <p className="text-[8px] font-bold text-white/50 uppercase">Signature</p>
+                              </div>
+                              <div className="text-center">
+                                 <p className={`text-lg font-black ${isSealed ? 'text-success' : 'text-white/30'}`}>
+                                    {isSealed ? '✓' : '—'}
+                                 </p>
+                                 <p className="text-[8px] font-bold text-white/50 uppercase">Sealed</p>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
+                     {/* ============================================================ */}
+                     {/* LINK STATUS (Shown prominently when job not complete) */}
+                     {/* ============================================================ */}
+                     {!isSealed && magicLinkInfo && (
+                        <div className={`rounded-2xl p-4 border ${
+                           !techLinkOpened ? 'bg-danger/10 border-danger/30' : 'bg-slate-800/50 border-white/5'
+                        }`}>
+                           <div className="flex items-center justify-between mb-3">
+                              <span className="text-[10px] font-black text-white uppercase tracking-widest">Tech Link</span>
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${getLinkStatusColor(magicLinkInfo.status)}`}>
+                                 {magicLinkInfo.status}
+                              </span>
+                           </div>
+
+                           {!techLinkOpened && (
+                              <div className="flex items-center gap-2 mb-3 p-2 bg-danger/20 rounded-lg">
+                                 <span className="material-symbols-outlined text-danger text-sm animate-pulse">warning</span>
+                                 <span className="text-[10px] font-bold text-danger">Link not opened by technician</span>
+                              </div>
+                           )}
+
+                           {/* Lifecycle Mini-Display */}
+                           {lifecycleSummary && (
+                              <div className="flex items-center gap-1 mb-3">
+                                 {['sent', 'opened', 'job_started', 'job_completed'].map((stage, idx) => {
+                                    const stageData = lifecycleSummary.stages.find(s => s.stage === stage);
+                                    const isComplete = stageData?.completed;
+                                    return (
+                                       <React.Fragment key={stage}>
+                                          <div className={`size-6 rounded-lg flex items-center justify-center ${
+                                             isComplete ? 'bg-success/20 text-success' : 'bg-slate-700 text-slate-500'
+                                          }`}>
+                                             <span className="material-symbols-outlined text-[10px]">
+                                                {stage === 'sent' ? 'send' : stage === 'opened' ? 'visibility' : stage === 'job_started' ? 'photo_camera' : 'verified'}
+                                             </span>
+                                          </div>
+                                          {idx < 3 && <div className={`flex-1 h-px ${isComplete ? 'bg-success/50' : 'bg-slate-700'}`} />}
+                                       </React.Fragment>
+                                    );
+                                 })}
+                              </div>
+                           )}
+
+                           <button
+                              onClick={handleCopyLink}
+                              className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg font-bold uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2"
+                           >
+                              <span className="material-symbols-outlined text-xs">content_copy</span>
+                              Copy Link
+                           </button>
+                        </div>
+                     )}
+
+                     {/* ============================================================ */}
+                     {/* ACTIONS (Conditional based on job state) */}
+                     {/* ============================================================ */}
                      <div>
-                        <h3 className="text-xs font-black text-slate-300 mb-6 uppercase tracking-[0.2em]">Hub Controls</h3>
+                        <h3 className="text-xs font-black text-white mb-6 uppercase tracking-[0.2em]">Actions</h3>
                         <div className="space-y-3">
-                           {job.status === 'Submitted' && !existingInvoice && (
+                           {isSealed && !existingInvoice && (
                               <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
                                  <span className="material-symbols-outlined text-sm font-black group-hover:rotate-12 transition-transform">receipt</span>
                                  Create Invoice
                               </button>
                            )}
-                           {job.status === 'Submitted' && (
+                           {isSealed && (
                               <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
                                  <span className="material-symbols-outlined text-sm font-black">receipt_long</span>
                                  Client Receipt
@@ -702,14 +871,24 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                  )}
                               </button>
                            )}
-                           <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
-                              <span className="material-symbols-outlined text-sm font-black">print</span>
-                              Print / Export PDF
-                           </button>
-                           <button onClick={() => setShowShareModal(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
-                              <span className="material-symbols-outlined text-sm font-black">share</span>
-                              Share Evidence Link
-                           </button>
+                           {/* Only show print/share when there's actual evidence */}
+                           {hasPhotos ? (
+                              <>
+                                 <button onClick={() => window.print()} className="w-full bg-primary hover:bg-blue-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
+                                    <span className="material-symbols-outlined text-sm font-black">print</span>
+                                    Print / Export PDF
+                                 </button>
+                                 <button onClick={() => setShowShareModal(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
+                                    <span className="material-symbols-outlined text-sm font-black">share</span>
+                                    Share Evidence Link
+                                 </button>
+                              </>
+                           ) : (
+                              <div className="text-center py-4 text-white/30">
+                                 <span className="material-symbols-outlined text-2xl mb-2">print_disabled</span>
+                                 <p className="text-[10px] uppercase tracking-widest">No evidence to print</p>
+                              </div>
+                           )}
                         </div>
                      </div>
 
@@ -919,17 +1098,23 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      )}
 
                      <div className="pt-8 border-t border-white/5">
-                        <h3 className="text-[10px] font-black text-slate-300 mb-4 uppercase tracking-[0.2em]">System Status</h3>
+                        <h3 className="text-[10px] font-black text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
                         <div className="space-y-3">
-                           <StatusLine label="Integrity Check" value={job.sealedAt ? "Pass" : "Pending"} success={!!job.sealedAt} />
-                           <StatusLine label="Sync Status" value={job.sealedAt ? "Vaulted" : "Draft"} success={!!job.sealedAt} />
-                           {magicLinkInfo && (
-                              <StatusLine
-                                 label="Tech Link"
-                                 value={magicLinkInfo.status === 'active' ? 'Active' : magicLinkInfo.status}
-                                 success={magicLinkInfo.status === 'active'}
-                              />
-                           )}
+                           <StatusLine
+                              label="Photos"
+                              value={hasPhotos ? `${job.photos.length} Captured` : "None"}
+                              success={hasPhotos}
+                           />
+                           <StatusLine
+                              label="Signature"
+                              value={hasSignature ? "Obtained" : "Pending"}
+                              success={hasSignature}
+                           />
+                           <StatusLine
+                              label="Seal Status"
+                              value={isSealed ? "Verified" : hasPhotos && hasSignature ? "Ready" : "Incomplete"}
+                              success={isSealed}
+                           />
                         </div>
                      </div>
                   </div>
@@ -1062,8 +1247,8 @@ const TimelineStep = ({ label, time, status, icon, active = true }: any) => (
 
 const StatusLine = ({ label, value, success }: any) => (
    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-      <span className="text-slate-400">{label}</span>
-      <span className={success ? 'text-success' : 'text-slate-400'}>{value}</span>
+      <span className="text-white/60">{label}</span>
+      <span className={success ? 'text-success' : 'text-white/40'}>{value}</span>
    </div>
 );
 
