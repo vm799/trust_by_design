@@ -66,7 +66,8 @@ const ClientForm: React.FC = () => {
       try {
         const draft = await getFormDraft(FORM_TYPE);
         if (draft) {
-          setFormData(draft.data as FormData);
+          // Type-safe cast: FormDraft stores Record<string, unknown>, narrow to FormData
+          setFormData(draft.data as unknown as FormData);
           setDraftRestored(true);
           showToast('Draft restored from previous session', 'info', 3000);
         }
@@ -85,7 +86,8 @@ const ClientForm: React.FC = () => {
 
     // Only save if form has content
     if (formData.name || formData.email || formData.phone || formData.address || formData.notes) {
-      saveFormDraft(FORM_TYPE, formData).catch(e => {
+      // Cast FormData to Record for saveFormDraft which expects generic storage type
+      saveFormDraft(FORM_TYPE, formData as unknown as Record<string, unknown>).catch(e => {
         console.warn('Failed to save draft to IndexedDB:', e);
       });
     }

@@ -1761,14 +1761,16 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       id: data.job_id,
       title: data.job_title,
       client: data.client_name,
-      clientName: data.client_name,
+      clientId: data.client_id || '',
+      technician: data.technician_name || '',
+      techId: data.technician_id || '',
       status: data.status,
       date: data.scheduled_date,
-      scheduledDate: data.scheduled_date,
       address: data.address,
       notes: data.notes,
       // Defaults for fields not returned by simple RPC
       photos: [],
+      signature: null,
       safetyChecklist: [],
       siteHazards: [],
       syncStatus: 'synced',
@@ -2094,7 +2096,7 @@ const _getTechniciansImpl = async (workspaceId: string): Promise<DbResult<Techni
           id: `tech-${index}`,
           name: row.technician_name,
           email: '',
-          status: 'active',
+          status: 'Available',
           rating: 0,
           jobsCompleted: 1
         });
