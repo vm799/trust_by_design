@@ -186,16 +186,16 @@ Evidence is cryptographically sealed and verifiable.
 
           {/* Client Info */}
           <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Client</p>
             <p className="text-sm font-bold text-slate-900">{receipt.client_name}</p>
             {receipt.client_address && (
-              <p className="text-xs text-slate-600 mt-1">{receipt.client_address}</p>
+              <p className="text-xs text-slate-700 mt-1">{receipt.client_address}</p>
             )}
           </div>
 
           {/* Work Details */}
           <div className="mb-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Work Completed</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Work Completed</p>
             <p className="text-lg font-black text-slate-900 uppercase tracking-tight">{receipt.job_title}</p>
             {receipt.job_description && (
               <p className="text-xs text-slate-600 mt-2 leading-relaxed">{receipt.job_description}</p>
@@ -204,19 +204,19 @@ Evidence is cryptographically sealed and verifiable.
 
           {/* Location */}
           <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Location</p>
             <p className="text-sm font-bold text-slate-900">{receipt.work_location}</p>
             {receipt.work_location_w3w && (
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-red-500 font-black text-xs">///</span>
-                <span className="text-xs text-slate-600">{receipt.work_location_w3w.replace('///', '')}</span>
+                <span className="text-xs text-slate-700">{receipt.work_location_w3w.replace('///', '')}</span>
               </div>
             )}
           </div>
 
           {/* Evidence Summary */}
           <div className="border border-slate-200 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Evidence Summary</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">Evidence Summary</p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-sm">photo_camera</span>
@@ -252,7 +252,7 @@ Evidence is cryptographically sealed and verifiable.
                 </div>
               </div>
               {receipt.evidence_hash && (
-                <p className="text-[8px] font-mono text-slate-400 mt-2 break-all">
+                <p className="text-[8px] font-mono text-slate-600 mt-2 break-all">
                   Hash: {receipt.evidence_hash.substring(0, 32)}...
                 </p>
               )}
@@ -263,18 +263,18 @@ Evidence is cryptographically sealed and verifiable.
           {receipt.amount && (
             <div className="border-t-2 border-dashed border-slate-200 pt-4 mt-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm font-black text-slate-600 uppercase">Amount Due</p>
+                <p className="text-sm font-black text-slate-700 uppercase">Amount Due</p>
                 <p className="text-2xl font-black text-slate-900">
                   £{receipt.amount.toFixed(2)}
                 </p>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
+              <p className="text-[10px] text-slate-600 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
             </div>
           )}
 
           {/* Verification Link */}
           <div className="border-t border-slate-200 pt-4 mt-4 text-center">
-            <p className="text-[10px] text-slate-400 mb-2">Verify this receipt online</p>
+            <p className="text-[10px] text-slate-600 mb-2">Verify this receipt online</p>
             <p className="text-xs font-mono text-primary break-all">{getReportUrl(job.id)}</p>
           </div>
         </div>

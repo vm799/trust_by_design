@@ -458,19 +458,28 @@ function SignatureCanvas({ onSave, onClear }: SignatureCanvasProps) {
 
   return (
     <div className="space-y-4">
-      <canvas
-        ref={canvasRef}
-        width={350}
-        height={200}
-        className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={350}
+          height={200}
+          className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+        />
+        {/* Sign here affordance overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-2 text-slate-300">
+            <span className="material-symbols-outlined text-4xl">draw</span>
+            <span className="text-xl font-medium tracking-wide">Sign here</span>
+          </div>
+        </div>
+      </div>
       <div className="flex gap-3">
         <button
           onClick={handleClear}

@@ -255,7 +255,7 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
           <h2 className="text-xl font-black text-white uppercase tracking-tight">
             Seal Certificate
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-300 mt-1">
             Download your cryptographic evidence certificate
           </p>
         </div>
@@ -280,19 +280,19 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         {/* Certificate Details Summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sealed</p>
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Sealed</p>
             <p className="text-sm font-bold text-white mt-1">{formatDate(job.sealedAt)}</p>
           </div>
           <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Evidence</p>
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Evidence</p>
             <p className="text-sm font-bold text-white mt-1">{job.photos?.length || 0} photos + signature</p>
           </div>
         </div>
 
         {/* Hash */}
         <div className="bg-slate-800/50 border border-white/5 rounded-xl p-4">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Evidence Hash (SHA-256)</p>
-          <p className="text-xs font-mono text-slate-300 break-all">{job.evidenceHash || 'N/A'}</p>
+          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">Evidence Hash (SHA-256)</p>
+          <p className="text-xs font-mono text-slate-100 break-all">{job.evidenceHash || 'N/A'}</p>
         </div>
 
         {/* Actions */}

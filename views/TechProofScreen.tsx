@@ -359,20 +359,29 @@ const TechProofScreen: React.FC = () => {
             Clear
           </button>
         </div>
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={parseInt(height) || 150}
-          className="w-full bg-white border-2 border-dashed border-slate-300 rounded-xl touch-none"
-          style={{ height }}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={endDrawing}
-          onMouseLeave={endDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={endDrawing}
-        />
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={300}
+            height={parseInt(height) || 150}
+            className="w-full bg-white border-2 border-dashed border-slate-300 rounded-xl touch-none"
+            style={{ height }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={endDrawing}
+            onMouseLeave={endDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={endDrawing}
+          />
+          {/* Sign here affordance overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center gap-2 text-slate-300">
+              <span className="material-symbols-outlined text-3xl">draw</span>
+              <span className="text-lg font-medium tracking-wide">Sign here</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
