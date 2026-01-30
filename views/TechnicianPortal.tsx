@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Job, Photo, SyncStatus, PhotoType, SafetyCheck } from '../types';
+import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
@@ -997,9 +997,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       }
 
       // Update job with seal metadata
+      // Use status from sealResult for consistency with sealing.ts (defaults to 'Submitted')
       const sealedJob: Job = {
         ...updatedJob,
-        status: 'Submitted',
+        status: (sealResult.job_status as JobStatus) || 'Submitted',
         sealedAt: sealResult.sealedAt,
         evidenceHash: sealResult.evidenceHash,
         isSealed: true
