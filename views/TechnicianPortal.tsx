@@ -256,15 +256,26 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   // Immutable State Protection: Block access if job is already submitted or sealed
   useEffect(() => {
     if (job?.status === 'Submitted' || job?.isSealed || job?.sealedAt) {
-      alert('This job has been sealed and is immutable. No further edits allowed.');
-      navigate('/home');
+      // Use styled dialog instead of alert - navigate after close
+      setDialog({
+        type: 'alert',
+        title: 'Job Sealed',
+        message: 'This job has been sealed and is immutable. No further edits allowed.',
+        variant: 'info',
+        onConfirm: () => navigate('/home')
+      });
     }
   }, [job?.status, job?.isSealed, job?.sealedAt, navigate]);
 
   // Check IndexedDB availability on mount
   useEffect(() => {
     if (!window.indexedDB) {
-      alert('Critical: Your browser does not support offline storage. Photos and signatures cannot be saved. Please use a modern browser.');
+      setDialog({
+        type: 'alert',
+        title: 'Browser Not Supported',
+        message: 'Your browser does not support offline storage. Photos and signatures cannot be saved. Please use a modern browser (Chrome, Firefox, Safari, Edge).',
+        variant: 'danger'
+      });
     }
   }, []);
 
@@ -826,7 +837,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
       } catch (error) {
         console.error('Failed to save photo to IndexedDB:', error);
-        alert('Failed to save photo. Your device storage may be full. Please free up space and try again.');
+        showAlert('Storage Full', 'Failed to save photo. Your device storage may be full. Please free up space and try again.', 'danger');
       }
     };
     reader.readAsDataURL(file);
@@ -839,18 +850,18 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     const sealCheck = canSealJob({ ...job, photos, signature: signerName });
 
     if (!sealCheck.canSeal) {
-      alert(sealCheck.reasons?.join(', ') || 'Cannot seal job');
+      showAlert('Cannot Seal Job', sealCheck.reasons?.join('\n') || 'Job requirements not met', 'warning');
       return;
     }
 
     // Critical Validation: Enforce audit spec requirements
     if (photos.length === 0) {
-      alert('Evidence Capture Required: At least one photo must be captured before sealing the job.');
+      showAlert('Evidence Required', 'At least one photo must be captured before sealing the job.', 'warning');
       return;
     }
 
     if (!signerName || signerName.trim() === '') {
-      alert('Signatory Identification Required: Please enter the full legal name of the person signing.');
+      showAlert('Name Required', 'Please enter the full legal name of the person signing.', 'warning');
       return;
     }
 
@@ -865,7 +876,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const isEmpty = pixelData ? !Array.from(pixelData).some(channel => channel !== 0) : true;
 
       if (isEmpty) {
-        alert('Signature Required: Please sign the canvas before submitting.');
+        showAlert('Signature Required', 'Please sign the canvas before submitting.', 'warning');
         setIsSubmitting(false);
         return;
       }
@@ -895,7 +906,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         await saveMediaLocal(signatureKey, job.id, signatureData);
       } catch (error) {
         console.error('Failed to save signature to IndexedDB:', error);
-        alert('Failed to save signature. Your device storage may be full. Please free up space and try again.');
+        showAlert('Storage Full', 'Failed to save signature. Your device storage may be full. Please free up space and try again.', 'danger');
         setIsSubmitting(false);
         return;
       }
@@ -975,13 +986,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           setIsSyncing(false);
           setIsSubmitting(false);
 
-          alert(
-            'Photos are still syncing to the cloud. This may be due to poor network connection.\n\n' +
-            'Please wait for sync to complete before sealing the job. Your data is saved locally.\n\n' +
-            'You can:\n' +
-            '• Wait and try again in a few moments\n' +
-            '• Move to an area with better signal\n' +
-            '• Contact support if the issue persists'
+          showAlert(
+            'Sync In Progress',
+            'Photos are still syncing to the cloud. This may be due to poor network connection.\n\nPlease wait for sync to complete before sealing the job. Your data is saved locally.\n\nYou can wait and try again, or move to an area with better signal.',
+            'warning'
           );
           return;
         }
@@ -991,7 +999,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const sealResult = await sealEvidence(job.id);
 
       if (!sealResult.success) {
-        alert(`Sealing failed: ${sealResult.error}\n\nJob data has been saved but not sealed. You can try sealing again from the admin dashboard.`);
+        showAlert(
+          'Sealing Failed',
+          `${sealResult.error}\n\nJob data has been saved but not sealed. You can try sealing again from the admin dashboard.`,
+          'danger'
+        );
         setIsSubmitting(false);
         return;
       }
@@ -1221,14 +1233,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           // Fallback to copy
           if ('clipboard' in navigator) {
             (navigator.clipboard as Clipboard).writeText(reportUrl);
-            alert('Report link copied to clipboard!');
+            showAlert('Copied!', 'Report link copied to clipboard.', 'info');
           }
         }
       } else {
         const nav = navigator as Navigator & { clipboard?: Clipboard };
         if (nav.clipboard) {
           nav.clipboard.writeText(reportUrl);
-          alert('Report link copied to clipboard!');
+          showAlert('Copied!', 'Report link copied to clipboard.', 'info');
         }
       }
     };
