@@ -11,6 +11,7 @@ import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualL
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import { notifyJobSealed, notifyLinkOpened } from '../lib/notificationService';
 import { hapticTap, hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
+import { celebrateSuccess, showToast } from '../lib/microInteractions';
 import { secureRandomString } from '../lib/secureId';
 import QuickJobForm from '../components/QuickJobForm';
 import TechnicianOnboarding, { useShouldShowOnboarding } from '../components/TechnicianOnboarding';
@@ -822,8 +823,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         const nextPhotos = [...photos, newPhoto];
         setPhotos(nextPhotos);
 
-        // Haptic feedback for successful photo capture
+        // Haptic feedback + celebration for successful photo capture
         hapticSuccess();
+        showToast(`Photo ${nextPhotos.length} captured!`, 'success', 2000);
+
+        // Confetti celebration on milestone photos (1st, 5th, 10th)
+        if (nextPhotos.length === 1 || nextPhotos.length === 5 || nextPhotos.length === 10) {
+          celebrateSuccess();
+        }
 
         // 4. Cache for display
         setPhotoDataUrls(prev => new Map(prev).set(photoId, dataUrl));
@@ -1049,8 +1056,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         );
       }
 
-      // Show success with haptic feedback
+      // Show success with haptic feedback and celebration
       hapticConfirm();
+
+      // 🎉 Major milestone - Celebrate with confetti!
+      celebrateSuccess();
+      showToast('Evidence sealed with RSA-2048 encryption!', 'success', 4000);
+
       setTimeout(() => {
         setIsSubmitting(false);
         setStep(5);
@@ -1396,8 +1408,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           </div>
         </div>
 
-        {step > 0 && (
-          <div className="flex gap-2">
+        {step > 0 && step < 5 && (
+          <div className="space-y-3">
+            {/* Step counter */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black text-primary uppercase tracking-widest">
+                Step {step} of 4
+              </p>
+              <p className="text-[10px] text-slate-500">
+                {step === 1 && 'Safety & Location'}
+                {step === 2 && 'Capture Evidence'}
+                {step === 3 && 'Review Summary'}
+                {step === 4 && 'Final Sign-off'}
+              </p>
+            </div>
+            <div className="flex gap-2">
             {['Access', 'Evidence', 'Summary', 'Sign-off'].map((label, idx) => {
               const stepNum = idx + 1;
               const isCompleted = step > stepNum;
@@ -1413,6 +1438,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 </div>
               );
             })}
+            </div>
           </div>
         )}
 
