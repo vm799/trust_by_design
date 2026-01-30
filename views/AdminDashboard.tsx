@@ -7,6 +7,7 @@ import OfflineIndicator from '../components/OfflineIndicator';
 import EmptyState from '../components/EmptyState';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
 import UnopenedLinksActionCenter from '../components/UnopenedLinksActionCenter';
+import JobQuickView from '../components/JobQuickView';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
@@ -169,6 +170,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   // State for technician-created job notifications
   const [techNotifications, setTechNotifications] = useState<TechJobNotification[]>([]);
 
+  // State for JobQuickView modal (smart routing)
+  const [quickViewJob, setQuickViewJob] = useState<Job | null>(null);
+  const [showQuickView, setShowQuickView] = useState(false);
+
   // Phase 10: Refresh function for links needing attention
   // CRITICAL FIX: Filter links to only include those with matching jobs
   // This ensures the badge count matches the actual displayed items
@@ -207,6 +212,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
   const handleTechNotificationDismiss = useCallback((notificationId: string) => {
     markTechNotificationRead(notificationId);
     setTechNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }, []);
+
+  /**
+   * SMART ROUTING: Determines whether to show QuickView or navigate to full report
+   * - Sealed/Complete jobs → Full Report (evidence is ready for review)
+   * - Incomplete jobs → QuickView modal (status check, quick actions)
+   */
+  const handleJobClick = useCallback((job: Job) => {
+    const isSealed = job.status === 'Submitted' || !!job.sealedAt || !!job.isSealed;
+    const hasSignature = !!job.signature;
+    const hasPhotos = job.photos.length > 0;
+    const isReadyForReview = isSealed || (hasPhotos && hasSignature);
+
+    if (isReadyForReview) {
+      // Job has meaningful content - go to full report
+      navigate(`/admin/report/${job.id}`);
+    } else {
+      // Job is incomplete - show quick status view
+      setQuickViewJob(job);
+      setShowQuickView(true);
+    }
+  }, [navigate]);
+
+  // Close QuickView
+  const handleCloseQuickView = useCallback(() => {
+    setShowQuickView(false);
+    setQuickViewJob(null);
+  }, []);
+
+  // Navigate to full report from QuickView
+  const handleViewFullReport = useCallback((jobId: string) => {
+    navigate(`/admin/report/${jobId}`);
+  }, [navigate]);
+
+  // Call technician
+  const handleCallTech = useCallback((phone: string) => {
+    window.location.href = `tel:${phone}`;
   }, []);
 
   // PERFORMANCE OPTIMIZATION: Load photo thumbnails only when jobs change
@@ -581,7 +623,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                   {uniqueAttentionJobs.map(item => (
                     <button
                       key={item.job.id}
-                      onClick={() => navigate(`/admin/report/${item.job.id}`)}
+                      onClick={() => handleJobClick(item.job)}
                       className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3 hover-lift press-spring"
                     >
                       <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -720,7 +762,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                   <JobCard
                     key={job.id}
                     job={job}
-                    onClick={() => navigate(`/admin/report/${job.id}`)}
+                    onClick={() => handleJobClick(job)}
                     onRetry={handleJobRetry}
                     photoDataUrls={photoDataUrls}
                   />
@@ -765,7 +807,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
                     const syncIntegrity = getSyncIntegrityStatus(job);
                     const isUrgent = job.priority === 'urgent';
                     return (
-                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isUrgent ? 'bg-danger/5 border-l-4 border-l-danger' : isOverdue ? 'bg-danger/5' : ''}`} onClick={() => navigate(`/admin/report/${job.id}`)}>
+                    <tr key={job.id} className={`hover:bg-white/5 transition-colors cursor-pointer group ${isUrgent ? 'bg-danger/5 border-l-4 border-l-danger' : isOverdue ? 'bg-danger/5' : ''}`} onClick={() => handleJobClick(job)}>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
                           {isUrgent && (
@@ -861,6 +903,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           setLinksNeedingAttention(prev => prev.filter(l => l.token !== token));
         }}
         onRefreshLinks={refreshLinksNeedingAttention}
+      />
+
+      {/* JobQuickView Modal - Smart Routing for incomplete jobs */}
+      <JobQuickView
+        job={quickViewJob}
+        isOpen={showQuickView}
+        onClose={handleCloseQuickView}
+        onViewFullReport={handleViewFullReport}
+        onCallTech={handleCallTech}
+        technicians={technicians}
       />
     </Layout>
   );
