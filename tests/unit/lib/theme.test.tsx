@@ -39,9 +39,7 @@ const ThemeTestComponent = () => {
       <span data-testid="daylight-auto">{daylightAuto ? 'yes' : 'no'}</span>
       <span data-testid="theme-state">{themeState}</span>
       <button data-testid="toggle" onClick={toggleDayNight}>Toggle</button>
-      <button data-testid="set-light" onClick={() => setTheme('light')}>Light</button>
       <button data-testid="set-dark" onClick={() => setTheme('dark')}>Dark</button>
-      <button data-testid="set-auto" onClick={() => setTheme('auto')}>Auto</button>
       <button data-testid="set-system" onClick={() => setTheme('system')}>System</button>
       <button data-testid="set-daylight" onClick={() => setTheme('daylight')}>Daylight</button>
       <button data-testid="enable-daylight" onClick={() => setDaylightMode(true)}>Enable Daylight</button>
@@ -58,7 +56,7 @@ const ThemeTestComponent = () => {
 describe('Theme System', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.classList.remove('light', 'dark', 'daylight');
+    document.documentElement.classList.remove('dark', 'daylight');
     document.documentElement.removeAttribute('data-theme');
     window.matchMedia = createMatchMediaMock(false);
   });
@@ -80,7 +78,8 @@ describe('Theme System', () => {
     });
 
     it('respects stored theme from localStorage', () => {
-      localStorage.setItem('jobproof-theme-mode', JSON.stringify('light'));
+      localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
+      localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
 
       render(
         <ThemeProvider>
@@ -88,8 +87,8 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('theme').textContent).toBe('light');
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      expect(screen.getByTestId('theme').textContent).toBe('daylight');
+      expect(screen.getByTestId('resolved').textContent).toBe('daylight');
     });
 
     it('applies theme class to document on mount', () => {
@@ -104,18 +103,18 @@ describe('Theme System', () => {
 
     it('supports forceTheme prop for testing', () => {
       render(
-        <ThemeProvider forceTheme="light">
+        <ThemeProvider forceTheme="dark">
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('theme').textContent).toBe('light');
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
   });
 
   describe('toggleDayNight - Theme Switching', () => {
-    it('toggles from dark to light', () => {
+    it('toggles from dark to daylight', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
@@ -124,11 +123,12 @@ describe('Theme System', () => {
 
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
       fireEvent.click(screen.getByTestId('toggle'));
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      expect(screen.getByTestId('resolved').textContent).toBe('daylight');
     });
 
-    it('toggles from light to dark', () => {
-      localStorage.setItem('jobproof-theme-mode', JSON.stringify('light'));
+    it('toggles from daylight to dark', () => {
+      localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
+      localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
 
       render(
         <ThemeProvider>
@@ -136,7 +136,7 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      expect(screen.getByTestId('resolved').textContent).toBe('daylight');
       fireEvent.click(screen.getByTestId('toggle'));
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
@@ -158,20 +158,9 @@ describe('Theme System', () => {
   });
 
   describe('setTheme - Theme Mode Changes', () => {
-    it('switches to light mode', () => {
-      render(
-        <ThemeProvider>
-          <ThemeTestComponent />
-        </ThemeProvider>
-      );
-
-      fireEvent.click(screen.getByTestId('set-light'));
-      expect(screen.getByTestId('theme').textContent).toBe('light');
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
-    });
-
     it('switches to dark mode', () => {
-      localStorage.setItem('jobproof-theme-mode', JSON.stringify('light'));
+      localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
+      localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
 
       render(
         <ThemeProvider>
@@ -204,17 +193,16 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      fireEvent.click(screen.getByTestId('set-light'));
-      expect(document.documentElement.classList.contains('light')).toBe(true);
-      expect(document.documentElement.classList.contains('dark')).toBe(false);
-
-      fireEvent.click(screen.getByTestId('set-dark'));
+      // Start in dark mode
       expect(document.documentElement.classList.contains('dark')).toBe(true);
-      expect(document.documentElement.classList.contains('light')).toBe(false);
 
       fireEvent.click(screen.getByTestId('set-daylight'));
       expect(document.documentElement.classList.contains('daylight')).toBe(true);
       expect(document.documentElement.classList.contains('dark')).toBe(false);
+
+      fireEvent.click(screen.getByTestId('set-dark'));
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.classList.contains('daylight')).toBe(false);
     });
   });
 
@@ -253,8 +241,8 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      fireEvent.click(screen.getByTestId('set-light'));
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
+      // Start in dark mode
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
 
       fireEvent.click(screen.getByTestId('enable-daylight'));
       expect(screen.getByTestId('resolved').textContent).toBe('daylight');
@@ -276,7 +264,8 @@ describe('Theme System', () => {
   });
 
   describe('System theme mode', () => {
-    it('respects system dark preference', () => {
+    it('always returns dark (light mode removed)', () => {
+      // Light mode has been removed - system always returns dark
       window.matchMedia = createMatchMediaMock(true);
 
       render(
@@ -289,7 +278,8 @@ describe('Theme System', () => {
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
 
-    it('respects system light preference', () => {
+    it('returns dark even when system prefers light (light mode removed)', () => {
+      // Light mode has been removed due to poor contrast
       window.matchMedia = createMatchMediaMock(false);
 
       render(
@@ -299,43 +289,7 @@ describe('Theme System', () => {
       );
 
       fireEvent.click(screen.getByTestId('set-system'));
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
-    });
-  });
-
-  describe('Auto (time-based) theme mode', () => {
-    it('returns dark during evening hours (6PM-6AM)', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2024-01-15T21:00:00'));
-
-      render(
-        <ThemeProvider>
-          <ThemeTestComponent />
-        </ThemeProvider>
-      );
-
-      fireEvent.click(screen.getByTestId('set-auto'));
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
-      expect(screen.getByTestId('evening').textContent).toBe('yes');
-
-      vi.useRealTimers();
-    });
-
-    it('returns light during day hours (6AM-6PM)', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2024-01-15T10:00:00'));
-
-      render(
-        <ThemeProvider>
-          <ThemeTestComponent />
-        </ThemeProvider>
-      );
-
-      fireEvent.click(screen.getByTestId('set-auto'));
-      expect(screen.getByTestId('resolved').textContent).toBe('light');
-      expect(screen.getByTestId('evening').textContent).toBe('no');
-
-      vi.useRealTimers();
     });
   });
 

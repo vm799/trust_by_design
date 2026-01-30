@@ -20,11 +20,11 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 // TYPE DEFINITIONS (Strict - No 'any')
 // ============================================
 
-/** Theme mode options */
-type ThemeMode = 'light' | 'dark' | 'system' | 'auto' | 'daylight';
+/** Theme mode options - Light mode removed due to poor contrast */
+type ThemeMode = 'dark' | 'system' | 'daylight';
 
 /** Resolved theme after system preference evaluation */
-type ResolvedTheme = 'light' | 'dark' | 'daylight';
+type ResolvedTheme = 'dark' | 'daylight';
 
 /** Theme state machine states */
 type ThemeState = 'idle' | 'hydrating' | 'ready' | 'transitioning';
@@ -136,9 +136,9 @@ function getIsDaytimeOutdoor(): boolean {
 // SYSTEM PREFERENCE DETECTION
 // ============================================
 
-function getSystemPreference(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'dark';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+function getSystemPreference(): 'dark' {
+  // Always return dark - light mode removed due to poor contrast
+  return 'dark';
 }
 
 // ============================================
@@ -188,20 +188,16 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
     if (isDaylightMode) return 'daylight';
 
     switch (theme) {
-      case 'light':
-        return 'light';
       case 'dark':
         return 'dark';
       case 'daylight':
         return 'daylight';
       case 'system':
         return getSystemPreference();
-      case 'auto':
-        return isEvening ? 'dark' : 'light';
       default:
         return 'dark';
     }
-  }, [theme, isEvening, isDaylightMode]);
+  }, [theme, isDaylightMode]);
 
   // ==========================================
   // THEME SETTERS
@@ -233,16 +229,14 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
       storage.set(STORAGE_KEYS.DAYLIGHT_ENABLED, false);
       setThemeInternal('dark');
       storage.set(STORAGE_KEYS.THEME, 'dark');
-    } else if (resolvedTheme === 'dark') {
-      // From dark -> light
-      setThemeInternal('light');
-      storage.set(STORAGE_KEYS.THEME, 'light');
     } else {
-      // From light -> dark
-      setThemeInternal('dark');
-      storage.set(STORAGE_KEYS.THEME, 'dark');
+      // From dark -> daylight (high visibility outdoor mode)
+      setIsDaylightMode(true);
+      storage.set(STORAGE_KEYS.DAYLIGHT_ENABLED, true);
+      setThemeInternal('daylight');
+      storage.set(STORAGE_KEYS.THEME, 'daylight');
     }
-  }, [resolvedTheme, isDaylightMode]);
+  }, [isDaylightMode]);
 
   const setDaylightMode = useCallback((enabled: boolean) => {
     setIsDaylightMode(enabled);
@@ -309,8 +303,8 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Remove all theme classes
-    root.classList.remove('light', 'dark', 'daylight');
+    // Remove all theme classes (light mode removed)
+    root.classList.remove('dark', 'daylight');
 
     // Apply resolved theme class
     root.classList.add(resolvedTheme);

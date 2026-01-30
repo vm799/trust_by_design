@@ -142,8 +142,8 @@ const SignupSuccess: React.FC = () => {
         <div className="text-center">
           <p className="text-slate-500 text-xs">
             Need help? Contact{' '}
-            <a href="mailto:support@jobproof.io" className="text-primary font-bold hover:underline">
-              support@jobproof.io
+            <a href="mailto:support@jobproof.pro" className="text-primary font-bold hover:underline">
+              support@jobproof.pro
             </a>
           </p>
         </div>
