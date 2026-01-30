@@ -25,6 +25,7 @@ import { useTheme } from '../lib/theme';
 import { validateChecksum, parseHashParams } from '../lib/redirects';
 import { useHandshake } from '../hooks/useHandshake';
 import { HandshakeService } from '../lib/handshakeService';
+import { JobSwitcher } from '../components/JobSwitcher';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -494,6 +495,8 @@ export default function BunkerRun() {
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
   const [signerName, setSignerName] = useState('');
   const [techName, setTechName] = useState('');
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [pauseReason, setPauseReason] = useState<'emergency' | 'parts_unavailable' | 'weather' | 'client_unavailable' | 'other'>('emergency');
 
   // Auto-hide toast after 3 seconds
   useEffect(() => {
@@ -811,6 +814,32 @@ export default function BunkerRun() {
     setIsJobFinished(true);
   };
 
+  // Handler to pause the current job and allow switching to another
+  const handlePauseJob = async () => {
+    if (!job) return;
+
+    // Save current job state to IndexedDB before pausing
+    await runDb.jobs.put({
+      ...job,
+      lastUpdated: Date.now(),
+    });
+
+    // Pause the handshake (clears lock, saves to paused list)
+    const paused = HandshakeService.pauseCurrentJob(pauseReason);
+
+    if (paused) {
+      setToastMessage({ text: 'Job paused - you can now access other jobs', type: 'info' });
+      setShowPauseModal(false);
+
+      // Navigate to job log where they can see paused jobs
+      setTimeout(() => {
+        navigate('/job-log');
+      }, 1000);
+    } else {
+      setToastMessage({ text: 'Failed to pause job', type: 'error' });
+    }
+  };
+
   // Auto-sync when job is complete and we have connection
   useEffect(() => {
     if (job?.completedAt && job.syncStatus === 'pending' && !isSyncing) {
@@ -1066,18 +1095,97 @@ export default function BunkerRun() {
 
   return (
     <div className={`min-h-screen ${themeClasses}`}>
-      {/* Navigation Header with Job Log Link */}
+      {/* Navigation Header with Pause and Job Log */}
       <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
-          <a
-            href="/#/job-log"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
-          >
-            My Jobs
-          </a>
+          <div className="flex items-center gap-2">
+            {/* Pause Button - Allow switching to other jobs */}
+            <button
+              onClick={() => setShowPauseModal(true)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 ${
+                isDaylight
+                  ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+              } transition-colors`}
+            >
+              <span className="material-symbols-outlined text-base">pause</span>
+              Pause
+            </button>
+            <a
+              href="/#/job-log"
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
+            >
+              My Jobs
+            </a>
+          </div>
         </div>
       </div>
+
+      {/* Pause Job Modal */}
+      {showPauseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-700'}`}>
+            <div className="text-center mb-6">
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-500/20'}`}>
+                <span className="material-symbols-outlined text-3xl text-amber-500">pause_circle</span>
+              </div>
+              <h2 className="text-xl font-bold mb-2">Pause This Job?</h2>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+                Your progress will be saved. You can resume this job later or switch to another job.
+              </p>
+            </div>
+
+            {/* Pause Reason Selection */}
+            <div className="mb-6">
+              <label className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+                Why are you pausing?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'emergency', label: 'Emergency', icon: 'warning' },
+                  { value: 'parts_unavailable', label: 'Need Parts', icon: 'inventory_2' },
+                  { value: 'weather', label: 'Weather', icon: 'cloud' },
+                  { value: 'client_unavailable', label: 'Client Away', icon: 'person_off' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPauseReason(option.value as typeof pauseReason)}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      pauseReason === option.value
+                        ? isDaylight
+                          ? 'bg-amber-50 border-amber-400 text-amber-700'
+                          : 'bg-amber-500/20 border-amber-500 text-amber-400'
+                        : isDaylight
+                          ? 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg mb-1">{option.icon}</span>
+                    <p className="text-xs font-medium">{option.label}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPauseModal(false)}
+                className={`flex-1 py-3 rounded-xl font-medium ${buttonSecondaryClasses}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePauseJob}
+                className="flex-1 py-3 rounded-xl font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors"
+              >
+                Pause Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sync Status Indicator */}
       <StatusIndicator isOnline={isOnline} syncStatus={job.syncStatus} isSyncing={isSyncing} message={syncMessage} />
@@ -1155,6 +1263,12 @@ export default function BunkerRun() {
           )}
         </div>
       </div>
+
+      {/* Job Switcher FAB - Shows paused jobs */}
+      <JobSwitcher
+        currentJobId={jobId}
+        onPauseRequest={() => setShowPauseModal(true)}
+      />
     </div>
   );
 }
