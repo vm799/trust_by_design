@@ -667,6 +667,58 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   // State for manual location modal
   const [showManualLocationModal, setShowManualLocationModal] = useState(false);
+
+  // State for signature preview and sealing confirmation
+  const [showSignaturePreview, setShowSignaturePreview] = useState(false);
+  const [signaturePreviewData, setSignaturePreviewData] = useState<string | null>(null);
+  const [showSealConfirmation, setShowSealConfirmation] = useState(false);
+
+  // Generate signature preview
+  const handlePreviewSignature = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const pixelData = ctx?.getImageData(0, 0, canvas.width, canvas.height).data;
+      const isEmpty = pixelData ? !Array.from(pixelData).some(channel => channel !== 0) : true;
+
+      if (isEmpty) {
+        showAlert('No Signature', 'Please sign in the box first before previewing.', 'warning');
+        return;
+      }
+
+      const dataUrl = canvas.toDataURL();
+      setSignaturePreviewData(dataUrl);
+      setShowSignaturePreview(true);
+    }
+  }, [showAlert]);
+
+  // Handle seal with confirmation
+  const handleSealWithConfirmation = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const pixelData = ctx?.getImageData(0, 0, canvas.width, canvas.height).data;
+      const isEmpty = pixelData ? !Array.from(pixelData).some(channel => channel !== 0) : true;
+
+      if (isEmpty) {
+        showAlert('Signature Required', 'Please sign the canvas before sealing.', 'warning');
+        return;
+      }
+
+      if (!signerName || signerName.trim().length < 2) {
+        showAlert('Name Required', 'Please enter the full name of the person signing.', 'warning');
+        return;
+      }
+
+      if (photos.length === 0) {
+        showAlert('Evidence Required', 'At least one photo must be captured before sealing.', 'warning');
+        return;
+      }
+
+      // Show confirmation
+      setShowSealConfirmation(true);
+    }
+  }, [showAlert, signerName, photos.length]);
   const [manualLatInput, setManualLatInput] = useState('');
   const [manualLngInput, setManualLngInput] = useState('');
 
@@ -1693,16 +1745,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <div className="flex gap-4">
               <button
                 onClick={() => setStep(1)}
-                disabled={maxCompletedStep >= 2}
-                className={`flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${maxCompletedStep >= 2 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border border-white/10 text-white hover:bg-slate-800'}`}
-                title={maxCompletedStep >= 2 ? 'Cannot go back after progressing' : undefined}
+                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-900 border border-white/10 text-white hover:bg-slate-800"
               >
-                {maxCompletedStep >= 2 ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-xs">lock</span>
-                    Locked
-                  </span>
-                ) : 'Back'}
+                Back to Safety
               </button>
               <button
                 disabled={photos.length === 0}
@@ -1762,16 +1807,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <div className="flex gap-4">
               <button
                 onClick={() => setStep(2)}
-                disabled={maxCompletedStep >= 3}
-                className={`flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${maxCompletedStep >= 3 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border border-white/10 text-white hover:bg-slate-800'}`}
-                title={maxCompletedStep >= 3 ? 'Cannot go back after progressing' : undefined}
+                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-900 border border-white/10 text-white hover:bg-slate-800"
               >
-                {maxCompletedStep >= 3 ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-xs">lock</span>
-                    Locked
-                  </span>
-                ) : 'Back'}
+                Back to Photos
               </button>
               <button
                 disabled={photos.length === 0}
@@ -1893,13 +1931,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 </div>
               </div>
 
-              <button
-                onClick={clearSignature}
-                className="w-full py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm font-black">backspace</span>
-                Clear Signature & Re-Sign
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePreviewSignature}
+                  className="flex-1 py-4 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/30 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm font-black">visibility</span>
+                  Preview
+                </button>
+                <button
+                  onClick={clearSignature}
+                  className="flex-1 py-4 bg-slate-900 text-slate-400 hover:text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm font-black">backspace</span>
+                  Clear & Re-Sign
+                </button>
+              </div>
             </div>
 
             {/* Pre-Seal Validation Checklist */}
@@ -1952,7 +1999,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </div>
 
             <button
-              onClick={handleFinalSeal}
+              onClick={handleSealWithConfirmation}
               disabled={isSubmitting || !signerName || photos.length === 0}
               className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 press-spring uppercase disabled:opacity-30 disabled:cursor-not-allowed"
             >
@@ -1961,7 +2008,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               ) : (
                 <>
                   <span className="material-symbols-outlined text-3xl font-black">lock</span>
-                  Seal & Complete Job
+                  Review & Seal Evidence
                 </>
               )}
             </button>
@@ -2168,6 +2215,111 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <ActionButton variant="secondary" onClick={() => setShowHelp(false)} fullWidth>
               Close Help
             </ActionButton>
+          </div>
+        </Modal>
+      )}
+
+      {/* Signature Preview Modal */}
+      {showSignaturePreview && signaturePreviewData && (
+        <Modal isOpen={true} onClose={() => setShowSignaturePreview(false)} title="Signature Preview" size="lg">
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-4 shadow-inner">
+              <img
+                src={signaturePreviewData}
+                alt="Signature Preview"
+                className="w-full h-auto"
+              />
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4">
+              <p className="text-xs text-slate-400">
+                <span className="font-bold text-white">Signer:</span> {signerName} ({signerRole})
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                <span className="font-bold text-white">Date:</span> {new Date().toLocaleDateString()}
+              </p>
+            </div>
+            <p className="text-xs text-slate-400 text-center">
+              If the signature looks correct, proceed to seal. Otherwise, close and re-sign.
+            </p>
+            <div className="flex gap-3">
+              <ActionButton variant="secondary" onClick={() => setShowSignaturePreview(false)} fullWidth>
+                Close
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                onClick={() => {
+                  setShowSignaturePreview(false);
+                  setShowSealConfirmation(true);
+                }}
+                fullWidth
+              >
+                Proceed to Seal
+              </ActionButton>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Seal Confirmation Modal */}
+      {showSealConfirmation && (
+        <Modal isOpen={true} onClose={() => setShowSealConfirmation(false)} title="Confirm Evidence Seal" size="lg">
+          <div className="space-y-6">
+            {/* Summary Header */}
+            <div className="bg-success/10 border border-success/30 rounded-2xl p-6 text-center">
+              <span className="material-symbols-outlined text-success text-5xl mb-3">verified_user</span>
+              <h3 className="text-lg font-black text-white uppercase tracking-tight">Ready to Seal Evidence</h3>
+              <p className="text-sm text-slate-400 mt-2">This action cannot be undone. Evidence will be cryptographically sealed.</p>
+            </div>
+
+            {/* Evidence Summary */}
+            <div className="bg-slate-800/50 rounded-xl p-4 space-y-3">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Evidence Summary</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-900/50 rounded-lg p-3">
+                  <p className="text-2xl font-black text-primary">{photos.length}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Photos</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg p-3">
+                  <p className="text-2xl font-black text-success">✓</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Signature</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg p-3">
+                  <p className="text-sm font-black text-white truncate">{signerName}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Signed By</p>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg p-3">
+                  <p className="text-sm font-black text-white">{locationStatus === 'captured' ? '✓ GPS' : '—'}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Location</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Info */}
+            <div className="flex items-start gap-3 bg-slate-800/50 rounded-xl p-4">
+              <span className="material-symbols-outlined text-primary text-xl">lock</span>
+              <div>
+                <p className="text-xs font-bold text-white">RSA-2048 Cryptographic Seal</p>
+                <p className="text-[10px] text-slate-400 mt-1">Evidence will be hashed with SHA-256 and signed with RSA-2048 private key. This creates tamper-proof verification.</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <ActionButton variant="secondary" onClick={() => setShowSealConfirmation(false)} fullWidth>
+                Cancel
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                onClick={() => {
+                  setShowSealConfirmation(false);
+                  handleFinalSeal();
+                }}
+                fullWidth
+                icon="lock"
+              >
+                Seal Evidence Now
+              </ActionButton>
+            </div>
           </div>
         </Modal>
       )}
