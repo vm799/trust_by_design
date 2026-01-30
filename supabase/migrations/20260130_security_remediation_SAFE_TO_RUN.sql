@@ -65,7 +65,7 @@ LIMIT 20;
 -- A6: Dead tuple ratio (bloat indicator)
 SELECT
   schemaname,
-  tablename,
+  relname AS table_name,
   n_dead_tup AS dead_tuples,
   n_live_tup AS live_tuples,
   ROUND(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 2) AS dead_ratio_pct
