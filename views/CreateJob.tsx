@@ -317,6 +317,11 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     setIsCreating(true);
     setError('');
 
+    // CRITICAL: Clear stale state from previous job creation to prevent QR code showing old link
+    setCreatedJobId('');
+    setMagicLinkUrl('');
+    setMagicLinkToken('');
+
     // Yield to main thread to show loading state
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -440,19 +445,14 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   };
 
   // getMagicLink should always return the properly generated URL
-  // The fallback generates a new local token if somehow magicLinkUrl wasn't set
+  // NO emergency fallback - using stale createdJobId causes QR code to show wrong job
   const getMagicLinkWithToken = (): { url: string; token: string } | null => {
     if (magicLinkUrl && magicLinkToken) {
       return { url: magicLinkUrl, token: magicLinkToken };
     }
-    // Emergency fallback: generate a local magic link on the fly
-    console.warn('[CreateJob] magicLinkUrl was not set, generating emergency local link');
-    if (!user?.email) {
-      console.error('[CreateJob] Cannot generate emergency link: user email not available');
-      return null;
-    }
-    const emergencyLink = storeMagicLinkLocal(createdJobId, user.email, user?.workspace?.id || 'local');
-    return { url: emergencyLink.url, token: emergencyLink.token };
+    // If magic link isn't ready yet, return null - don't use stale state
+    console.warn('[CreateJob] magicLinkUrl not yet set - waiting for job creation to complete');
+    return null;
   };
 
   const getMagicLink = () => {

@@ -69,7 +69,12 @@ export default function JobLog() {
     setIsLoading(true);
 
     try {
-      // Try to fetch from Supabase first
+      // Get local jobs from IndexedDB first
+      const localJobs = await logDb.jobs.toArray();
+      const localCompleted = localJobs.filter(j => j.completedAt);
+
+      // Try to fetch from Supabase
+      let cloudJobs: CompletedJob[] = [];
       if (navigator.onLine && SUPABASE_URL && SUPABASE_ANON_KEY) {
         const response = await fetch(
           `${SUPABASE_URL}/rest/v1/bunker_jobs?status=eq.Complete&order=completed_at.desc&limit=50`,
@@ -83,31 +88,54 @@ export default function JobLog() {
 
         if (response.ok) {
           const data = await response.json();
-          const mappedJobs: CompletedJob[] = data.map((j: Record<string, unknown>) => ({
+          cloudJobs = data.map((j: Record<string, unknown>) => ({
             id: j.id as string,
             title: j.title as string || `Job ${j.id}`,
             client: j.client as string || 'Client',
             address: j.address as string,
             completedAt: j.completed_at as string || j.last_updated as string,
-            // FIX: Read actual sync_status from API instead of hardcoding 'synced'
-            syncStatus: (j.sync_status as 'pending' | 'synced' | 'failed') || 'synced',
+            // Jobs from Supabase ARE synced - they exist in the cloud
+            syncStatus: 'synced' as const,
             beforePhotoUrl: j.before_photo_data as string,
             afterPhotoUrl: j.after_photo_data as string,
             signatureUrl: j.signature_data as string,
             reportUrl: j.report_url as string,
           }));
-          setJobs(mappedJobs);
-          setIsLoading(false);
-          return;
         }
       }
 
-      // Fallback to IndexedDB
-      const localJobs = await logDb.jobs.toArray();
-      const completed = localJobs.filter(j => j.completedAt);
-      setJobs(completed);
+      // Merge: Cloud jobs (synced) + Local-only jobs (pending)
+      const cloudJobIds = new Set(cloudJobs.map(j => j.id));
+
+      // Local jobs that are NOT in cloud are pending sync
+      const pendingJobs: CompletedJob[] = localCompleted
+        .filter(j => !cloudJobIds.has(j.id))
+        .map(j => ({ ...j, syncStatus: 'pending' as const }));
+
+      // Combine: synced cloud jobs + pending local jobs
+      const allJobs = [...cloudJobs, ...pendingJobs];
+
+      // Sort by completedAt descending
+      allJobs.sort((a, b) => {
+        const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      setJobs(allJobs);
     } catch (error) {
       console.error('[JobLog] Load error:', error);
+      // On error, just show local jobs as pending
+      try {
+        const localJobs = await logDb.jobs.toArray();
+        const completed = localJobs.filter(j => j.completedAt).map(j => ({
+          ...j,
+          syncStatus: 'pending' as const
+        }));
+        setJobs(completed);
+      } catch {
+        setJobs([]);
+      }
     }
 
     setIsLoading(false);
