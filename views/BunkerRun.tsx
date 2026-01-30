@@ -265,8 +265,8 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
       address: job.address,
       w3w: job.w3w,
       notes: job.notes,
-      // FIX: Only set 'In Progress' when work has started, preserve 'Pending' for fresh jobs
-      status: job.completedAt ? 'Complete' : (job.beforePhoto ? 'In Progress' : (job.status || 'Pending')),
+      // FIX: Derive status from job state - RunJob doesn't have status property
+      status: job.completedAt ? 'Complete' : (job.beforePhoto ? 'In Progress' : 'Pending'),
       before_photo_data: job.beforePhoto?.dataUrl,
       after_photo_data: job.afterPhoto?.dataUrl,
       signature_data: job.signature?.dataUrl,
