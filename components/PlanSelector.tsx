@@ -179,7 +179,16 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
       }
     } catch (err) {
       console.error('Plan selection error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start checkout');
+      // Detect CORS/network errors vs API errors
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start checkout';
+      const isCorsOrNetwork = errorMessage.includes('Failed to fetch') ||
+                              errorMessage.includes('NetworkError') ||
+                              errorMessage.includes('CORS');
+
+      setError(isCorsOrNetwork
+        ? 'Payment service unavailable. Please try again later or contact support.'
+        : errorMessage
+      );
       setLoading(false);
     }
   };
