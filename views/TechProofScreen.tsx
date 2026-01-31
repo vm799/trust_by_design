@@ -589,11 +589,18 @@ const TechProofScreen: React.FC = () => {
         <Card className="p-4 space-y-4">
           <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-accent text-sm">person</span>
-            Client Signature
-            <Tooltip content="Client signature confirms they're satisfied with the work. This is your strongest protection against 'I never approved this' disputes." position="bottom">
+            Client Sign-Off
+            <Tooltip content="Client signature confirms they have reviewed and accepted the completed work." position="bottom">
               <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
+
+          {/* Sign-off declaration text */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
+            <p className="text-sm text-slate-300 leading-relaxed">
+              By signing below, I confirm that I have inspected the completed work and am satisfied that it meets my requirements.
+            </p>
+          </div>
 
           <input
             type="text"
@@ -604,7 +611,7 @@ const TechProofScreen: React.FC = () => {
           />
 
           <SignaturePad
-            label="Client signs below"
+            label="Client signs below to confirm acceptance"
             height="15vh"
             onSign={(sig) => setProofData(prev => ({ ...prev, clientSignature: sig || null }))}
           />

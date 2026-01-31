@@ -1,0 +1,146 @@
+<!--
+  JobProof Branded Magic Link Email Template
+
+  To apply this template:
+  1. Go to Supabase Dashboard > Authentication > Email Templates
+  2. Select "Magic Link" template
+  3. Copy the HTML content below into the template editor
+  4. Save changes
+
+  Variables available:
+  - {{ .ConfirmationURL }} - The magic link URL
+  - {{ .Email }} - User's email address
+  - {{ .SiteURL }} - Your site URL
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Sign in to JobProof</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0f172a; color: #f8fafc;">
+  <div style="max-width: 560px; margin: 0 auto; padding: 40px 20px;">
+
+    <!-- Header with Logo -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <div style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 16px 24px; border-radius: 16px;">
+        <span style="color: white; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">JobProof</span>
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 24px; overflow: hidden;">
+
+      <!-- Welcome Banner -->
+      <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 32px 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800;">
+          Welcome to JobProof
+        </h1>
+        <p style="color: #bfdbfe; margin: 8px 0 0 0; font-size: 15px;">
+          Click below to sign in securely
+        </p>
+      </div>
+
+      <!-- Content -->
+      <div style="padding: 32px 24px;">
+
+        <!-- Sign In Button -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="{{ .ConfirmationURL }}"
+             style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; padding: 18px 48px; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 8px 24px 0 rgba(34, 197, 94, 0.4); letter-spacing: 0.5px;">
+            Sign In to JobProof
+          </a>
+        </div>
+
+        <!-- What's Waiting Section -->
+        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="color: #f1f5f9; font-size: 14px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 1px;">
+            What's waiting for you:
+          </h3>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; vertical-align: middle; width: 36px;">
+                <div style="width: 32px; height: 32px; background: #3b82f6; border-radius: 8px; text-align: center; line-height: 32px;">
+                  <span style="color: white; font-size: 16px;">📋</span>
+                </div>
+              </td>
+              <td style="padding: 8px 12px; color: #e2e8f0; font-size: 14px;">
+                View and manage your field service jobs
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; vertical-align: middle;">
+                <div style="width: 32px; height: 32px; background: #22c55e; border-radius: 8px; text-align: center; line-height: 32px;">
+                  <span style="color: white; font-size: 16px;">📸</span>
+                </div>
+              </td>
+              <td style="padding: 8px 12px; color: #e2e8f0; font-size: 14px;">
+                Capture GPS-verified evidence photos
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; vertical-align: middle;">
+                <div style="width: 32px; height: 32px; background: #f59e0b; border-radius: 8px; text-align: center; line-height: 32px;">
+                  <span style="color: white; font-size: 16px;">✍️</span>
+                </div>
+              </td>
+              <td style="padding: 8px 12px; color: #e2e8f0; font-size: 14px;">
+                Get client sign-offs with digital signatures
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; vertical-align: middle;">
+                <div style="width: 32px; height: 32px; background: #8b5cf6; border-radius: 8px; text-align: center; line-height: 32px;">
+                  <span style="color: white; font-size: 16px;">🔒</span>
+                </div>
+              </td>
+              <td style="padding: 8px 12px; color: #e2e8f0; font-size: 14px;">
+                Seal evidence with cryptographic verification
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Quick Tips -->
+        <div style="background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+          <h4 style="color: #94a3b8; font-size: 11px; font-weight: 700; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;">
+            Quick Tips
+          </h4>
+          <ul style="margin: 0; padding: 0 0 0 20px; color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+            <li>This link expires in 24 hours</li>
+            <li>Works on any device - phone, tablet, or computer</li>
+            <li>Add JobProof to your home screen for quick access</li>
+          </ul>
+        </div>
+
+        <!-- Fallback Link -->
+        <div style="text-align: center; padding-top: 16px; border-top: 1px solid #334155;">
+          <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0;">
+            Button not working? Copy and paste this link:
+          </p>
+          <p style="color: #60a5fa; font-size: 11px; word-break: break-all; margin: 0; font-family: monospace;">
+            {{ .ConfirmationURL }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 24px 16px;">
+      <p style="color: #64748b; font-size: 12px; margin: 0;">
+        You're receiving this because you requested a sign-in link for {{ .Email }}
+      </p>
+      <p style="color: #475569; font-size: 11px; margin: 12px 0 0 0;">
+        If you didn't request this, you can safely ignore this email.
+      </p>
+      <p style="color: #334155; font-size: 10px; margin: 16px 0 0 0;">
+        Powered by <strong style="color: #60a5fa;">JobProof</strong> | Professional Field Evidence Platform
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

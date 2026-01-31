@@ -877,12 +877,23 @@ serve(async (req) => {
       throw new Error(`Failed to upload PDF: ${uploadError.message}`);
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (more reliable than public URL for email downloads)
+    // Signed URL is valid for 7 days (604800 seconds)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('job-reports')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 604800);
 
-    const pdfUrl = urlData.publicUrl;
+    let pdfUrl: string;
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      // Fallback to public URL if signed URL fails
+      console.warn('[GenerateReport] Signed URL failed, using public URL:', signedUrlError);
+      const { data: urlData } = supabase.storage
+        .from('job-reports')
+        .getPublicUrl(fileName);
+      pdfUrl = urlData.publicUrl;
+    } else {
+      pdfUrl = signedUrlData.signedUrl;
+    }
     console.log(`[GenerateReport] PDF uploaded: ${pdfUrl}`);
 
     // =========================================================================
@@ -1246,27 +1257,49 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
         ` : ''}
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- SIGNATURE CONFIRMATION -->
+        <!-- SIGNATURE CONFIRMATION WITH METADATA -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        ${evidence.signatureIncluded && job.signer_name ? `
-        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="vertical-align: middle; width: 40px;">
-                <div style="width: 36px; height: 36px; background: #3b82f6; border-radius: 8px; text-align: center; line-height: 36px;">
-                  <span style="color: white; font-size: 18px;">✍️</span>
-                </div>
-              </td>
-              <td style="vertical-align: middle; padding-left: 12px;">
-                <p style="color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Client Approval</p>
-                <p style="color: #f1f5f9; font-size: 15px; font-weight: 600; margin: 4px 0 0 0;">Signed by ${job.signer_name}</p>
-                ${job.signer_role ? `<p style="color: #94a3b8; font-size: 12px; margin: 2px 0 0 0;">${job.signer_role}</p>` : ''}
-              </td>
-              <td style="text-align: right; vertical-align: middle;">
-                <span style="color: #22c55e; font-size: 20px;">✓</span>
-              </td>
-            </tr>
-          </table>
+        ${evidence.signatureIncluded ? `
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
+          <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 10px 16px;">
+            <span style="color: white; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">✍️ CLIENT SIGN-OFF</span>
+          </div>
+          <div style="padding: 16px;">
+            ${job.signature_data ? `
+            <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: center;">
+              <img src="${job.signature_data}" alt="Client signature" style="max-height: 80px; max-width: 100%;" />
+            </div>
+            ` : ''}
+            <table style="width: 100%; border-collapse: collapse;">
+              ${job.signer_name || job.client_name_signed ? `
+              <tr>
+                <td style="padding: 4px 0; color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase;">Signed By</td>
+                <td style="padding: 4px 0; color: #f1f5f9; font-size: 13px; font-weight: 600; text-align: right;">${job.signer_name || job.client_name_signed}</td>
+              </tr>
+              ` : ''}
+              ${completedTs ? `
+              <tr>
+                <td style="padding: 4px 0; color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase;">Signed At</td>
+                <td style="padding: 4px 0; color: #22c55e; font-size: 12px; font-weight: 600; text-align: right;">${completedTs.date} ${completedTs.time}</td>
+              </tr>
+              ` : ''}
+              ${afterGPS ? `
+              <tr>
+                <td style="padding: 4px 0; color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase;">Location</td>
+                <td style="padding: 4px 0; color: #e2e8f0; font-size: 11px; font-family: monospace; text-align: right;">📍 ${afterGPS}</td>
+              </tr>
+              ` : ''}
+              ${afterW3W ? `
+              <tr>
+                <td style="padding: 4px 0; color: #cbd5e1; font-size: 10px; font-weight: 700; text-transform: uppercase;">W3W</td>
+                <td style="padding: 4px 0; color: #fca5a5; font-size: 11px; font-family: monospace; font-weight: 700; text-align: right;">${afterW3W}</td>
+              </tr>
+              ` : ''}
+            </table>
+            <p style="color: #94a3b8; font-size: 10px; margin: 12px 0 0 0; padding-top: 10px; border-top: 1px solid #334155; line-height: 1.4;">
+              Client confirmed satisfaction with completed work by providing signature above.
+            </p>
+          </div>
         </div>
         ` : ''}
 
@@ -1383,7 +1416,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     Why Seal Evidence?
                   </p>
                   <p style="color: #cbd5e1; font-size: 12px; margin: 0; line-height: 1.4;">
-                    Creates <strong style="color: #ffffff;">tamper-proof cryptographic proof</strong> that photos haven't been altered. Essential for disputes.
+                    Creates <strong style="color: #ffffff;">tamper-detection cryptographic proof</strong> that photos haven't been altered. Useful for verifying work.
                   </p>
                 </td>
               </tr>
@@ -1411,21 +1444,21 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
             </table>
           </div>
 
-          <!-- TIP 3: Legal Benefit -->
+          <!-- TIP 3: Clear Documentation -->
           <div>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 36px; vertical-align: top; padding-right: 10px;">
                   <div style="width: 32px; height: 32px; background: #059669; border-radius: 8px; text-align: center; line-height: 32px;">
-                    <span style="color: white; font-size: 16px;">⚖️</span>
+                    <span style="color: white; font-size: 16px;">📋</span>
                   </div>
                 </td>
                 <td style="vertical-align: top;">
                   <p style="color: #e2e8f0; font-size: 12px; font-weight: 700; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                    Legal Protection
+                    Clear Documentation
                   </p>
                   <p style="color: #cbd5e1; font-size: 12px; margin: 0; line-height: 1.4;">
-                    Sealed evidence is <strong style="color: #ffffff;">admissible in court</strong> and insurance disputes. Proves exact time, place & work.
+                    Sealed evidence provides <strong style="color: #ffffff;">clear records</strong> of work completed with verifiable timestamps and locations.
                   </p>
                 </td>
               </tr>

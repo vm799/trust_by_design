@@ -22,7 +22,7 @@
 
 JobProof is a production-ready field service evidence management platform that provides:
 
-- **Cryptographic Sealing** - RSA-2048 digital signatures for tamper-evident evidence
+- **Cryptographic Sealing** - RSA-2048 digital signatures for verifiable records
 - **Offline-First** - Full functionality without internet connectivity
 - **GPS Verification** - Precise location tracking with what3words integration
 - **Multi-Persona** - Support for contractors, technicians, and clients
@@ -35,7 +35,7 @@ JobProof is a production-ready field service evidence management platform that p
 ### Core Capabilities
 
 - 📸 **Evidence Capture** - Photos, signatures, timestamps with GPS metadata
-- 🔒 **Cryptographic Sealing** - RSA-2048 signatures for legal defensibility
+- 🔒 **Cryptographic Sealing** - RSA-2048 signatures for tamper-evident evidence
 - 🌐 **Offline-First** - IndexedDB storage with automatic sync when online
 - 📍 **Location Accuracy** - GPS coordinates + what3words addresses
 - 👥 **Role-Based Access** - Admin, technician, and client portals

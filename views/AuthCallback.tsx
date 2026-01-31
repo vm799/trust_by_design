@@ -155,7 +155,7 @@ const AuthCallback: React.FC = () => {
       // Don't show error on INITIAL_SESSION without session - token extraction may still work
     });
 
-    // Check for existing session after a delay
+    // Check for existing session immediately (no delay)
     const checkExistingSession = async () => {
       if (hasRedirected.current) return;
 
@@ -169,7 +169,8 @@ const AuthCallback: React.FC = () => {
       }
     };
 
-    const sessionCheckTimer = setTimeout(checkExistingSession, 1000);
+    // Run session check immediately - no 1-second delay
+    const sessionCheckTimer = setTimeout(checkExistingSession, 50);
 
     return () => {
       subscription.unsubscribe();

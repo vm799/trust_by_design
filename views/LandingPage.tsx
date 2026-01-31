@@ -653,8 +653,8 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
     {
       icon: 'gavel',
       question: 'Can this evidence help with disputes?',
-      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures. This creates a strong paper trail for resolving payment disagreements with clients. Legal evidence certification is on our v2 roadmap.',
-      badge: 'Dispute-ready',
+      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures. This creates a clear record of work completed that you can share with clients to clarify misunderstandings. Note: JobProof is a technical evidence capture tool, not a legal authority.',
+      badge: 'Clear records',
     },
     {
       icon: 'security',
