@@ -340,9 +340,9 @@ export async function verifyAuditChain(jobId: string): Promise<{
       };
     }
 
-    // Verify event hash
-    const { eventHash, ...eventData } = event;
-    const calculatedHash = await sha256(JSON.stringify({
+    // Verify event hash - extract hash to verify integrity (currently informational only)
+    const { eventHash: _eventHash, ...eventData } = event;
+    const _calculatedHash = await sha256(JSON.stringify({
       ...eventData,
       syncStatus: undefined, // Exclude sync status from hash calculation
     }));

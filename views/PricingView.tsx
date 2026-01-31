@@ -264,7 +264,9 @@ const PriceCard = ({
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch {}
+        } catch {
+          // JSON parsing failed - use default error message
+        }
         throw new Error(errorMessage);
       }
 

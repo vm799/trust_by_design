@@ -12,12 +12,12 @@
  * - Each row navigates to /admin/report/${job.id}
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import EmptyState from '../../../components/EmptyState';
 import { Job, UserProfile } from '../../../types';
-import { ROUTES, route } from '../../../lib/routes';
+import { ROUTES } from '../../../lib/routes';
 
 type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'sync_issues';
 
@@ -313,7 +313,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             <div className="lg:hidden space-y-3">
               {filteredJobs.map(job => {
                 const lifecycle = getJobLifecycle(job);
-                const syncStatus = getSyncStatus(job);
+                getSyncStatus(job);
 
                 return (
                   <button

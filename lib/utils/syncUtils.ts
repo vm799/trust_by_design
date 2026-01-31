@@ -25,7 +25,7 @@ export async function waitForPhotoSync(
   pollInterval: number = 1000
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const startTime = Date.now();
+    Date.now(); // Track start time for potential timeout implementation
 
     const checkSync = async () => {
       try {

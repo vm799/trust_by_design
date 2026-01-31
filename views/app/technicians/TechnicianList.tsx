@@ -8,12 +8,10 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, EmptyState, ErrorState, LoadingSkeleton, Modal } from '../../../components/ui';
 import { getTechnicians, getJobs, addTechnician, deleteTechnician } from '../../../hooks/useWorkspaceData';
 import { Technician, Job } from '../../../types';
-import { ROUTES } from '../../../lib/routes';
 
 const TechnicianList: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -55,7 +53,7 @@ const TechnicianList: React.FC = () => {
 
   // REMEDIATION ITEM 7: Memoize tech stats to avoid O(n*m) lookups in render
   const techStatsMap = useMemo(() => {
-    const stats: Record<string, { total: number; active: number; completed: number }> = {};
+    const _stats: Record<string, { total: number; active: number; completed: number }> = {};
 
     // Group jobs by technicianId and calculate stats in single pass
     const jobsByTech: Record<string, { total: number; active: number; completed: number }> = {};

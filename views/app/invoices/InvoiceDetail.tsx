@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
+import { Card, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
 import { getInvoices, getClients, getJobs, updateInvoice, deleteInvoice } from '../../../hooks/useWorkspaceData';
 import { Invoice, Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';

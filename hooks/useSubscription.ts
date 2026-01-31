@@ -41,7 +41,9 @@ export const useSubscription = () => {
         const { data, timestamp } = JSON.parse(cached);
         if (Date.now() - timestamp < CACHE_TTL) return data;
       }
-    } catch {}
+    } catch {
+      // Cache parsing failed - use default subscription
+    }
     return {
       tier: 'solo',
       status: 'active',

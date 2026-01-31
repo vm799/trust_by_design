@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
+import { ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
 import { getJobs } from '../../../hooks/useWorkspaceData';
 import { sealEvidence } from '../../../lib/sealing';
 import { Job } from '../../../types';
@@ -27,7 +27,7 @@ interface Photo {
 
 const EvidenceReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState<Job | null>(null);

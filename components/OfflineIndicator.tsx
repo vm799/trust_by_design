@@ -59,7 +59,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               Working Offline
             </h3>
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              Your work is being saved locally. Changes will sync when you're back online.
+              Your work is being saved locally. Changes will sync when you&apos;re back online.
             </p>
           </div>
           {isOnline && (

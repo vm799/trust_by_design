@@ -29,7 +29,6 @@ interface MessagingPanelProps {
   userName: string;
   userRole: 'manager' | 'technician';
   currentJobId?: string;
-  currentJobTitle?: string;
   onClose: () => void;
 }
 
@@ -38,7 +37,6 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
   userName,
   userRole,
   currentJobId,
-  currentJobTitle,
   onClose,
 }) => {
   const [threads, setThreads] = useState<MessageThread[]>([]);
@@ -91,7 +89,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
 
       return unsubscribe;
     }
-  }, [selectedThread, userId]);
+  }, [selectedThread, userId, scrollToBottom]);
 
   // Online/offline detection
   useEffect(() => {
@@ -333,6 +331,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
                           {att.type === 'image' ? (
                             <img src={att.url} alt="" className="max-w-full rounded-lg" />
                           ) : att.type === 'voice' ? (
+                            // eslint-disable-next-line jsx-a11y/media-has-caption
                             <audio src={att.url} controls className="w-full" />
                           ) : (
                             <a href={att.url} className="underline">{att.filename}</a>

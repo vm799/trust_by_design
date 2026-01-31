@@ -121,9 +121,10 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
   const step = steps[actualStepIndex];
 
   // Highlight target element
+  const targetId = step?.targetId;
   React.useEffect(() => {
-    if (!step) return;
-    const target = document.getElementById(step.targetId);
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
     if (target) {
       target.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-slate-950', 'z-[101]', 'relative');
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -133,18 +134,25 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         target.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-slate-950', 'z-[101]', 'relative');
       }
     };
-  }, [actualStepIndex, step?.targetId]);
+  }, [actualStepIndex, targetId]);
 
   // Keyboard shortcuts
+  const isCompleted = step?.isCompleted;
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        handleSkip();
+        localStorage.setItem('jobproof_onboarding_v4', 'true');
+        onComplete();
       }
-      if (e.key === 'ArrowRight' && step?.isCompleted) {
+      if (e.key === 'ArrowRight' && isCompleted) {
         e.preventDefault();
-        next();
+        if (currentStep < steps.length - 1) {
+          setCurrentStep(currentStep + 1);
+        } else {
+          localStorage.setItem('jobproof_onboarding_v4', 'true');
+          onComplete();
+        }
       }
       if (e.key === 'ArrowLeft' && currentStep > 0) {
         e.preventDefault();
@@ -154,7 +162,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, step?.isCompleted]);
+  }, [currentStep, isCompleted, steps.length, onComplete]);
 
   const next = () => {
     if (currentStep < steps.length - 1) {

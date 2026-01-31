@@ -11,7 +11,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { getJobs, getClients, updateJob } from '../../hooks/useWorkspaceData';
 import { Job, Client } from '../../types';
-import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 
 interface Photo {

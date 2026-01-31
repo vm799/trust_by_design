@@ -12,7 +12,7 @@
  */
 
 import { getSupabase, isSupabaseAvailable } from './supabase';
-import { toCamelCaseKeys, toSnakeCaseKeys } from './caseConvert';
+import { toCamelCaseKeys } from './caseConvert';
 
 // Cache key prefix
 const CACHE_PREFIX = 'jobproof_cache_';

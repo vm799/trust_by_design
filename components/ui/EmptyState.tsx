@@ -7,7 +7,6 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import ActionButton from './ActionButton';
 
 interface EmptyStateProps {

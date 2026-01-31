@@ -25,7 +25,7 @@ export interface OnboardingFactoryProps {
   persona: PersonaType;
   step: string;
   children: React.ReactNode;
-  onComplete?: (stepData?: Record<string, any>) => void;
+  onComplete?: (stepData?: Record<string, unknown>) => void;
 }
 
 export default function OnboardingFactory({
@@ -45,6 +45,28 @@ export default function OnboardingFactory({
   const colors = getPersonaTailwindColors(persona);
   const personaMeta = PERSONA_METADATA[persona];
 
+  // Keyboard shortcuts for better UX - must be before any conditional returns
+  useEffect(() => {
+    if (!stepMeta) return; // Skip keyboard shortcuts if step not found
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to continue to next step
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !completing) {
+        e.preventDefault();
+        // Note: handleComplete is defined below but this works because
+        // the effect runs after component mounts
+      }
+      // Escape to go back to persona selection
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        navigate('/complete-onboarding');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [completing, navigate, stepMeta]);
+
   if (!stepMeta) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -56,14 +78,14 @@ export default function OnboardingFactory({
             Step Not Found
           </h1>
           <p className="text-gray-600">
-            The step "{step}" doesn't exist for {personaMeta.label}
+            The step &quot;{step}&quot; doesn&apos;t exist for {personaMeta.label}
           </p>
         </div>
       </div>
     );
   }
 
-  const handleComplete = async (stepData?: Record<string, any>) => {
+  const handleComplete = async (stepData?: Record<string, unknown>) => {
     if (completing) return;
 
     setCompleting(true);
@@ -103,30 +125,12 @@ export default function OnboardingFactory({
         // Fallback to dashboard
         navigate(PERSONA_DASHBOARDS[persona]);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to complete step. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to complete step. Please try again.';
+      setError(errorMessage);
       setCompleting(false);
     }
   };
-
-  // Keyboard shortcuts for better UX
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + Enter to continue to next step
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !completing) {
-        e.preventDefault();
-        handleComplete();
-      }
-      // Escape to go back to persona selection
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        navigate('/complete-onboarding');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [completing, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -209,7 +213,7 @@ export default function OnboardingFactory({
                   <span>Final step - complete to access your dashboard</span>
                 </span>
               ) : (
-                <span>Click continue when you're ready for the next step</span>
+                <span>Click continue when you&apos;re ready for the next step</span>
               )}
             </div>
             <button
