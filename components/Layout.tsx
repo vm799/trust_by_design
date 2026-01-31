@@ -44,10 +44,10 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
         </div>
 
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
-          <div className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Hub Management</div>
+          <div className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Management</div>
           <NavLink to="/admin" icon="dashboard" label="Dashboard" active={location.pathname === '/admin'} id="nav-dashboard" />
-          <NavLink to="/admin/clients" icon="group" label="Client Registry" active={location.pathname === '/admin/clients'} id="nav-clients" />
-          <NavLink to="/admin/technicians" icon="engineering" label="Workforce" active={location.pathname === '/admin/technicians'} id="nav-techs" />
+          <NavLink to="/admin/clients" icon="group" label="Clients" active={location.pathname === '/admin/clients'} id="nav-clients" />
+          <NavLink to="/admin/technicians" icon="engineering" label="Technicians" active={location.pathname === '/admin/technicians'} id="nav-techs" />
           <NavLink to="/admin/templates" icon="assignment" label="Protocols" active={location.pathname === '/admin/templates'} />
 
           <div className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Financials</div>
@@ -117,23 +117,21 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             >
               <span className="material-symbols-outlined" aria-hidden="true">menu</span>
             </button>
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-3">
               {location.pathname !== '/admin' && (
-                <>
-                  <Link
-                    to="/admin"
-                    className="text-sm lg:text-base font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors uppercase tracking-tight"
-                  >
-                    Hub
-                  </Link>
-                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-sm" aria-hidden="true">chevron_right</span>
-                </>
+                <Link
+                  to="/admin"
+                  className="size-9 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 flex items-center justify-center transition-colors"
+                  aria-label="Back to Dashboard"
+                >
+                  <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-lg" aria-hidden="true">arrow_back</span>
+                </Link>
               )}
               <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
                 {location.pathname === '/admin' ? 'Dashboard' :
                   location.pathname === '/admin/create' ? 'Create Job' :
-                    location.pathname === '/admin/clients' ? 'Registry' :
-                      location.pathname === '/admin/technicians' ? 'Workforce' :
+                    location.pathname === '/admin/clients' ? 'Clients' :
+                      location.pathname === '/admin/technicians' ? 'Technicians' :
                         location.pathname === '/admin/templates' ? 'Protocols' :
                           location.pathname === '/admin/invoices' ? 'Invoices' :
                             location.pathname === '/admin/profile' ? 'Profile' :
