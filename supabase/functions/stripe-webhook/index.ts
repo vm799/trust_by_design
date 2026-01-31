@@ -167,14 +167,145 @@ serve(async (req) => {
     if (event.type === 'customer.subscription.trial_will_end') {
       const subscription = event.data.object as Stripe.Subscription
       console.log(`Trial ending soon for subscription ${subscription.id}`)
-      // Could trigger email notification here
+
+      // Get user email from subscription record
+      const { data: subData } = await supabase
+        .from('user_subscriptions')
+        .select('user_id')
+        .eq('stripe_subscription_id', subscription.id)
+        .single()
+
+      if (subData?.user_id) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email, full_name')
+          .eq('id', subData.user_id)
+          .single()
+
+        if (userData?.email) {
+          const trialEndDate = subscription.trial_end
+            ? new Date(subscription.trial_end * 1000).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            : 'soon'
+
+          const displayName = userData.full_name?.split(' ')[0] || 'there'
+
+          // Send trial ending email via send-email function
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                to: userData.email,
+                subject: 'Your JobProof trial ends in 3 days',
+                html: `
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                      <h1 style="color: #0f172a; font-size: 24px; margin: 0;">Your trial is ending soon</h1>
+                    </div>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">Hi ${displayName},</p>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                      Your JobProof free trial ends on <strong>${trialEndDate}</strong>.
+                    </p>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                      To keep access to all your jobs, evidence, and team features, add a payment method before your trial expires.
+                    </p>
+                    <div style="text-align: center; margin: 32px 0;">
+                      <a href="https://jobproof.pro/#/admin/settings" style="display: inline-block; background: #2563eb; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                        Add Payment Method
+                      </a>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                      If you have any questions, just reply to this email. We're here to help.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+                    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                      JobProof - Professional Field Evidence Management
+                    </p>
+                  </div>
+                `,
+              }),
+            })
+            console.log(`Trial ending email sent to ${userData.email}`)
+          } catch (emailError) {
+            console.error('Failed to send trial ending email:', emailError)
+          }
+        }
+      }
     }
 
     // Handle payment failures
     if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object as Stripe.Invoice
       console.log(`Payment failed for invoice ${invoice.id}`)
-      // Could trigger email notification here
+
+      // Get user from subscription
+      if (invoice.subscription) {
+        const { data: subData } = await supabase
+          .from('user_subscriptions')
+          .select('user_id')
+          .eq('stripe_subscription_id', invoice.subscription)
+          .single()
+
+        if (subData?.user_id) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('email, full_name')
+            .eq('id', subData.user_id)
+            .single()
+
+          if (userData?.email) {
+            const displayName = userData.full_name?.split(' ')[0] || 'there'
+
+            // Send payment failed email
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseServiceKey}`,
+                },
+                body: JSON.stringify({
+                  to: userData.email,
+                  subject: 'Action required: Payment failed for JobProof',
+                  html: `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                      <div style="text-align: center; margin-bottom: 32px;">
+                        <h1 style="color: #dc2626; font-size: 24px; margin: 0;">Payment Failed</h1>
+                      </div>
+                      <p style="color: #475569; font-size: 16px; line-height: 1.6;">Hi ${displayName},</p>
+                      <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                        We couldn't process your payment for JobProof. Please update your payment method to avoid any interruption to your service.
+                      </p>
+                      <div style="text-align: center; margin: 32px 0;">
+                        <a href="https://jobproof.pro/#/admin/settings" style="display: inline-block; background: #dc2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                          Update Payment Method
+                        </a>
+                      </div>
+                      <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                        If you believe this is an error or need assistance, please reply to this email.
+                      </p>
+                      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+                      <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                        JobProof - Professional Field Evidence Management
+                      </p>
+                    </div>
+                  `,
+                }),
+              })
+              console.log(`Payment failed email sent to ${userData.email}`)
+            } catch (emailError) {
+              console.error('Failed to send payment failed email:', emailError)
+            }
+          }
+        }
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), { status: 200 })
