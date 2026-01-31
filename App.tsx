@@ -68,6 +68,8 @@ const BunkerSuccess = lazy(() => import('./views/BunkerSuccess'));
 const TechPortal = lazy(() => import('./views/tech/TechPortal'));
 const TechJobDetail = lazy(() => import('./views/tech/TechJobDetail'));
 const EvidenceCapture = lazy(() => import('./views/tech/EvidenceCapture'));
+// Stripe Trial: Plan selection after signup
+const SelectPlan = lazy(() => import('./views/SelectPlan'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -440,6 +442,8 @@ const AppContent: React.FC = () => {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
+        {/* Stripe Trial: Plan selection after account creation */}
+        <Route path="/select-plan" element={isAuthenticated ? <SelectPlan /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding" element={isAuthenticated ? <CompleteOnboarding /> : <Navigate to="/auth" replace />} />
         <Route path="/onboarding/:persona/:step" element={isAuthenticated ? <OnboardingStepLoader /> : <Navigate to="/auth" replace />} />
         {/* Manager Onboarding Wizard - UX Spec Compliant */}
