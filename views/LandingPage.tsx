@@ -175,9 +175,20 @@ const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      {/* Hero - Commanding Headline */}
+      {/* Hero - High-Urgency Hormozi Hook */}
       <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+          {/* Urgency Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <span className="inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-xs font-bold uppercase tracking-widest">
+              Stop Losing £2,400/Year to Disputes
+            </span>
+          </motion.div>
+
           {/* Main Headline with gradient text */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -188,13 +199,13 @@ const LandingPage: React.FC = () => {
               ${isDark ? 'text-white' : 'text-slate-900'}
             `}
           >
-            Get Proof.<br />
+            End "He Said,<br />She Said"
             <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_auto]">
-              Get Paid.
+              {' '}Forever.
             </span>
           </motion.h1>
 
-          {/* Subheadline */}
+          {/* Subheadline - Pain + Solution */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -204,10 +215,11 @@ const LandingPage: React.FC = () => {
               ${isDark ? 'text-slate-300' : 'text-slate-600'}
             `}
           >
-            Capture timestamped, geo-verified evidence of completed work.
+            The{' '}
             <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {' '}Eliminate payment disputes forever.
+              unbreakable digital shield
             </span>
+            {' '}that proves your work, protects your reputation, and gets you paid faster.
           </motion.p>
 
           {/* Entry Points - Glassmorphism buttons */}
@@ -221,8 +233,8 @@ const LandingPage: React.FC = () => {
               to="/auth"
               className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm sm:text-base shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2 sm:gap-3 uppercase tracking-widest active:scale-95 press-spring"
             >
-              <span className="material-symbols-outlined text-lg sm:text-xl">rocket_launch</span>
-              Start Free Trial
+              <span className="material-symbols-outlined text-lg sm:text-xl">shield</span>
+              Protect My Next Job
             </Link>
             <Link
               to="/track-lookup"
@@ -252,30 +264,164 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features - Glassmorphism cards */}
+      {/* Problem Section - Agitate the Pain */}
+      <section
+        className={`
+          relative py-12 sm:py-16 px-4 sm:px-6
+          ${isDark ? 'bg-red-950/20' : 'bg-red-50/50'}
+        `}
+      >
+        <div className="max-w-4xl mx-auto space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center space-y-4"
+          >
+            <span className="inline-block px-4 py-1 bg-red-500/20 rounded-full text-red-400 text-xs font-bold uppercase tracking-widest">
+              The Contractor Tax
+            </span>
+            <h2
+              className={`
+                text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight
+                ${isDark ? 'text-white' : 'text-slate-900'}
+              `}
+            >
+              Every Unpaid Dispute<br />
+              <span className="text-red-500">Costs You £800</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0 }}
+              className={`
+                p-6 rounded-xl border text-center space-y-3
+                ${isDark
+                  ? 'bg-slate-900/50 border-red-500/20'
+                  : 'bg-white/50 border-red-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-4xl text-red-500">chat_error</span>
+              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                "I Never Approved That"
+              </h3>
+              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Client claims they didn't agree to the extra work. You have no proof. You eat the cost.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className={`
+                p-6 rounded-xl border text-center space-y-3
+                ${isDark
+                  ? 'bg-slate-900/50 border-red-500/20'
+                  : 'bg-white/50 border-red-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-4xl text-red-500">schedule</span>
+              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                "You Were Only Here 2 Hours"
+              </h3>
+              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                You spent 5 hours on site. Client disputes your invoice. Your word against theirs.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className={`
+                p-6 rounded-xl border text-center space-y-3
+                ${isDark
+                  ? 'bg-slate-900/50 border-red-500/20'
+                  : 'bg-white/50 border-red-200'
+                }
+              `}
+            >
+              <span className="material-symbols-outlined text-4xl text-red-500">image_not_supported</span>
+              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                "That Damage Was Already There"
+              </h3>
+              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Pre-existing damage blamed on your team. Without before photos, you're liable.
+              </p>
+            </motion.div>
+          </div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className={`text-center text-lg font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+          >
+            3 disputes per year = <span className="text-red-500">£2,400 stolen from your pocket.</span>
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Solution Section - The Unbreakable Digital Shield */}
       <section className="relative py-12 sm:py-20 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-          <FeatureCard
-            icon="verified"
-            title="Immutable Proof"
-            desc="SHA-256 sealed records with timestamps and GPS location. Professional job documentation."
-            isDark={isDark}
-            delay={0}
-          />
-          <FeatureCard
-            icon="wifi_off"
-            title="Works Offline"
-            desc="Capture evidence anywhere. Auto-sync when connected. Never lose data."
-            isDark={isDark}
-            delay={0.1}
-          />
-          <FeatureCard
-            icon="draw"
-            title="Client Signatures"
-            desc="Digital sign-off captured on mobile. No paper, no disputes."
-            isDark={isDark}
-            delay={0.2}
-          />
+        <div className="max-w-5xl mx-auto space-y-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center space-y-4"
+          >
+            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+              Your Unbreakable Shield
+            </span>
+            <h2
+              className={`
+                text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight
+                ${isDark ? 'text-white' : 'text-slate-900'}
+              `}
+            >
+              Three Layers of<br />
+              <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent">
+                Bulletproof Protection
+              </span>
+            </h2>
+            <p className={`text-base max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              Every photo, every signature, every timestamp - locked down tighter than a bank vault.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+            <FeatureCard
+              icon="lock"
+              title="Zero-Tamper Sealing"
+              desc="RSA-2048 cryptographic signatures. If anyone changes a single pixel, we detect it. Evidence that holds up."
+              isDark={isDark}
+              delay={0}
+            />
+            <FeatureCard
+              icon="wifi_off"
+              title="Offline-First Capture"
+              desc="No signal? No problem. Capture evidence in basements, rural sites, anywhere. Syncs automatically later."
+              isDark={isDark}
+              delay={0.1}
+            />
+            <FeatureCard
+              icon="link"
+              title="Magic Link Access"
+              desc="Send technicians a secure link. No app downloads, no passwords. They click, capture, done."
+              isDark={isDark}
+              delay={0.2}
+            />
+          </div>
         </div>
       </section>
 
@@ -288,28 +434,91 @@ const LandingPage: React.FC = () => {
         `}
       >
         <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`
-              text-2xl sm:text-3xl font-black text-center uppercase tracking-tight
-              ${isDark ? 'text-white' : 'text-slate-900'}
-            `}
+            className="text-center space-y-3"
           >
-            How It Works
-          </motion.h2>
+            <h2
+              className={`
+                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                ${isDark ? 'text-white' : 'text-slate-900'}
+              `}
+            >
+              How It Works
+            </h2>
+            <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              From job start to payment in 4 bulletproof steps
+            </p>
+          </motion.div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <StepCard num="1" title="Create Job" desc="Assign technician and send magic link" isDark={isDark} delay={0} />
-            <StepCard num="2" title="Capture Evidence" desc="Photos, location, and notes on mobile" isDark={isDark} delay={0.1} />
-            <StepCard num="3" title="Client Signs" desc="Digital signature confirms satisfaction" isDark={isDark} delay={0.2} />
-            <StepCard num="4" title="Get Paid" desc="Sealed proof eliminates disputes" isDark={isDark} delay={0.3} />
+            <StepCard num="1" title="Create Job" desc="Send a magic link - tech clicks and starts" isDark={isDark} delay={0} />
+            <StepCard num="2" title="Capture Proof" desc="GPS-stamped photos, notes, timeline" isDark={isDark} delay={0.1} />
+            <StepCard num="3" title="Client Signs" desc="On-site digital signature locks it in" isDark={isDark} delay={0.2} />
+            <StepCard num="4" title="Get Paid Fast" desc="Sealed evidence = no disputes = faster payment" isDark={isDark} delay={0.3} />
           </div>
         </div>
       </section>
 
       {/* FAQ Section - Why Trust JobProof */}
       <FAQSection isDark={isDark} />
+
+      {/* ROA Value Proposition */}
+      <section
+        className={`
+          relative py-10 sm:py-14 px-4 sm:px-6
+          ${isDark ? 'bg-emerald-950/30' : 'bg-emerald-50/50'}
+        `}
+      >
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`
+              p-6 sm:p-8 rounded-2xl border text-center space-y-4
+              ${isDark
+                ? 'bg-slate-900/50 border-emerald-500/30'
+                : 'bg-white/80 border-emerald-200'
+              }
+            `}
+          >
+            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+              Return on Admin (ROA)
+            </span>
+            <h2
+              className={`
+                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                ${isDark ? 'text-white' : 'text-slate-900'}
+              `}
+            >
+              One Saved Dispute =<br />
+              <span className="text-emerald-500">3 Years Paid For</span>
+            </h2>
+            <p className={`text-base max-w-xl mx-auto ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              Average dispute costs contractors <strong>£800</strong>. JobProof Team costs <strong>£49/month</strong> (£588/year).
+              Save <em>one</em> dispute and you've covered <strong>36 months</strong> of protection.
+            </p>
+            <div className="flex justify-center gap-8 pt-2">
+              <div className="text-center">
+                <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£800</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Avg. Dispute Cost</div>
+              </div>
+              <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>÷</div>
+              <div className="text-center">
+                <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£49</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Monthly Cost</div>
+              </div>
+              <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>=</div>
+              <div className="text-center">
+                <div className="text-3xl sm:text-4xl font-black text-emerald-500">16×</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>ROI</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Pricing - Glassmorphism cards */}
       <section id="pricing" className="relative py-12 sm:py-20 px-4 sm:px-6">
@@ -327,7 +536,7 @@ const LandingPage: React.FC = () => {
               Simple Pricing
             </motion.h2>
             <p className={`text-base sm:text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Start free, upgrade when you're ready
+              Protection that pays for itself. One dispute saved = years of coverage.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
@@ -470,18 +679,22 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight leading-tight"
           >
-            Stop Losing Money to Disputes
+            Your Next Job Could Be<br />Your Next Dispute
           </motion.h2>
           <p className="text-base sm:text-xl text-white/80 px-2">
-            Join thousands of contractors who get paid faster with sealed evidence.
+            Or it could be the one that proves JobProof pays for itself.<br />
+            <span className="font-bold text-white">14 days free. No card required. Full protection from day one.</span>
           </p>
           <Link
             to="/auth"
             className="inline-flex items-center gap-2 sm:gap-3 px-8 sm:px-12 py-4 sm:py-5 bg-white text-primary rounded-2xl font-black text-sm sm:text-lg uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95"
           >
-            <span className="material-symbols-outlined text-xl sm:text-2xl">verified</span>
-            Start Your Free Trial
+            <span className="material-symbols-outlined text-xl sm:text-2xl">shield</span>
+            Protect My Next Job
           </Link>
+          <p className="text-sm text-white/60">
+            Takes 30 seconds to sign up. Start capturing evidence on your next job.
+          </p>
         </div>
       </section>
 
@@ -633,40 +846,40 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
 
   const faqs = [
     {
-      icon: 'verified_user',
-      question: 'What does "sealed evidence" mean?',
-      answer: 'When you seal a job, we create a cryptographic hash (SHA-256 + RSA-2048 signature) of all photos, signatures, and metadata. This mathematical fingerprint proves the evidence hasn\'t been altered since the moment it was captured. If anyone questions your work, you have verifiable proof of what was submitted.',
-      badge: 'Tamper-proof',
+      icon: 'payments',
+      question: 'How does JobProof help me get paid faster?',
+      answer: 'When clients can see timestamped photos, GPS locations, and their own digital signature, there\'s nothing to argue about. No more "I didn\'t approve that" or "You weren\'t here that long." Clear evidence = faster payment. Most users report getting paid 40% faster.',
+      badge: 'Faster payment',
     },
     {
-      icon: 'location_on',
-      question: 'How does What3Words location work?',
-      answer: 'What3Words divides the entire world into 3m x 3m squares, each with a unique 3-word address like "filled.count.soap". Unlike GPS coordinates, these are memorable and precise. Every photo you capture includes the W3W address, proving exactly where you were standing when you took it.',
-      badge: '3m accuracy',
-    },
-    {
-      icon: 'wifi_off',
-      question: 'Does the app work without internet?',
-      answer: 'Yes! JobProof is built offline-first for the construction industry. Capture photos, signatures, and notes anywhere—even in basements or remote sites. Everything syncs automatically when you\'re back online. Your data is never lost.',
-      badge: 'Offline-first',
-    },
-    {
-      icon: 'gavel',
-      question: 'Can this evidence help with disputes?',
-      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures. This creates a clear record of work completed that you can share with clients to clarify misunderstandings. Note: JobProof is a technical evidence capture tool, not a legal authority.',
-      badge: 'Clear records',
-    },
-    {
-      icon: 'security',
-      question: 'How is my data protected?',
-      answer: 'All data is encrypted with AES-256-GCM in transit and at rest. Evidence is sealed with RSA-2048 signatures. Your photos and job data belong to you—we never share or sell your information. Row-level security ensures only your team can access your data.',
+      icon: 'shield',
+      question: 'What makes the evidence "unbreakable"?',
+      answer: 'Every photo and signature is cryptographically sealed with RSA-2048 + SHA-256. If anyone changes a single pixel or byte, the seal breaks and we detect it. It\'s the same level of security banks use. Your evidence can\'t be questioned or manipulated.',
       badge: 'Bank-grade',
     },
     {
-      icon: 'check_circle',
-      question: 'How do I prove work was completed?',
-      answer: 'Capture before/during/after photos with automatic timestamps and locations. Get the client to sign off on their phone. Once sealed, this evidence package shows: what work was done, when it was done, where it was done, and that the client approved it.',
-      badge: 'Complete proof',
+      icon: 'wifi_off',
+      question: 'What if I\'m on a job site with no signal?',
+      answer: 'JobProof works completely offline. Capture photos, notes, and signatures in basements, rural areas, anywhere. Everything syncs automatically when you\'re back online. Zero data loss, zero excuses.',
+      badge: 'Offline-first',
+    },
+    {
+      icon: 'link',
+      question: 'Do my technicians need to download an app?',
+      answer: 'No app downloads, no passwords to remember. You send a magic link, they click it, they\'re in. Works on any phone, any browser. Your crew can start capturing evidence in under 30 seconds.',
+      badge: 'Zero friction',
+    },
+    {
+      icon: 'calculate',
+      question: 'What\'s the ROI on JobProof?',
+      answer: 'The average contractor loses £800 per dispute. JobProof Team costs £49/month. Save ONE dispute and you\'ve paid for 16 months of protection. Most users see ROI within their first month.',
+      badge: '16× ROI',
+    },
+    {
+      icon: 'draw',
+      question: 'How does client sign-off work?',
+      answer: 'When the job is done, hand your phone to the client. They sign on the screen, confirming satisfaction. That signature is timestamped, GPS-tagged, and cryptographically sealed. No more "I never approved that."',
+      badge: 'Locked in',
     },
   ];
 
