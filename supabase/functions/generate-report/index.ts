@@ -1055,8 +1055,14 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
   const beforeGPS = formatGPS(job.before_photo_lat, job.before_photo_lng);
   const afterGPS = formatGPS(job.after_photo_lat, job.after_photo_lng);
   const w3wAddress = formatW3W(job.w3w);
+  const beforeW3W = formatW3W(job.before_photo_w3w || job.w3w);
+  const afterW3W = formatW3W(job.after_photo_w3w || job.w3w);
   const completedTs = formatTimestamp(job.completed_at);
   const sealedTs = formatTimestamp(job.sealed_at);
+
+  // App URL for Review & Seal button
+  const appUrl = Deno.env.get('VITE_APP_URL') || Deno.env.get('APP_URL') || 'https://jobproof.vercel.app';
+  const reviewSealUrl = `${appUrl}/#/admin/job/${job.id}/evidence`;
 
   // Truncate hash for display
   const truncateHash = (hash: string | null, len = 16) => {
@@ -1196,6 +1202,9 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     ${beforeGPS ? `
                     <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${beforeGPS}</p>
                     ` : ''}
+                    ${beforeW3W ? `
+                    <p style="color: #fca5a5; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 700;">${beforeW3W}</p>
+                    ` : ''}
                   </div>
                 </div>
               </td>
@@ -1223,6 +1232,9 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     ` : ''}
                     ${afterGPS ? `
                     <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${afterGPS}</p>
+                    ` : ''}
+                    ${afterW3W ? `
+                    <p style="color: #fca5a5; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 700;">${afterW3W}</p>
                     ` : ''}
                   </div>
                 </div>
@@ -1350,6 +1362,22 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
             📄 Download Full Report (PDF)
           </a>
         </div>
+
+        ${!isSealed ? `
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- SECONDARY CTA - REVIEW & SEAL EVIDENCE -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div style="text-align: center; margin: 16px 0 24px 0;">
+          <a href="${reviewSealUrl}"
+             style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px 0 rgba(5, 150, 105, 0.4); letter-spacing: 0.5px;">
+            🔐 Review & Seal Evidence
+          </a>
+        </div>
+        <p style="color: #f59e0b; font-size: 11px; text-align: center; margin: 0 0 16px 0; line-height: 1.5;">
+          ⚠️ Evidence is NOT YET SEALED. Review and seal to create<br/>
+          tamper-proof cryptographic proof of this work.
+        </p>
+        ` : ''}
 
         <p style="color: #64748b; font-size: 11px; text-align: center; margin: 0; line-height: 1.5;">
           The PDF contains high-resolution photos, GPS coordinates,<br/>

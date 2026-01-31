@@ -25,6 +25,7 @@ import { motion } from 'framer-motion';
 import { ActionButton, Card, LoadingSkeleton } from '../components/ui';
 import { showToast } from '../lib/microInteractions';
 import { fadeInUp } from '../lib/animations';
+import { sealEvidence } from '../lib/sealing';
 
 // Supabase client for RPC calls
 const getSupabaseClient = async () => {
@@ -242,6 +243,22 @@ const TechProofScreen: React.FC = () => {
 
       if (data?.success) {
         showToast('Proof submitted successfully! Manager notified.', 'success', 4000);
+
+        // AUTO-SEAL: Cryptographically seal evidence after successful submission
+        try {
+          console.log('[TechProofScreen] Attempting auto-seal for job:', job.id);
+          const sealResult = await sealEvidence(job.id);
+          if (sealResult.success) {
+            console.log('[TechProofScreen] Evidence sealed:', sealResult.evidenceHash?.substring(0, 16));
+            showToast('Evidence sealed with cryptographic proof!', 'success', 3000);
+          } else {
+            console.warn('[TechProofScreen] Auto-seal skipped:', sealResult.error);
+            // Non-blocking - manager can seal later via review
+          }
+        } catch (sealError) {
+          console.warn('[TechProofScreen] Auto-seal error (non-blocking):', sealError);
+        }
+
         setScreenState('submitted');
       } else {
         showToast(data?.error || 'Submission failed. Please try again.', 'error', 4000);

@@ -26,6 +26,7 @@ import { validateChecksum, parseHashParams } from '../lib/redirects';
 import { useHandshake } from '../hooks/useHandshake';
 import { HandshakeService } from '../lib/handshakeService';
 import { JobSwitcher } from '../components/JobSwitcher';
+import { sealEvidence } from '../lib/sealing';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -798,6 +799,22 @@ export default function BunkerRun() {
       // This ensures subsequent magic links are not blocked by stale locks
       HandshakeService.clear();
       console.log('[BunkerRun] Handshake cleared after successful sync');
+
+      // AUTO-SEAL: Cryptographically seal evidence after successful sync
+      try {
+        console.log('[BunkerRun] Attempting auto-seal for job:', job.id);
+        const sealResult = await sealEvidence(job.id);
+        if (sealResult.success) {
+          console.log('[BunkerRun] Evidence sealed successfully:', sealResult.evidenceHash?.substring(0, 16));
+          setToastMessage({ text: 'Evidence sealed & synced!', type: 'success' });
+        } else {
+          console.warn('[BunkerRun] Auto-seal skipped:', sealResult.error);
+          // Don't show error to user - seal can happen later via manager review
+        }
+      } catch (sealError) {
+        console.warn('[BunkerRun] Auto-seal error (non-blocking):', sealError);
+        // Non-blocking - job is synced, seal can happen later
+      }
 
       // Give toast time to show, then navigate
       setTimeout(() => {
