@@ -89,12 +89,12 @@ const OAuthSetup: React.FC = () => {
       const supabase = getSupabase();
       if (!supabase) return;
 
-      // Check if profile already exists
+      // Check if profile already exists (use maybeSingle to avoid 406 on new users)
       const { data: profile } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         navigate('/', { replace: true });
@@ -177,7 +177,20 @@ const OAuthSetup: React.FC = () => {
       });
 
       if (workspaceError) {
-        throw new Error(workspaceError.message || 'Workspace creation failed');
+        // Foreign key error = user doesn't exist in auth.users (stale session)
+        if (workspaceError.message?.includes('fk_users_auth') || workspaceError.code === '23503') {
+          // Clear stale session and redirect to auth
+          console.error('[OAuthSetup] User not in auth.users - clearing stale session');
+          await supabase.auth.signOut();
+          navigate('/auth', { replace: true });
+          return;
+        }
+        // 409/23505 = conflict, user already exists - that's OK, refetch and continue
+        if (workspaceError.code === '409' || workspaceError.code === '23505') {
+          console.log('[OAuthSetup] User/workspace already exists, continuing...');
+        } else {
+          throw new Error(workspaceError.message || 'Workspace creation failed');
+        }
       }
 
       // Show install prompt if available, otherwise navigate

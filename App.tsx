@@ -263,32 +263,47 @@ const AppContent: React.FC = () => {
       // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
       if (!profile && sessionUserMetadata?.workspace_name) {
         const meta = sessionUserMetadata;
-        const workspaceSlug = (meta.workspace_name as string)
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '');
-        const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
-        // REMEDIATION ITEM 13: Get supabase through auth module (already lazy loaded above)
+        // GUARD: Check if user already exists in users table (prevents 409 conflicts)
         const supabase = auth.getSupabaseClient();
         if (supabase) {
-          try {
-            const { error } = await supabase.rpc('create_workspace_with_owner', {
-              p_user_id: sessionUserId,
-              p_email: sessionUserEmail,
-              p_workspace_name: meta.workspace_name,
-              p_workspace_slug: finalSlug,
-              p_full_name: meta.full_name || null
-            });
-            if (error) {
-              console.error('[App] Auto-heal workspace creation failed:', error);
-            } else {
-              // Try fetching again after creation
+          const { data: existingUser } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', sessionUserId)
+            .maybeSingle();
+
+          // Only create workspace if user doesn't exist
+          if (!existingUser) {
+            const workspaceSlug = (meta.workspace_name as string)
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '');
+            const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
+
+            try {
+              const { error } = await supabase.rpc('create_workspace_with_owner', {
+                p_user_id: sessionUserId,
+                p_email: sessionUserEmail,
+                p_workspace_name: meta.workspace_name,
+                p_workspace_slug: finalSlug,
+                p_full_name: meta.full_name || null
+              });
+              if (error) {
+                // 409 = conflict, user/workspace already exists - not a real error
+                if (error.code !== '409' && error.code !== '23505') {
+                  console.error('[App] Auto-heal workspace creation failed:', error);
+                }
+              }
+              // Try fetching again after creation attempt
               profile = await auth.getUserProfile(sessionUserId);
+            } catch (err) {
+              console.error('[App] Auto-heal exception:', err);
             }
-          } catch (err) {
-            console.error('[App] Auto-heal exception:', err);
+          } else {
+            // User exists but profile fetch failed - try again
+            profile = await auth.getUserProfile(sessionUserId);
           }
         }
       }
