@@ -635,7 +635,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
     {
       icon: 'verified_user',
       question: 'What does "sealed evidence" mean?',
-      answer: 'When you seal a job, we create a cryptographic hash (SHA-256 + RSA-2048 signature) of all photos, signatures, and metadata. This mathematical fingerprint proves the evidence hasn\'t been altered since the moment it was captured. If anyone disputes your work, you have court-admissible proof.',
+      answer: 'When you seal a job, we create a cryptographic hash (SHA-256 + RSA-2048 signature) of all photos, signatures, and metadata. This mathematical fingerprint proves the evidence hasn\'t been altered since the moment it was captured. If anyone questions your work, you have verifiable proof of what was submitted.',
       badge: 'Tamper-proof',
     },
     {
@@ -652,9 +652,9 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
     },
     {
       icon: 'gavel',
-      question: 'Will this evidence hold up in court?',
-      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures that meet legal standards for digital evidence. Multiple contractors have successfully used JobProof records to resolve payment disputes and defend against false claims.',
-      badge: 'Court-ready',
+      question: 'Can this evidence help with disputes?',
+      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures. This creates a strong paper trail for resolving payment disagreements with clients. Legal evidence certification is on our v2 roadmap.',
+      badge: 'Dispute-ready',
     },
     {
       icon: 'security',
@@ -665,7 +665,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
     {
       icon: 'check_circle',
       question: 'How do I prove work was completed?',
-      answer: 'Capture before/during/after photos with automatic timestamps and locations. Get the client to sign off on their phone. Once sealed, this evidence package proves: what work was done, when it was done, where it was done, and that the client approved it.',
+      answer: 'Capture before/during/after photos with automatic timestamps and locations. Get the client to sign off on their phone. Once sealed, this evidence package shows: what work was done, when it was done, where it was done, and that the client approved it.',
       badge: 'Complete proof',
     },
   ];
