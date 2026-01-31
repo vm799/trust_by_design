@@ -404,15 +404,23 @@ const AppContent: React.FC = () => {
       return <Navigate to="/client" replace />;
     }
 
-    // CRITICAL FIX: Returning managers go directly to dashboard
-    // Only first-time users (haven't seen onboarding) see the Intent Selector
-    if (hasSeenOnboarding) {
-      console.log('[PersonaRedirect] Returning manager, going to dashboard');
+    // CRITICAL FIX: Managers with complete profiles go directly to dashboard
+    // The hasSeenOnboarding localStorage flag is unreliable (resets in incognito/new browser)
+    // If user has workspace + persona, they've completed setup - go to dashboard
+    const hasCompleteProfile = !!(user.workspace?.id && user.persona);
+
+    if (hasCompleteProfile) {
+      console.log('[PersonaRedirect] Manager with complete profile, going to dashboard');
+      // Auto-set onboarding flag to prevent future confusion
+      if (!hasSeenOnboarding) {
+        localStorage.setItem('jobproof_onboarding_v4', 'true');
+      }
       return <Navigate to="/admin" replace />;
     }
 
-    // First-time managers see Intent Selector for onboarding
-    console.log('[PersonaRedirect] First-time manager, showing intent selector');
+    // Only show Intent Selector for users who just created persona but workspace setup incomplete
+    // This should be rare - most users complete both in OAuthSetup
+    console.log('[PersonaRedirect] Manager missing workspace, showing intent selector');
     return <Navigate to="/manager/intent" replace />;
   };
 
