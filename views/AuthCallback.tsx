@@ -64,28 +64,14 @@ const extractTokensFromHash = (): { access_token?: string; refresh_token?: strin
   return null;
 };
 
-/**
- * Generate a short random suffix for workspace slugs
- */
-const generateSlugSuffix = (): string => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('Verifying your credentials...');
   const hasRedirected = useRef(false);
   const hasAttemptedTokenExtraction = useRef(false);
-  const hasCreatedWorkspace = useRef(false);
 
   // CRITICAL FIX: Extract tokens from HashRouter URL and set session manually
   useEffect(() => {
@@ -138,68 +124,9 @@ const AuthCallback: React.FC = () => {
           } else if (data.session) {
             console.log('[AuthCallback] Session set successfully');
 
-            // Check if user needs a workspace (new users won't have one)
-            // First check for explicit signup params, then check if profile exists
-            let workspaceName = searchParams.get('workspace');
-            const fullName = searchParams.get('name');
-            const userId = data.session.user.id;
-            const userEmail = data.session.user.email || '';
-
-            if (!hasCreatedWorkspace.current) {
-              try {
-                // Check if user already has a profile (returning user)
-                const { data: existingProfile } = await supabase
-                  .from('users')
-                  .select('id')
-                  .eq('id', userId)
-                  .single();
-
-                if (!existingProfile) {
-                  // New user - create workspace
-                  hasCreatedWorkspace.current = true;
-                  setStatusMessage('Setting up your workspace...');
-
-                  // Generate workspace name if not provided
-                  if (!workspaceName) {
-                    const emailParts = userEmail.split('@');
-                    const localPart = emailParts[0] || 'my';
-                    // Capitalize first letter and create friendly name
-                    workspaceName = localPart.charAt(0).toUpperCase() + localPart.slice(1) + "'s Workspace";
-                  }
-
-                  console.log('[AuthCallback] New user detected, creating workspace:', workspaceName);
-
-                  // Generate workspace slug
-                  const workspaceSlug = workspaceName
-                    .toLowerCase()
-                    .trim()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-|-$/g, '');
-                  const finalSlug = `${workspaceSlug}-${generateSlugSuffix()}`;
-
-                  // Create workspace and user profile via RPC
-                  const { error: rpcError } = await supabase.rpc('create_workspace_with_owner', {
-                    p_user_id: userId,
-                    p_email: userEmail,
-                    p_workspace_name: workspaceName,
-                    p_workspace_slug: finalSlug,
-                    p_full_name: fullName || null,
-                  });
-
-                  if (rpcError) {
-                    console.error('[AuthCallback] Workspace creation failed:', rpcError);
-                    // Don't block - App.tsx has auto-heal logic as fallback
-                  } else {
-                    console.log('[AuthCallback] Workspace created successfully');
-                  }
-                } else {
-                  console.log('[AuthCallback] Returning user detected, skipping workspace creation');
-                }
-              } catch (err) {
-                console.error('[AuthCallback] Profile check/workspace creation error:', err);
-                // Don't block redirect - App.tsx has auto-heal logic
-              }
-            }
+            // Don't create workspace here - let the user go through OAuthSetup
+            // for a more personal experience where they can enter their name
+            // and company name. App.tsx routing will redirect new users to /auth/setup.
 
             hasRedirected.current = true;
             setProcessing(false);
@@ -326,7 +253,7 @@ const AuthCallback: React.FC = () => {
             Signing You In
           </h1>
           <p className="text-slate-400 text-sm">
-            {statusMessage}
+            Verifying your credentials...
           </p>
         </div>
       </div>
