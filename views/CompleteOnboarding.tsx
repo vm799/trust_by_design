@@ -142,13 +142,51 @@ const CompleteOnboarding: React.FC = () => {
             if (!supabase || !userId) throw new Error('Not authenticated');
 
             // Get user profile to get workspace_id
-            const { data: profile } = await supabase
+            let { data: profile } = await supabase
                 .from('users')
-                .select('workspace_id')
+                .select('workspace_id, email')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
-            if (!profile) throw new Error('Profile not found. Please complete workspace setup.');
+            // If no profile or no workspace, create one
+            if (!profile || !profile.workspace_id) {
+                const workspaceName = fullName ? `${fullName.split(' ')[0]}'s Workspace` : 'My Workspace';
+                const workspaceSlug = workspaceName
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
+
+                // Try to create workspace via RPC
+                const { error: rpcError } = await supabase.rpc('create_workspace_with_owner', {
+                    p_user_id: userId,
+                    p_email: userEmail || profile?.email || '',
+                    p_workspace_name: workspaceName,
+                    p_workspace_slug: workspaceSlug,
+                    p_full_name: fullName || null
+                });
+
+                // 409/23505 = conflict, workspace/user already exists - that's OK
+                if (rpcError && rpcError.code !== '409' && rpcError.code !== '23505') {
+                    console.error('Workspace creation failed:', rpcError);
+                    throw new Error('Failed to create workspace. Please try again.');
+                }
+
+                // Refetch profile after creation
+                const { data: newProfile } = await supabase
+                    .from('users')
+                    .select('workspace_id, email')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (!newProfile?.workspace_id) {
+                    throw new Error('Workspace setup incomplete. Please refresh and try again.');
+                }
+                profile = newProfile;
+            }
+
+            // At this point profile is guaranteed to have workspace_id
+            const workspaceId = profile!.workspace_id;
 
             // Get first step
             const steps = PERSONA_STEPS[persona];
@@ -159,7 +197,7 @@ const CompleteOnboarding: React.FC = () => {
                 .from('user_personas')
                 .upsert({
                     user_id: userId,
-                    workspace_id: profile.workspace_id,
+                    workspace_id: workspaceId,
                     persona_type: persona,
                     is_active: true,
                     is_complete: false,
