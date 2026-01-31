@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { hapticTap, hapticSuccess } from '../lib/haptics';
+import { useAdaptivePolling } from '../hooks/useAdaptivePolling';
 import {
   Message,
   MessageThread,
@@ -50,26 +51,30 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load threads
-  useEffect(() => {
-    const loadThreads = () => {
-      const userThreads = getThreadsForUser(userId);
-      setThreads(userThreads);
+  // Load threads with adaptive polling (respects online/offline + visibility)
+  const loadThreads = useCallback(() => {
+    const userThreads = getThreadsForUser(userId);
+    setThreads(userThreads);
 
-      // Auto-select job thread if on a job
-      if (currentJobId && !selectedThread) {
-        const jobThread = userThreads.find(t => t.jobId === currentJobId);
-        if (jobThread) {
-          setSelectedThread(jobThread);
-        }
+    // Auto-select job thread if on a job
+    if (currentJobId && !selectedThread) {
+      const jobThread = userThreads.find(t => t.jobId === currentJobId);
+      if (jobThread) {
+        setSelectedThread(jobThread);
       }
-    };
-
-    loadThreads();
-    // Refresh every 5 seconds
-    const interval = setInterval(loadThreads, 5000);
-    return () => clearInterval(interval);
+    }
   }, [userId, currentJobId, selectedThread]);
+
+  // Adaptive polling: 10s when active, 60s when hidden, stops when offline
+  // Immediate refresh on reconnect or visibility change (critical for bunker)
+  useAdaptivePolling({
+    callback: loadThreads,
+    activeInterval: 10000,   // 10s when visible (was 5s - 50% reduction)
+    inactiveInterval: 60000, // 60s when tab hidden
+    pollWhenOffline: true,   // Keep polling locally - it's just localStorage
+    enabled: true,
+    deps: [userId, currentJobId],
+  });
 
   // Load messages when thread selected
   useEffect(() => {
@@ -400,7 +405,7 @@ export default MessagingPanel;
 
 /**
  * Message Badge Component
- * Shows unread count in nav/header
+ * Shows unread count in nav/header with adaptive polling
  */
 export const MessageBadge: React.FC<{ userId: string; onClick: () => void }> = ({
   userId,
@@ -408,15 +413,19 @@ export const MessageBadge: React.FC<{ userId: string; onClick: () => void }> = (
 }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const updateCount = () => {
-      setUnreadCount(getTotalUnreadCount(userId));
-    };
-
-    updateCount();
-    const interval = setInterval(updateCount, 5000);
-    return () => clearInterval(interval);
+  // Adaptive polling for unread count - less aggressive since badge is always visible
+  const updateCount = useCallback(() => {
+    setUnreadCount(getTotalUnreadCount(userId));
   }, [userId]);
+
+  useAdaptivePolling({
+    callback: updateCount,
+    activeInterval: 15000,   // 15s when visible (was 5s - 66% reduction)
+    inactiveInterval: 120000, // 2min when tab hidden
+    pollWhenOffline: true,    // Still check localStorage when offline
+    enabled: true,
+    deps: [userId],
+  });
 
   return (
     <button
