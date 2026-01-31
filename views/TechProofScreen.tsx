@@ -597,8 +597,8 @@ const TechProofScreen: React.FC = () => {
 
           {/* Sign-off declaration text */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
-            <p className="text-sm text-slate-300 leading-relaxed">
-              By signing below, I confirm that I have inspected the completed work and am satisfied that it meets my requirements.
+            <p className="text-sm text-slate-300 leading-relaxed font-medium">
+              "I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements."
             </p>
           </div>
 
@@ -611,7 +611,7 @@ const TechProofScreen: React.FC = () => {
           />
 
           <SignaturePad
-            label="Client signs below to confirm acceptance"
+            label="Sign here to confirm satisfaction with completed work"
             height="15vh"
             onSign={(sig) => setProofData(prev => ({ ...prev, clientSignature: sig || null }))}
           />
