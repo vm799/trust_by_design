@@ -122,7 +122,12 @@ const AuthCallback: React.FC = () => {
             }
             // Other errors - let the listener handle it
           } else if (data.session) {
-            console.log('[AuthCallback] Session set successfully, redirecting...');
+            console.log('[AuthCallback] Session set successfully');
+
+            // Don't create workspace here - let the user go through OAuthSetup
+            // for a more personal experience where they can enter their name
+            // and company name. App.tsx routing will redirect new users to /auth/setup.
+
             hasRedirected.current = true;
             setProcessing(false);
             // Clean up the URL hash to remove tokens
@@ -248,7 +253,7 @@ const AuthCallback: React.FC = () => {
             Signing You In
           </h1>
           <p className="text-slate-400 text-sm">
-            Please wait while we verify your credentials...
+            Verifying your credentials...
           </p>
         </div>
       </div>

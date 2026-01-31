@@ -7,50 +7,85 @@
  * Phase G: Technician Portal (Enhanced with nav tabs)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { getJobs, getClients } from '../../hooks/useWorkspaceData';
 import { useAuth } from '../../lib/AuthContext';
 import { Job, Client } from '../../types';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
+import QuickJobForm from '../../components/QuickJobForm';
+import { createJob } from '../../lib/db';
 
 type TabType = 'jobs' | 'history' | 'profile';
 
 const TechPortal: React.FC = () => {
-  const { userId } = useAuth();
+  const navigate = useNavigate();
+  const { userId, session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('jobs');
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [syncPending, setSyncPending] = useState(0);
+  const [showQuickJob, setShowQuickJob] = useState(false);
+
+  // Get user info for QuickJobForm (defined early for use in callbacks)
+  const techId = userId || 'tech-local';
+  const techName = session?.user?.user_metadata?.full_name || 'Technician';
+  const techEmail = session?.user?.email;
+  const workspaceId = 'local-workspace'; // Default for sole contractors
+
+  // Load jobs data - extracted as callback for reuse after job creation
+  const loadData = useCallback(async () => {
+    try {
+      const [jobsData, clientsData] = await Promise.all([
+        getJobs(),
+        getClients(),
+      ]);
+
+      // Filter jobs assigned to this technician OR created by them (self-employed)
+      // This ensures sole contractors see their own created jobs
+      const myJobs = jobsData.filter(j =>
+        j.technicianId === userId ||
+        j.techId === userId ||
+        j.techMetadata?.createdByTechId === userId ||
+        // Fallback: show all jobs with a technician assigned (demo mode)
+        j.technicianId
+      );
+      setAllJobs(myJobs);
+      setClients(clientsData);
+
+      // Check for pending sync items
+      const pendingCount = myJobs.filter(j => j.syncStatus === 'pending').length;
+      setSyncPending(pendingCount);
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [jobsData, clientsData] = await Promise.all([
-          getJobs(),
-          getClients(),
-        ]);
-
-        // Filter jobs assigned to technicians (or all for demo)
-        const myJobs = jobsData.filter(j => j.technicianId);
-        setAllJobs(myJobs);
-        setClients(clientsData);
-
-        // Check for pending sync items
-        const pendingCount = myJobs.filter(j => j.syncStatus === 'pending').length;
-        setSyncPending(pendingCount);
-      } catch (error) {
-        console.error('Failed to load jobs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
-  }, [userId]);
+  }, [loadData]);
+
+  // Handle job creation from QuickJobForm
+  const handleJobCreated = useCallback(async (job: Job) => {
+    // Save job to database (mock or Supabase)
+    await createJob(job, job.workspaceId || workspaceId);
+    // Add to local state immediately for optimistic UI
+    setAllJobs(prev => [job, ...prev]);
+    // Close the form
+    setShowQuickJob(false);
+    // Navigate to the job detail to start working
+    navigate(`/tech/job/${job.id}`);
+  }, [navigate, workspaceId]);
+
+  // Close the quick job form
+  const handleQuickJobCancel = useCallback(() => {
+    setShowQuickJob(false);
+  }, []);
 
   // Filter jobs by status - useMemo for performance
   const { activeJobs, completedJobs, todayJobs, upcomingJobs } = useMemo(() => {
@@ -69,6 +104,21 @@ const TechPortal: React.FC = () => {
       upcomingJobs: upcoming,
     };
   }, [allJobs]);
+
+  // Show QuickJobForm modal
+  if (showQuickJob) {
+    return (
+      <QuickJobForm
+        techId={techId}
+        techName={techName}
+        techEmail={techEmail}
+        workspaceId={workspaceId}
+        onJobCreated={handleJobCreated}
+        onCancel={handleQuickJobCancel}
+        existingClients={clients.map(c => ({ id: c.id, name: c.name, address: c.address || '' }))}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
@@ -96,11 +146,22 @@ const TechPortal: React.FC = () => {
         ) : activeTab === 'jobs' ? (
           /* Jobs Tab */
           activeJobs.length === 0 ? (
-            <EmptyState
-              icon="work_off"
-              title="No jobs assigned"
-              description="You don't have any jobs assigned yet. Check back later."
-            />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="size-20 rounded-[2rem] bg-primary/10 flex items-center justify-center mb-6">
+                <span className="material-symbols-outlined text-4xl text-primary">add_task</span>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Ready to work?</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 max-w-xs">
+                Create your first job to start capturing evidence and building your work history.
+              </p>
+              <button
+                onClick={() => setShowQuickJob(true)}
+                className="px-6 py-4 bg-primary rounded-2xl font-black text-white text-sm uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center gap-3 transition-all active:scale-98 press-spring"
+              >
+                <span className="material-symbols-outlined">add</span>
+                Create My First Job
+              </button>
+            </div>
           ) : (
             <div className="space-y-8">
               {/* Today's Jobs */}
@@ -347,6 +408,17 @@ const TechPortal: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Floating Action Button - Create Job */}
+      {activeTab === 'jobs' && activeJobs.length > 0 && (
+        <button
+          onClick={() => setShowQuickJob(true)}
+          className="fixed right-4 bottom-24 z-40 size-14 bg-primary rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center text-white transition-all active:scale-95 press-spring hover:shadow-xl hover:shadow-primary/40"
+          aria-label="Create new job"
+        >
+          <span className="material-symbols-outlined text-2xl">add</span>
+        </button>
+      )}
 
       {/* Bottom Navigation - Functional */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 px-4 pb-safe">
