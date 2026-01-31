@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext';
 
 interface SettingsProps {
   user: UserProfile;
   setUser: (u: UserProfile) => void;
 }
 
+interface SubscriptionStatus {
+  tier: string;
+  status: string;
+  trialEnd: string | null;
+  currentPeriodEnd: string | null;
+}
+
 const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [wsName, setWsName] = useState(user.workspaceName);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   // Job Configuration Settings
   const [settings, setSettings] = useState(() => {
@@ -32,6 +43,74 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
       photoQuality: 'high'
     };
   });
+
+  // Fetch subscription status on mount
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!session?.access_token) return;
+
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_trial_status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data) {
+            setSubscription({
+              tier: data.tier || 'solo',
+              status: data.status || 'none',
+              trialEnd: data.trial_end,
+              currentPeriodEnd: data.current_period_end,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription:', error);
+      }
+    };
+
+    fetchSubscription();
+  }, [session?.access_token]);
+
+  // Open Stripe billing portal
+  const openBillingPortal = async () => {
+    if (!session?.access_token) {
+      alert('Please log in to manage billing.');
+      return;
+    }
+
+    setBillingLoading(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/stripe-portal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to open billing portal.');
+      }
+    } catch (error) {
+      console.error('Billing portal error:', error);
+      alert('Failed to open billing portal. Please try again.');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   const saveWorkspace = () => {
     setUser({ ...user, workspaceName: wsName });
@@ -105,6 +184,121 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     <span className="material-symbols-outlined text-base group-hover:scale-110 transition-transform">person_add</span>
                     Invite Team Member
                   </button>
+               </div>
+            </section>
+
+            {/* Billing & Subscription */}
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
+               <div className="p-6 sm:p-8 border-b border-slate-800 bg-white/[0.02]">
+                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Billing & Subscription</h3>
+               </div>
+               <div className="p-6 sm:p-10 space-y-6">
+                  {/* Current Plan */}
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/5">
+                     <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`size-10 rounded-xl flex items-center justify-center font-black text-sm ${
+                          subscription?.tier === 'agency' ? 'bg-amber-500' :
+                          subscription?.tier === 'team' ? 'bg-primary' : 'bg-slate-600'
+                        }`}>
+                          <span className="material-symbols-outlined text-white">
+                            {subscription?.tier === 'agency' ? 'diamond' :
+                             subscription?.tier === 'team' ? 'group' : 'person'}
+                          </span>
+                        </div>
+                        <div>
+                           <p className="text-sm font-bold text-white capitalize">
+                             {subscription?.tier || 'Solo'} Plan
+                           </p>
+                           <p className="text-[10px] text-slate-300 uppercase font-black">
+                             {subscription?.status === 'trialing' ? (
+                               <>
+                                 Trial ends {subscription.trialEnd
+                                   ? new Date(subscription.trialEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                                   : 'soon'}
+                               </>
+                             ) : subscription?.status === 'active' ? 'Active' :
+                                subscription?.status === 'paused' ? 'Paused - Add payment' :
+                                subscription?.status === 'past_due' ? 'Payment overdue' :
+                                'Free tier'}
+                           </p>
+                        </div>
+                     </div>
+                     <span className={`text-[10px] font-black uppercase ${
+                       subscription?.status === 'active' ? 'text-success' :
+                       subscription?.status === 'trialing' ? 'text-primary' :
+                       subscription?.status === 'paused' || subscription?.status === 'past_due' ? 'text-warning' :
+                       'text-slate-400'
+                     }`}>
+                       {subscription?.status === 'trialing' ? 'Trial' :
+                        subscription?.status || 'Free'}
+                     </span>
+                  </div>
+
+                  {/* Trial Warning Banner */}
+                  {subscription?.status === 'trialing' && subscription.trialEnd && (
+                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-start gap-3">
+                      <span className="material-symbols-outlined text-primary">schedule</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Trial ending soon</p>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Add a payment method before {new Date(subscription.trialEnd).toLocaleDateString('en-GB', {
+                            day: 'numeric', month: 'long', year: 'numeric'
+                          })} to keep your plan features.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Paused Subscription Warning */}
+                  {subscription?.status === 'paused' && (
+                    <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl flex items-start gap-3">
+                      <span className="material-symbols-outlined text-warning">pause_circle</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Subscription paused</p>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Your trial has ended. Add a payment method to resume your subscription and access all features.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Billing Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {subscription?.tier && subscription.tier !== 'solo' ? (
+                      <button
+                        onClick={openBillingPortal}
+                        disabled={billingLoading}
+                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {billingLoading ? (
+                          <>
+                            <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-base">credit_card</span>
+                            Manage Billing
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate('/select-plan')}
+                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-base">upgrade</span>
+                        Upgrade Plan
+                      </button>
+                    )}
+                    <button
+                      onClick={() => navigate('/pricing')}
+                      className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-base">compare</span>
+                      Compare Plans
+                    </button>
+                  </div>
                </div>
             </section>
 
