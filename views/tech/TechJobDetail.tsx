@@ -149,13 +149,18 @@ const TechJobDetail: React.FC = () => {
             ${isActive ? 'bg-primary/20 text-primary' : 'bg-slate-700 text-slate-400'}
           `}>
             <span className="material-symbols-outlined text-2xl">
-              {isActive ? 'pending' : 'schedule'}
+              {isActive ? 'play_circle' : 'schedule'}
             </span>
           </div>
           <div className="flex-1">
-            <p className="font-medium text-white">
-              {isActive ? 'Job In Progress' : 'Ready to Start'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-white">
+                {isActive ? 'Job In Progress' : 'Ready to Start'}
+              </p>
+              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${isActive ? 'bg-primary/20 text-primary' : 'bg-slate-600 text-slate-300'}`}>
+                {job.status}
+              </span>
+            </div>
             <p className="text-sm text-slate-400">
               {isActive
                 ? 'Capture evidence and complete when done'
@@ -272,7 +277,7 @@ const TechJobDetail: React.FC = () => {
       </main>
 
       {/* Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-safe">
         <div className="flex gap-3">
           {!isActive ? (
             <ActionButton

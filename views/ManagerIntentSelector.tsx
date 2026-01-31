@@ -29,6 +29,9 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
   const navigate = useNavigate();
   const displayName = user?.name?.split(' ')[0] || 'Manager';
 
+  // Check if this is a first-time user (name is just email or 'Manager')
+  const isFirstTimeUser = !user?.name || user.name === user?.email || displayName === 'Manager';
+
   // PWA tip banner - show once per session if not installed
   const [showPwaTip, setShowPwaTip] = React.useState(() => {
     if (typeof window === 'undefined') return false;
@@ -141,11 +144,16 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
           {/* Welcome Message */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-black text-white tracking-tight">
-              Welcome back, {displayName}
+              {isFirstTimeUser ? `Welcome to JobProof` : `Welcome back, ${displayName}`}
             </h1>
             <p className="text-sm text-slate-400">
               {dateString} • {timeString}
             </p>
+            {isFirstTimeUser && (
+              <p className="text-sm text-primary mt-2">
+                Let's get you set up! Start by creating your first job.
+              </p>
+            )}
           </div>
 
           {/* PWA Tip Banner */}
