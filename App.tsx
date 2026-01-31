@@ -442,7 +442,10 @@ const AppContent: React.FC = () => {
         <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
           <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
-        <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
+        {/* CRITICAL FIX: Always show LandingPage on /home - don't auto-redirect authenticated users
+            Users who want to go to dashboard can click CTAs. This prevents redirect loops for
+            users with incomplete profiles (missing persona/workspace). */}
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
         {/* Public Help Center - accessible without auth */}
