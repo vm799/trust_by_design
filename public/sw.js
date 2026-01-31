@@ -13,7 +13,8 @@
 // Cache version - increment to force cache refresh on deployment
 // v2.0.0: Added CSP fix, database error handling
 // v2.1.0: Fixed stale asset detection - auto-clear on 404 JS/CSS
-const CACHE_VERSION = 'bunker-v2.1';
+// v2.2.0: Fixed index.html cache strategy - network-first prevents stale asset refs
+const CACHE_VERSION = 'bunker-v2.2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const MEDIA_CACHE = `${CACHE_VERSION}-media`;
@@ -132,6 +133,10 @@ self.addEventListener('fetch', (event) => {
   // Handle different request types
   if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
+  } else if (isNavigationRequest(request, url)) {
+    // CRITICAL: index.html must be network-first to get latest asset references
+    // This prevents stale cached HTML from requesting old hashed assets that 404
+    event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
   } else if (isMediaRequest(url)) {
     event.respondWith(cacheFirstStrategy(request, MEDIA_CACHE));
   } else {
@@ -253,6 +258,26 @@ function isApiRequest(url) {
   return url.pathname.startsWith('/rest/') ||
          url.pathname.startsWith('/api/') ||
          url.hostname.includes('supabase');
+}
+
+/**
+ * Detect navigation requests (HTML pages)
+ * These should be network-first to always get latest asset references
+ */
+function isNavigationRequest(request, url) {
+  // Navigation requests (browser navigation)
+  if (request.mode === 'navigate') {
+    return true;
+  }
+  // Direct requests for index.html or root
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    return true;
+  }
+  // Any HTML file request
+  if (url.pathname.endsWith('.html')) {
+    return true;
+  }
+  return false;
 }
 
 function isMediaRequest(url) {
@@ -409,4 +434,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('[SW] Service worker loaded - Bunker Mode Ready (v2.0.0)');
+console.log(`[SW] Service worker loaded - Bunker Mode Ready (${CACHE_VERSION})`);
