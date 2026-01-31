@@ -57,10 +57,10 @@ export const RequireGuest: React.FC<GuardProps> = ({ children }) => {
     );
   }
 
-  // Authenticated - redirect to app or specified redirect
+  // Authenticated - redirect to home or specified redirect
   if (isAuthenticated) {
     const params = new URLSearchParams(location.search);
-    const redirectTo = params.get('redirect') || '/app';
+    const redirectTo = params.get('redirect') || '/';
     return <Navigate to={redirectTo} replace />;
   }
 
