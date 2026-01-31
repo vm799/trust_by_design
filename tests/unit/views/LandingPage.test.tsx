@@ -216,7 +216,9 @@ describe('LandingPage', () => {
       const pricingLinks = screen.getAllByRole('link', { name: /^Pricing$/i });
       expect(pricingLinks.length).toBeGreaterThanOrEqual(1);
 
-      expect(screen.getByRole('link', { name: /Help/i })).toBeInTheDocument();
+      // Multiple help links exist (footer + FAQ section)
+      const helpLinks = screen.getAllByRole('link', { name: /Help/i });
+      expect(helpLinks.length).toBeGreaterThanOrEqual(1);
     });
 
     it('renders copyright notice', () => {

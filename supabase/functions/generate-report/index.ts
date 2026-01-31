@@ -1055,8 +1055,14 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
   const beforeGPS = formatGPS(job.before_photo_lat, job.before_photo_lng);
   const afterGPS = formatGPS(job.after_photo_lat, job.after_photo_lng);
   const w3wAddress = formatW3W(job.w3w);
+  const beforeW3W = formatW3W(job.before_photo_w3w || job.w3w);
+  const afterW3W = formatW3W(job.after_photo_w3w || job.w3w);
   const completedTs = formatTimestamp(job.completed_at);
   const sealedTs = formatTimestamp(job.sealed_at);
+
+  // App URL for Review & Seal button
+  const appUrl = Deno.env.get('VITE_APP_URL') || Deno.env.get('APP_URL') || 'https://jobproof.vercel.app';
+  const reviewSealUrl = `${appUrl}/#/admin/job/${job.id}/evidence`;
 
   // Truncate hash for display
   const truncateHash = (hash: string | null, len = 16) => {
@@ -1119,25 +1125,25 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
           ${job.client ? `
           <tr>
-            <td style="padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; width: 100px;">Client</td>
+            <td style="padding: 6px 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; width: 100px;">Client</td>
             <td style="padding: 6px 0; color: #f1f5f9; font-size: 15px; font-weight: 600;">${job.client}</td>
           </tr>
           ` : ''}
           ${job.address ? `
           <tr>
-            <td style="padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Location</td>
+            <td style="padding: 6px 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Location</td>
             <td style="padding: 6px 0; color: #f1f5f9; font-size: 14px;">${job.address}</td>
           </tr>
           ` : ''}
           ${job.technician_name ? `
           <tr>
-            <td style="padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Technician</td>
+            <td style="padding: 6px 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Technician</td>
             <td style="padding: 6px 0; color: #f1f5f9; font-size: 14px;">${job.technician_name}</td>
           </tr>
           ` : ''}
           ${completedTs ? `
           <tr>
-            <td style="padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Completed</td>
+            <td style="padding: 6px 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Completed</td>
             <td style="padding: 6px 0; color: #f1f5f9; font-size: 14px;">${completedTs.date} at ${completedTs.time}</td>
           </tr>
           ` : ''}
@@ -1169,7 +1175,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         ${(evidence.beforePhotoIncluded || evidence.afterPhotoIncluded) ? `
         <div style="margin-bottom: 20px;">
-          <p style="color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0;">📸 Evidence Photos</p>
+          <p style="color: #cbd5e1; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0;">📸 EVIDENCE PHOTOS</p>
 
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
@@ -1186,7 +1192,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                   <img src="${job.before_photo_url}" alt="Before photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
                   ` : `
                   <div style="background: #334155; height: 120px; text-align: center; padding-top: 40px;">
-                    <span style="color: #64748b; font-size: 12px;">📷 Photo captured</span>
+                    <span style="color: #cbd5e1; font-size: 13px; font-weight: 600;">📷 Photo Available</span>
                   </div>
                   `}
                   <div style="padding: 10px 12px; background: #0f172a;">
@@ -1195,6 +1201,9 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     ` : ''}
                     ${beforeGPS ? `
                     <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${beforeGPS}</p>
+                    ` : ''}
+                    ${beforeW3W ? `
+                    <p style="color: #fca5a5; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 700;">${beforeW3W}</p>
                     ` : ''}
                   </div>
                 </div>
@@ -1214,7 +1223,7 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                   <img src="${job.after_photo_url}" alt="After photo" style="width: 100%; height: auto; display: block; max-height: 200px; object-fit: cover;" />
                   ` : `
                   <div style="background: #334155; height: 120px; text-align: center; padding-top: 40px;">
-                    <span style="color: #64748b; font-size: 12px;">📷 Photo captured</span>
+                    <span style="color: #cbd5e1; font-size: 13px; font-weight: 600;">📷 Photo Available</span>
                   </div>
                   `}
                   <div style="padding: 10px 12px; background: #0f172a;">
@@ -1223,6 +1232,9 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
                     ` : ''}
                     ${afterGPS ? `
                     <p style="color: #e2e8f0; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 600;">📍 ${afterGPS}</p>
+                    ` : ''}
+                    ${afterW3W ? `
+                    <p style="color: #fca5a5; font-size: 10px; margin: 4px 0 0 0; font-family: monospace; font-weight: 700;">${afterW3W}</p>
                     ` : ''}
                   </div>
                 </div>
@@ -1317,23 +1329,23 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
         ` : `
         <!-- Evidence Summary (not sealed) -->
         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-          <p style="color: #94a3b8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0;">Evidence Summary</p>
+          <p style="color: #cbd5e1; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0;">EVIDENCE SUMMARY</p>
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Before Photo</td>
-              <td style="padding: 4px 0; text-align: right; color: ${evidence.beforePhotoIncluded ? '#22c55e' : '#64748b'}; font-size: 13px; font-weight: 600;">${evidence.beforePhotoIncluded ? '✓ Captured' : '—'}</td>
+              <td style="padding: 4px 0; color: #e2e8f0; font-size: 13px; font-weight: 600;">Before Photo</td>
+              <td style="padding: 4px 0; text-align: right; color: ${evidence.beforePhotoIncluded ? '#22c55e' : '#94a3b8'}; font-size: 13px; font-weight: 600;">${evidence.beforePhotoIncluded ? '✓ Captured' : '—'}</td>
             </tr>
             <tr>
-              <td style="padding: 4px 0; color: #64748b; font-size: 13px;">After Photo</td>
-              <td style="padding: 4px 0; text-align: right; color: ${evidence.afterPhotoIncluded ? '#22c55e' : '#64748b'}; font-size: 13px; font-weight: 600;">${evidence.afterPhotoIncluded ? '✓ Captured' : '—'}</td>
+              <td style="padding: 4px 0; color: #e2e8f0; font-size: 13px; font-weight: 600;">After Photo</td>
+              <td style="padding: 4px 0; text-align: right; color: ${evidence.afterPhotoIncluded ? '#22c55e' : '#94a3b8'}; font-size: 13px; font-weight: 600;">${evidence.afterPhotoIncluded ? '✓ Captured' : '—'}</td>
             </tr>
             <tr>
-              <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Client Signature</td>
-              <td style="padding: 4px 0; text-align: right; color: ${evidence.signatureIncluded ? '#22c55e' : '#64748b'}; font-size: 13px; font-weight: 600;">${evidence.signatureIncluded ? '✓ Signed' : '—'}</td>
+              <td style="padding: 4px 0; color: #e2e8f0; font-size: 13px; font-weight: 600;">Client Signature</td>
+              <td style="padding: 4px 0; text-align: right; color: ${evidence.signatureIncluded ? '#22c55e' : '#94a3b8'}; font-size: 13px; font-weight: 600;">${evidence.signatureIncluded ? '✓ Signed' : '—'}</td>
             </tr>
             ${w3wAddress ? `
             <tr>
-              <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Location Verified</td>
+              <td style="padding: 4px 0; color: #e2e8f0; font-size: 13px; font-weight: 600;">Location Verified</td>
               <td style="padding: 4px 0; text-align: right; color: #22c55e; font-size: 13px; font-weight: 600;">✓ W3W</td>
             </tr>
             ` : ''}
@@ -1351,7 +1363,93 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
           </a>
         </div>
 
-        <p style="color: #64748b; font-size: 11px; text-align: center; margin: 0; line-height: 1.5;">
+        ${!isSealed ? `
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- EDUCATIONAL TIPS - WHY JOBPROOF MATTERS -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+
+          <!-- TIP 1: Why Seal -->
+          <div style="margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #475569;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 36px; vertical-align: top; padding-right: 10px;">
+                  <div style="width: 32px; height: 32px; background: #7c3aed; border-radius: 8px; text-align: center; line-height: 32px;">
+                    <span style="color: white; font-size: 16px;">🔐</span>
+                  </div>
+                </td>
+                <td style="vertical-align: top;">
+                  <p style="color: #e2e8f0; font-size: 12px; font-weight: 700; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Why Seal Evidence?
+                  </p>
+                  <p style="color: #cbd5e1; font-size: 12px; margin: 0; line-height: 1.4;">
+                    Creates <strong style="color: #ffffff;">tamper-proof cryptographic proof</strong> that photos haven't been altered. Essential for disputes.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- TIP 2: What's W3W -->
+          <div style="margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #475569;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 36px; vertical-align: top; padding-right: 10px;">
+                  <div style="width: 32px; height: 32px; background: #dc2626; border-radius: 8px; text-align: center; line-height: 32px;">
+                    <span style="color: white; font-size: 16px;">📍</span>
+                  </div>
+                </td>
+                <td style="vertical-align: top;">
+                  <p style="color: #e2e8f0; font-size: 12px; font-weight: 700; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                    What3Words = 3m Accuracy
+                  </p>
+                  <p style="color: #cbd5e1; font-size: 12px; margin: 0; line-height: 1.4;">
+                    Pinpoints exact location to a <strong style="color: #ffffff;">3-meter square</strong>. Far more precise than GPS (±50m).
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- TIP 3: Legal Benefit -->
+          <div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 36px; vertical-align: top; padding-right: 10px;">
+                  <div style="width: 32px; height: 32px; background: #059669; border-radius: 8px; text-align: center; line-height: 32px;">
+                    <span style="color: white; font-size: 16px;">⚖️</span>
+                  </div>
+                </td>
+                <td style="vertical-align: top;">
+                  <p style="color: #e2e8f0; font-size: 12px; font-weight: 700; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Legal Protection
+                  </p>
+                  <p style="color: #cbd5e1; font-size: 12px; margin: 0; line-height: 1.4;">
+                    Sealed evidence is <strong style="color: #ffffff;">admissible in court</strong> and insurance disputes. Proves exact time, place & work.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- SECONDARY CTA - REVIEW & SEAL EVIDENCE -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div style="text-align: center; margin: 16px 0 24px 0;">
+          <a href="${reviewSealUrl}"
+             style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px 0 rgba(5, 150, 105, 0.4); letter-spacing: 0.5px;">
+            🔐 Review & Seal Evidence
+          </a>
+        </div>
+        <p style="color: #f59e0b; font-size: 11px; text-align: center; margin: 0 0 16px 0; line-height: 1.5;">
+          ⚠️ Evidence is NOT YET SEALED. Review and seal to create<br/>
+          tamper-proof cryptographic proof of this work.
+        </p>
+        ` : ''}
+
+        <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0; line-height: 1.5;">
           The PDF contains high-resolution photos, GPS coordinates,<br/>
           timestamps, signature, and cryptographic verification.
         </p>
@@ -1362,13 +1460,13 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
     <!-- FOOTER -->
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <div style="text-align: center; padding: 24px 16px;">
-      <p style="color: #64748b; font-size: 12px; margin: 0;">
-        Powered by <strong style="color: #3b82f6;">JobProof</strong> • Professional Evidence Management
+      <p style="color: #cbd5e1; font-size: 13px; font-weight: 600; margin: 0;">
+        Powered by <strong style="color: #60a5fa;">JobProof</strong> • Professional Evidence Platform
       </p>
-      <p style="color: #475569; font-size: 10px; margin: 8px 0 0 0;">
+      <p style="color: #94a3b8; font-size: 11px; margin: 8px 0 0 0;">
         Job ID: ${job.id.substring(0, 8).toUpperCase()}
       </p>
-      <p style="color: #475569; font-size: 10px; margin: 4px 0 0 0;">
+      <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">
         Report generated ${new Date().toISOString().split('T')[0]}
       </p>
     </div>

@@ -308,6 +308,9 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* FAQ Section - Why Trust JobProof */}
+      <FAQSection isDark={isDark} />
+
       {/* Pricing - Glassmorphism cards */}
       <section id="pricing" className="relative py-12 sm:py-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12">
@@ -623,6 +626,194 @@ const StepCard = ({
     </p>
   </motion.div>
 );
+
+// FAQ Section - Accordion style with expandable items
+const FAQSection = ({ isDark }: { isDark: boolean }) => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      icon: 'verified_user',
+      question: 'What does "sealed evidence" mean?',
+      answer: 'When you seal a job, we create a cryptographic hash (SHA-256 + RSA-2048 signature) of all photos, signatures, and metadata. This mathematical fingerprint proves the evidence hasn\'t been altered since the moment it was captured. If anyone disputes your work, you have court-admissible proof.',
+      badge: 'Tamper-proof',
+    },
+    {
+      icon: 'location_on',
+      question: 'How does What3Words location work?',
+      answer: 'What3Words divides the entire world into 3m x 3m squares, each with a unique 3-word address like "filled.count.soap". Unlike GPS coordinates, these are memorable and precise. Every photo you capture includes the W3W address, proving exactly where you were standing when you took it.',
+      badge: '3m accuracy',
+    },
+    {
+      icon: 'wifi_off',
+      question: 'Does the app work without internet?',
+      answer: 'Yes! JobProof is built offline-first for the construction industry. Capture photos, signatures, and notes anywhere—even in basements or remote sites. Everything syncs automatically when you\'re back online. Your data is never lost.',
+      badge: 'Offline-first',
+    },
+    {
+      icon: 'gavel',
+      question: 'Will this evidence hold up in court?',
+      answer: 'Our sealed evidence includes verified timestamps, GPS/W3W locations, and cryptographic signatures that meet legal standards for digital evidence. Multiple contractors have successfully used JobProof records to resolve payment disputes and defend against false claims.',
+      badge: 'Court-ready',
+    },
+    {
+      icon: 'security',
+      question: 'How is my data protected?',
+      answer: 'All data is encrypted with AES-256-GCM in transit and at rest. Evidence is sealed with RSA-2048 signatures. Your photos and job data belong to you—we never share or sell your information. Row-level security ensures only your team can access your data.',
+      badge: 'Bank-grade',
+    },
+    {
+      icon: 'check_circle',
+      question: 'How do I prove work was completed?',
+      answer: 'Capture before/during/after photos with automatic timestamps and locations. Get the client to sign off on their phone. Once sealed, this evidence package proves: what work was done, when it was done, where it was done, and that the client approved it.',
+      badge: 'Complete proof',
+    },
+  ];
+
+  return (
+    <section className="relative py-12 sm:py-20 px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto space-y-8 sm:space-y-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center space-y-3"
+        >
+          <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+            Trust & Security
+          </span>
+          <h2
+            className={`
+              text-2xl sm:text-3xl font-black uppercase tracking-tight
+              ${isDark ? 'text-white' : 'text-slate-900'}
+            `}
+          >
+            Frequently Asked Questions
+          </h2>
+          <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Everything you need to know about protecting your work
+          </p>
+        </motion.div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.05 }}
+              className={`
+                rounded-xl border overflow-hidden transition-all
+                ${isDark
+                  ? 'bg-slate-900/50 border-white/10 hover:border-white/20'
+                  : 'bg-white/50 border-slate-200/50 hover:border-slate-300'
+                }
+              `}
+            >
+              <button
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                className="w-full p-4 sm:p-5 flex items-center gap-3 sm:gap-4 text-left"
+              >
+                <div
+                  className={`
+                    size-10 sm:size-12 rounded-xl flex items-center justify-center shrink-0
+                    ${isDark
+                      ? 'bg-primary/20'
+                      : 'bg-amber-100'
+                    }
+                  `}
+                >
+                  <span
+                    className={`
+                      material-symbols-outlined text-lg sm:text-xl
+                      ${isDark ? 'text-primary' : 'text-amber-600'}
+                    `}
+                  >
+                    {faq.icon}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3
+                      className={`
+                        text-sm sm:text-base font-bold
+                        ${isDark ? 'text-white' : 'text-slate-900'}
+                      `}
+                    >
+                      {faq.question}
+                    </h3>
+                    <span
+                      className={`
+                        px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                        ${isDark
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-emerald-100 text-emerald-700'
+                        }
+                      `}
+                    >
+                      {faq.badge}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`
+                    material-symbols-outlined text-xl transition-transform shrink-0
+                    ${openIndex === index ? 'rotate-180' : ''}
+                    ${isDark ? 'text-slate-400' : 'text-slate-500'}
+                  `}
+                >
+                  expand_more
+                </span>
+              </button>
+              <motion.div
+                initial={false}
+                animate={{
+                  height: openIndex === index ? 'auto' : 0,
+                  opacity: openIndex === index ? 1 : 0,
+                }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <p
+                  className={`
+                    px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-sm leading-relaxed
+                    ${isDark ? 'text-slate-300' : 'text-slate-600'}
+                  `}
+                  style={{ marginLeft: '52px' }}
+                >
+                  {faq.answer}
+                </p>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Link
+            to="/help"
+            className={`
+              inline-flex items-center gap-2 text-sm font-bold transition-colors
+              ${isDark
+                ? 'text-primary hover:text-primary-hover'
+                : 'text-amber-600 hover:text-amber-700'
+              }
+            `}
+          >
+            <span className="material-symbols-outlined text-lg">help</span>
+            View Full Help Center
+            <span className="material-symbols-outlined text-lg">arrow_forward</span>
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 // Price Card - Glassmorphism - REMEDIATION ITEM 11: Using memoized animation objects
 const PriceCard = ({
