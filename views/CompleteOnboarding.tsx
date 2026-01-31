@@ -166,10 +166,19 @@ const CompleteOnboarding: React.FC = () => {
                     p_full_name: fullName || null
                 });
 
-                // 409/23505 = conflict, workspace/user already exists - that's OK
-                if (rpcError && rpcError.code !== '409' && rpcError.code !== '23505') {
-                    console.error('Workspace creation failed:', rpcError);
-                    throw new Error('Failed to create workspace. Please try again.');
+                if (rpcError) {
+                    // Foreign key error = user doesn't exist in auth.users (stale session)
+                    if (rpcError.message?.includes('fk_users_auth') || rpcError.code === '23503') {
+                        console.error('[Onboarding] User not in auth.users - clearing stale session');
+                        await supabase.auth.signOut();
+                        navigate('/auth', { replace: true });
+                        return;
+                    }
+                    // 409/23505 = conflict, workspace/user already exists - that's OK
+                    if (rpcError.code !== '409' && rpcError.code !== '23505') {
+                        console.error('Workspace creation failed:', rpcError);
+                        throw new Error('Failed to create workspace. Please try again.');
+                    }
                 }
 
                 // Refetch profile after creation
