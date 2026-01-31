@@ -92,6 +92,9 @@ const OAuthSetup: React.FC = () => {
         return;
       }
 
+      // CRITICAL FIX: Mark setup as started immediately once authenticated
+      // This prevents any subsequent auth state changes from causing redirects
+      setupStartedRef.current = true;
       hasCheckedRef.current = true;
 
       const supabase = getSupabase();
