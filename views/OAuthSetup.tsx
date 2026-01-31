@@ -89,12 +89,12 @@ const OAuthSetup: React.FC = () => {
       const supabase = getSupabase();
       if (!supabase) return;
 
-      // Check if profile already exists
+      // Check if profile already exists (use maybeSingle to avoid 406 on new users)
       const { data: profile } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         navigate('/', { replace: true });

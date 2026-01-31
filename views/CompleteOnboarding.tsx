@@ -63,12 +63,12 @@ const CompleteOnboarding: React.FC = () => {
                 return;
             }
 
-            // Check user profile for name
+            // Check user profile for name (use maybeSingle to avoid 406 on new users)
             const { data: profile } = await supabase
                 .from('users')
                 .select('full_name, email')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (profile) {
                 setUserEmail(profile.email || '');
