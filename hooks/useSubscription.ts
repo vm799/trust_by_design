@@ -10,6 +10,9 @@ interface Subscription {
   status: Status;
   jobsUsed: number;
   limits: { jobs: number; users: number };
+  trialEnd?: string | null;
+  isTrialing: boolean;
+  trialDaysRemaining: number;
 }
 
 const TIER_LIMITS: Record<Tier, { jobs: number; users: number }> = {
@@ -43,7 +46,10 @@ export const useSubscription = () => {
       tier: 'solo',
       status: 'active',
       jobsUsed: 0,
-      limits: TIER_LIMITS.solo
+      limits: TIER_LIMITS.solo,
+      trialEnd: null,
+      isTrialing: false,
+      trialDaysRemaining: 0,
     } as Subscription;
   });
 
@@ -87,7 +93,7 @@ export const useSubscription = () => {
       const [subResult, jobsResult] = await Promise.all([
         supabase
           .from('user_subscriptions')
-          .select('tier, status')
+          .select('tier, status, trial_end')
           .eq('user_id', userId)
           .maybeSingle(),
         supabase
@@ -99,12 +105,26 @@ export const useSubscription = () => {
       const tier = (subResult.data?.tier as Tier) || 'solo';
       const status = (subResult.data?.status as Status) || 'active';
       const jobsUsed = jobsResult?.count || 0;
+      const trialEnd = subResult.data?.trial_end || null;
+      const isTrialing = status === 'trialing';
+
+      // Calculate trial days remaining
+      let trialDaysRemaining = 0;
+      if (trialEnd && isTrialing) {
+        const trialEndDate = new Date(trialEnd);
+        const now = new Date();
+        const diffMs = trialEndDate.getTime() - now.getTime();
+        trialDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      }
 
       return {
         tier,
         status,
         jobsUsed,
-        limits: TIER_LIMITS[tier]
+        limits: TIER_LIMITS[tier],
+        trialEnd,
+        isTrialing,
+        trialDaysRemaining,
       };
     };
 

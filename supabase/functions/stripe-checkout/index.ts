@@ -106,6 +106,9 @@ serve(async (req) => {
         tier: tier || 'unknown',
         billing_period: billingPeriod || 'monthly',
       },
+      // NO CREDIT CARD REQUIRED: Allow trial without payment method
+      // User can start 14-day trial without entering card details
+      payment_method_collection: 'if_required',
       // 14-day free trial for all paid plans
       subscription_data: {
         trial_period_days: 14,
@@ -113,11 +116,18 @@ serve(async (req) => {
           user_id: user.id,
           tier: tier || 'unknown',
         },
+        // When trial ends without payment method: pause subscription (not cancel)
+        // This allows users to resume by adding payment later
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'pause',
+          },
+        },
       },
       // Allow promotion codes
       allow_promotion_codes: true,
-      // Collect billing address for tax purposes
-      billing_address_collection: 'required',
+      // Collect billing address for tax purposes (only if payment required)
+      billing_address_collection: 'auto',
       // Automatic tax calculation (if enabled in Stripe)
       automatic_tax: { enabled: true },
     }
