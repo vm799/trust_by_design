@@ -1,0 +1,142 @@
+<!--
+  JobProof Confirm Signup Email - DELIGHTFUL VERSION
+
+  To apply this template:
+  1. Go to Supabase Dashboard > Authentication > Email Templates
+  2. Select "Confirm signup" template
+  3. Paste the HTML below
+  4. Set Subject to: "🎉 Welcome to JobProof - Activate Your Shield"
+  5. Save changes
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to JobProof</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a; min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+
+          <!-- Header with Logo -->
+          <tr>
+            <td style="padding: 40px 40px 24px 40px; text-align: center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); width: 48px; height: 48px; border-radius: 12px; text-align: center; vertical-align: middle;">
+                    <span style="color: white; font-size: 24px; font-weight: bold;">&#10003;</span>
+                  </td>
+                  <td style="padding-left: 12px;">
+                    <span style="color: white; font-size: 28px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">JobProof</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Welcome Badge -->
+          <tr>
+            <td style="text-align: center; padding: 0 40px;">
+              <span style="display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 16px; border-radius: 100px;">
+                Welcome to the Club
+              </span>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 24px 40px; text-align: center;">
+              <h1 style="margin: 0 0 8px 0; color: white; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.2;">
+                You're About to<br>
+                <span style="background: linear-gradient(135deg, #3b82f6 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">End Disputes Forever</span>
+              </h1>
+              <p style="margin: 16px 0 32px 0; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                One click and you'll have an unbreakable digital shield protecting every job you complete.
+              </p>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 16px; background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%); box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: inline-block; padding: 18px 48px; color: white; text-decoration: none; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                      Activate My Shield &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #64748b; font-size: 12px;">
+                Link expires in 24 hours
+              </p>
+            </td>
+          </tr>
+
+          <!-- Features Preview -->
+          <tr>
+            <td style="padding: 0 40px 32px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 16px 0; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
+                      What you're getting:
+                    </p>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span>
+                          GPS-stamped photo evidence
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span>
+                          Cryptographically sealed reports
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span>
+                          Client digital signatures
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span>
+                          Magic links for technicians
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px 40px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
+                Didn't sign up? You can safely ignore this email.
+              </p>
+              <p style="margin: 0; color: #475569; font-size: 11px;">
+                &copy; {{ .SiteURL }} &bull; Stop losing &pound;2,400/year to disputes
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
