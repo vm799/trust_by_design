@@ -57,13 +57,21 @@
                 One click and you'll have an unbreakable digital shield protecting every job you complete.
               </p>
 
-              <!-- CTA Button - BIG AND OBVIOUS -->
+              <!-- CTA Button - BIG AND OBVIOUS (Bulletproof for all email clients) -->
               <table role="presentation" cellspacing="0" cellpadding="0" width="100%" style="margin: 0 auto;">
                 <tr>
-                  <td style="border-radius: 16px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 10px 40px rgba(34, 197, 94, 0.5);">
-                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: block; padding: 20px 32px; color: white; text-decoration: none; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: center;">
-                      &#128737; ACTIVATE MY SHIELD
+                  <td align="center">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:60px;v-text-anchor:middle;width:280px;" arcsize="27%" strokecolor="#16a34a" fillcolor="#22c55e">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">🛡️ ACTIVATE MY SHIELD</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: inline-block; padding: 20px 40px; background-color: #22c55e; background-image: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: center; border-radius: 16px; border: 2px solid #16a34a; mso-hide: all;">
+                      🛡️ ACTIVATE MY SHIELD
                     </a>
+                    <!--<![endif]-->
                   </td>
                 </tr>
               </table>
