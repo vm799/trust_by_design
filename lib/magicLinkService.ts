@@ -10,7 +10,7 @@
  */
 
 import { getSupabase, isSupabaseAvailable } from './supabase';
-import { queueNotification, processNotificationQueue } from './notificationService';
+import { queueNotification } from './notificationService';
 
 // ============================================================================
 // TYPES

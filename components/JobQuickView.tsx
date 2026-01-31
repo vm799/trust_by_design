@@ -7,11 +7,10 @@
  * Shows: Status, Blockers, Evidence Summary, Quick Actions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Job } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Job, Technician } from '../types';
 import { getMagicLinksForJob, type MagicLinkInfo } from '../lib/db';
 import Modal from './ui/Modal';
-import ActionButton from './ui/ActionButton';
 
 interface JobQuickViewProps {
   job: Job | null;
@@ -21,7 +20,7 @@ interface JobQuickViewProps {
   onGenerateLink?: (jobId: string) => void;
   onResendLink?: (jobId: string) => void;
   onCallTech?: (phone: string) => void;
-  technicians?: any[];
+  technicians?: Technician[];
 }
 
 interface JobState {

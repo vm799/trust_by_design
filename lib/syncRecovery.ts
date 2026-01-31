@@ -10,7 +10,6 @@
  */
 
 import { getSupabase, isSupabaseAvailable } from './supabase';
-import { queueNotification } from './notificationService';
 
 // ============================================================================
 // ERROR CODES

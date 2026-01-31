@@ -10,16 +10,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
+import { Card, StatusBadge, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
 import { getInvoices, getClients, getJobs } from '../../../hooks/useWorkspaceData';
 import { Invoice, Client, Job } from '../../../types';
-import { route, ROUTES } from '../../../lib/routes';
+import { ROUTES } from '../../../lib/routes';
 
 type StatusType = 'pending' | 'paid' | 'overdue';
 type FilterStatus = 'all' | StatusType;
 
 const InvoiceList: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
   const [invoices, setInvoices] = useState<Invoice[]>([]);

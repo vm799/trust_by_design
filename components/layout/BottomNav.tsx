@@ -7,7 +7,7 @@
  * Phase A: Foundation & App Shell
  */
 
-import React, { memo, useCallback } from 'react';
+import React, { memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface BottomNavProps {

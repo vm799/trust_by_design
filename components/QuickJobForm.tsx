@@ -6,8 +6,7 @@ import {
   notifyManagerOfTechJob,
   getTechnicianWorkMode,
   setTechnicianWorkMode,
-  storeMagicLinkLocal,
-  generateClientReceipt
+  storeMagicLinkLocal
 } from '../lib/db';
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
 import { generateSecureJobId } from '../lib/secureId';

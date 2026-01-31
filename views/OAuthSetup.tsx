@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { JobProofLogo } from '../components/branding/jobproof-logo';
 import { generateSecureSlugSuffix } from '../lib/secureId';
 import { setTechnicianWorkMode } from '../lib/db';
-import { fadeInUp, fadeInScale, staggerContainer } from '../lib/animations';
+import { fadeInUp, staggerContainer } from '../lib/animations';
 
 /**
  * Account Setup View - Delightful Persona-Driven Onboarding

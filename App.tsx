@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { UserProfile } from './types';
 import { AuthProvider, useAuth } from './lib/AuthContext';
@@ -103,28 +103,6 @@ const LoadingFallback: React.FC = () => (
   </div>
 );
 
-// Error fallback for failed chunk loads
-const ChunkErrorFallback: React.FC<{ error: Error; resetError: () => void }> = ({ error, resetError }) => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-    <div className="text-center space-y-4 max-w-md">
-      <span className="material-symbols-outlined text-5xl text-amber-400">wifi_off</span>
-      <h2 className="text-white text-xl font-bold">Failed to Load</h2>
-      <p className="text-slate-400 text-sm">
-        This might be a network issue. Please check your connection and try again.
-      </p>
-      <button
-        onClick={() => {
-          resetError();
-          window.location.reload();
-        }}
-        className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition"
-      >
-        Retry
-      </button>
-    </div>
-  </div>
-);
-
 // Inner component that consumes AuthContext and DataContext
 const AppContent: React.FC = () => {
   // CRITICAL FIX: Consume AuthContext instead of managing own auth state
@@ -137,7 +115,6 @@ const AppContent: React.FC = () => {
     technicians,
     invoices,
     templates,
-    isLoading: dataLoading,
     addJob,
     updateJob,
     addClient,
@@ -340,6 +317,7 @@ const AppContent: React.FC = () => {
     };
 
     loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionUserId]); // FIXED: Only depends on primitive userId, not session object
 
   // REMEDIATION #1: Data loading and mutations now handled by DataContext
@@ -377,12 +355,6 @@ const AppContent: React.FC = () => {
   const completeOnboarding = () => {
     setHasSeenOnboarding(true);
     localStorage.setItem('jobproof_onboarding_v4', 'true');
-  };
-
-  // Phase C.1: Real authentication callbacks
-  const handleLogin = () => {
-    // Session is managed by AuthContext
-    // This callback just exists for compatibility with AuthView
   };
 
   // REMEDIATION ITEM 5: Lazy load auth module for logout

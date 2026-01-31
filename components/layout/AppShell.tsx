@@ -9,10 +9,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
-import PageHeader from './PageHeader';
 import { useAuth } from '../../lib/AuthContext';
 import { OfflineIndicator } from '../OfflineIndicator';
 
@@ -21,8 +20,7 @@ interface AppShellProps {
 }
 
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  const location = useLocation();
-  const { userId, userEmail } = useAuth();
+  useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = useCallback(() => {

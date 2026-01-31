@@ -20,12 +20,6 @@ import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offlin
 // Form type identifier for Dexie storage
 const FORM_TYPE = 'client';
 
-interface DraftData {
-  formData: FormData;
-  savedAt: number;
-  editId?: string;
-}
-
 interface FormData {
   name: string;
   email: string;
@@ -56,7 +50,7 @@ const ClientForm: React.FC = () => {
     notes: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [draftRestored, setDraftRestored] = useState(false);
+  const [, setDraftRestored] = useState(false);
 
   // CLAUDE.md: Load draft from IndexedDB on mount (only for new clients)
   useEffect(() => {

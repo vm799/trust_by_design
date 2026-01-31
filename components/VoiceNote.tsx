@@ -23,7 +23,6 @@ interface RecordingState {
 }
 
 const VoiceNote: React.FC<VoiceNoteProps> = ({
-  jobId,
   onRecordingComplete,
   maxDuration = 120, // 2 minutes default
   disabled = false
@@ -131,6 +130,7 @@ const VoiceNote: React.FC<VoiceNoteProps> = ({
         hapticWarning();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSupported, disabled, maxDuration, onRecordingComplete, state.duration]);
 
   const stopRecording = useCallback(() => {

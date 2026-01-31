@@ -1,6 +1,6 @@
-import { db, queueAction, LocalJob, OfflineAction } from './db';
+import { db, LocalJob } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
-import { Job, Photo } from '../../types';
+import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
 

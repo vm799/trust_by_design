@@ -25,11 +25,13 @@ class ErrorBoundary extends Component<Props, State> {
         cachedPlan =
           data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
       }
-    } catch {}
+    } catch {
+      // Error parsing cached data - use default plan
+    }
     return { hasError: true, error, cachedPlan };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error) {
     // Log error for debugging
     console.error('[ErrorBoundary] Caught error:', error.name, error.message);
   }

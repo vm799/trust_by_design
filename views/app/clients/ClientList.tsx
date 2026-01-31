@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
+import { Card, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
 import { getClients, getJobs } from '../../../hooks/useWorkspaceData';
 import { Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';

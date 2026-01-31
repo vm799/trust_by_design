@@ -153,7 +153,7 @@ export function checkTechnicianDuplicate(
 function checkEntityDuplicate(
   newEntity: { name: string; email?: string; phone?: string },
   existingEntities: Entity[],
-  entityType: string
+  _entityType: string
 ): DuplicateCheckResult {
   const result: DuplicateCheckResult = {
     isDuplicate: false,
@@ -165,7 +165,7 @@ function checkEntityDuplicate(
     return result;
   }
 
-  const normalizedNewName = normalizeString(newEntity.name);
+  normalizeString(newEntity.name);
   const normalizedNewEmail = newEntity.email ? normalizeEmail(newEntity.email) : null;
   const normalizedNewPhone = newEntity.phone ? normalizePhone(newEntity.phone) : null;
 

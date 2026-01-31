@@ -6,13 +6,11 @@
  * Phase C: Dashboard Redesign
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
-import { useAuth } from '../../lib/AuthContext';
 import { useWorkspaceData } from '../../hooks/useWorkspaceData';
-import { Job, Client, Technician } from '../../types';
 import { route, ROUTES } from '../../lib/routes';
 
 interface QuickStat {
@@ -34,7 +32,6 @@ interface AttentionItem {
 }
 
 const Dashboard: React.FC = () => {
-  const { userId, userEmail } = useAuth();
   // Use reactive DataContext hook instead of deprecated standalone functions
   // This ensures dashboard updates when data changes elsewhere in the app
   const { jobs, clients, technicians, isLoading: loading } = useWorkspaceData();

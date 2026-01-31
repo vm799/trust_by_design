@@ -18,7 +18,7 @@ interface ClientReceiptViewProps {
  * - Shareable via copy, email, SMS
  */
 const ClientReceiptView: React.FC<ClientReceiptViewProps> = ({ job, onClose }) => {
-  const [receipt, setReceipt] = useState<ClientReceipt | null>(() => {
+  const [receipt] = useState<ClientReceipt | null>(() => {
     // Try to get existing receipt or generate new one
     const existing = getClientReceipt(job.id);
     if (existing) return existing;

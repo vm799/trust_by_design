@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Job, Photo, SyncStatus } from '../../types';
+import { Job, SyncStatus } from '../../types';
 
 // Database schema version - increment when schema changes
 // v3: Added clients and technicians tables for offline persistence

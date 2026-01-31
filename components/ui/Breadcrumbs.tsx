@@ -35,7 +35,7 @@ const Breadcrumbs = memo<BreadcrumbsProps>(({
 }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const location = useLocation();
+  useLocation();
 
   const separatorIcon = {
     chevron: 'chevron_right',
