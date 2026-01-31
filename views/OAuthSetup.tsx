@@ -193,6 +193,36 @@ const OAuthSetup: React.FC = () => {
         }
       }
 
+      // CRITICAL FIX: Save persona to user_personas table
+      // This prevents the redirect loop: OAuthSetup → / → PersonaRedirect → /onboarding
+      // Map simplified persona to full PersonaType
+      const personaType = selectedPersona === 'solo' ? 'solo_contractor' : 'agency_owner';
+
+      // Get workspace_id for the persona record
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('workspace_id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (userProfile?.workspace_id) {
+        const { error: personaError } = await supabase
+          .from('user_personas')
+          .upsert({
+            user_id: userId,
+            workspace_id: userProfile.workspace_id,
+            persona_type: personaType,
+            is_active: true,
+            is_complete: true, // Mark as complete since OAuthSetup handles full setup
+            current_step: null
+          }, { onConflict: 'user_id,persona_type' });
+
+        if (personaError) {
+          console.error('[OAuthSetup] Failed to save persona:', personaError);
+          // Non-fatal - continue with navigation
+        }
+      }
+
       // Show install prompt if available, otherwise navigate
       if (isInstallable) {
         setStep('install');
