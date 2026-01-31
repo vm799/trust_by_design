@@ -1,0 +1,141 @@
+<!--
+  JobProof Invite User Email - DELIGHTFUL VERSION
+
+  To apply this template:
+  1. Go to Supabase Dashboard > Authentication > Email Templates
+  2. Select "Invite user" template
+  3. Paste the HTML below
+  4. Set Subject to: "👋 You've Been Invited to JobProof"
+  5. Save changes
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You've Been Invited</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0f172a; min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+
+          <!-- Header with Logo -->
+          <tr>
+            <td style="padding: 40px 40px 24px 40px; text-align: center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); width: 48px; height: 48px; border-radius: 12px; text-align: center; vertical-align: middle;">
+                    <span style="color: white; font-size: 24px; font-weight: bold;">&#10003;</span>
+                  </td>
+                  <td style="padding-left: 12px;">
+                    <span style="color: white; font-size: 28px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">JobProof</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Invitation Icon -->
+          <tr>
+            <td style="text-align: center; padding: 0 40px;">
+              <div style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); width: 80px; height: 80px; border-radius: 20px; margin: 0 auto; display: inline-block; line-height: 80px;">
+                <span style="font-size: 40px;">&#128075;</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 32px 40px; text-align: center;">
+              <h1 style="margin: 0 0 8px 0; color: white; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+                You've Been Invited
+              </h1>
+              <p style="margin: 0 0 32px 0; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                Your manager has invited you to join their team on JobProof. Accept to start capturing bulletproof job evidence.
+              </p>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 16px; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); box-shadow: 0 10px 40px rgba(245, 158, 11, 0.4);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: inline-block; padding: 18px 48px; color: white; text-decoration: none; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                      Accept Invitation &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #64748b; font-size: 12px;">
+                Link expires in 7 days
+              </p>
+            </td>
+          </tr>
+
+          <!-- What You'll Do -->
+          <tr>
+            <td style="padding: 0 40px 32px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 16px 0; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
+                      Your toolkit:
+                    </p>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #f59e0b; margin-right: 8px;">&#128247;</span>
+                          Snap before/during/after photos
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #f59e0b; margin-right: 8px;">&#128205;</span>
+                          Auto GPS + What3Words tagging
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #f59e0b; margin-right: 8px;">&#9999;</span>
+                          Capture client signatures on-site
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #e2e8f0; font-size: 13px;">
+                          <span style="color: #f59e0b; margin-right: 8px;">&#128274;</span>
+                          Works offline in basements & rural
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px 40px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
+                No app download needed - works in your browser!
+              </p>
+              <p style="margin: 0; color: #475569; font-size: 11px;">
+                &copy; {{ .SiteURL }} &bull; Unbreakable Evidence for Contractors
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
