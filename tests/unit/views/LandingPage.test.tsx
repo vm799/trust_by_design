@@ -35,30 +35,31 @@ describe('LandingPage', () => {
   });
 
   describe('Hero Section', () => {
-    it('renders the main headline', () => {
+    it('renders the main headline with Hormozi hook', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
-      expect(screen.getByText('Get Proof.')).toBeInTheDocument();
-      expect(screen.getByText('Get Paid.')).toBeInTheDocument();
+      expect(screen.getByText(/End "He Said/i)).toBeInTheDocument();
+      expect(screen.getByText(/Forever\./i)).toBeInTheDocument();
     });
 
-    it('renders the subheadline with value proposition', () => {
+    it('renders the subheadline with unbreakable shield value proposition', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       expect(
-        screen.getByText(/Capture timestamped, geo-verified evidence/i)
+        screen.getByText(/unbreakable digital shield/i)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/Eliminate payment disputes forever/i)
+        screen.getByText(/gets you paid faster/i)
       ).toBeInTheDocument();
     });
 
     it('renders the primary CTA button', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
-      const ctaButton = screen.getByRole('link', { name: /Start Free Trial/i });
-      expect(ctaButton).toBeInTheDocument();
-      expect(ctaButton).toHaveAttribute('href', '/auth');
+      // Multiple Protect My Next Job buttons exist (hero + footer CTA)
+      const ctaButtons = screen.getAllByRole('link', { name: /Protect My Next Job/i });
+      expect(ctaButtons.length).toBeGreaterThan(0);
+      expect(ctaButtons[0]).toHaveAttribute('href', '/auth');
     });
 
     it('renders the technician portal link', () => {
@@ -106,26 +107,27 @@ describe('LandingPage', () => {
   });
 
   describe('Features Section', () => {
-    it('renders all three feature cards', () => {
+    it('renders all three protection pillars', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
-      expect(screen.getByText('Immutable Proof')).toBeInTheDocument();
-      expect(screen.getByText('Works Offline')).toBeInTheDocument();
-      expect(screen.getByText('Client Signatures')).toBeInTheDocument();
+      expect(screen.getByText('Zero-Tamper Sealing')).toBeInTheDocument();
+      expect(screen.getByText('Offline-First Capture')).toBeInTheDocument();
+      expect(screen.getByText('Magic Link Access')).toBeInTheDocument();
     });
 
-    it('renders feature descriptions', () => {
+    it('renders feature descriptions with security focus', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       expect(
-        screen.getByText(/SHA-256 sealed records/i)
+        screen.getByText(/RSA-2048 cryptographic signatures/i)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/Capture evidence anywhere/i)
+        screen.getByText(/No signal\? No problem/i)
       ).toBeInTheDocument();
+      // Multiple instances may exist (feature card + FAQ), check at least one exists
       expect(
-        screen.getByText(/Digital sign-off captured/i)
-      ).toBeInTheDocument();
+        screen.getAllByText(/No app downloads, no passwords/i).length
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -141,12 +143,12 @@ describe('LandingPage', () => {
 
       expect(screen.getByText('Create Job')).toBeInTheDocument();
       expect(screen.getByText('Client Signs')).toBeInTheDocument();
-      // Check descriptions to confirm steps are present
+      // Check descriptions to confirm steps are present (may appear multiple times on page)
       expect(
-        screen.getByText(/Assign technician and send magic link/i)
-      ).toBeInTheDocument();
+        screen.getAllByText(/Send a magic link/i).length
+      ).toBeGreaterThan(0);
       expect(
-        screen.getByText(/Sealed proof eliminates disputes/i)
+        screen.getByText(/no disputes = faster payment/i)
       ).toBeInTheDocument();
     });
 
@@ -179,7 +181,8 @@ describe('LandingPage', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       expect(screen.getByText('Free')).toBeInTheDocument();
-      expect(screen.getByText('£49')).toBeInTheDocument();
+      // £49 appears multiple times (pricing card + ROA section)
+      expect(screen.getAllByText('£49').length).toBeGreaterThan(0);
       expect(screen.getByText('£199')).toBeInTheDocument();
     });
 
@@ -191,19 +194,22 @@ describe('LandingPage', () => {
   });
 
   describe('CTA Section', () => {
-    it('renders the final CTA heading', () => {
+    it('renders the final CTA heading with urgency', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       expect(
-        screen.getByText('Stop Losing Money to Disputes')
+        screen.getByText(/Your Next Job Could Be/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Your Next Dispute/i)
       ).toBeInTheDocument();
     });
 
-    it('renders multiple CTA buttons', () => {
+    it('renders multiple Protect My Next Job CTA buttons', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       // Find all CTA buttons (hero + footer)
-      const ctaButtons = screen.getAllByRole('link', { name: /Free Trial/i });
+      const ctaButtons = screen.getAllByRole('link', { name: /Protect My Next Job/i });
       expect(ctaButtons.length).toBeGreaterThan(0);
     });
   });
@@ -254,8 +260,8 @@ describe('LandingPage', () => {
       render(<LandingPage />, { wrapper: TestWrapper });
 
       // Find CTA button and verify touch-friendly sizing
-      const ctaButton = screen.getByRole('link', { name: /Start Free Trial/i });
-      expect(ctaButton).toHaveClass('py-4');
+      const ctaButtons = screen.getAllByRole('link', { name: /Protect My Next Job/i });
+      expect(ctaButtons[0]).toHaveClass('py-4');
     });
   });
 
