@@ -22,7 +22,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ActionButton, Card, LoadingSkeleton } from '../components/ui';
+import { ActionButton, Card, LoadingSkeleton, Tooltip } from '../components/ui';
 import { showToast } from '../lib/microInteractions';
 import { fadeInUp } from '../lib/animations';
 import { sealEvidence } from '../lib/sealing';
@@ -485,6 +485,9 @@ const TechProofScreen: React.FC = () => {
           <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-warning text-sm">photo_camera</span>
             Before Photo
+            <Tooltip content="Capture the job site BEFORE starting work. This proves the original condition and protects you from pre-existing damage claims." position="bottom">
+              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+            </Tooltip>
           </h3>
 
           {proofData.beforePhoto ? (
@@ -538,6 +541,9 @@ const TechProofScreen: React.FC = () => {
           <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-success text-sm">photo_camera</span>
             After Photo
+            <Tooltip content="Capture the completed work. GPS location is automatically recorded to prove you were on-site. This photo + before photo = undeniable proof of work done." position="bottom">
+              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+            </Tooltip>
           </h3>
 
           {proofData.afterPhoto ? (
@@ -584,6 +590,9 @@ const TechProofScreen: React.FC = () => {
           <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-accent text-sm">person</span>
             Client Signature
+            <Tooltip content="Client signature confirms they're satisfied with the work. This is your strongest protection against 'I never approved this' disputes." position="bottom">
+              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+            </Tooltip>
           </h3>
 
           <input
@@ -607,15 +616,26 @@ const TechProofScreen: React.FC = () => {
           {proofData.gpsLat
             ? `GPS: ${proofData.gpsLat.toFixed(4)}, ${proofData.gpsLng?.toFixed(4)}`
             : 'Acquiring GPS...'}
+          <Tooltip content="GPS coordinates prove you were physically at the job site. Combined with timestamps, this creates location-verified evidence that can't be faked." position="top">
+            <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+          </Tooltip>
         </div>
 
         {/* Submit Button - 72px */}
-        <ActionButton
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="w-full !h-[72px] !text-lg !font-black"
-          variant="primary"
-        >
+        <div className="space-y-2">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400">
+            <span className="material-symbols-outlined text-primary text-sm">verified</span>
+            <span>Evidence will be cryptographically sealed upon submission</span>
+            <Tooltip content="Sealing creates a tamper-proof mathematical fingerprint of all your evidence. If photos or data are ever altered, the seal will break—proving the original evidence was genuine." position="top">
+              <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+            </Tooltip>
+          </div>
+          <ActionButton
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="w-full !h-[72px] !text-lg !font-black"
+            variant="primary"
+          >
           {submitting ? (
             <>
               <span className="material-symbols-outlined animate-spin mr-2">progress_activity</span>
@@ -627,7 +647,8 @@ const TechProofScreen: React.FC = () => {
               Submit Proof
             </>
           )}
-        </ActionButton>
+          </ActionButton>
+        </div>
       </div>
     </div>
   );

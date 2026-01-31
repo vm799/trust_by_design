@@ -211,6 +211,91 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           </div>
         </div>
       )
+    },
+    {
+      id: 'troubleshooting',
+      icon: 'build',
+      title: 'Troubleshooting',
+      desc: 'Common issues and how to fix them quickly.',
+      content: (
+        <div className="space-y-4 text-sm text-slate-300">
+          <p className="leading-relaxed">
+            Quick solutions to the most common issues:
+          </p>
+          <div className="space-y-4">
+            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-8 bg-danger/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="material-symbols-outlined text-danger text-sm">photo_camera</span>
+                </div>
+                <div>
+                  <h5 className="font-black text-white text-xs uppercase mb-2">Photos won't upload</h5>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li>• Check if you're offline (look for the offline indicator)</li>
+                    <li>• Photos are saved locally and will sync when online</li>
+                    <li>• Try the "Retry Sync" button in the dashboard</li>
+                    <li>• If stuck, restart the app - your data is safe</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-8 bg-warning/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="material-symbols-outlined text-warning text-sm">location_off</span>
+                </div>
+                <div>
+                  <h5 className="font-black text-white text-xs uppercase mb-2">GPS not working</h5>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li>• Ensure location permissions are enabled in your browser</li>
+                    <li>• Move to an area with better signal (away from metal roofs)</li>
+                    <li>• GPS still acquiring? Wait 10-15 seconds, it will lock on</li>
+                    <li>• Photos will still be saved even without GPS</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="material-symbols-outlined text-primary text-sm">link_off</span>
+                </div>
+                <div>
+                  <h5 className="font-black text-white text-xs uppercase mb-2">Magic link not working</h5>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li>• Links expire after 7 days - request a fresh link</li>
+                    <li>• Check the full URL was copied (no text cut off)</li>
+                    <li>• Try opening in a different browser</li>
+                    <li>• Ask your manager to resend via SMS or QR code</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-8 bg-success/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="material-symbols-outlined text-success text-sm">draw</span>
+                </div>
+                <div>
+                  <h5 className="font-black text-white text-xs uppercase mb-2">Signature pad issues</h5>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li>• Use your finger or stylus directly on the white area</li>
+                    <li>• Tap "Clear" if you need to start over</li>
+                    <li>• The pad works even without internet</li>
+                    <li>• Sign slowly for better line quality</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mt-4">
+            <p className="text-xs font-bold text-primary uppercase mb-1">Still stuck?</p>
+            <p className="text-xs text-slate-300">
+              Contact support at <span className="font-bold text-white">help@jobproof.app</span> or use the in-app feedback button.
+            </p>
+          </div>
+        </div>
+      )
     }
   ];
 
