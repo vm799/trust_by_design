@@ -219,13 +219,14 @@ CREATE POLICY "bunker_signatures_via_job" ON bunker_signatures
 
 /*
 -- C1: Bunker table indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bunker_jobs_id_workspace
+-- NOTE: Removed CONCURRENTLY because Supabase migrations run in transactions
+CREATE INDEX IF NOT EXISTS idx_bunker_jobs_id_workspace
   ON bunker_jobs(id, workspace_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bunker_photos_job_id_btree
+CREATE INDEX IF NOT EXISTS idx_bunker_photos_job_id_btree
   ON bunker_photos(job_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bunker_signatures_job_id_btree
+CREATE INDEX IF NOT EXISTS idx_bunker_signatures_job_id_btree
   ON bunker_signatures(job_id);
 */
 
