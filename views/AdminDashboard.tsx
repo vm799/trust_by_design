@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
 import UnopenedLinksActionCenter from '../components/UnopenedLinksActionCenter';
 import JobQuickView from '../components/JobQuickView';
+import AttentionActionCard from '../components/AttentionActionCard';
 import { Job, UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { getMedia } from '../db';
@@ -356,34 +357,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
           }}
         />
 
-        {/* Header with Sticky CTA */}
+        {/* Header - Clean, minimal */}
             <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
-              <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                <div className="space-y-1 flex items-center gap-3">
-                  <div>
-                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Operations Hub</h2>
-                    <p className="text-slate-400 text-sm">Verifiable field evidence management.</p>
-                  </div>
-                  {/* Phase 10: Red Alert Badge for Unopened Links - Opens Action Center */}
+              <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  {/* Alert Badge - Visible when action needed */}
                   {linksNeedingAttention.length > 0 && (
                     <button
                       onClick={() => setShowActionCenter(true)}
-                      className="relative flex items-center gap-2 px-3 py-2 bg-danger/20 hover:bg-danger/30 border border-danger/40 rounded-xl transition-all animate-pulse"
-                      title={`${linksNeedingAttention.length} unopened job link${linksNeedingAttention.length > 1 ? 's' : ''} - Click to manage`}
+                      className="relative flex items-center gap-2 px-3 py-2 bg-danger/20 hover:bg-danger/30 border border-danger/40 rounded-xl transition-all"
+                      title={`${linksNeedingAttention.length} link${linksNeedingAttention.length > 1 ? 's' : ''} need attention`}
                     >
-                      <span className="material-symbols-outlined text-danger text-lg">warning</span>
+                      <span className="material-symbols-outlined text-danger text-lg animate-pulse">notifications_active</span>
                       <span className="text-danger font-black text-sm">{linksNeedingAttention.length}</span>
-                      <span className="hidden sm:inline text-danger text-xs font-bold uppercase">Unopened</span>
                     </button>
                   )}
+                  {/* Quick stats summary */}
+                  <div className="hidden sm:flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+                    <span className="text-slate-500">{activeJobs.length} Active</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-500">{sealedJobs.length} Sealed</span>
+                  </div>
                 </div>
                 <button
                   id="btn-dispatch"
                   onClick={() => navigate('/admin/create')}
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 press-spring flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 press-spring flex items-center justify-center gap-2 whitespace-nowrap"
                 >
                   <span className="material-symbols-outlined font-black">send</span>
-                  New Job
+                  <span className="truncate">New Job</span>
                 </button>
               </header>
             </div>
@@ -606,57 +608,60 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ jobs, clients = [], tec
               </div>
             )}
 
-            {/* ATTENTION REQUIRED PANEL - Mobile optimized */}
+            {/* ATTENTION REQUIRED PANEL - With inline actions */}
             {uniqueAttentionJobs.length > 0 && (
               <div className="bg-gradient-to-br from-warning/5 to-danger/5 border-2 border-warning/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-in">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-warning/20 flex items-center justify-center flex-shrink-0">
-                    <span className="material-symbols-outlined text-warning text-lg sm:text-xl font-black">priority_high</span>
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">Attention Required</h3>
-                    <p className="text-[10px] sm:text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} need{uniqueAttentionJobs.length === 1 ? 's' : ''} immediate action</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-warning/20 flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-outlined text-warning text-lg sm:text-xl font-black">priority_high</span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">Quick Actions</h3>
+                      <p className="text-[10px] sm:text-xs text-slate-300">{uniqueAttentionJobs.length} job{uniqueAttentionJobs.length > 1 ? 's' : ''} - fix issues right here</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {uniqueAttentionJobs.map(item => (
-                    <button
-                      key={item.job.id}
-                      onClick={() => handleJobClick(item.job)}
-                      className="w-full bg-slate-900/80 hover:bg-slate-900 border border-white/10 hover:border-warning/30 rounded-xl p-4 transition-all text-left group flex items-start gap-3 hover-lift press-spring"
-                    >
-                      <div className={`size-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        item.color === 'danger' ? 'bg-danger/20' : 'bg-warning/20'
-                      }`}>
-                        <span className={`material-symbols-outlined text-sm ${
-                          item.color === 'danger' ? 'text-danger' : 'text-warning'
-                        }`}>
-                          {item.icon}
-                        </span>
-                      </div>
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+                  {uniqueAttentionJobs.map(item => {
+                    // Determine the attention type based on job state
+                    const hasLink = !!item.job.magicLinkToken;
+                    const linkOpened = !!item.job.technicianLinkOpened;
+                    const hasPhotos = item.job.photos.length > 0;
+                    const hasSignature = !!item.job.signature;
+                    const hasTech = !!item.job.techId;
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-black text-white text-sm uppercase tracking-tight truncate group-hover:text-warning transition-colors">
-                            {item.job.title}
-                          </h4>
-                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 ${
-                            item.color === 'danger'
-                              ? 'bg-danger/20 text-danger border border-danger/30'
-                              : 'bg-warning/20 text-warning border border-warning/30'
-                          }`}>
-                            {item.label}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 font-mono">{item.job.client} • {item.job.technician}</p>
-                      </div>
+                    let attentionType: 'link_not_generated' | 'link_not_opened' | 'awaiting_seal' | 'no_technician' | 'missing_evidence';
 
-                      <span className="material-symbols-outlined text-slate-300 text-sm group-hover:text-warning transition-colors flex-shrink-0">
-                        arrow_forward
-                      </span>
-                    </button>
-                  ))}
+                    if (!hasTech) {
+                      attentionType = 'no_technician';
+                    } else if (!hasLink) {
+                      attentionType = 'link_not_generated';
+                    } else if (!linkOpened) {
+                      attentionType = 'link_not_opened';
+                    } else if (hasPhotos && hasSignature && !item.job.sealedAt) {
+                      attentionType = 'awaiting_seal';
+                    } else {
+                      attentionType = 'missing_evidence';
+                    }
+
+                    const tech = technicians.find(t => t.id === item.job.techId);
+                    const client = clients.find(c => c.id === item.job.clientId);
+
+                    return (
+                      <AttentionActionCard
+                        key={item.job.id}
+                        job={item.job}
+                        type={attentionType}
+                        technician={tech}
+                        client={client}
+                        managerEmail={user?.email}
+                        onJobUpdate={updateJob}
+                        onNavigate={navigate}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
