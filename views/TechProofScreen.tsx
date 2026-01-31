@@ -26,6 +26,7 @@ import { ActionButton, Card, LoadingSkeleton, Tooltip } from '../components/ui';
 import { showToast } from '../lib/microInteractions';
 import { fadeInUp } from '../lib/animations';
 import { sealEvidence } from '../lib/sealing';
+import { getVerifiedLocation, type VerifiedLocationResult } from '../lib/services/what3words';
 
 // Supabase client for RPC calls
 const getSupabaseClient = async () => {
@@ -53,6 +54,9 @@ interface ProofData {
   clientName: string;
   gpsLat: number | null;
   gpsLng: number | null;
+  gpsAccuracy: number | null;
+  w3w: string | null;
+  w3wVerified: boolean;
 }
 
 type ScreenState = 'loading' | 'error' | 'proof' | 'submitted';
@@ -75,6 +79,9 @@ const TechProofScreen: React.FC = () => {
     clientName: '',
     gpsLat: null,
     gpsLng: null,
+    gpsAccuracy: null,
+    w3w: null,
+    w3wVerified: false,
   });
 
   // Validate token and load job via Supabase RPC
@@ -148,16 +155,33 @@ const TechProofScreen: React.FC = () => {
     validateAndLoad();
   }, [jobId, token, pin]);
 
-  // Request GPS location
+  // Request GPS location and convert to W3W
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+
+          // Update GPS immediately
           setProofData(prev => ({
             ...prev,
-            gpsLat: position.coords.latitude,
-            gpsLng: position.coords.longitude,
+            gpsLat: latitude,
+            gpsLng: longitude,
+            gpsAccuracy: accuracy,
           }));
+
+          // Fetch W3W address (non-blocking)
+          try {
+            const locationResult = await getVerifiedLocation(latitude, longitude, accuracy);
+            setProofData(prev => ({
+              ...prev,
+              w3w: locationResult.w3w,
+              w3wVerified: locationResult.isVerified,
+            }));
+            console.log('[TechProofScreen] W3W location:', locationResult.w3w, 'verified:', locationResult.isVerified);
+          } catch (e) {
+            console.warn('[TechProofScreen] W3W lookup failed:', e);
+          }
         },
         () => {
           console.warn('GPS not available');
@@ -229,6 +253,9 @@ const TechProofScreen: React.FC = () => {
         p_proof_metadata: {
           gps_lat: proofData.gpsLat,
           gps_lng: proofData.gpsLng,
+          gps_accuracy: proofData.gpsAccuracy,
+          w3w: proofData.w3w,
+          w3w_verified: proofData.w3wVerified,
           device_info: navigator.userAgent,
           captured_at: new Date().toISOString(),
         },
@@ -291,6 +318,9 @@ const TechProofScreen: React.FC = () => {
           proofData: {
             gpsLat: proofData.gpsLat,
             gpsLng: proofData.gpsLng,
+            gpsAccuracy: proofData.gpsAccuracy,
+            w3w: proofData.w3w,
+            w3wVerified: proofData.w3wVerified,
             capturedAt: new Date().toISOString(),
           },
           status: 'completed',
@@ -392,11 +422,9 @@ const TechProofScreen: React.FC = () => {
             onTouchEnd={endDrawing}
           />
           {/* Sign here affordance overlay */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex items-center gap-2 text-slate-300">
-              <span className="material-symbols-outlined text-3xl">draw</span>
-              <span className="text-lg font-medium tracking-wide">Sign here</span>
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-4">
+            <span className="material-symbols-outlined text-3xl text-slate-300 mb-2">draw</span>
+            <span className="text-sm font-medium tracking-wide text-slate-300 text-center leading-snug">{label}</span>
           </div>
         </div>
       </div>
@@ -617,15 +645,27 @@ const TechProofScreen: React.FC = () => {
           />
         </Card>
 
-        {/* GPS Status */}
-        <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">
-          <span className={`size-2 rounded-full ${proofData.gpsLat ? 'bg-success' : 'bg-warning animate-pulse'}`} />
-          {proofData.gpsLat
-            ? `GPS: ${proofData.gpsLat.toFixed(4)}, ${proofData.gpsLng?.toFixed(4)}`
-            : 'Acquiring GPS...'}
-          <Tooltip content="GPS coordinates prove you were physically at the job site. Combined with timestamps, this creates location-verified evidence that can't be faked." position="top">
-            <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
-          </Tooltip>
+        {/* GPS & W3W Status */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">
+            <span className={`size-2 rounded-full ${proofData.gpsLat ? 'bg-success' : 'bg-warning animate-pulse'}`} />
+            {proofData.gpsLat
+              ? `GPS: ${proofData.gpsLat.toFixed(4)}, ${proofData.gpsLng?.toFixed(4)}`
+              : 'Acquiring GPS...'}
+            <Tooltip content="GPS coordinates prove you were physically at the job site. Combined with timestamps, this creates location-verified evidence that can't be faked." position="top">
+              <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+            </Tooltip>
+          </div>
+          {proofData.w3w && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-red-900/30 border border-red-700/50 rounded-lg">
+              <span className="text-[10px] font-bold text-red-400 font-mono">{proofData.w3w}</span>
+              {proofData.w3wVerified ? (
+                <span className="text-[9px] text-green-400 font-medium">✓ Verified</span>
+              ) : (
+                <span className="text-[9px] text-amber-400 font-medium">Mock</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Submit Button - 72px */}
