@@ -380,7 +380,7 @@ const AppContent: React.FC = () => {
   // Helper for Persona-Aware Routing
   // CRITICAL FIX: This component only renders AFTER profileLoading is false (blocked at top level)
   // So if user is null here, it means the profile is truly missing, not just loading
-  const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
+  const PersonaRedirect: React.FC<{ user: UserProfile | null; hasSeenOnboarding: boolean }> = ({ user, hasSeenOnboarding }) => {
     // Profile truly missing (not loading) - redirect to setup
     if (!user) {
       console.log('[PersonaRedirect] Profile missing (load complete), redirecting to setup');
@@ -404,7 +404,15 @@ const AppContent: React.FC = () => {
       return <Navigate to="/client" replace />;
     }
 
-    // Default to Manager Intent Selector for Managers/Owners (Intent-First UX)
+    // CRITICAL FIX: Returning managers go directly to dashboard
+    // Only first-time users (haven't seen onboarding) see the Intent Selector
+    if (hasSeenOnboarding) {
+      console.log('[PersonaRedirect] Returning manager, going to dashboard');
+      return <Navigate to="/admin" replace />;
+    }
+
+    // First-time managers see Intent Selector for onboarding
+    console.log('[PersonaRedirect] First-time manager, showing intent selector');
     return <Navigate to="/manager/intent" replace />;
   };
 
@@ -413,7 +421,7 @@ const AppContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
-          <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
+          <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <Navigate to="/home" replace />} />
         {/* CRITICAL FIX: Always show LandingPage on /home - don't auto-redirect authenticated users
             Users who want to go to dashboard can click CTAs. This prevents redirect loops for
             users with incomplete profiles (missing persona/workspace). */}
@@ -427,7 +435,7 @@ const AppContent: React.FC = () => {
         <Route path="/track-lookup" element={<TrackLookup />} />
 
         {/* V1 MVP: Magic Link Only Authentication */}
-        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
         {/* Phase 6.5: Dedicated callback handler for magic link - processes auth tokens */}
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
@@ -454,8 +462,8 @@ const AppContent: React.FC = () => {
         } />
 
         {/* V1 MVP: Magic Link Auth Routes - All redirect to unified auth */}
-        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
-        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
+        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
 
         {/* Onboarding & Setup */}
         <Route path="/setup" element={
