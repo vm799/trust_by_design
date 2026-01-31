@@ -71,14 +71,23 @@ const OAuthSetup: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const hasCheckedRef = useRef(false);
+  const setupStartedRef = useRef(false); // Track if user has started setup flow
 
   useEffect(() => {
     if (authLoading) return;
     if (hasCheckedRef.current) return;
 
     const checkUser = async () => {
+      // CRITICAL FIX: Don't redirect to /auth if user has already started setup
+      // This prevents race condition where auth state changes mid-flow
+      if (setupStartedRef.current) {
+        console.log('[OAuthSetup] Setup already started, skipping auth check');
+        return;
+      }
+
       if (!isAuthenticated || !userId) {
         hasCheckedRef.current = true;
+        console.log('[OAuthSetup] Not authenticated, redirecting to /auth');
         navigate('/auth');
         return;
       }
@@ -122,6 +131,8 @@ const OAuthSetup: React.FC = () => {
       return;
     }
     setError(null);
+    // CRITICAL FIX: Mark setup as started to prevent auth redirect race condition
+    setupStartedRef.current = true;
     setStep('persona');
   };
 
@@ -148,7 +159,8 @@ const OAuthSetup: React.FC = () => {
 
   const handleFinalSetup = async (selectedPersona: Persona) => {
     if (!userId) {
-      setError('Session not ready. Please wait...');
+      console.error('[OAuthSetup] userId is null in handleFinalSetup');
+      setError('Session not ready. Please refresh the page and try again.');
       return;
     }
 
@@ -177,11 +189,16 @@ const OAuthSetup: React.FC = () => {
 
       if (workspaceError) {
         // Foreign key error = user doesn't exist in auth.users (stale session)
+        // CRITICAL FIX: Don't immediately sign out - show error and let user retry
         if (workspaceError.message?.includes('fk_users_auth') || workspaceError.code === '23503') {
-          // Clear stale session and redirect to auth
-          console.error('[OAuthSetup] User not in auth.users - clearing stale session');
-          await supabase.auth.signOut();
-          navigate('/auth', { replace: true });
+          console.error('[OAuthSetup] Foreign key error - session may be stale:', workspaceError);
+          setError('Session expired. Please sign in again.');
+          setLoading(false);
+          // Give user a moment to see the error before redirecting
+          setTimeout(() => {
+            supabase.auth.signOut();
+            navigate('/auth', { replace: true });
+          }, 2000);
           return;
         }
         // 409/23505 = conflict, user already exists - update their full_name and continue
