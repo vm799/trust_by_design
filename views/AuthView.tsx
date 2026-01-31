@@ -157,10 +157,10 @@ const AuthView: React.FC = () => {
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-              Manager Sign In
+              Get Started
             </h2>
             <p className="text-slate-300 text-sm font-medium">
-              Enter your email to receive a secure sign-in link.
+              Enter your email to receive a secure sign-in link. New users will choose their role next.
             </p>
           </div>
         </div>
