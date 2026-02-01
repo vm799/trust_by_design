@@ -657,6 +657,15 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                           {p.lat && (
                                              <p className="text-[8px] font-mono text-slate-700 uppercase leading-none">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
                                           )}
+                                          {/* Photo SHA-256 fingerprint for evidence integrity */}
+                                          {(p as any).photo_hash && (
+                                             <div className="flex items-center gap-1 mt-1 pt-1 border-t border-slate-200">
+                                                <span className="material-symbols-outlined text-[9px] text-slate-500">fingerprint</span>
+                                                <p className="text-[7px] font-mono text-slate-500 uppercase tracking-tight" title={(p as any).photo_hash}>
+                                                   SHA256: {(p as any).photo_hash.substring(0, 12)}...
+                                                </p>
+                                             </div>
+                                          )}
                                        </div>
                                     </div>
                                  </div>
