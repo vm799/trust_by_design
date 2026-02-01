@@ -10,7 +10,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
-import { saveMediaLocal, getMediaLocal, db } from '../../lib/offline/db';
+import { saveMediaLocal, getMediaLocal, db, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast } from '../../lib/microInteractions';
 
@@ -43,6 +43,9 @@ const EvidenceCapture: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [saveConfirmation, setSaveConfirmation] = useState(false);
+  const [draftSaveWarning, setDraftSaveWarning] = useState(false);
+  const [storageFullWarning, setStorageFullWarning] = useState(false);
+  const [cameraRetryCount, setCameraRetryCount] = useState(0);
 
   // Draft key for photo persistence (survives app crash)
   const draftKey = `photo_draft_${jobId}`;
@@ -65,11 +68,24 @@ const EvidenceCapture: React.FC = () => {
   }, [jobId, draftKey]);
 
   // Persist captured photo to IndexedDB immediately (offline-first)
+  // P0 FIX: Silent failure removed - user MUST know if draft save fails
   const persistDraft = useCallback(async (photo: CapturedPhoto) => {
     try {
       await saveMediaLocal(draftKey, jobId || '', JSON.stringify(photo));
-    } catch {
-      // Silently fail - photo still in state, just not persisted
+      setDraftSaveWarning(false); // Clear warning on success
+      setStorageFullWarning(false);
+    } catch (err) {
+      // P0 CRITICAL: Never silently fail - user must know photo is at risk
+      console.error('[EvidenceCapture] Draft save failed:', err);
+
+      // P0-3 FIX: Detect storage quota exceeded specifically
+      if (err instanceof StorageQuotaExceededError) {
+        setStorageFullWarning(true);
+        setDraftSaveWarning(false);
+      } else {
+        setDraftSaveWarning(true);
+        setStorageFullWarning(false);
+      }
     }
   }, [draftKey, jobId]);
 
@@ -232,6 +248,7 @@ const EvidenceCapture: React.FC = () => {
   const isCameraPermissionError = error?.includes('camera') || error?.includes('permission');
 
   // Try again handler - attempts to restart camera
+  // P0-7 FIX: Track retry attempts and provide escalation after 3 failures
   const handleTryAgain = async () => {
     setError(null);
     try {
@@ -243,14 +260,19 @@ const EvidenceCapture: React.FC = () => {
         },
       });
       setStream(mediaStream);
+      setCameraRetryCount(0); // Reset on success
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
       console.error('Camera retry failed:', err);
+      setCameraRetryCount(prev => prev + 1);
       setError('Unable to access camera. Please grant camera permissions.');
     }
   };
+
+  // P0-7: Check if we've exceeded retry threshold
+  const showEscalation = cameraRetryCount >= 3;
 
   if (error) {
     return (
@@ -265,7 +287,7 @@ const EvidenceCapture: React.FC = () => {
           <p className="text-slate-300 text-sm mb-6">{error}</p>
 
           {/* Sprint 3 Task 3.3: Step-by-step instructions for camera permission */}
-          {isCameraPermissionError && (
+          {isCameraPermissionError && !showEscalation && (
             <div className="bg-slate-900 border border-white/10 rounded-xl p-4 mb-6 text-left">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">How to enable camera:</p>
               <ol className="space-y-2 text-sm text-slate-300">
@@ -286,6 +308,27 @@ const EvidenceCapture: React.FC = () => {
                   <span>Return here and tap <strong className="text-white">Try Again</strong></span>
                 </li>
               </ol>
+            </div>
+          )}
+
+          {/* P0-7 FIX: Escalation path after 3 failed retries */}
+          {isCameraPermissionError && showEscalation && (
+            <div className="bg-red-900/50 border border-red-500/30 rounded-xl p-4 mb-6 text-left">
+              <p className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">warning</span>
+                Camera Blocked
+              </p>
+              <p className="text-sm text-slate-300 mb-4">
+                Camera access is blocked by your device. You need to change this in your device settings, not in the app.
+              </p>
+              <div className="space-y-2 text-sm text-slate-300">
+                <p className="font-bold text-white">Options:</p>
+                <ul className="space-y-2 ml-4 list-disc">
+                  <li>Check device Settings → JobProof → Camera = ON</li>
+                  <li>Contact your manager if you need help</li>
+                  <li>Go back and complete photos later</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -333,6 +376,26 @@ const EvidenceCapture: React.FC = () => {
       {capturedPhoto ? (
         /* Photo Preview */
         <div className="flex-1 flex flex-col">
+          {/* P0-3 FIX: Storage full warning - device needs space */}
+          {storageFullWarning && (
+            <div className="bg-red-500 px-4 py-3 flex items-center gap-3">
+              <span className="material-symbols-outlined text-white">storage</span>
+              <div className="flex-1">
+                <p className="text-white font-bold text-sm">Device Storage Full</p>
+                <p className="text-red-100 text-xs">Delete old photos/apps to free space, then save</p>
+              </div>
+            </div>
+          )}
+          {/* P0 FIX: Draft save warning - user must know if photo is at risk */}
+          {draftSaveWarning && !storageFullWarning && (
+            <div className="bg-amber-500 px-4 py-3 flex items-center gap-3">
+              <span className="material-symbols-outlined text-amber-900">warning</span>
+              <div className="flex-1">
+                <p className="text-amber-900 font-bold text-sm">Photo Not Backed Up</p>
+                <p className="text-amber-800 text-xs">Save now to avoid losing this photo</p>
+              </div>
+            </div>
+          )}
           {/* Preview Image */}
           <div className="flex-1 relative">
             <img

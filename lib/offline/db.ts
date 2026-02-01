@@ -309,13 +309,34 @@ export async function getAllJobsLocal(workspaceId: string) {
         .sortBy('lastUpdated'); // Sort by recent
 }
 
+// P0 FIX: Custom error for quota exceeded - allows callers to surface meaningful message
+export class StorageQuotaExceededError extends Error {
+    constructor(message: string = 'Device storage is full. Please free up space.') {
+        super(message);
+        this.name = 'StorageQuotaExceededError';
+    }
+}
+
 export async function saveMediaLocal(id: string, jobId: string, data: string) {
-    return await db.media.put({
-        id,
-        jobId,
-        data,
-        createdAt: Date.now()
-    });
+    try {
+        return await db.media.put({
+            id,
+            jobId,
+            data,
+            createdAt: Date.now()
+        });
+    } catch (error: any) {
+        // P0 CRITICAL: Detect quota exceeded and throw meaningful error
+        // Never silently fail when device storage is full
+        if (error?.name === 'QuotaExceededError' ||
+            error?.message?.includes('QuotaExceededError') ||
+            error?.inner?.name === 'QuotaExceededError') {
+            console.error('[DB] Storage quota exceeded when saving media:', id);
+            throw new StorageQuotaExceededError();
+        }
+        // Re-throw other errors
+        throw error;
+    }
 }
 
 export async function getMediaLocal(id: string) {
