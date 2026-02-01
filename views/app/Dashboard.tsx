@@ -185,10 +185,9 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div>
-        <PageHeader title="Dashboard" />
-        <PageContent>
+        <div className="px-4 lg:px-8 py-8">
           <LoadingSkeleton variant="card" count={3} />
-        </PageContent>
+        </div>
       </div>
     );
   }
