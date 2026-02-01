@@ -80,6 +80,44 @@ npm test -- --run && npm run lint && npm run type-check && npm run build
 - `AGENTIC_EXECUTION.md` — Fix mode (run after critique)
 - `AGENTIC_PRE_COMMIT.md` — Daily guardrail (run before merge)
 - `AGENTIC_SHIP_GATE.md` — Release blocker (run before production)
+- `docs/ux-flow-contract.md` — **UX Flow Contract** (core laws, canonical flows)
+- `docs/ux-route-contract.md` — **Route-Level Enforcement** (per-route checklist)
+
+---
+
+## UX Flow Contract (Mandatory)
+
+Before any navigation or auth change, consult the UX contracts. Key laws:
+
+### Law 1: Intent Is Sacred
+```tsx
+// Navigation intent must survive auth, offline, and restarts
+import { captureNavigationIntentFromUrl, resumeIntentAndGetPath } from '../lib/navigationIntent';
+
+// Capture BEFORE auth checks (in App.tsx)
+captureNavigationIntentFromUrl();
+
+// Resume AFTER auth succeeds (in AuthCallback.tsx)
+const targetPath = resumeIntentAndGetPath();
+navigate(targetPath, { replace: true });
+```
+
+### Law 2: Auth Never Owns Navigation
+- Auth screens only answer: `AUTHENTICATED | NOT_AUTHENTICATED | EXPIRED`
+- Auth NEVER decides destination
+- Original intent always resumes post-auth
+
+### Law 3: No Dead Ends
+Every screen must declare:
+- Previous context (back target)
+- Failure path (offline, expired link, quota exceeded)
+- Success path (action complete → next screen)
+
+### PR Rejection Criteria (Auto-Fail)
+- [ ] Intent lost during auth flow
+- [ ] Dead-end screen with no recovery
+- [ ] Auth-driven navigation (auth decides destination)
+- [ ] Touch targets < 44px
 
 ---
 
