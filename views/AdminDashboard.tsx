@@ -17,7 +17,7 @@ import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import OfflineIndicator from '../components/OfflineIndicator';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
 import UnopenedLinksActionCenter from '../components/UnopenedLinksActionCenter';
-import { Job, UserProfile } from '../types';
+import { Job, UserProfile, Technician } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { retryFailedSyncs } from '../lib/syncQueue';
 import { useAuth } from '../lib/AuthContext';
@@ -27,7 +27,7 @@ import { getLinksNeedingAttention, acknowledgeLinkFlag, type MagicLinkInfo } fro
 interface AdminDashboardProps {
   jobs: Job[];
   clients?: { id: string; name: string }[];
-  technicians?: { id: string; name: string; phone?: string; email?: string; status?: string }[];
+  technicians?: Technician[];
   user: UserProfile | null;
   showOnboarding: boolean;
   onCloseOnboarding: () => void;

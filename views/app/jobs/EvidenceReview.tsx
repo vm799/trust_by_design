@@ -51,7 +51,7 @@ const EvidenceReview: React.FC = () => {
         const sealedJob: Job = {
           ...job,
           sealedAt: new Date().toISOString(),
-          sealHash: result.hash,
+          evidenceHash: result.evidenceHash,
         };
         contextUpdateJob(sealedJob);
         // Also refresh from server to ensure consistency
