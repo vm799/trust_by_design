@@ -41,10 +41,42 @@ function getEvidenceStatus(job: Job): EvidenceStatus {
     return 'invoiced';
   }
 
-  // Sealed - evidence locked
-  if (job.sealedAt || job.isSealed) {
-    return 'sealed';
-  }
+    // SPRINT 4 FIX: Jobs ready for sealing (Submitted status, not sealed)
+    // Sealing requires: status=Submitted, photos, signature, signer name
+    // Jobs in "Complete" need manager review → "Submit" before they can be sealed
+    jobs
+      .filter(j => j.status === 'Submitted' && !j.sealedAt)
+      .slice(0, 3)
+      .forEach(job => {
+        const hasPhotos = job.photos && job.photos.length > 0;
+        const hasSignature = !!job.signature && !!job.signerName;
+        items.push({
+          id: `seal-${job.id}`,
+          type: 'seal',
+          title: `Job #${job.id.slice(0, 6)}`,
+          subtitle: hasPhotos && hasSignature
+            ? 'Ready to seal evidence'
+            : `Missing: ${!hasPhotos ? 'photos' : ''}${!hasPhotos && !hasSignature ? ', ' : ''}${!hasSignature ? 'signature' : ''}`,
+          action: { label: 'Review & Seal', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
+          urgency: hasPhotos && hasSignature ? 'medium' : 'high',
+        });
+      });
+
+    // Jobs in Complete status need manager review before sealing
+    jobs
+      .filter(j => j.status === 'Complete' && !j.sealedAt)
+      .slice(0, 3)
+      .forEach(job => {
+        const client = clients.find(c => c.id === job.clientId);
+        items.push({
+          id: `review-${job.id}`,
+          type: 'seal',
+          title: `Job #${job.id.slice(0, 6)}`,
+          subtitle: `Needs review${client ? ` - ${client.name}` : ''}`,
+          action: { label: 'Review Evidence', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
+          urgency: 'medium',
+        });
+      });
 
   const hasPhotos = job.photos && job.photos.length > 0;
   const hasSignature = !!job.signature;

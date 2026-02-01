@@ -557,25 +557,62 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   <div className="space-y-3">
                      <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</h3>
                      <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.technician}</p>
+                     {/* SPRINT 4 FIX: Only show verification badges when data actually exists */}
                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-2">
-                              <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
-                              <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                        {/* Geo-metadata - only show if job has coordinates OR photos have GPS */}
+                        {(job.lat && job.lng) || job.photos.some(p => p.lat && p.lng) ? (
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined text-success text-sm font-black">location_on</span>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Geo-metadata captured on-site</p>
+                              </div>
+                              <p className="text-[8px] text-slate-600 italic pl-6">
+                                 (GPS coordinates recorded, not verified against address)
+                              </p>
                            </div>
-                           <p className="text-[8px] text-slate-600 italic pl-6">
-                              (GPS coordinates recorded, not verified against address)
-                           </p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-2">
-                              <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
-                              <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Account Verified (Email)</p>
+                        ) : (
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined text-warning text-sm font-black">location_off</span>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-tight">No geo-metadata captured</p>
+                              </div>
+                              <p className="text-[8px] text-slate-500 italic pl-6">
+                                 (Location data not available for this job)
+                              </p>
                            </div>
-                           <p className="text-[8px] text-slate-600 italic pl-6">
-                              (Account-based identity verification)
-                           </p>
-                        </div>
+                        )}
+                        {/* Account Verified - only show if magic link was used and opened */}
+                        {magicLinkInfo && lifecycleSummary?.stages.some(s => s.stage === 'opened' && s.completed) ? (
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Account Verified (Link)</p>
+                              </div>
+                              <p className="text-[8px] text-slate-600 italic pl-6">
+                                 (Technician accessed via authenticated link)
+                              </p>
+                           </div>
+                        ) : isSelfEmployedJob ? (
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined text-success text-sm font-black">lock</span>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-700 font-bold uppercase tracking-tight">Account Verified (Self)</p>
+                              </div>
+                              <p className="text-[8px] text-slate-600 italic pl-6">
+                                 (Self-employed: authenticated via account login)
+                              </p>
+                           </div>
+                        ) : (
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined text-warning text-sm font-black">lock_open</span>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-tight">Not yet verified</p>
+                              </div>
+                              <p className="text-[8px] text-slate-500 italic pl-6">
+                                 (No technician link sent or accessed)
+                              </p>
+                           </div>
+                        )}
                      </div>
                   </div>
                </div>
