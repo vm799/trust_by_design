@@ -10,6 +10,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
+import { OfflineIndicator } from '../../components/OfflineIndicator';
+import { showToast } from '../../lib/microInteractions';
 
 type PhotoType = 'before' | 'during' | 'after';
 
@@ -141,6 +143,9 @@ const EvidenceCapture: React.FC = () => {
       const updatedJob: Job = { ...job, photos: updatedPhotos };
       contextUpdateJob(updatedJob);
 
+      // FIELD UX: Show confirmation toast before navigating
+      showToast('Photo Captured', 'Saved locally - will sync when online', 'success');
+
       // Go back to job detail
       navigate(`/tech/job/${job.id}`);
     } catch (error) {
@@ -255,10 +260,15 @@ const EvidenceCapture: React.FC = () => {
           {/* Cancel Button */}
           <button
             onClick={goBack}
-            className="absolute top-4 left-4 z-10 p-2 bg-black/50 backdrop-blur rounded-full text-white"
+            className="absolute top-4 left-4 z-10 p-3 min-w-[44px] min-h-[44px] bg-black/50 backdrop-blur rounded-full text-white"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
+
+          {/* FIELD UX: Offline safety indicator */}
+          <div className="absolute top-4 right-4 z-10">
+            <OfflineIndicator variant="compact" />
+          </div>
 
           {/* Video Feed */}
           <div className="flex-1 relative overflow-hidden">
