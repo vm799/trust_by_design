@@ -1,12 +1,13 @@
 /**
  * Developer Reset Utility
  *
- * Clears ALL 5 persistence layers for testing/development:
+ * Clears ALL 6 persistence layers for testing/development:
  * 1. Service Worker cache
  * 2. IndexedDB (Dexie database)
  * 3. LocalStorage
  * 4. SessionStorage
  * 5. Supabase auth session
+ * 6. Cookies (auth tokens)
  *
  * This is the "nuclear option" for developers - NOT shipped to production users
  * in normal flows. Access via:
@@ -35,32 +36,14 @@ export const BUILD_INFO = {
 };
 
 /**
- * LocalStorage keys used by JobProof
- * Centralized list for complete cleanup
+ * Prefixes for localStorage keys that should be cleared
  */
-const LOCALSTORAGE_KEYS = [
-  // User/auth state
-  'jobproof_user_v2',
-  'jobproof_onboarding_v4',
-  // Sync queues
-  'jobproof_sync_queue',
-  'jobproof_failed_sync_queue',
-  // Database versioning
-  'jobproof_db_version',
-  // Request cache
-  'jobproof_request_cache',
-  // Form drafts (backup to IndexedDB)
-  'jobproof_draft_job',
-  'jobproof_draft_client',
-  'jobproof_draft_technician',
-  // Feature flags
-  'jobproof_dev_mode',
-  'jobproof_debug_enabled',
-  // Notification permissions
-  'jobproof_notification_dismissed',
-  // Tour state
-  'jobproof_tour_complete',
-  // Any other jobproof prefixed keys
+const STORAGE_PREFIXES = [
+  'jobproof_',
+  'supabase.',
+  'sb-',  // Supabase auth tokens
+  'bunker_',
+  'infobox_dismissed_',
 ];
 
 /**
@@ -71,31 +54,37 @@ export async function clearServiceWorker(): Promise<boolean> {
   console.log('[DevReset] Clearing service worker...');
 
   try {
-    // Send message to SW to clear its caches
+    // Clear Cache API FIRST (before unregistering SW)
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      console.log('[DevReset] Found caches:', cacheNames);
+      await Promise.all(
+        cacheNames.map(async (name) => {
+          console.log('[DevReset] Deleting cache:', name);
+          await caches.delete(name);
+        })
+      );
+    }
+
+    // Send message to SW to clear its internal state
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
         type: 'CLEAR_ALL_DATA',
       });
-      // Wait a moment for SW to process
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for SW to process
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     // Unregister all service workers
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        console.log('[DevReset] Unregistering SW:', registration.scope);
-        await registration.unregister();
-      }
-    }
-
-    // Clear Cache API directly (backup)
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      for (const name of cacheNames) {
-        console.log('[DevReset] Deleting cache:', name);
-        await caches.delete(name);
-      }
+      console.log('[DevReset] Found SW registrations:', registrations.length);
+      await Promise.all(
+        registrations.map(async (registration) => {
+          console.log('[DevReset] Unregistering SW:', registration.scope);
+          await registration.unregister();
+        })
+      );
     }
 
     console.log('[DevReset] Service worker cleared');
@@ -126,23 +115,36 @@ export async function clearIndexedDB(): Promise<boolean> {
     // Get all databases and delete them
     if (indexedDB.databases) {
       const databases = await indexedDB.databases();
+      console.log('[DevReset] Found IndexedDB databases:', databases.map(d => d.name));
+
       for (const dbInfo of databases) {
         if (dbInfo.name) {
           console.log('[DevReset] Deleting IndexedDB:', dbInfo.name);
-          await new Promise<void>((resolve, reject) => {
+          await new Promise<void>((resolve) => {
             const request = indexedDB.deleteDatabase(dbInfo.name!);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+              console.log('[DevReset] Deleted:', dbInfo.name);
+              resolve();
+            };
+            request.onerror = () => {
+              console.warn('[DevReset] Error deleting:', dbInfo.name);
+              resolve();
+            };
             request.onblocked = () => {
-              console.warn('[DevReset] Database delete blocked:', dbInfo.name);
-              resolve(); // Continue anyway
+              console.warn('[DevReset] Blocked deleting:', dbInfo.name);
+              resolve();
             };
           });
         }
       }
     } else {
       // Fallback: delete known database names
-      const knownDatabases = ['JobProofOfflineDB', 'keyval-store'];
+      const knownDatabases = [
+        'JobProofOfflineDB',
+        'keyval-store',
+        'localforage',
+        'firebaseLocalStorageDb',
+      ];
       for (const name of knownDatabases) {
         await new Promise<void>((resolve) => {
           const request = indexedDB.deleteDatabase(name);
@@ -162,30 +164,40 @@ export async function clearIndexedDB(): Promise<boolean> {
 }
 
 /**
- * Clear all localStorage
- * Removes all jobproof keys + any unknown keys for complete reset
+ * Clear all localStorage - NUCLEAR version
+ * Clears EVERYTHING, no exceptions
  */
 export function clearLocalStorage(allKeys = false): boolean {
   console.log('[DevReset] Clearing localStorage...');
 
   try {
+    const keysBefore = Object.keys(localStorage);
+    console.log('[DevReset] localStorage keys before:', keysBefore);
+
     if (allKeys) {
       // Nuclear: clear everything
       localStorage.clear();
+      console.log('[DevReset] localStorage.clear() called');
     } else {
-      // Targeted: only jobproof keys
-      for (const key of LOCALSTORAGE_KEYS) {
-        localStorage.removeItem(key);
-      }
-      // Also remove any keys that start with 'jobproof_'
-      const allLocalStorageKeys = Object.keys(localStorage);
-      for (const key of allLocalStorageKeys) {
-        if (key.startsWith('jobproof_') || key.startsWith('supabase.')) {
-          localStorage.removeItem(key);
+      // Targeted: only app-related keys
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const shouldRemove = STORAGE_PREFIXES.some(prefix => key.startsWith(prefix));
+          if (shouldRemove) {
+            keysToRemove.push(key);
+          }
         }
       }
+      keysToRemove.forEach(key => {
+        console.log('[DevReset] Removing:', key);
+        localStorage.removeItem(key);
+      });
     }
 
+    const keysAfter = Object.keys(localStorage);
+    console.log('[DevReset] localStorage keys after:', keysAfter);
     console.log('[DevReset] localStorage cleared');
     return true;
   } catch (error) {
@@ -201,11 +213,39 @@ export function clearSessionStorage(): boolean {
   console.log('[DevReset] Clearing sessionStorage...');
 
   try {
+    const keysBefore = Object.keys(sessionStorage);
+    console.log('[DevReset] sessionStorage keys before:', keysBefore);
     sessionStorage.clear();
     console.log('[DevReset] sessionStorage cleared');
     return true;
   } catch (error) {
     console.error('[DevReset] Failed to clear sessionStorage:', error);
+    return false;
+  }
+}
+
+/**
+ * Clear all cookies
+ */
+export function clearCookies(): boolean {
+  console.log('[DevReset] Clearing cookies...');
+
+  try {
+    const cookies = document.cookie.split(';');
+    console.log('[DevReset] Found cookies:', cookies.length);
+
+    for (const cookie of cookies) {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      // Clear for current path and root
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`;
+    }
+
+    console.log('[DevReset] Cookies cleared');
+    return true;
+  } catch (error) {
+    console.error('[DevReset] Failed to clear cookies:', error);
     return false;
   }
 }
@@ -220,8 +260,19 @@ export async function clearSupabaseSession(): Promise<boolean> {
   try {
     const supabase = getSupabase();
     if (supabase) {
-      await supabase.auth.signOut({ scope: 'local' });
+      // Sign out globally (clears all sessions)
+      await supabase.auth.signOut({ scope: 'global' });
     }
+
+    // Also manually clear any Supabase localStorage keys that might remain
+    const supabaseKeys = Object.keys(localStorage).filter(
+      key => key.startsWith('sb-') || key.startsWith('supabase.')
+    );
+    supabaseKeys.forEach(key => {
+      console.log('[DevReset] Removing Supabase key:', key);
+      localStorage.removeItem(key);
+    });
+
     console.log('[DevReset] Supabase session cleared');
     return true;
   } catch (error) {
@@ -240,13 +291,14 @@ export interface DevResetResult {
     indexedDB: boolean;
     localStorage: boolean;
     sessionStorage: boolean;
+    cookies: boolean;
     supabaseSession: boolean;
   };
   errors: string[];
 }
 
 /**
- * NUCLEAR RESET: Clear ALL 5 persistence layers
+ * NUCLEAR RESET: Clear ALL 6 persistence layers
  *
  * This is the complete developer reset. After calling this:
  * 1. User will be logged out
@@ -262,25 +314,34 @@ export async function developerReset(autoReload = true): Promise<DevResetResult>
   console.log('[DevReset] INITIATING NUCLEAR RESET');
   console.log('[DevReset] Build:', BUILD_INFO.commit);
   console.log('[DevReset] Schema:', BUILD_INFO.schemaVersion);
+  console.log('[DevReset] Time:', new Date().toISOString());
   console.log('='.repeat(60));
 
   const errors: string[] = [];
 
-  // Clear all 5 layers in order
+  // Clear Supabase session FIRST (before clearing storage it uses)
+  const supabaseResult = await clearSupabaseSession();
+  if (!supabaseResult) errors.push('Supabase session clear failed');
+
+  // Clear service workers and caches
   const serviceWorkerResult = await clearServiceWorker();
   if (!serviceWorkerResult) errors.push('Service Worker clear failed');
 
+  // Clear IndexedDB
   const indexedDBResult = await clearIndexedDB();
   if (!indexedDBResult) errors.push('IndexedDB clear failed');
 
+  // Clear localStorage (NUCLEAR - everything)
   const localStorageResult = clearLocalStorage(true);
   if (!localStorageResult) errors.push('localStorage clear failed');
 
+  // Clear sessionStorage
   const sessionStorageResult = clearSessionStorage();
   if (!sessionStorageResult) errors.push('sessionStorage clear failed');
 
-  const supabaseResult = await clearSupabaseSession();
-  if (!supabaseResult) errors.push('Supabase session clear failed');
+  // Clear cookies
+  const cookiesResult = clearCookies();
+  if (!cookiesResult) errors.push('Cookies clear failed');
 
   const result: DevResetResult = {
     success: errors.length === 0,
@@ -289,6 +350,7 @@ export async function developerReset(autoReload = true): Promise<DevResetResult>
       indexedDB: indexedDBResult,
       localStorage: localStorageResult,
       sessionStorage: sessionStorageResult,
+      cookies: cookiesResult,
       supabaseSession: supabaseResult,
     },
     errors,
@@ -299,15 +361,65 @@ export async function developerReset(autoReload = true): Promise<DevResetResult>
 
   // Auto-reload to apply changes
   if (autoReload) {
-    console.log('[DevReset] Reloading page in 1 second...');
+    console.log('[DevReset] Hard reload in 500ms...');
     setTimeout(() => {
-      // Use location.href = location.origin to ensure clean reload
-      // This bypasses any hash routing state
-      window.location.href = window.location.origin + window.location.pathname;
-    }, 1000);
+      // Force a cache-busting hard reload
+      // Adding timestamp ensures browser doesn't use disk cache
+      const url = new URL(window.location.origin + window.location.pathname);
+      url.searchParams.set('_reset', Date.now().toString());
+      window.location.replace(url.toString());
+    }, 500);
   }
 
   return result;
+}
+
+/**
+ * Get a diagnostic report of current storage state
+ * Useful for debugging what's persisting
+ */
+export async function getStorageDiagnostics(): Promise<{
+  localStorage: { count: number; keys: string[] };
+  sessionStorage: { count: number; keys: string[] };
+  indexedDB: { count: number; databases: string[] };
+  caches: { count: number; names: string[] };
+  serviceWorker: { active: boolean; scope?: string };
+  cookies: { count: number };
+}> {
+  const localStorageKeys = Object.keys(localStorage);
+  const sessionStorageKeys = Object.keys(sessionStorage);
+
+  let indexedDBDatabases: string[] = [];
+  if (indexedDB.databases) {
+    const dbs = await indexedDB.databases();
+    indexedDBDatabases = dbs.map(db => db.name || 'unknown');
+  }
+
+  let cacheNames: string[] = [];
+  if ('caches' in window) {
+    cacheNames = await caches.keys();
+  }
+
+  let swActive = false;
+  let swScope: string | undefined;
+  if ('serviceWorker' in navigator) {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg?.active) {
+      swActive = true;
+      swScope = reg.scope;
+    }
+  }
+
+  const cookieCount = document.cookie.split(';').filter(c => c.trim()).length;
+
+  return {
+    localStorage: { count: localStorageKeys.length, keys: localStorageKeys },
+    sessionStorage: { count: sessionStorageKeys.length, keys: sessionStorageKeys },
+    indexedDB: { count: indexedDBDatabases.length, databases: indexedDBDatabases },
+    caches: { count: cacheNames.length, names: cacheNames },
+    serviceWorker: { active: swActive, scope: swScope },
+    cookies: { count: cookieCount },
+  };
 }
 
 /**

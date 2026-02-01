@@ -16,8 +16,10 @@ import {
   clearIndexedDB,
   clearLocalStorage,
   clearSessionStorage,
+  clearCookies,
   clearSupabaseSession,
   getBuildInfo,
+  getStorageDiagnostics,
   isDevMode,
   enableDevMode,
   disableDevMode,
@@ -96,11 +98,22 @@ const DevReset: React.FC = () => {
       details: sessionStorageKeys.length > 0 ? sessionStorageKeys : undefined,
     });
 
-    // 6. Supabase Auth
-    const supabaseAuthKey = localStorage.getItem('supabase.auth.token');
+    // 6. Cookies
+    const cookies = document.cookie.split(';').filter(c => c.trim());
+    stats.push({
+      name: 'Cookies',
+      items: `${cookies.length} cookies`,
+      details: cookies.length > 0 ? cookies.map(c => c.trim().split('=')[0]) : undefined,
+    });
+
+    // 7. Supabase Auth
+    const supabaseKeys = Object.keys(localStorage).filter(
+      k => k.startsWith('sb-') || k.startsWith('supabase.')
+    );
     stats.push({
       name: 'Supabase Session',
-      items: supabaseAuthKey ? 'Active' : 'None',
+      items: supabaseKeys.length > 0 ? 'Active' : 'None',
+      details: supabaseKeys.length > 0 ? supabaseKeys : undefined,
     });
 
     setLayers(stats);
@@ -141,6 +154,9 @@ const DevReset: React.FC = () => {
       case 'SessionStorage':
         clearSessionStorage();
         break;
+      case 'Cookies':
+        clearCookies();
+        break;
       case 'Supabase Session':
         await clearSupabaseSession();
         break;
@@ -148,6 +164,15 @@ const DevReset: React.FC = () => {
 
     setIsResetting(false);
     await gatherLayerStats();
+  };
+
+  const handleShowDiagnostics = async () => {
+    const diag = await getStorageDiagnostics();
+    console.log('='.repeat(60));
+    console.log('[DevReset] Storage Diagnostics:');
+    console.log(JSON.stringify(diag, null, 2));
+    console.log('='.repeat(60));
+    alert(`Storage Diagnostics logged to console.\n\nSummary:\n- localStorage: ${diag.localStorage.count} keys\n- sessionStorage: ${diag.sessionStorage.count} keys\n- IndexedDB: ${diag.indexedDB.count} databases\n- Caches: ${diag.caches.count} caches\n- Service Worker: ${diag.serviceWorker.active ? 'Active' : 'Inactive'}\n- Cookies: ${diag.cookies.count}`);
   };
 
   const toggleDevMode = () => {
@@ -323,6 +348,13 @@ const DevReset: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={handleShowDiagnostics}
+            className="px-6 py-3 bg-blue-800 hover:bg-blue-700 rounded-xl font-medium transition-colors"
+          >
+            Diagnostics
+          </button>
+          <button
+            type="button"
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium transition-colors"
           >
@@ -350,6 +382,9 @@ const DevReset: React.FC = () => {
               </li>
               <li>
                 <strong>LocalStorage</strong> - User profile, sync queues. Survives incognito (sometimes).
+              </li>
+              <li>
+                <strong>Cookies</strong> - Auth tokens, session identifiers.
               </li>
               <li>
                 <strong>Supabase Session</strong> - Auth tokens. Auto-refreshes.
