@@ -42,6 +42,7 @@ const EvidenceCapture: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [saveConfirmation, setSaveConfirmation] = useState(false);
 
   // Draft key for photo persistence (survives app crash)
   const draftKey = `photo_draft_${jobId}`;
@@ -190,10 +191,15 @@ const EvidenceCapture: React.FC = () => {
         // Non-critical - draft will be orphaned but not cause issues
       }
 
-      // Go back to job detail
-      navigate(`/tech/job/${job.id}`);
+      // Show "Saved to device" confirmation (Sprint 1 Task 1.2)
+      // CRITICAL: Technician needs certainty that photo is safe
+      setSaveConfirmation(true);
+
+      // Wait 1.5s so user sees confirmation, then navigate
+      setTimeout(() => {
+        navigate(`/tech/job/${job.id}`);
+      }, 1500);
     } catch (error) {
-      console.error('Failed to save photo:', error);
       setError('Failed to save photo. Please try again.');
     } finally {
       setSaving(false);
@@ -228,6 +234,18 @@ const EvidenceCapture: React.FC = () => {
     <div className="min-h-screen bg-black flex flex-col">
       {/* Offline status indicator */}
       <OfflineIndicator />
+
+      {/* Save Confirmation Toast (Sprint 1 Task 1.2) */}
+      {/* CRITICAL: Technician needs visual certainty that photo is safe */}
+      {saveConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-emerald-500 text-white px-8 py-6 rounded-2xl flex flex-col items-center gap-3 shadow-2xl shadow-emerald-500/30 animate-scale-in">
+            <span className="material-symbols-outlined text-5xl">check_circle</span>
+            <span className="font-black text-lg uppercase tracking-wider">Saved to Device</span>
+            <span className="text-sm text-emerald-100">Photo stored safely</span>
+          </div>
+        </div>
+      )}
 
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
