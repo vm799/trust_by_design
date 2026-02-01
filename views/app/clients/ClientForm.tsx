@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
-import { useWorkspaceData } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Client } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import { showToast } from '../../../lib/microInteractions';
@@ -36,8 +36,8 @@ const ClientForm: React.FC = () => {
   const isEdit = Boolean(id);
   const returnTo = searchParams.get('returnTo');
 
-  // Use centralized DataContext via hook (REMEDIATION ITEM 1)
-  const { clients, createClient, updateClient } = useWorkspaceData();
+  // Use centralized DataContext (FIELD UX FIX: replaces deprecated useWorkspaceData)
+  const { clients, addClient, updateClient } = useData();
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -154,8 +154,13 @@ const ClientForm: React.FC = () => {
           throw new Error('Client not found');
         }
       } else {
-        // Create new client via DataContext (generates ID automatically)
-        const newClient = createClient(clientData);
+        // Create new client via DataContext (FIELD UX FIX: generate ID, use addClient)
+        const newClientId = `client_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        const newClient: Client = {
+          id: newClientId,
+          ...clientData,
+        };
+        addClient(newClient);
 
         // Clear draft after successful creation
         clearDraft();

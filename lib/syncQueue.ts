@@ -18,10 +18,11 @@ interface SyncQueueItem {
   lastAttempt: number;
 }
 
-// FIELD-OPTIMIZED: Extended retry window for spotty connectivity
-// Total window: 2s + 5s + 15s + 30s + 60s + 120s + 180s + 300s = 712s (~12 minutes)
-export const RETRY_DELAYS = [2000, 5000, 15000, 30000, 60000, 120000, 180000, 300000];
-const MAX_RETRIES = 8;
+// FIELD UX FIX: Reduced retry window with faster early feedback
+// Total window: 2s + 4s + 8s + 15s + 30s + 60s + 60s = 179s (~3 minutes)
+// Users need feedback within 3 minutes, not 12 minutes
+export const RETRY_DELAYS = [2000, 4000, 8000, 15000, 30000, 60000, 60000];
+const MAX_RETRIES = 7;
 
 /**
  * Sync a complete job to Supabase

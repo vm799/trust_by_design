@@ -13,6 +13,7 @@ import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HandshakeService, type PausedJobContext } from '../lib/handshakeService';
+import ConfirmDialog from './ui/ConfirmDialog';
 
 interface JobSwitcherProps {
   currentJobId?: string;
@@ -30,6 +31,8 @@ export const JobSwitcher = memo(function JobSwitcher({
   const [isOpen, setIsOpen] = useState(false);
   const [pausedJobs, setPausedJobs] = useState<PausedJobContext[]>([]);
   const [hasLockedJob, setHasLockedJob] = useState(false);
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
+  const [pendingResumeJobId, setPendingResumeJobId] = useState<string | null>(null);
 
   // Load paused jobs and check current lock status
   useEffect(() => {
@@ -60,7 +63,9 @@ export const JobSwitcher = memo(function JobSwitcher({
       if (onPauseRequest) {
         onPauseRequest();
       } else {
-        alert('Please pause your current job before switching.');
+        // FIELD UX FIX: Use ConfirmDialog instead of browser alert()
+        setPendingResumeJobId(jobId);
+        setShowPauseDialog(true);
       }
       return;
     }
@@ -71,6 +76,15 @@ export const JobSwitcher = memo(function JobSwitcher({
       setIsOpen(false);
       navigate(`/run/${jobId}`);
     }
+  };
+
+  const handlePauseConfirm = () => {
+    // User confirmed they want to pause current job
+    // The parent component should handle the actual pause logic
+    setShowPauseDialog(false);
+    setPendingResumeJobId(null);
+    // For now, just close drawer - parent needs to implement pause flow
+    setIsOpen(false);
   };
 
   const formatPauseReason = (reason?: PausedJobContext['pauseReason']) => {
@@ -261,6 +275,21 @@ export const JobSwitcher = memo(function JobSwitcher({
           </>
         )}
       </AnimatePresence>
+
+      {/* FIELD UX FIX: Confirm dialog for job switching */}
+      <ConfirmDialog
+        isOpen={showPauseDialog}
+        onClose={() => {
+          setShowPauseDialog(false);
+          setPendingResumeJobId(null);
+        }}
+        onConfirm={handlePauseConfirm}
+        title="Pause Current Job?"
+        message="You need to pause your current job before switching to another. Would you like to go back and pause it?"
+        confirmLabel="Go Back"
+        cancelLabel="Cancel"
+        variant="warning"
+      />
     </>
   );
 });

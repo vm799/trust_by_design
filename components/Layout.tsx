@@ -65,7 +65,16 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold truncate text-white">{user?.name || 'User'}</p>
-              <p className="text-[10px] text-slate-300 truncate uppercase font-black tracking-widest">{user?.role || 'Member'}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] text-slate-300 truncate uppercase font-black tracking-widest">
+                  {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
+                </p>
+                {user?.persona && (
+                  <span className="text-[8px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap">
+                    Active
+                  </span>
+                )}
+              </div>
             </div>
           </Link>
         </div>
@@ -99,7 +108,19 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
               <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white font-black">
                 {user?.name?.[0] || 'U'}
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">{user?.name || 'User'}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name || 'User'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase font-bold">
+                    {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
+                  </p>
+                  {user?.persona && (
+                    <span className="text-[8px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full font-bold">
+                      Active
+                    </span>
+                  )}
+                </div>
+              </div>
             </Link>
           </div>
         </div>
