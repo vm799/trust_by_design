@@ -121,4 +121,60 @@ Every screen must declare:
 
 ---
 
+## UX Contract Enforcement Prompt (Agentic Audit)
+
+Use this prompt to audit any branch or PR for UX compliance. Start a Claude session and run this when reviewing changes.
+
+### Context
+- **UX Laws**: Intent Is Sacred, Auth Never Owns Navigation, No Dead Ends
+- **Route Contracts**: See `docs/ux-route-contract.md` for per-route expectations
+- **Offline Rules**: IndexedDB never silently fails, SW caches versioned, retries show status
+- **Dev Escape Hatch**: `/dev/reset` clears all caches, IndexedDB, sessionStorage, Supabase session
+
+### Audit Checklist
+
+**1. Navigation & Intent**
+- [ ] Magic links, email links, deep links resume intended route post-auth
+- [ ] Offline, auth resolution, app restart does not break navigation
+- [ ] `lib/navigationIntent.ts` correctly captures and resumes intent
+
+**2. Route-Level UX**
+- [ ] `/dashboard`: Hierarchy (Attention → Active → Idle), virtualized lists, sync badges
+- [ ] `/job/:id`: Deep-link intent resume, offline drafts, retryable captures, 3-tap evidence
+- [ ] `/report/:jobId`: Offline cached, dark mode, GPS/W3W/timestamp on photos
+- [ ] `/auth/*`: Expired link handling, 44px touch targets, single-use enforced
+- [ ] `/settings`: Read-only offline, synced session, no stale data
+
+**3. Offline Persistence**
+- [ ] IndexedDB: No silent failures, quota warnings shown
+- [ ] Service Worker: Versioned caches, update triggers rebuild
+- [ ] Schema version incremented if persistence changes
+
+**4. Retry & Resilience**
+- [ ] All writes retry with exponential backoff
+- [ ] Errors surfaced to user (no silent console.logs)
+- [ ] Force-sync buttons present where appropriate
+
+**5. Dark Mode & Accessibility**
+- [ ] Cards, modals, headers, buttons respect dark mode
+- [ ] Touch targets >= 44px
+- [ ] Navigation clear and consistent
+
+**6. Technical Debt**
+- [ ] No race conditions or legacy hooks
+- [ ] No duplicated logic or unhandled promise rejections
+- [ ] No dead/legacy code blocks
+
+### Output Format
+
+For each route, report:
+
+| Route | UX Laws | Offline | Retry | A11y | Critical Failures | Warnings | Recommendations |
+|-------|---------|---------|-------|------|-------------------|----------|-----------------|
+| `/dashboard` | ✅/❌ | ✅/❌ | ✅/❌ | ✅/❌ | List | List | List |
+
+**Only routes that pass all P0 critical UX laws are "ready for merge."**
+
+---
+
 *This file contains permanent operating constraints. For playbooks and protocols, see the AGENTIC_*.md files.*
