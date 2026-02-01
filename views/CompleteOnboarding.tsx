@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { getJobs, getClients, getTechnicians } from '../lib/db';
 import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '../lib/onboarding';
 import PersonaCard from '../components/PersonaCard';
 

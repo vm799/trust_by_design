@@ -3,6 +3,7 @@ import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
+import { showPersistentNotification } from '../utils/syncUtils';
 
 /**
  * PULL: Fetch latest jobs from Supabase and update local DB
@@ -146,11 +147,49 @@ async function _pullJobsImpl(workspaceId: string) {
                 await db.jobs.bulkPut(jobsToUpdate);
             }
 
-            // Store conflicts for UI notification
+            // Store conflicts and notify user (Sprint 1 Task 1.4)
             if (conflicts.length > 0) {
+                // Enrich conflicts with timestamp for history
+                const enrichedConflicts = conflicts.map(c => ({
+                    ...c,
+                    resolvedAt: Date.now(),
+                    jobTitle: serverJobs.find(j => j.id === c.jobId)?.title || 'Unknown Job'
+                }));
+
+                // Store in conflict history (last 50)
                 const existingConflicts = JSON.parse(localStorage.getItem('jobproof_sync_conflicts') || '[]');
-                const allConflicts = [...existingConflicts, ...conflicts].slice(-50); // Keep last 50
+                const allConflicts = [...existingConflicts, ...enrichedConflicts].slice(-50);
                 localStorage.setItem('jobproof_sync_conflicts', JSON.stringify(allConflicts));
+
+                // Count by resolution type for user notification
+                const serverWins = conflicts.filter(c => c.resolution === 'server_accepted').length;
+                const localPreserved = conflicts.filter(c => c.resolution === 'local_preserved').length;
+                const merged = conflicts.filter(c => c.resolution === 'merged').length;
+
+                // Build user-friendly message
+                const messages: string[] = [];
+                if (serverWins > 0) {
+                    messages.push(`${serverWins} job(s) updated from cloud (sealed/newer)`);
+                }
+                if (localPreserved > 0) {
+                    messages.push(`${localPreserved} local change(s) preserved`);
+                }
+                if (merged > 0) {
+                    messages.push(`${merged} job(s) merged`);
+                }
+
+                // Show notification to user
+                showPersistentNotification({
+                    type: serverWins > 0 ? 'warning' : 'info',
+                    title: 'Sync Conflicts Resolved',
+                    message: `${conflicts.length} conflict(s) detected during sync. ${messages.join('. ')}.`,
+                    persistent: false,  // Auto-dismiss after 10s
+                    actionLabel: 'View History',
+                    onAction: () => {
+                        console.log('[Conflict History] User requested conflict history:', allConflicts);
+                        // Future: Navigate to conflict history UI
+                    }
+                });
             }
 
             console.log(`[Sync] Pulled ${serverJobs.length} jobs, updated ${jobsToUpdate.length}, conflicts: ${conflicts.length}`);

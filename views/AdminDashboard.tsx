@@ -23,6 +23,12 @@ import { retryFailedSyncs } from '../lib/syncQueue';
 import { useAuth } from '../lib/AuthContext';
 import { useData } from '../lib/DataContext';
 import { getLinksNeedingAttention, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
+import {
+  JOB_STATUS,
+  SYNC_STATUS,
+  TECHNICIAN_STATUS,
+  canTechnicianAcceptJobs,
+} from '../lib/constants';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -42,7 +48,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onCloseOnboarding
 }) => {
   const navigate = useNavigate();
-  const { updateJob, deleteJob } = useData();
+  const { updateJob, deleteJob, refresh } = useData();
 
   // Loading state with 300ms delay
   const [isLoading, setIsLoading] = useState(true);
@@ -56,9 +62,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   // Job categorization
-  const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
-  const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted'), [jobs]);
-  const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const activeJobs = useMemo(() => jobs.filter(j => j.status !== JOB_STATUS.SUBMITTED), [jobs]);
+  const sealedJobs = useMemo(() => jobs.filter(j => j.status === JOB_STATUS.SUBMITTED), [jobs]);
+  const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === SYNC_STATUS.FAILED), [jobs]);
   const syncIssues = failedJobs.length;
 
   // Manual sync state
@@ -94,8 +100,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return technicians.map(tech => {
       // Jobs assigned to this tech
       const techJobs = activeJobs.filter(j => j.techId === tech.id);
-      const currentJob = techJobs.find(j => j.status === 'In Progress');
-      const pendingJobs = techJobs.filter(j => j.status !== 'In Progress');
+      const currentJob = techJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
+      const pendingJobs = techJobs.filter(j => j.status !== JOB_STATUS.IN_PROGRESS);
 
       // Calculate time since last activity
       const lastActivity = techJobs.reduce((latest, job) => {
@@ -113,7 +119,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }> = [];
 
       // Idle too long (no jobs, available status)
-      if (techJobs.length === 0 && (tech.status === 'Available' || tech.status === 'Authorised')) {
+      if (techJobs.length === 0 && canTechnicianAcceptJobs(tech.status as typeof TECHNICIAN_STATUS[keyof typeof TECHNICIAN_STATUS])) {
         attentionFlags.push({ type: 'idle', label: 'Idle - No jobs', severity: 'warning' });
       }
 
@@ -129,7 +135,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
 
       // Sync failed
-      const hasSyncFailed = techJobs.some(j => j.syncStatus === 'failed');
+      const hasSyncFailed = techJobs.some(j => j.syncStatus === SYNC_STATUS.FAILED);
       if (hasSyncFailed) {
         attentionFlags.push({ type: 'sync_failed', label: 'Sync failed', severity: 'danger' });
       }
@@ -143,13 +149,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         operationalStatus = 'in_field';
         statusLabel = 'In Field';
         statusColor = 'text-primary';
-      } else if (tech.status === 'Available' || tech.status === 'Authorised') {
+      } else if (canTechnicianAcceptJobs(tech.status as typeof TECHNICIAN_STATUS[keyof typeof TECHNICIAN_STATUS])) {
         operationalStatus = 'available';
-        statusLabel = 'Available';
+        statusLabel = TECHNICIAN_STATUS.AVAILABLE;
         statusColor = 'text-success';
       } else {
         operationalStatus = 'off_duty';
-        statusLabel = 'Off Duty';
+        statusLabel = TECHNICIAN_STATUS.OFF_DUTY;
         statusColor = 'text-slate-400';
       }
 
@@ -186,15 +192,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await retryFailedSyncs();
       setSyncMessage('Sync completed. Check job status for results.');
       setTimeout(() => setSyncMessage(null), 5000);
-      window.location.reload();
+      await refresh(); // Use DataContext refresh instead of page reload
     } catch (error) {
-      console.error('Manual sync failed:', error);
       setSyncMessage('Sync failed. Please check your connection.');
       setTimeout(() => setSyncMessage(null), 5000);
     } finally {
       setIsSyncing(false);
     }
-  }, [isSyncing]);
+  }, [isSyncing, refresh]);
 
   // Show skeleton while loading
   if (isLoading) {
@@ -216,7 +221,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Offline Indicator */}
         <OfflineIndicator
           syncStatus={{
-            pending: jobs.filter(j => j.syncStatus === 'pending').length,
+            pending: jobs.filter(j => j.syncStatus === SYNC_STATUS.PENDING).length,
             failed: syncIssues
           }}
         />
@@ -231,18 +236,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Attention alert */}
-            {(techsNeedingAttention > 0 || linksNeedingAttention.length > 0) && (
-              <button
-                onClick={() => setShowActionCenter(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-danger/20 hover:bg-danger/30 border border-danger/40 rounded-xl transition-all"
-              >
-                <span className="material-symbols-outlined text-danger text-lg animate-pulse">warning</span>
-                <span className="text-danger font-bold text-sm">
-                  {techsNeedingAttention + linksNeedingAttention.length}
-                </span>
-              </button>
-            )}
+            {/* Sprint 3 Task 3.2: Removed duplicate attention button - now inline below */}
             {/* New Job button */}
             <button
               onClick={() => navigate('/admin/create')}
@@ -281,37 +275,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* Quick metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Sprint 3 Task 3.1: Simplified metrics - only actionable info */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Attention Needed - Primary actionable metric */}
           <MetricCard
-            label="In Field"
-            value={technicianRows.filter(t => t.operationalStatus === 'in_field').length.toString()}
-            icon="person_pin"
+            label="Attention Needed"
+            value={(techsNeedingAttention + linksNeedingAttention.length).toString()}
+            icon="warning"
+            color={techsNeedingAttention + linksNeedingAttention.length > 0 ? 'text-danger' : 'text-success'}
+            onClick={() => setShowActionCenter(true)}
+          />
+          {/* Team Status - Consolidated view */}
+          <MetricCard
+            label="Team Status"
+            value={`${technicianRows.filter(t => t.operationalStatus === 'in_field').length} / ${technicians.length}`}
+            icon="groups"
             color="text-primary"
-            onClick={() => {}}
-          />
-          <MetricCard
-            label="Available"
-            value={technicianRows.filter(t => t.operationalStatus === 'available').length.toString()}
-            icon="person"
-            color="text-success"
-            onClick={() => {}}
-          />
-          <MetricCard
-            label="Active Jobs"
-            value={activeJobs.length.toString()}
-            icon="work"
-            color="text-slate-300"
-            onClick={() => navigate('/admin/jobs?filter=active')}
-          />
-          <MetricCard
-            label="Sealed"
-            value={sealedJobs.length.toString()}
-            icon="verified"
-            color="text-emerald-400"
-            onClick={() => navigate('/admin/jobs?filter=sealed')}
+            onClick={() => navigate('/admin/technicians')}
+            subtitle="in field"
           />
         </div>
+
+        {/* Sprint 3 Task 3.2: Inline Attention Section (replaces modal for quick actions) */}
+        {(techsNeedingAttention > 0 || linksNeedingAttention.length > 0) && (
+          <InlineAttentionSection
+            techsNeedingAttention={technicianRows.filter(t => t.hasAttention)}
+            linksNeedingAttention={linksNeedingAttention}
+            jobs={jobs}
+            onViewDetails={() => setShowActionCenter(true)}
+            onDismissLink={(token) => {
+              acknowledgeLinkFlag(token);
+              setLinksNeedingAttention(prev => prev.filter(l => l.token !== token));
+            }}
+          />
+        )}
 
         {/* TECHNICIAN ROWS - Primary View */}
         {technicians.length === 0 ? (
@@ -530,20 +527,140 @@ const TechnicianRow = React.memo(({
 TechnicianRow.displayName = 'TechnicianRow';
 
 /**
+ * Sprint 3 Task 3.2: Inline Attention Section
+ * Shows attention items directly without opening a modal
+ */
+const InlineAttentionSection = React.memo(({
+  techsNeedingAttention,
+  linksNeedingAttention,
+  jobs,
+  onViewDetails,
+  onDismissLink
+}: {
+  // Fix: Match actual technicianRows structure (tech object nested inside)
+  techsNeedingAttention: Array<{
+    tech: { id: string; name: string };
+    attentionFlags: Array<{ label: string; severity: string }>;
+  }>;
+  linksNeedingAttention: Array<{ token: string; job_id: string; sent_at?: string }>;
+  jobs: Job[];
+  onViewDetails: () => void;
+  onDismissLink: (token: string) => void;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  // Create lookup maps for O(1) access
+  const jobsById = useMemo(() => new Map(jobs.map(j => [j.id, j])), [jobs]);
+
+  // Get enriched link data
+  const enrichedLinks = useMemo(() =>
+    linksNeedingAttention.map(link => {
+      const job = jobsById.get(link.job_id);
+      const hoursAgo = link.sent_at
+        ? Math.floor((Date.now() - new Date(link.sent_at).getTime()) / (1000 * 60 * 60))
+        : 0;
+      return { link, job, hoursAgo };
+    }).filter(item => item.job).slice(0, 5), // Show max 5 items
+  [linksNeedingAttention, jobsById]);
+
+  const totalItems = techsNeedingAttention.length + linksNeedingAttention.length;
+
+  return (
+    <div className="bg-danger/10 border border-danger/20 rounded-xl overflow-hidden">
+      {/* Collapsible Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-danger/5 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-danger animate-pulse">warning</span>
+          <span className="text-white font-bold text-sm">{totalItems} item{totalItems !== 1 ? 's' : ''} need attention</span>
+        </div>
+        <span className={`material-symbols-outlined text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+          expand_more
+        </span>
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="border-t border-danger/10">
+          {/* Unopened Links */}
+          {enrichedLinks.length > 0 && (
+            <div className="p-4 space-y-2">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Unopened Links</p>
+              {enrichedLinks.map(({ link, job, hoursAgo }) => (
+                <div key={link.token} className="flex items-center justify-between bg-slate-900/50 px-3 py-2 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{job?.title || 'Unknown Job'}</p>
+                    <p className="text-xs text-slate-400">Sent {hoursAgo}h ago • {job?.technician || 'Unassigned'}</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDismissLink(link.token); }}
+                    className="ml-2 p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded transition-colors"
+                    title="Dismiss"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Technicians Needing Attention (summary) */}
+          {techsNeedingAttention.length > 0 && (
+            <div className="p-4 border-t border-danger/10 space-y-2">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Technician Issues</p>
+              {techsNeedingAttention.slice(0, 3).map(row => (
+                <div key={row.tech.id} className="flex items-center gap-3 bg-slate-900/50 px-3 py-2 rounded-lg">
+                  <div className="size-8 rounded-full bg-slate-800 flex items-center justify-center">
+                    <span className="text-xs font-bold text-slate-300">{row.tech.name.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{row.tech.name}</p>
+                    <p className="text-xs text-warning">{row.attentionFlags[0]?.label || 'Needs attention'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* View All / Actions Footer */}
+          {(linksNeedingAttention.length > 5 || techsNeedingAttention.length > 3) && (
+            <div className="p-4 border-t border-danger/10">
+              <button
+                onClick={onViewDetails}
+                className="w-full py-2 px-4 bg-danger/20 hover:bg-danger/30 text-danger font-bold text-sm rounded-lg transition-colors"
+              >
+                View All {totalItems} Items
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
+InlineAttentionSection.displayName = 'InlineAttentionSection';
+
+/**
  * MetricCard - Compact metric display
+ * Sprint 3 Task 3.1: Added subtitle prop for contextual info
  */
 const MetricCard = React.memo(({
   label,
   value,
   icon,
   color,
-  onClick
+  onClick,
+  subtitle
 }: {
   label: string;
   value: string;
   icon: string;
   color: string;
   onClick: () => void;
+  subtitle?: string;
 }) => (
   <button
     onClick={onClick}
@@ -553,7 +670,10 @@ const MetricCard = React.memo(({
       <span className={`material-symbols-outlined text-sm ${color}`}>{icon}</span>
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
     </div>
-    <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    <div className="flex items-baseline gap-2">
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+    </div>
   </button>
 ));
 

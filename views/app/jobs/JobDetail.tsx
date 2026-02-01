@@ -18,6 +18,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
+import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
 
 const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,10 +54,14 @@ const JobDetail: React.FC = () => {
     job ? clients.find(c => c.id === job.clientId) || null : null,
     [clients, job]
   );
-  const technician = useMemo(() =>
-    job ? technicians.find(t => t.id === job.technicianId || t.id === job.techId) || null : null,
-    [technicians, job]
-  );
+  // Sprint 2 Task 2.6: Use normalized technician ID for consistent lookup
+  const technician = useMemo(() => {
+    if (!job) return null;
+    const resolved = resolveTechnicianId(job);
+    return resolved.assignedTechnicianId
+      ? technicians.find(t => t.id === resolved.assignedTechnicianId) || null
+      : null;
+  }, [technicians, job]);
 
   // Initialize magic link from job data
   useEffect(() => {
@@ -109,11 +114,11 @@ const JobDetail: React.FC = () => {
 
     setAssigning(true);
     try {
-      // Update via DataContext with full job object
+      // Sprint 2 Task 2.6: Use single field - DataContext normalizes to both techId and technicianId
       const updatedJob: Job = {
         ...job,
         technicianId: techId,
-        techId: techId,
+        technician: tech.name, // Update display name too
       };
       contextUpdateJob(updatedJob);
       setShowAssignModal(false);
