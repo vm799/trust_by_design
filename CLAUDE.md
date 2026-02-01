@@ -2,8 +2,96 @@
 **Offline-First Field Service Evidence Platform**
 **Last Updated:** February 2026 | **Status:** ENFORCE ALL RULES | **Tests:** 367+
 
+### Encryption Standards
+
+- **At Rest:** AES-256-GCM for sensitive fields
+- **In Transit:** TLS 1.3 (Supabase default)
+- **Evidence Sealing:** RSA-2048 + SHA-256 signatures
+- **Keys:** In-memory only, NON-EXTRACTABLE
+
 ---
 
+## Absolute Rules (Break = IMMEDIATE REJECT)
+
+```
+1. NO CODE CHANGES WITHOUT TESTS FIRST
+2. SHOW BEFORE/AFTER CONTEXT (20 lines each)
+3. MAXIMUM 1 FILE CHANGED PER FIX
+4. DELETE LEGACY CODE (NEVER COMMENT OUT)
+5. PROVE IT WORKS (test command output REQUIRED)
+6. ONE-CLICK DEPLOY COMMANDS
+7. NO "THIS SHOULD WORK" - ONLY PROOF
+8. JSON OUTPUT FORMAT FOR FIXES
+9. UAT SCRIPT REQUIRED FOR EVERY FIX
+```
+
+---
+
+## Offline-First Mandates
+
+Every form and data operation MUST have:
+
+```
+- Dexie/IndexedDB draft saving (every keystroke)
+- Offline submit queue via lib/syncQueue.ts
+- Network status awareness (navigator.onLine)
+- Optimistic UI updates with status indicators
+- Airplane mode -> app restart -> data survives
+- Form drafts auto-load on screen mount
+```
+
+---
+
+## Mandatory JSON Output Format (For Fixes)
+
+```json
+{
+  "issue": "descriptive_snake_case_name",
+  "rootCause": "exact cause from code analysis",
+  "files": {
+    "before": "file:line - 20 lines context",
+    "after": "file:line - 20 lines context",
+    "changed": ["path/to/file.tsx"]
+  },
+  "tests": {
+    "added": ["tests/unit/newTest.test.ts"],
+    "commands_run": ["npm test -- --run"],
+    "results": "357 tests passed"
+  },
+  "cleanup": {
+    "deleted_files": [],
+    "removed_imports": [],
+    "legacy_code_gone": true
+  },
+  "deploy": {
+    "preview": "vercel deploy",
+    "prod": "vercel --prod"
+  },
+  "uat_script": "1. Open incognito\n2. Navigate to X\n3. Expect Y",
+  "status": "TestsPassed_UATPending",
+  "risk_level": "LOW|MEDIUM|HIGH"
+}
+```
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Daily workflow
+npm run dev              # Start dev server (port 3000)
+npm test                 # Run unit tests (watch mode)
+npm test -- --run        # Run tests once
+npm run lint             # ESLint check
+npm run type-check       # TypeScript validation
+npm run build            # Production build
+
+# Full verification (run before every commit)
+npm test -- --run && npm run lint && npm run type-check && npm run build
+
+# Deployment
+vercel deploy            # Preview deployment
+vercel --prod            # Production deployment
 ## 🎯 CORE MISSION
 
 Build bulletproof **offline-first web app** for field workers in poor service areas.
@@ -63,6 +151,24 @@ import { getJobs, updateJob } from '../hooks/useWorkspaceData';
 const [jobs, setJobs] = useState<Job[]>([]);
 ```
 
+### 2. Authentication - Use AuthContext
+
+```tsx
+// CORRECT
+import { useAuth } from '../lib/AuthContext';
+const { isAuthenticated, userId, session } = useAuth();
+
+// WRONG - Causes excessive API calls (877 req/hr bug)
+const { data } = await supabase.auth.getUser();
+```
+
+### 3. Protected Routes - Use RouteErrorBoundary
+
+```tsx
+// CORRECT
+<RouteErrorBoundary sectionName="Dashboard" fallbackRoute="/home">
+  <Dashboard />
+</RouteErrorBoundary>
 ### Pattern 2: DataContext Function Signatures (CRITICAL)
 
 ```tsx
@@ -136,6 +242,53 @@ import { fadeInUp, hoverLiftQuick } from '../lib/animations';
 
 ---
 
+## File Structure
+
+```
+/home/user/trust_by_design/
+├── components/
+│   ├── ui/                    # Reusable UI (ActionButton, Card, Modal, Tooltip)
+│   ├── layout/                # AppShell, BottomNav, PageHeader, Sidebar
+│   ├── branding/              # Logo & brand assets
+│   ├── ProtectedRoute.tsx     # Auth error boundary wrapper
+│   └── RouteErrorBoundary.tsx # Route-level error boundary
+│
+├── views/                     # Page-level components
+│   ├── app/                   # Admin routes (Dashboard, clients/, jobs/, technicians/)
+│   ├── tech/                  # Technician portal (TechPortal, TechJobDetail, EvidenceCapture)
+│   ├── AuthView.tsx           # Email + magic link auth
+│   ├── AuthCallback.tsx       # Magic link handler
+│   ├── OAuthSetup.tsx         # New user account setup + persona selection
+│   └── LandingPage.tsx        # Public landing
+│
+├── lib/                       # Core business logic
+│   ├── AuthContext.tsx        # Auth state (session memoization)
+│   ├── DataContext.tsx        # Centralized data state
+│   ├── auth.ts                # Supabase auth helpers
+│   ├── supabase.ts            # Supabase client config
+│   ├── db.ts                  # Dexie IndexedDB schema
+│   ├── syncQueue.ts           # Offline sync queue
+│   ├── encryption.ts          # AES-256-GCM encryption
+│   ├── sealing.ts             # RSA-2048 evidence sealing
+│   └── animations.ts          # Shared Framer Motion constants
+│
+├── hooks/                     # Custom React hooks
+│   ├── useJobGuard.ts         # Client-first validation
+│   ├── useAuthFlow.ts         # Auth state machine
+│   └── useWorkspaceData.ts    # Workspace data fetching
+│
+├── tests/
+│   ├── unit/                  # Vitest unit tests
+│   └── e2e/                   # Playwright E2E tests
+│
+├── supabase/
+│   ├── migrations/            # SQL migrations (RLS policies here!)
+│   └── functions/             # Edge Functions (seal-evidence, verify-evidence)
+│
+├── types.ts                   # TypeScript type definitions
+├── App.tsx                    # Root app with lazy routes
+└── vite.config.ts             # Build config with code splitting
+```
 ## 🚫 FORBIDDEN PATTERNS
 
 | Pattern | Why Forbidden | Correct Alternative |
@@ -264,6 +417,27 @@ Draft → Dispatched → In Progress → Complete → Submitted → Sealed → I
 # Preview
 vercel deploy
 
+# Find broken patterns
+grep -r "service_role" components/ views/ lib/ # MUST be 0 (security)
+
+# Production readiness check
+npm test -- --run && npm run lint && npm run type-check && npm run build
+```
+
+---
+
+## Emergency Procedures
+
+### When Tests Fail
+
+```bash
+git stash push -m "work in progress"
+npm test -- --run           # Verify baseline passes
+git stash pop               # Restore changes if baseline passes
+# Fix the specific failing test
+```
+
+### When Build Fails
 # Production
 vercel --prod
 
@@ -279,6 +453,118 @@ VITE_APP_URL=https://jobproof.pro
 
 ### Tests Fail After Changes
 ```bash
+rm -rf node_modules/.cache
+npm ci                      # Clean install
+npm run build               # Retry build
+```
+
+### When Auth Loop Detected
+
+Check `lib/AuthContext.tsx`:
+- Token refresh updates ref, not state
+- Only user ID changes trigger component re-renders
+- Session memoization prevents 877 req/hr bug
+
+### Nuclear Reset
+
+```bash
+git stash push -m "claude broke it"
+rm -rf node_modules/.cache
+npm ci
+npm run build
+# Only pop stash if build passes
+```
+
+---
+
+## PR Checklist
+
+Before merging any PR, verify:
+
+- [ ] `npm test -- --run` passes (all tests green)
+- [ ] `npm run lint` passes (no errors)
+- [ ] `npm run type-check` passes (no type errors)
+- [ ] `npm run build` succeeds
+- [ ] No direct `supabase.auth.getUser()` calls in components
+- [ ] No `useState` for jobs/clients/technicians (use DataContext)
+- [ ] All route components lazy-loaded
+- [ ] All protected routes wrapped with RouteErrorBoundary
+- [ ] No inline animation objects in Framer Motion
+- [ ] No array index as React key
+- [ ] New views added to vite.config.ts manualChunks
+- [ ] Navigation components wrapped with React.memo
+- [ ] Expensive list operations use useMemo
+- [ ] Failed operations have ErrorState with retry
+- [ ] Offline functionality verified (airplane mode test)
+- [ ] No `service_role` keys in frontend code
+
+---
+
+## Environment Variables
+
+```bash
+# Required (.env)
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbG...
+VITE_APP_URL=https://yourapp.vercel.app
+
+# Optional
+VITE_W3W_API_KEY=xxx                    # What3Words
+VITE_GOOGLE_CLIENT_ID=xxx               # Google OAuth
+
+# Supabase Secrets (Server-side only - NEVER in frontend)
+SEAL_PRIVATE_KEY=base64...              # RSA-2048 private key
+SEAL_PUBLIC_KEY=base64...               # RSA-2048 public key
+SUPABASE_SERVICE_ROLE_KEY=xxx           # NEVER expose in src/
+```
+
+---
+
+## Key Type Definitions
+
+```typescript
+// Job status lifecycle
+type JobStatus = 'Pending' | 'In Progress' | 'Complete' | 'Submitted'
+               | 'Archived' | 'Paused' | 'Cancelled' | 'Draft';
+
+// Persona types (user roles)
+type PersonaType = 'solo_contractor' | 'agency_owner' | 'compliance_officer'
+                 | 'safety_manager' | 'site_supervisor';
+
+// Job creation origin
+type JobCreationOrigin = 'manager' | 'technician' | 'self_employed';
+
+// Technician work mode
+type TechnicianWorkMode = 'employed' | 'self_employed';
+```
+
+---
+
+## Claude Behavior Constraints
+
+```
+NEVER ALLOW:
+- "This should fix it" (no proof)
+- Rewrite working code without reason
+- Leave TODO/FIXME comments
+- Suggest multiple approaches (pick ONE)
+- Change core architecture mid-fix
+- More than 1 file per atomic fix
+- Use service_role keys in frontend
+
+MANDATORY:
+- Tests run BEFORE declaring success
+- Before/after context shown (20 lines)
+- Legacy code DELETED (not commented)
+- Deploy commands that work copy/paste
+- UAT script human can execute
+- Risk assessment per fix
+- Use Task tool for exploration (not manual grep)
+```
+
+---
+
+*This document is the source of truth for JobProof development. Every Claude response must obey these rules.*
 git stash push -m "work in progress"
 npm test -- --run    # Verify baseline
 git stash pop        # Restore and fix
