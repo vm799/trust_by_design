@@ -397,13 +397,13 @@ function generateMagicLinkEmailHtml(delivery: MagicLinkDelivery): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 32px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 12px 16px 24px;">
         <tr>
           <td align="center">
             <table width="100%" style="max-width: 560px; background-color: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <!-- Header -->
               <tr>
-                <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 24px; border-radius: 12px 12px 0 0;">
+                <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 16px 20px; border-radius: 12px 12px 0 0;">
                   <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
                     New Job Assignment
                   </h1>
