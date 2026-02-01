@@ -1,406 +1,438 @@
 /**
- * Dashboard - Attention-First Manager Dashboard
+ * Dashboard - Risk-Radar Field-First Dashboard
  *
- * The main dashboard for managers, prioritizing items that need attention.
+ * A body-cam-style dashboard focused on evidence defensibility.
+ * Jobs are risk containers. The app is a silent witness.
  *
- * Phase C: Dashboard Redesign
+ * Three states only:
+ * 1. Needs Proof (red) - Missing evidence, financial/legal risk
+ * 2. In Progress (amber) - Active work, time risk
+ * 3. Defensible (green) - Has minimum evidence, protected
+ *
+ * Design principles:
+ * - One primary action: "Continue Current Job"
+ * - Jobs sorted by risk, not date
+ * - Shield indicator for defensibility (silent, binary)
+ * - Zero cognitive load, zero training required
+ * - Field-first, not manager-first
  */
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { PageHeader, PageContent } from '../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
-import { useWorkspaceData } from '../../hooks/useWorkspaceData';
+import { motion } from 'framer-motion';
+import { PageContent } from '../../components/layout';
+import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
+import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
+import { staggerContainer, fadeInUp } from '../../lib/animations';
+import type { Job } from '../../types';
 
-interface QuickStat {
-  label: string;
-  value: number;
-  icon: string;
-  color: string;
-  link: string;
-  trend?: { value: number; isUp: boolean };
+// ============================================================================
+// DEFENSIBILITY LOGIC
+// ============================================================================
+
+type RiskLevel = 'needs_proof' | 'in_progress' | 'defensible';
+
+interface JobRisk {
+  job: Job;
+  level: RiskLevel;
+  issues: string[];
+  isDefensible: boolean;
 }
 
-interface AttentionItem {
-  id: string;
-  type: 'dispatch' | 'seal' | 'invoice' | 'overdue';
-  title: string;
-  subtitle: string;
-  action: { label: string; to: string };
-  urgency: 'high' | 'medium' | 'low';
+/**
+ * Calculate if a job has minimum evidence for defensibility.
+ *
+ * Minimum evidence requirements:
+ * - At least 1 photo
+ * - Signature captured
+ * - Signer name provided
+ *
+ * This is NOT the same as seal-ready (which requires Submitted status).
+ * A job can be defensible while still in progress.
+ */
+const calculateJobRisk = (job: Job): JobRisk => {
+  const issues: string[] = [];
+
+  // Check photos
+  const hasPhotos = job.photos && job.photos.length > 0;
+  if (!hasPhotos) {
+    issues.push('No photos');
+  }
+
+  // Check signature
+  const hasSignature = !!job.signature;
+  if (!hasSignature) {
+    issues.push('No signature');
+  }
+
+  // Check signer name
+  const hasSignerName = !!job.signerName && job.signerName.trim() !== '';
+  if (!hasSignerName && hasSignature) {
+    issues.push('Missing signer name');
+  }
+
+  // Determine risk level
+  const isDefensible = hasPhotos && hasSignature && hasSignerName;
+
+  // Already sealed = fully defensible
+  if (job.sealedAt) {
+    return {
+      job,
+      level: 'defensible',
+      issues: [],
+      isDefensible: true,
+    };
+  }
+
+  // In progress with some evidence
+  if (job.status === 'In Progress') {
+    return {
+      job,
+      level: isDefensible ? 'defensible' : 'in_progress',
+      issues,
+      isDefensible,
+    };
+  }
+
+  // Complete or Submitted with full evidence
+  if ((job.status === 'Complete' || job.status === 'Submitted') && isDefensible) {
+    return {
+      job,
+      level: 'defensible',
+      issues: [],
+      isDefensible: true,
+    };
+  }
+
+  // Any job missing evidence
+  if (!isDefensible) {
+    return {
+      job,
+      level: 'needs_proof',
+      issues,
+      isDefensible: false,
+    };
+  }
+
+  return {
+    job,
+    level: 'defensible',
+    issues: [],
+    isDefensible: true,
+  };
+};
+
+/**
+ * Sort jobs by risk level (highest risk first)
+ * Within each level, sort by date (most recent first)
+ */
+const sortByRisk = (jobs: JobRisk[]): JobRisk[] => {
+  const riskOrder: Record<RiskLevel, number> = {
+    needs_proof: 0,
+    in_progress: 1,
+    defensible: 2,
+  };
+
+  return [...jobs].sort((a, b) => {
+    // First sort by risk level
+    const riskDiff = riskOrder[a.level] - riskOrder[b.level];
+    if (riskDiff !== 0) return riskDiff;
+
+    // Then by date (most recent first)
+    return new Date(b.job.date).getTime() - new Date(a.job.date).getTime();
+  });
+};
+
+// ============================================================================
+// SHIELD COMPONENT
+// ============================================================================
+
+interface ShieldProps {
+  isDefensible: boolean;
+  size?: 'sm' | 'md';
 }
+
+/**
+ * Silent shield indicator.
+ * Green = defensible (minimum evidence present)
+ * Grey = needs proof (financial/legal risk)
+ *
+ * No legal language. No explanation needed.
+ * Field workers feel protection, not compliance burden.
+ */
+const Shield: React.FC<ShieldProps> = ({ isDefensible, size = 'sm' }) => {
+  const sizeClasses = size === 'md' ? 'size-8 text-xl' : 'size-6 text-base';
+
+  return (
+    <div
+      className={`
+        ${sizeClasses} rounded-full flex items-center justify-center flex-shrink-0
+        ${isDefensible
+          ? 'bg-emerald-500/20 text-emerald-400'
+          : 'bg-slate-700/50 text-slate-500'
+        }
+      `}
+      aria-label={isDefensible ? 'Protected' : 'Needs proof'}
+    >
+      <span className="material-symbols-outlined" style={{ fontSize: 'inherit' }}>
+        {isDefensible ? 'verified_user' : 'shield'}
+      </span>
+    </div>
+  );
+};
+
+// ============================================================================
+// JOB ROW COMPONENT
+// ============================================================================
+
+interface JobRowProps {
+  jobRisk: JobRisk;
+  clientName?: string;
+}
+
+const JobRow: React.FC<JobRowProps> = ({ jobRisk, clientName }) => {
+  const { job, level, issues, isDefensible } = jobRisk;
+
+  // Status indicator colors
+  const statusColors: Record<RiskLevel, string> = {
+    needs_proof: 'border-l-red-500',
+    in_progress: 'border-l-amber-500',
+    defensible: 'border-l-emerald-500',
+  };
+
+  return (
+    <Link to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
+      <motion.div variants={fadeInUp}>
+        <Card
+          variant="interactive"
+          className={`border-l-4 ${statusColors[level]}`}
+        >
+          <div className="flex items-center gap-4 min-h-[56px]">
+            {/* Shield indicator */}
+            <Shield isDefensible={isDefensible} />
+
+            {/* Job info */}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-white truncate">
+                {job.title || `Job #${job.id.slice(0, 6)}`}
+              </p>
+              <p className="text-sm text-slate-400 truncate">
+                {clientName || job.client || 'Unknown client'}
+                {job.address && ` • ${job.address.split(',')[0]}`}
+              </p>
+            </div>
+
+            {/* Issues or status */}
+            <div className="flex items-center gap-2">
+              {level === 'needs_proof' && issues.length > 0 && (
+                <span className="text-xs text-red-400 hidden sm:block">
+                  {issues[0]}
+                </span>
+              )}
+              {level === 'in_progress' && (
+                <span className="text-xs text-amber-400 hidden sm:block">
+                  In progress
+                </span>
+              )}
+              {level === 'defensible' && job.sealedAt && (
+                <span className="text-xs text-emerald-400 hidden sm:block">
+                  Sealed
+                </span>
+              )}
+              <span className="material-symbols-outlined text-slate-500">
+                chevron_right
+              </span>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+    </Link>
+  );
+};
+
+// ============================================================================
+// MAIN DASHBOARD
+// ============================================================================
 
 const Dashboard: React.FC = () => {
-  // Use reactive DataContext hook instead of deprecated standalone functions
-  // This ensures dashboard updates when data changes elsewhere in the app
-  const { jobs, clients, technicians, isLoading: loading } = useWorkspaceData();
+  const { jobs, clients, isLoading } = useData();
 
-  // State for "Show incomplete only" filter
-  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
+  // Calculate risk for all active jobs (exclude Archived, Cancelled)
+  const jobsWithRisk = useMemo(() => {
+    const activeJobs = jobs.filter(
+      j => j.status !== 'Archived' && j.status !== 'Cancelled'
+    );
+    const withRisk = activeJobs.map(calculateJobRisk);
+    return sortByRisk(withRisk);
+  }, [jobs]);
 
-  // Calculate stats with clickable links
-  const stats: QuickStat[] = [
-    {
-      label: 'Need Action',
-      value: jobs.filter(j => !j.technicianId || j.status === 'Pending').length,
-      icon: 'priority_high',
-      color: 'text-red-400 bg-red-500/10',
-      link: `${ROUTES.JOBS}?status=pending`,
-    },
-    {
-      label: 'In Progress',
-      value: jobs.filter(j => j.status === 'In Progress').length,
-      icon: 'pending',
-      color: 'text-amber-400 bg-amber-500/10',
-      link: `${ROUTES.JOBS}?status=in-progress`,
-    },
-    {
-      label: 'Completed',
-      value: jobs.filter(j => j.status === 'Complete').length,
-      icon: 'check_circle',
-      color: 'text-emerald-400 bg-emerald-500/10',
-      link: `${ROUTES.JOBS}?status=complete`,
-    },
-    {
-      label: 'Total Clients',
-      value: clients.length,
-      icon: 'group',
-      color: 'text-blue-400 bg-blue-500/10',
-      link: ROUTES.CLIENTS,
-    },
-  ];
+  // Find the current/next job to continue
+  const currentJob = useMemo(() => {
+    // Priority: In Progress jobs first, then needs proof
+    const inProgress = jobsWithRisk.find(jr => jr.job.status === 'In Progress');
+    if (inProgress) return inProgress;
 
-  // Generate attention items
-  const getAttentionItems = (): AttentionItem[] => {
-    const items: AttentionItem[] = [];
+    // Then any job needing proof (highest risk)
+    const needsProof = jobsWithRisk.find(jr => jr.level === 'needs_proof');
+    if (needsProof) return needsProof;
 
-    // Jobs without technicians
-    jobs
-      .filter(j => !j.technicianId && j.status !== 'Complete')
-      .slice(0, 3)
-      .forEach(job => {
-        const client = clients.find(c => c.id === job.clientId);
-        items.push({
-          id: `dispatch-${job.id}`,
-          type: 'dispatch',
-          title: `Job #${job.id.slice(0, 6)}`,
-          subtitle: `No technician assigned${client ? ` - ${client.name}` : ''}`,
-          action: { label: 'Assign Tech', to: route(ROUTES.JOB_DETAIL, { id: job.id }) },
-          urgency: 'high',
-        });
-      });
+    // Then any non-sealed job
+    return jobsWithRisk.find(jr => !jr.job.sealedAt) || null;
+  }, [jobsWithRisk]);
 
-    // SPRINT 4 FIX: Jobs ready for sealing (Submitted status, not sealed)
-    // Sealing requires: status=Submitted, photos, signature, signer name
-    // Jobs in "Complete" need manager review → "Submit" before they can be sealed
-    jobs
-      .filter(j => j.status === 'Submitted' && !j.sealedAt)
-      .slice(0, 3)
-      .forEach(job => {
-        const hasPhotos = job.photos && job.photos.length > 0;
-        const hasSignature = !!job.signature && !!job.signerName;
-        items.push({
-          id: `seal-${job.id}`,
-          type: 'seal',
-          title: `Job #${job.id.slice(0, 6)}`,
-          subtitle: hasPhotos && hasSignature
-            ? 'Ready to seal evidence'
-            : `Missing: ${!hasPhotos ? 'photos' : ''}${!hasPhotos && !hasSignature ? ', ' : ''}${!hasSignature ? 'signature' : ''}`,
-          action: { label: 'Review & Seal', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
-          urgency: hasPhotos && hasSignature ? 'medium' : 'high',
-        });
-      });
-
-    // Jobs in Complete status need manager review before sealing
-    jobs
-      .filter(j => j.status === 'Complete' && !j.sealedAt)
-      .slice(0, 3)
-      .forEach(job => {
-        const client = clients.find(c => c.id === job.clientId);
-        items.push({
-          id: `review-${job.id}`,
-          type: 'seal',
-          title: `Job #${job.id.slice(0, 6)}`,
-          subtitle: `Needs review${client ? ` - ${client.name}` : ''}`,
-          action: { label: 'Review Evidence', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
-          urgency: 'medium',
-        });
-      });
-
-    // Jobs ready for invoicing (sealed but not invoiced)
-    jobs
-      .filter(j => j.sealedAt && !j.invoiceId)
-      .slice(0, 3)
-      .forEach(job => {
-        items.push({
-          id: `invoice-${job.id}`,
-          type: 'invoice',
-          title: `Job #${job.id.slice(0, 6)}`,
-          subtitle: 'Sealed, ready to invoice',
-          action: { label: 'Generate Invoice', to: route(ROUTES.JOB_DETAIL, { id: job.id }) },
-          urgency: 'low',
-        });
-      });
-
-    return items.slice(0, 5);
+  // Get client name for a job
+  const getClientName = (clientId: string) => {
+    return clients.find(c => c.id === clientId)?.name;
   };
 
-  const attentionItems = loading ? [] : getAttentionItems();
+  // Count jobs by risk level
+  const riskCounts = useMemo(() => {
+    return {
+      needsProof: jobsWithRisk.filter(jr => jr.level === 'needs_proof').length,
+      inProgress: jobsWithRisk.filter(jr => jr.level === 'in_progress').length,
+      defensible: jobsWithRisk.filter(jr => jr.level === 'defensible').length,
+    };
+  }, [jobsWithRisk]);
 
-  // Get today's jobs with optional incomplete filter
-  const todayJobs = jobs.filter(j => {
-    const jobDate = new Date(j.date);
-    const today = new Date();
-    const isToday = jobDate.toDateString() === today.toDateString();
-
-    if (!isToday) return false;
-
-    // If filter is on, only show incomplete jobs (not Complete, Submitted, or sealed)
-    if (showIncompleteOnly) {
-      return j.status !== 'Complete' && j.status !== 'Submitted' && !j.sealedAt;
-    }
-
-    return true;
-  });
-
-  // Get greeting based on time
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const formatDate = () => {
-    return new Date().toLocaleDateString('en-AU', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div>
-        <PageHeader title="Dashboard" />
-        <PageContent>
+        <div className="px-4 lg:px-8 py-8">
           <LoadingSkeleton variant="card" count={3} />
-        </PageContent>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      {/* Header with greeting */}
-      <div className="px-4 lg:px-8 py-6 border-b border-white/5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {getGreeting()}
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">{formatDate()}</p>
-          </div>
-          <div className="flex gap-2">
-            <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
-              New Job
+      {/* Primary Action Area */}
+      <div className="px-4 lg:px-8 py-8 border-b border-white/5">
+        {currentJob ? (
+          <div className="max-w-2xl">
+            {/* Current job status */}
+            <div className="flex items-center gap-3 mb-4">
+              <Shield isDefensible={currentJob.isDefensible} size="md" />
+              <div>
+                <p className="text-sm text-slate-400">
+                  {currentJob.job.status === 'In Progress' ? 'Continue working on' : 'Next up'}
+                </p>
+                <p className="text-lg font-semibold text-white">
+                  {currentJob.job.title || `Job #${currentJob.job.id.slice(0, 6)}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Issues warning (if any) */}
+            {currentJob.issues.length > 0 && (
+              <div className="flex items-center gap-2 mb-4 text-sm text-slate-400">
+                <span className="material-symbols-outlined text-lg text-amber-400">
+                  info
+                </span>
+                <span>Needs: {currentJob.issues.join(', ')}</span>
+              </div>
+            )}
+
+            {/* Primary CTA - One action only */}
+            <ActionButton
+              variant="primary"
+              size="lg"
+              icon={currentJob.job.status === 'In Progress' ? 'play_arrow' : 'arrow_forward'}
+              to={route(ROUTES.JOB_DETAIL, { id: currentJob.job.id })}
+              className="w-full sm:w-auto min-h-[56px] text-lg"
+            >
+              {currentJob.job.status === 'In Progress' ? 'Continue Job' : 'Start Job'}
             </ActionButton>
           </div>
-        </div>
+        ) : (
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl text-emerald-400">
+                  check_circle
+                </span>
+              </div>
+              <p className="text-lg font-semibold text-white">All caught up</p>
+            </div>
+            <ActionButton
+              variant="secondary"
+              size="lg"
+              icon="add"
+              to={ROUTES.JOB_NEW}
+              className="min-h-[56px]"
+            >
+              Create New Job
+            </ActionButton>
+          </div>
+        )}
       </div>
 
       <PageContent>
-        {/* Quick Stats - Clickable metrics linking to filtered views */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, i) => (
-            <Link key={i} to={stat.link} className="block">
-              <Card padding="md" variant="interactive" className="h-full hover:scale-[1.02] transition-transform">
-                <div className="flex items-center gap-3">
-                  <div className={`size-10 rounded-xl flex items-center justify-center ${stat.color}`}>
-                    <span className="material-symbols-outlined text-xl">{stat.icon}</span>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs text-slate-400">{stat.label}</p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-
-        {/* Needs Your Attention */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Needs Your Attention</h2>
-            <Link to={ROUTES.JOBS} className="text-sm text-primary hover:text-primary/80">
-              View All
-            </Link>
-          </div>
-
-          {attentionItems.length === 0 ? (
-            <Card>
-              <div className="flex items-center gap-4 py-4">
-                <div className="size-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
-                </div>
-                <div>
-                  <p className="font-medium text-white">All caught up!</p>
-                  <p className="text-sm text-slate-400">No items need your immediate attention.</p>
-                </div>
+        {/* Risk Summary - Minimal, no charts */}
+        {jobsWithRisk.length > 0 && (
+          <div className="flex items-center gap-6 mb-6 text-sm">
+            {riskCounts.needsProof > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="size-3 rounded-full bg-red-500" />
+                <span className="text-slate-400">
+                  {riskCounts.needsProof} need{riskCounts.needsProof === 1 ? 's' : ''} proof
+                </span>
               </div>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {attentionItems.map(item => (
-                <Card key={item.id} variant="interactive">
-                  <div className="flex items-center gap-4">
-                    <div className={`
-                      size-10 rounded-xl flex items-center justify-center
-                      ${item.urgency === 'high' ? 'bg-red-500/10 text-red-400' :
-                        item.urgency === 'medium' ? 'bg-amber-500/10 text-amber-400' :
-                        'bg-blue-500/10 text-blue-400'}
-                    `}>
-                      <span className="material-symbols-outlined text-xl">
-                        {item.type === 'dispatch' ? 'person_add' :
-                         item.type === 'seal' ? 'verified' :
-                         item.type === 'invoice' ? 'receipt' : 'warning'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{item.title}</p>
-                      <p className="text-sm text-slate-400 truncate">{item.subtitle}</p>
-                    </div>
-                    <ActionButton variant="secondary" size="sm" to={item.action.to}>
-                      {item.action.label}
-                    </ActionButton>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
+            )}
+            {riskCounts.inProgress > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="size-3 rounded-full bg-amber-500" />
+                <span className="text-slate-400">
+                  {riskCounts.inProgress} in progress
+                </span>
+              </div>
+            )}
+            {riskCounts.defensible > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="size-3 rounded-full bg-emerald-500" />
+                <span className="text-slate-400">
+                  {riskCounts.defensible} protected
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Today's Schedule */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-white">Today's Schedule</h2>
-              {/* Incomplete filter toggle */}
-              <button
-                onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  showIncompleteOnly
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
-                }`}
+        {/* Job List - Sorted by risk */}
+        {jobsWithRisk.length === 0 ? (
+          <EmptyState
+            icon="work"
+            title="No active jobs"
+            description="Create your first job to start capturing evidence."
+            action={{ label: 'Create Job', to: ROUTES.JOB_NEW, icon: 'add' }}
+          />
+        ) : (
+          <motion.div
+            className="space-y-3"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {jobsWithRisk.slice(0, 10).map(jobRisk => (
+              <JobRow
+                key={jobRisk.job.id}
+                jobRisk={jobRisk}
+                clientName={getClientName(jobRisk.job.clientId)}
+              />
+            ))}
+
+            {/* View all link if more jobs */}
+            {jobsWithRisk.length > 10 && (
+              <Link
+                to={ROUTES.JOBS}
+                className="block text-center py-4 text-sm text-primary hover:text-primary/80"
               >
-                {showIncompleteOnly ? 'Showing Incomplete' : 'Show Incomplete Only'}
-              </button>
-            </div>
-            <Link to={ROUTES.JOBS} className="text-sm text-primary hover:text-primary/80">
-              View All
-            </Link>
-          </div>
-
-          {todayJobs.length === 0 ? (
-            <EmptyState
-              icon="event_busy"
-              title="No jobs scheduled for today"
-              description="Create a new job to get started."
-              action={{ label: 'Create Job', to: ROUTES.JOB_NEW, icon: 'add' }}
-            />
-          ) : (
-            <div className="space-y-3">
-              {todayJobs.map(job => {
-                const client = clients.find(c => c.id === job.clientId);
-                const tech = technicians.find(t => t.id === job.technicianId);
-
-                return (
-                  <Link key={job.id} to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
-                    <Card variant="interactive">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center min-w-[60px]">
-                          <p className="text-xs text-slate-500">
-                            {new Date(job.date).toLocaleTimeString('en-AU', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                        <div className="w-px h-10 bg-white/10" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-white truncate">
-                              {job.title || `Job #${job.id.slice(0, 6)}`}
-                            </p>
-                            <StatusBadge
-                              status={job.status === 'Complete' ? 'completed' : job.status === 'In Progress' ? 'active' : 'pending'}
-                              variant="compact"
-                            />
-                          </div>
-                          <p className="text-sm text-slate-400 truncate">
-                            {client?.name || 'Unknown client'}
-                            {tech && ` • ${tech.name}`}
-                          </p>
-                        </div>
-                        <span className="material-symbols-outlined text-slate-500">chevron_right</span>
-                      </div>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Quick Actions */}
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Link to={ROUTES.JOB_NEW}>
-              <Card variant="interactive" padding="md">
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl text-primary">add_circle</span>
-                  </div>
-                  <span className="text-sm font-medium text-white">New Job</span>
-                </div>
-              </Card>
-            </Link>
-            <Link to={ROUTES.CLIENT_NEW}>
-              <Card variant="interactive" padding="md">
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl text-blue-400">person_add</span>
-                  </div>
-                  <span className="text-sm font-medium text-white">Add Client</span>
-                </div>
-              </Card>
-            </Link>
-            <Link to={ROUTES.TECHNICIAN_NEW}>
-              <Card variant="interactive" padding="md">
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl text-amber-400">engineering</span>
-                  </div>
-                  <span className="text-sm font-medium text-white">Add Tech</span>
-                </div>
-              </Card>
-            </Link>
-            <Link to={ROUTES.INVOICES}>
-              <Card variant="interactive" padding="md">
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl text-emerald-400">receipt_long</span>
-                  </div>
-                  <span className="text-sm font-medium text-white">Invoices</span>
-                </div>
-              </Card>
-            </Link>
-          </div>
-        </section>
+                View all {jobsWithRisk.length} jobs
+              </Link>
+            )}
+          </motion.div>
+        )}
       </PageContent>
     </div>
   );
