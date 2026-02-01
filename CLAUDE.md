@@ -326,6 +326,52 @@ const MAX_RETRIES = 8;
 
 ---
 
+## 🏕️ BUNKER FIRST: Universal Offline Permissions
+
+**Core Principle:** In no-service scenarios, ALL roles can perform ALL actions locally.
+
+Field workers often operate in:
+- Remote sites with zero connectivity
+- Underground/bunker environments
+- Areas with intermittent service
+- Emergency situations
+
+### Permission Model
+
+| Action | Online | Offline (Bunker Mode) |
+|--------|--------|----------------------|
+| Create jobs | Admin/Manager | **ALL ROLES** |
+| Create clients | Admin/Manager | **ALL ROLES** |
+| Assign technicians | Admin/Manager | **ALL ROLES** |
+| Capture evidence | Technician | **ALL ROLES** |
+| Complete jobs | Technician | **ALL ROLES** |
+| View all data | Role-based | **ALL ROLES** |
+
+### Implementation Rules
+
+1. **Local-first creation:** Jobs/clients created offline get `origin: 'offline'` flag
+2. **Sync reconciliation:** On reconnect, server validates and may flag conflicts
+3. **No blocking:** Never prevent local work due to "insufficient permissions"
+4. **Audit trail:** All offline actions logged with timestamp + user for later review
+5. **Conflict resolution:** Server-side rules determine merge strategy on sync
+
+### UI Indicators
+
+```tsx
+// Show bunker mode indicator when offline
+{!navigator.onLine && (
+  <BunkerModeIndicator message="Full access - changes sync when online" />
+)}
+```
+
+### Rationale
+
+> "A technician stuck in a basement with no signal MUST be able to log a new
+> emergency job, create an ad-hoc client, and capture evidence. The alternative
+> is lost work and safety risks. Sync conflicts are preferable to blocked workers."
+
+---
+
 ## 📱 Accessibility Requirements
 
 | Element | Minimum Size | CSS Class |

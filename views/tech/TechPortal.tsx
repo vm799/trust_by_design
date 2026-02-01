@@ -4,12 +4,16 @@
  * Primary Question: "What am I meant to be doing right now?"
  *
  * Design Principles:
- * - Assigned jobs ONLY - no visibility of others
+ * - Assigned jobs ONLY - no visibility of others (when online)
  * - No filters, no search (unless >10 jobs)
  * - Clear status labels: Assigned, Started, Finished
  * - Visual signal when job is "done enough"
- * - NO job creation - technicians execute, not manage
  * - NO reordering, editing metadata, or arbitrary status changes
+ *
+ * BUNKER FIRST (Offline Mode):
+ * - When offline, technicians CAN create jobs, clients, and capture evidence
+ * - All actions sync when connectivity returns
+ * - Never block field work due to "insufficient permissions"
  */
 
 import React, { useMemo } from 'react';
