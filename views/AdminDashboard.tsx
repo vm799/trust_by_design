@@ -293,14 +293,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             value={technicianRows.filter(t => t.operationalStatus === 'in_field').length.toString()}
             icon="person_pin"
             color="text-primary"
-            onClick={() => {}}
+            onClick={() => navigate('/admin/technicians?status=in_field')}
           />
           <MetricCard
             label="Available"
             value={technicianRows.filter(t => t.operationalStatus === 'available').length.toString()}
             icon="person"
             color="text-success"
-            onClick={() => {}}
+            onClick={() => navigate('/admin/technicians?status=available')}
           />
           <MetricCard
             label="Active Jobs"

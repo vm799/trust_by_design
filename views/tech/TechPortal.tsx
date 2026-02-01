@@ -87,12 +87,13 @@ const TechPortal: React.FC = () => {
               </div>
             )}
             <OfflineIndicator />
-            <Link
-              to="/tech/profile"
-              className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+{/* Profile link disabled - no profile view yet (Sprint 2 Task 2.8) */}
+            <div
+              className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center opacity-50 cursor-not-allowed"
+              title="Profile settings coming soon"
             >
               <span className="material-symbols-outlined text-sm text-slate-600 dark:text-slate-400">person</span>
-            </Link>
+            </div>
           </div>
         </div>
       </header>

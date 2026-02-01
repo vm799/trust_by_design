@@ -229,22 +229,16 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                             </section>
                         )}
 
-                        {/* DONE - Just a count, link to history */}
+                        {/* DONE - Just a count (no history view yet - Sprint 2 Task 2.8) */}
                         {doneCount > 0 && (
                             <section className="pt-4 border-t border-white/5">
-                                <button
-                                    onClick={() => navigate('/contractor/history')}
-                                    className="flex items-center justify-between w-full py-3 text-slate-500 hover:text-slate-300 transition-colors"
-                                >
+                                <div className="flex items-center justify-between w-full py-3 text-slate-500">
                                     <div className="flex items-center gap-2">
                                         <span className="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
                                         <span className="text-sm">Completed</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold">{doneCount}</span>
-                                        <span className="material-symbols-outlined text-sm">chevron_right</span>
-                                    </div>
-                                </button>
+                                    <span className="text-sm font-bold">{doneCount}</span>
+                                </div>
                             </section>
                         )}
                     </div>
