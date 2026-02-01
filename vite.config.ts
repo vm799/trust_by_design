@@ -1,6 +1,16 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { execSync } from 'child_process';
+
+// Get git commit hash for build fingerprint
+function getGitCommit(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 // Security headers for production deployment
 const securityHeaders = {
@@ -38,7 +48,11 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        // Build fingerprint variables for dev reset utility
+        'import.meta.env.VITE_GIT_COMMIT': JSON.stringify(getGitCommit()),
+        'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
+        'import.meta.env.VITE_APP_VERSION': JSON.stringify('1.0.0'),
       },
       resolve: {
         alias: {
