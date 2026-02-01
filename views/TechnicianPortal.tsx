@@ -344,7 +344,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [, setLocalSyncStatus] = useState<SyncStatus>('synced');
   const [signerName, setSignerName] = useState('');
   const [signerRole, setSignerRole] = useState('Client');
-  // UX Flow Contract: Legal attestation checkbox required before sealing
+  // UX Flow Contract: Attestation checkbox required before sealing
   const [attestationConfirmed, setAttestationConfirmed] = useState(false);
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
   const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
@@ -2009,7 +2009,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </div>
             </div>
 
-            {/* UX Flow Contract: Legal attestation checkbox - REQUIRED before sealing */}
+            {/* UX Flow Contract: Attestation checkbox - REQUIRED before sealing */}
             <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4">
               <label className="flex items-start gap-4 cursor-pointer group">
                 <div className="relative flex-shrink-0 mt-0.5">
@@ -2030,7 +2030,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     I confirm I am satisfied with the work completed
                   </p>
                   <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                    By signing below, the signatory acknowledges that the work described has been completed to their satisfaction and authorizes the sealing of this evidence record.
+                    By signing below, the signatory acknowledges that the work described has been completed to their satisfaction.
                   </p>
                 </div>
               </label>

@@ -952,16 +952,80 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // STEP 4: Update job record with report URL
+    // STEP 4: AUTO-SEAL evidence when email is sent
+    // Evidence is cryptographically sealed immediately upon report generation
     // =========================================================================
+
+    let sealedAt: string | null = null;
+    let evidenceHash: string | null = null;
+
+    // Auto-seal if not already sealed
+    if (!job.sealed_at) {
+      try {
+        console.log(`[GenerateReport] Auto-sealing job ${job.id}...`);
+
+        // Build evidence bundle for hashing
+        const evidenceBundle = {
+          job: {
+            id: job.id,
+            title: job.title,
+            client: job.client_name,
+            address: job.address,
+            notes: job.notes || '',
+            completedAt: job.completed_at || new Date().toISOString(),
+          },
+          photos: job.photos || [],
+          signature: {
+            url: job.signature_url || null,
+            signerName: job.signer_name,
+            signerRole: job.signer_role,
+          },
+          metadata: {
+            sealedAt: new Date().toISOString(),
+            version: '1.0',
+          },
+        };
+
+        // Compute SHA-256 hash
+        const canonicalJson = JSON.stringify(evidenceBundle, Object.keys(evidenceBundle).sort());
+        const encoder = new TextEncoder();
+        const data = encoder.encode(canonicalJson);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        evidenceHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+        sealedAt = evidenceBundle.metadata.sealedAt;
+
+        console.log(`[GenerateReport] Evidence hash: ${evidenceHash.substring(0, 16)}...`);
+      } catch (sealError) {
+        console.error(`[GenerateReport] Auto-seal failed:`, sealError);
+        // Non-blocking - report still generated
+      }
+    } else {
+      sealedAt = job.sealed_at;
+      evidenceHash = job.evidence_hash;
+      console.log(`[GenerateReport] Job already sealed at ${sealedAt}`);
+    }
+
+    // =========================================================================
+    // STEP 5: Update job record with report URL and seal data
+    // =========================================================================
+
+    const updatePayload: Record<string, any> = {
+      report_url: pdfUrl,
+      report_generated_at: new Date().toISOString(),
+      report_emailed: emailSent,
+    };
+
+    // Include seal data if we sealed this job
+    if (sealedAt && evidenceHash && !job.sealed_at) {
+      updatePayload.sealed_at = sealedAt;
+      updatePayload.evidence_hash = evidenceHash;
+      updatePayload.status = 'Archived';
+    }
 
     await supabase
       .from('bunker_jobs')
-      .update({
-        report_url: pdfUrl,
-        report_generated_at: new Date().toISOString(),
-        report_emailed: emailSent,
-      })
+      .update(updatePayload)
       .eq('id', job.id);
 
     return new Response(
@@ -971,7 +1035,10 @@ serve(async (req) => {
         emailSent,
         emailError,
         evidenceIncluded: { beforePhotoIncluded, afterPhotoIncluded, signatureIncluded },
-        message: `Report generated for job ${job.id}`,
+        sealed: !!sealedAt,
+        sealedAt,
+        evidenceHash,
+        message: `Report generated${sealedAt ? ' and sealed' : ''} for job ${job.id}`,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
