@@ -647,19 +647,26 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                              <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">GPS Captured</span>
                                           </div>
                                        </div>
-                                       <div className="flex flex-col gap-0.5">
-                                          {p.w3w && (
-                                             <div className="flex items-center gap-1">
-                                                <span className="text-red-500 font-black text-[9px]">///</span>
-                                                <p className="text-slate-700 font-black uppercase text-[9px] tracking-widest">{p.w3w.replace('///', '')}</p>
-                                             </div>
-                                          )}
+                                       <div className="flex flex-col gap-1">
+                                          {/* W3W Location - Always show with verified/unverified status */}
+                                          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2 py-1">
+                                             <span className="text-red-500 font-black text-[10px]">///</span>
+                                             {p.w3w ? (
+                                                <p className="text-slate-800 font-black uppercase text-[9px] tracking-wide">{p.w3w.replace('///', '')}</p>
+                                             ) : (
+                                                <p className="text-slate-400 font-medium text-[9px] italic">Location not captured</p>
+                                             )}
+                                             {(p as any).w3w_verified && (
+                                                <span className="text-[8px] text-green-600 font-bold">✓</span>
+                                             )}
+                                          </div>
+                                          {/* GPS Coordinates */}
                                           {p.lat && (
-                                             <p className="text-[8px] font-mono text-slate-700 uppercase leading-none">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
+                                             <p className="text-[8px] font-mono text-slate-600 uppercase leading-none px-2">GPS: {p.lat.toFixed(5)}, {p.lng?.toFixed(5)}</p>
                                           )}
                                           {/* Photo SHA-256 fingerprint for evidence integrity */}
                                           {(p as any).photo_hash && (
-                                             <div className="flex items-center gap-1 mt-1 pt-1 border-t border-slate-200">
+                                             <div className="flex items-center gap-1 mt-1 pt-1 border-t border-slate-200 px-2">
                                                 <span className="material-symbols-outlined text-[9px] text-slate-500">fingerprint</span>
                                                 <p className="text-[7px] font-mono text-slate-500 uppercase tracking-tight" title={(p as any).photo_hash}>
                                                    SHA256: {(p as any).photo_hash.substring(0, 12)}...
