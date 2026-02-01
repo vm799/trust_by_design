@@ -10,6 +10,7 @@ import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from '
 import { getMedia } from '../db';
 import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
+import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
 
 interface SyncQueueItem {
   id: string;
@@ -42,6 +43,8 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
     const uploadedPhotos: Photo[] = [];
     const failedPhotos: string[] = [];
 
+    const orphanedPhotos: OrphanPhoto[] = [];
+
     for (const photo of job.photos) {
       if (photo.isIndexedDBRef) {
         // Get Base64 data from IndexedDB
@@ -49,6 +52,30 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         if (!dataUrl) {
           console.error(`Failed to retrieve photo ${photo.id} from IndexedDB`);
           failedPhotos.push(photo.id);
+
+          // Sprint 1 Task 1.3: Preserve metadata in orphan log instead of silently losing it
+          const orphan: OrphanPhoto = {
+            id: photo.id,
+            jobId: job.id,
+            jobTitle: job.title,
+            type: photo.type,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            w3w: photo.w3w,
+            reason: 'IndexedDB data lost - binary not found',
+            orphanedAt: Date.now(),
+            recoveryAttempts: 0
+          };
+          orphanedPhotos.push(orphan);
+
+          // Save to IndexedDB orphan log
+          try {
+            await saveOrphanPhoto(orphan);
+            console.warn(`📸 Photo ${photo.id} metadata preserved in orphan log`);
+          } catch (saveErr) {
+            console.error('Failed to save orphan photo metadata:', saveErr);
+          }
           continue;
         }
 
@@ -57,6 +84,29 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         if (!publicUrl) {
           console.error(`Failed to upload photo ${photo.id} to Supabase`);
           failedPhotos.push(photo.id);
+
+          // Preserve metadata for upload failures too (network issue, not data loss)
+          const orphan: OrphanPhoto = {
+            id: photo.id,
+            jobId: job.id,
+            jobTitle: job.title,
+            type: photo.type,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            w3w: photo.w3w,
+            reason: 'Upload failed - data exists locally but cloud upload failed',
+            orphanedAt: Date.now(),
+            recoveryAttempts: 0
+          };
+          orphanedPhotos.push(orphan);
+
+          try {
+            await saveOrphanPhoto(orphan);
+            console.warn(`📸 Photo ${photo.id} metadata preserved (upload failed)`);
+          } catch (saveErr) {
+            console.error('Failed to save orphan photo metadata:', saveErr);
+          }
           continue;
         }
 
@@ -70,6 +120,22 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       } else {
         uploadedPhotos.push(photo);
       }
+    }
+
+    // Notify user if any photos were orphaned
+    if (orphanedPhotos.length > 0) {
+      const totalOrphans = await countOrphanPhotos();
+      showPersistentNotification({
+        type: 'warning',
+        title: 'Photo Sync Issue',
+        message: `${orphanedPhotos.length} photo(s) could not sync for "${job.title}". Metadata preserved. ${totalOrphans} total photos need attention. Check your connection and try again.`,
+        persistent: true,
+        actionLabel: 'View Details',
+        onAction: () => {
+          console.log('[Orphan Recovery] User requested details for orphaned photos:', orphanedPhotos.map(p => p.id));
+          // Future: Navigate to recovery UI
+        }
+      });
     }
 
     // SECURITY FIX (BACKEND_AUDIT.md Risk #8): Fail sync if any photos failed to upload

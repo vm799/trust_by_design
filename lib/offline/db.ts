@@ -3,7 +3,8 @@ import { Job, SyncStatus } from '../../types';
 
 // Database schema version - increment when schema changes
 // v3: Added clients and technicians tables for offline persistence
-const DB_SCHEMA_VERSION = 3;
+// v4: Added orphanPhotos table for failed sync recovery (Sprint 1 Task 1.3)
+const DB_SCHEMA_VERSION = 4;
 const DB_NAME = 'JobProofOfflineDB';
 
 export interface LocalJob extends Job {
@@ -32,6 +33,21 @@ export interface FormDraft {
     formType: string; // 'client' | 'technician' | 'job'
     data: Record<string, unknown>;
     savedAt: number;
+}
+
+// Sprint 1 Task 1.3: Orphan photo log for failed sync recovery
+export interface OrphanPhoto {
+    id: string;           // Photo ID
+    jobId: string;        // Associated job ID
+    jobTitle?: string;    // Job title for user display
+    type?: string;        // Photo type (before/during/after/evidence)
+    timestamp?: string;   // When photo was taken
+    lat?: number;         // GPS latitude (preserved for audit trail)
+    lng?: number;         // GPS longitude
+    w3w?: string;         // What3Words location
+    reason: string;       // Why it became orphaned
+    orphanedAt: number;   // When it was orphaned
+    recoveryAttempts: number; // How many times we tried to recover
 }
 
 // CLAUDE.md mandate: Clients must persist offline
@@ -71,6 +87,7 @@ export class JobProofDatabase extends Dexie {
     formDrafts!: Table<FormDraft, string>;
     clients!: Table<LocalClient, string>;       // v3: CLAUDE.md offline mandate
     technicians!: Table<LocalTechnician, string>; // v3: CLAUDE.md offline mandate
+    orphanPhotos!: Table<OrphanPhoto, string>;    // v4: Failed sync recovery
 
     constructor() {
         super(DB_NAME);
@@ -94,6 +111,16 @@ export class JobProofDatabase extends Dexie {
             formDrafts: 'formType, savedAt',
             clients: 'id, workspaceId, name',
             technicians: 'id, workspaceId, name'
+        });
+        // Version 4: Add orphanPhotos for failed sync recovery (Sprint 1 Task 1.3)
+        this.version(4).stores({
+            jobs: 'id, syncStatus, workspaceId, status',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt'
         });
 
         // Handle version change from other tabs
@@ -450,4 +477,67 @@ export async function countTechniciansLocal(workspaceId: string): Promise<number
         .where('workspaceId')
         .equals(workspaceId)
         .count();
+}
+
+// ============================================================================
+// ORPHAN PHOTO RECOVERY (Sprint 1 Task 1.3: Preserve failed photo references)
+// ============================================================================
+
+/**
+ * Save orphan photo metadata when IndexedDB data is lost
+ * Preserves metadata (GPS, timestamp, type) for audit trail even if binary is gone
+ */
+export async function saveOrphanPhoto(orphan: OrphanPhoto): Promise<string> {
+    return await db.orphanPhotos.put(orphan);
+}
+
+/**
+ * Get all orphan photos for a job
+ */
+export async function getOrphanPhotosForJob(jobId: string): Promise<OrphanPhoto[]> {
+    return await db.orphanPhotos
+        .where('jobId')
+        .equals(jobId)
+        .toArray();
+}
+
+/**
+ * Get all orphan photos (for admin recovery view)
+ */
+export async function getAllOrphanPhotos(): Promise<OrphanPhoto[]> {
+    return await db.orphanPhotos
+        .orderBy('orphanedAt')
+        .reverse()
+        .toArray();
+}
+
+/**
+ * Count orphan photos (for dashboard badge)
+ */
+export async function countOrphanPhotos(): Promise<number> {
+    return await db.orphanPhotos.count();
+}
+
+/**
+ * Delete orphan photo after successful recovery or manual dismissal
+ */
+export async function deleteOrphanPhoto(id: string): Promise<void> {
+    await db.orphanPhotos.delete(id);
+}
+
+/**
+ * Update recovery attempts on orphan photo
+ */
+export async function incrementOrphanRecoveryAttempts(id: string): Promise<void> {
+    await db.orphanPhotos.update(id, {
+        recoveryAttempts: (await db.orphanPhotos.get(id))?.recoveryAttempts ?? 0 + 1
+    });
+}
+
+/**
+ * Clear all orphan photos (use with caution - only after verified recovery)
+ */
+export async function clearAllOrphanPhotos(): Promise<void> {
+    await db.orphanPhotos.clear();
+    console.log('[DB] All orphan photos cleared');
 }
