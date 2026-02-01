@@ -234,7 +234,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
                 <div className="flex items-center gap-2 pt-2">
                   {tech?.phone && onCallTech && (
                     <button
-                      onClick={() => onCallTech(tech.phone)}
+                      onClick={() => onCallTech(tech.phone!)}
                       className="flex items-center gap-1 px-3 py-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
                     >
                       <span className="material-symbols-outlined text-xs">call</span>

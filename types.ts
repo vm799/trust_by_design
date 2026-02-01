@@ -88,6 +88,7 @@ export interface Job {
   total?: number; // Alias for price
   magicLinkToken?: string; // Magic link token for technician access
   magicLinkUrl?: string; // Full URL for sharing
+  magicLinkCreatedAt?: string; // ISO timestamp when magic link was created
   workspaceId?: string; // Workspace ID (from database)
   technicianLinkOpened?: boolean; // Phase 11: Flag for unopened links filtering
   technicianLinkOpenedAt?: string; // ISO timestamp when technician first opened link

@@ -221,6 +221,10 @@ const JobForm: React.FC = () => {
 
       clearDraft();
 
+      // Get client and tech names for display fields
+      const selectedClient = clients.find(c => c.id === formData.clientId);
+      const selectedTech = technicians.find(t => t.id === formData.technicianId);
+
       if (isEdit && id && existingJob) {
         // Update existing job - use full Job object
         const updatedJob: Job = {
@@ -228,10 +232,12 @@ const JobForm: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           notes: formData.description.trim() || '',
+          client: selectedClient?.name || existingJob.client || '',
           clientId: formData.clientId,
+          technician: selectedTech?.name || existingJob.technician || '',
           technicianId: formData.technicianId || undefined,
           techId: formData.technicianId || '',
-          address: formData.address.trim() || undefined,
+          address: formData.address.trim() || '',
           date: dateTime.toISOString(),
           total: formData.total ? parseFloat(formData.total) : undefined,
           price: formData.total ? parseFloat(formData.total) : undefined,
@@ -246,16 +252,19 @@ const JobForm: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           notes: formData.description.trim() || '',
+          client: selectedClient?.name || '',
           clientId: formData.clientId,
+          technician: selectedTech?.name || '',
           technicianId: formData.technicianId || undefined,
           techId: formData.technicianId || '',
-          address: formData.address.trim() || undefined,
+          address: formData.address.trim() || '',
           date: dateTime.toISOString(),
           total: formData.total ? parseFloat(formData.total) : undefined,
           price: formData.total ? parseFloat(formData.total) : undefined,
           priority: formData.priority,
           status: 'Pending',
           photos: [],
+          signature: null,
           safetyChecklist: [],
           siteHazards: [],
           syncStatus: 'pending',
@@ -292,6 +301,7 @@ const JobForm: React.FC = () => {
         email: newClientEmail.trim() || undefined,
         phone: '',
         address: '',
+        totalJobs: 0,
       };
       contextAddClient(newClient);
       setFormData(prev => ({ ...prev, clientId: newClient.id }));
@@ -317,6 +327,8 @@ const JobForm: React.FC = () => {
         email: newTechEmail.trim() || undefined,
         phone: '',
         status: 'Authorised',
+        rating: 0,
+        jobsCompleted: 0,
       };
       contextAddTechnician(newTech);
       setFormData(prev => ({ ...prev, technicianId: newTech.id }));
