@@ -12,6 +12,7 @@ import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
 import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
 import { prepareJobForSync } from './utils/technicianIdNormalization';
+import { logConflict, isConflictError, getConflictTypeFromError } from './conflictTelemetry';
 
 interface SyncQueueItem {
   id: string;
@@ -241,6 +242,22 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
 
   } catch (error) {
     console.error('❌ Sync failed:', error);
+
+    // P1-1a: Log conflict telemetry for analysis
+    if (isConflictError(error)) {
+      const conflictType = getConflictTypeFromError(error) || 'UPSERT_VERSION_MISMATCH';
+      logConflict(
+        conflictType,
+        'job',
+        job.id,
+        'UNRESOLVED',
+        {
+          jobId: job.id,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        }
+      );
+    }
+
     return false;
   }
 };

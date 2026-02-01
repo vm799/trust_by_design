@@ -70,19 +70,31 @@ export async function checkNetworkConnectivity(forceCheck = false): Promise<bool
     // 400 = auth required but Supabase is reachable
     const isReachable = response.ok || response.status === 400;
 
+    // Only notify if status actually changed (prevents unnecessary re-renders)
+    const statusChanged = lastPingResult !== isReachable;
+
     // Cache result
     lastPingResult = isReachable;
     lastPingTime = now;
 
-    // Notify subscribers if status changed
-    notifySubscribers(isReachable);
+    // Notify subscribers only on change
+    if (statusChanged) {
+      notifySubscribers(isReachable);
+    }
 
     return isReachable;
   } catch (error) {
     console.log('[NetworkStatus] Ping failed:', error);
+
+    // Only notify if status actually changed
+    const statusChanged = lastPingResult !== false;
+
     lastPingResult = false;
     lastPingTime = now;
-    notifySubscribers(false);
+
+    if (statusChanged) {
+      notifySubscribers(false);
+    }
     return false;
   }
 }
