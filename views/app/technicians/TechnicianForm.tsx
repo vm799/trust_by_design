@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
-import { useWorkspaceData } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Technician } from '../../../types';
 import { showToast } from '../../../lib/microInteractions';
 
@@ -39,8 +39,8 @@ const TechnicianForm: React.FC = () => {
   const isEdit = Boolean(id);
   const returnTo = searchParams.get('returnTo');
 
-  // Use centralized DataContext via hook (REMEDIATION ITEM 1)
-  const { technicians, createTechnician, updateTechnician } = useWorkspaceData();
+  // Use centralized DataContext (FIELD UX FIX: replaces deprecated useWorkspaceData)
+  const { technicians, addTechnician, updateTechnician } = useData();
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -178,8 +178,13 @@ const TechnicianForm: React.FC = () => {
           throw new Error('Technician not found');
         }
       } else {
-        // Create new technician via DataContext (generates ID automatically)
-        const newTechnician = createTechnician(technicianData);
+        // Create new technician via DataContext (FIELD UX FIX: generate ID, use addTechnician)
+        const newTechId = `tech_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        const newTechnician: Technician = {
+          id: newTechId,
+          ...technicianData,
+        };
+        addTechnician(newTechnician);
 
         // Clear draft after successful creation
         clearDraft();
