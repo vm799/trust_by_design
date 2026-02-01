@@ -6,10 +6,12 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
+import { saveMediaLocal, getMediaLocal, db } from '../../lib/offline/db';
+import OfflineIndicator from '../../components/OfflineIndicator';
 
 type PhotoType = 'before' | 'during' | 'after';
 
@@ -39,6 +41,35 @@ const EvidenceCapture: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Draft key for photo persistence (survives app crash)
+  const draftKey = `photo_draft_${jobId}`;
+
+  // Restore draft photo on mount (survives app crash/reload)
+  useEffect(() => {
+    const restoreDraft = async () => {
+      if (!jobId) return;
+      try {
+        const draftData = await getMediaLocal(draftKey);
+        if (draftData) {
+          const parsed = JSON.parse(draftData) as CapturedPhoto;
+          setCapturedPhoto(parsed);
+        }
+      } catch {
+        // Draft corrupted or missing - ignore
+      }
+    };
+    restoreDraft();
+  }, [jobId, draftKey]);
+
+  // Persist captured photo to IndexedDB immediately (offline-first)
+  const persistDraft = useCallback(async (photo: CapturedPhoto) => {
+    try {
+      await saveMediaLocal(draftKey, jobId || '', JSON.stringify(photo));
+    } catch {
+      // Silently fail - photo still in state, just not persisted
+    }
+  }, [draftKey, jobId]);
 
   // Start camera
   useEffect(() => {
@@ -107,16 +138,26 @@ const EvidenceCapture: React.FC = () => {
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
-    setCapturedPhoto({
+    const photo: CapturedPhoto = {
       dataUrl,
       type: photoType,
       timestamp: new Date().toISOString(),
       location: location || undefined,
-    });
+    };
+
+    // Persist to IndexedDB immediately (survives app crash)
+    persistDraft(photo);
+    setCapturedPhoto(photo);
   };
 
-  const retakePhoto = () => {
+  const retakePhoto = async () => {
     setCapturedPhoto(null);
+    // Clear draft - user wants to take a new photo
+    try {
+      await db.media.delete(draftKey);
+    } catch {
+      // Non-critical
+    }
   };
 
   const savePhoto = async () => {
@@ -140,6 +181,13 @@ const EvidenceCapture: React.FC = () => {
       // Use DataContext updateJob with full Job object
       const updatedJob: Job = { ...job, photos: updatedPhotos };
       contextUpdateJob(updatedJob);
+
+      // Clear draft from IndexedDB (photo is now committed to job)
+      try {
+        await db.media.delete(draftKey);
+      } catch {
+        // Non-critical - draft will be orphaned but not cause issues
+      }
 
       // Go back to job detail
       navigate(`/tech/job/${job.id}`);
@@ -177,6 +225,9 @@ const EvidenceCapture: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Offline status indicator */}
+      <OfflineIndicator />
+
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
 
@@ -211,7 +262,11 @@ const EvidenceCapture: React.FC = () => {
               {(['before', 'during', 'after'] as PhotoType[]).map((type) => (
                 <button
                   key={type}
-                  onClick={() => setCapturedPhoto({ ...capturedPhoto, type })}
+                  onClick={() => {
+                    const updated = { ...capturedPhoto, type };
+                    setCapturedPhoto(updated);
+                    persistDraft(updated);
+                  }}
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all
                     ${capturedPhoto.type === type

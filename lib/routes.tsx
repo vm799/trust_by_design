@@ -13,19 +13,13 @@ import { lazy } from 'react';
 export const OAuthSetup = lazy(() => import('../views/OAuthSetup'));
 export const CompleteOnboarding = lazy(() => import('../views/CompleteOnboarding'));
 
-// Main app views (new)
-export const Dashboard = lazy(() => import('../views/app/Dashboard'));
-export const ClientList = lazy(() => import('../views/app/clients/ClientList'));
-export const ClientDetail = lazy(() => import('../views/app/clients/ClientDetail'));
+// Main app views (active in App.tsx routes)
 export const ClientForm = lazy(() => import('../views/app/clients/ClientForm'));
-export const JobList = lazy(() => import('../views/app/jobs/JobList'));
+export const JobsList = lazy(() => import('../views/app/jobs/JobsList'));
 export const JobDetail = lazy(() => import('../views/app/jobs/JobDetail'));
 export const JobForm = lazy(() => import('../views/app/jobs/JobForm'));
 export const EvidenceReview = lazy(() => import('../views/app/jobs/EvidenceReview'));
-export const InvoiceList = lazy(() => import('../views/app/invoices/InvoiceList'));
-export const InvoiceDetail = lazy(() => import('../views/app/invoices/InvoiceDetail'));
-export const TechnicianList = lazy(() => import('../views/app/technicians/TechnicianList'));
-export const Settings = lazy(() => import('../views/app/settings/Settings'));
+export const TechnicianForm = lazy(() => import('../views/app/technicians/TechnicianForm'));
 
 // Technician views
 export const TechPortal = lazy(() => import('../views/tech/TechPortal'));
@@ -34,9 +28,6 @@ export const EvidenceCapture = lazy(() => import('../views/tech/EvidenceCapture'
 
 // Phase 15: Field Proof System
 export const TechProofScreen = lazy(() => import('../views/TechProofScreen'));
-
-// Public views
-export const CertificateVerify = lazy(() => import('../views/public/CertificateVerify'));
 
 // Active views (used in App.tsx)
 export const AdminDashboard = lazy(() => import('../views/AdminDashboard'));

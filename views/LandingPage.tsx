@@ -911,7 +911,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
         <div className="space-y-3">
           {faqs.map((faq, index) => (
             <motion.div
-              key={index}
+              key={faq.question}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
