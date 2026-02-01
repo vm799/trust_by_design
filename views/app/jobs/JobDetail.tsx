@@ -7,12 +7,12 @@
  * - Track job status through completion
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
-import { getJobs, getClients, getTechnicians, deleteJob, updateJob } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { generateMagicLink } from '../../../lib/db';
 import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician } from '../../../types';
@@ -24,16 +24,22 @@ const JobDetail: React.FC = () => {
   const navigate = useNavigate();
   const { userEmail } = useAuth();
 
-  const [loading, setLoading] = useState(true);
-  const [job, setJob] = useState<Job | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
-  const [technician, setTechnician] = useState<Technician | null>(null);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const {
+    jobs,
+    clients,
+    technicians,
+    updateJob: contextUpdateJob,
+    deleteJob: contextDeleteJob,
+    isLoading: dataLoading
+  } = useData();
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Magic link state
   const [magicLink, setMagicLink] = useState<string | null>(null);
@@ -41,65 +47,75 @@ const JobDetail: React.FC = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [mailClientOpened, setMailClientOpened] = useState(false);
 
+  // Derive job, client, technician from DataContext (memoized for performance)
+  const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
+  const client = useMemo(() =>
+    job ? clients.find(c => c.id === job.clientId) || null : null,
+    [clients, job]
+  );
+  const technician = useMemo(() =>
+    job ? technicians.find(t => t.id === job.technicianId || t.id === job.techId) || null : null,
+    [technicians, job]
+  );
+
+  // Initialize magic link from job data
   useEffect(() => {
-    const loadData = async () => {
-      if (!id) return;
+    if (job?.magicLinkUrl && !magicLink) {
+      setMagicLink(job.magicLinkUrl);
+    }
+  }, [job, magicLink]);
 
-      try {
-        const [jobsData, clientsData, techsData] = await Promise.all([
-          getJobs(),
-          getClients(),
-          getTechnicians(),
-        ]);
-
-        const foundJob = jobsData.find(j => j.id === id);
-        setJob(foundJob || null);
-
-        if (foundJob) {
-          setClient(clientsData.find(c => c.id === foundJob.clientId) || null);
-          setTechnician(techsData.find(t => t.id === foundJob.technicianId || t.id === foundJob.techId) || null);
-          // Use existing magic link if available
-          if (foundJob.magicLinkUrl) {
-            setMagicLink(foundJob.magicLinkUrl);
-          }
-        }
-
-        setTechnicians(techsData);
-      } catch (error) {
-        console.error('Failed to load job:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [id]);
+  const loading = dataLoading;
 
   const handleDelete = async () => {
     if (!job) return;
 
+    // Prevent deletion of sealed or invoiced jobs
+    if (job.sealedAt) {
+      setDeleteError('Cannot delete a sealed job. Sealed evidence must be preserved.');
+      return;
+    }
+    if (job.invoiceId) {
+      setDeleteError('Cannot delete a job with an invoice. Delete the invoice first.');
+      return;
+    }
+
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await deleteJob(job.id);
+      contextDeleteJob(job.id);
       navigate(ROUTES.JOBS);
     } catch (error) {
       console.error('Failed to delete job:', error);
-      alert('Failed to delete job. Please try again.');
+      setDeleteError('Failed to delete job. Please try again.');
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
     }
   };
 
+  // Check if job can be deleted
+  const canDelete = job && !job.sealedAt && !job.invoiceId;
+
   const handleAssignTech = async (techId: string) => {
     if (!job) return;
 
+    // Validate technician exists
+    const tech = technicians.find(t => t.id === techId);
+    if (!tech) {
+      alert('Technician not found. Please try again.');
+      return;
+    }
+
     setAssigning(true);
     try {
-      await updateJob(job.id, { technicianId: techId, techId });
-      const tech = technicians.find(t => t.id === techId);
-      setTechnician(tech || null);
-      setJob({ ...job, technicianId: techId, techId });
+      // Update via DataContext with full job object
+      const updatedJob: Job = {
+        ...job,
+        technicianId: techId,
+        techId: techId,
+      };
+      contextUpdateJob(updatedJob);
       setShowAssignModal(false);
     } catch (error) {
       console.error('Failed to assign technician:', error);
@@ -124,12 +140,13 @@ const JobDetail: React.FC = () => {
       const result = await generateMagicLink(job.id, userEmail);
       if (result.success && result.data) {
         setMagicLink(result.data.url);
-        // Store magic link on job for later reference
-        await updateJob(job.id, {
+        // Store magic link on job via DataContext
+        const updatedJob: Job = {
+          ...job,
           magicLinkToken: result.data.token,
           magicLinkUrl: result.data.url,
-        });
-        setJob({ ...job, magicLinkToken: result.data.token, magicLinkUrl: result.data.url });
+        };
+        contextUpdateJob(updatedJob);
       } else {
         throw new Error(result.error || 'Failed to generate link');
       }
@@ -269,7 +286,13 @@ const JobDetail: React.FC = () => {
             variant: 'primary' as const,
           }] : []),
           { label: 'Edit', icon: 'edit', to: route(ROUTES.JOB_EDIT, { id: job.id }) },
-          { label: 'Delete', icon: 'delete', onClick: () => setShowDeleteDialog(true), variant: 'danger' as const },
+          // Only show delete for jobs that can be deleted (not sealed, not invoiced)
+          ...(canDelete ? [{
+            label: 'Delete',
+            icon: 'delete',
+            onClick: () => setShowDeleteDialog(true),
+            variant: 'danger' as const,
+          }] : []),
         ]}
       />
 
