@@ -29,6 +29,8 @@ const TechJobDetail: React.FC = () => {
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
 
   const [submitting, setSubmitting] = useState(false);
+  // Task 3.4: Error state for retry functionality
+  const [actionError, setActionError] = useState<{ type: 'start' | 'complete'; message: string } | null>(null);
 
   // Derive job and client from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
@@ -41,18 +43,21 @@ const TechJobDetail: React.FC = () => {
 
   const handleStartJob = async () => {
     if (!job) return;
+    setActionError(null);
 
     try {
       const updatedJob: Job = { ...job, status: 'In Progress' };
       contextUpdateJob(updatedJob);
     } catch (error) {
       console.error('Failed to start job:', error);
-      alert('Failed to start job. Please try again.');
+      // Task 3.4: Set error state instead of alert() - allows retry
+      setActionError({ type: 'start', message: 'Failed to start job. Tap to retry.' });
     }
   };
 
   const handleCompleteJob = async () => {
     if (!job) return;
+    setActionError(null);
 
     setSubmitting(true);
     try {
@@ -61,9 +66,19 @@ const TechJobDetail: React.FC = () => {
       navigate('/tech');
     } catch (error) {
       console.error('Failed to complete job:', error);
-      alert('Failed to complete job. Please try again.');
+      // Task 3.4: Set error state instead of alert() - allows retry
+      setActionError({ type: 'complete', message: 'Failed to complete job. Tap to retry.' });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Task 3.4: Retry handler
+  const handleRetry = () => {
+    if (actionError?.type === 'start') {
+      handleStartJob();
+    } else if (actionError?.type === 'complete') {
+      handleCompleteJob();
     }
   };
 
@@ -151,6 +166,23 @@ const TechJobDetail: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Task 3.4: Error Banner with Retry */}
+        {actionError && (
+          <button
+            onClick={handleRetry}
+            className="w-full p-4 rounded-2xl mb-6 flex items-center gap-4 bg-red-500/10 border border-red-500/20 text-left min-h-[56px]"
+          >
+            <div className="size-12 rounded-xl flex items-center justify-center bg-red-500/20 text-red-400 flex-shrink-0">
+              <span className="material-symbols-outlined text-2xl">error</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-red-400">{actionError.message}</p>
+              <p className="text-sm text-slate-400">Tap to try again</p>
+            </div>
+            <span className="material-symbols-outlined text-red-400">refresh</span>
+          </button>
+        )}
 
         {/* Job Info */}
         <Card className="mb-6">
