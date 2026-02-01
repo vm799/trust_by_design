@@ -7,43 +7,20 @@
  * Phase D: Client Registry
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
-import { getClients, getJobs } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
 const ClientList: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
-  const [clients, setClients] = useState<Client[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const { clients, jobs, isLoading: loading, error: dataError, refresh } = useData();
+  const [searchQuery, setSearchQuery] = React.useState('');
 
-  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [clientsData, jobsData] = await Promise.all([
-        getClients(),
-        getJobs(),
-      ]);
-      setClients(clientsData);
-      setJobs(jobsData);
-    } catch (err) {
-      console.error('Failed to load clients:', err);
-      setError('Failed to load clients. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const error = dataError;
 
   // Filter clients by search query
   const filteredClients = useMemo(() => {
@@ -124,7 +101,7 @@ const ClientList: React.FC = () => {
     );
   }
 
-  // REMEDIATION ITEM 10: Show error state with retry
+  // Show error state with retry using DataContext refresh
   if (error) {
     return (
       <div>
@@ -136,7 +113,7 @@ const ClientList: React.FC = () => {
           <ErrorState
             title="Failed to load clients"
             message={error}
-            onRetry={loadData}
+            onRetry={refresh}
             secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
           />
         </PageContent>

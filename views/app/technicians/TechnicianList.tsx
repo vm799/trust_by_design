@@ -7,17 +7,24 @@
  * Phase E: Job Lifecycle
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, EmptyState, ErrorState, LoadingSkeleton, Modal } from '../../../components/ui';
-import { getTechnicians, getJobs, addTechnician, deleteTechnician } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Technician, Job } from '../../../types';
 
 const TechnicianList: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const {
+    technicians,
+    jobs,
+    addTechnician: contextAddTechnician,
+    deleteTechnician: contextDeleteTechnician,
+    isLoading: loading,
+    error: dataError,
+    refresh
+  } = useData();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -28,28 +35,7 @@ const TechnicianList: React.FC = () => {
     phone: '',
   });
 
-  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [techsData, jobsData] = await Promise.all([
-        getTechnicians(),
-        getJobs(),
-      ]);
-      setTechnicians(techsData);
-      setJobs(jobsData);
-    } catch (err) {
-      console.error('Failed to load technicians:', err);
-      setError('Failed to load technicians. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const error = dataError;
 
   // REMEDIATION ITEM 7: Memoize tech stats to avoid O(n*m) lookups in render
   const techStatsMap = useMemo(() => {
@@ -91,15 +77,16 @@ const TechnicianList: React.FC = () => {
 
     setSaving(true);
     try {
-      const newTech = await addTechnician({
+      const newTech: Technician = {
+        id: `tech-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
         phone: formData.phone.trim() || undefined,
         status: 'Available',
         rating: 0,
         jobsCompleted: 0,
-      });
-      setTechnicians([...technicians, newTech]);
+      };
+      contextAddTechnician(newTech);
       setShowAddModal(false);
       setFormData({ name: '', email: '', phone: '' });
     } catch (error) {
@@ -114,8 +101,7 @@ const TechnicianList: React.FC = () => {
     if (!confirm('Are you sure you want to remove this technician?')) return;
 
     try {
-      await deleteTechnician(techId);
-      setTechnicians(technicians.filter(t => t.id !== techId));
+      contextDeleteTechnician(techId);
     } catch (error) {
       console.error('Failed to delete technician:', error);
       alert('Failed to remove technician. Please try again.');
@@ -136,7 +122,7 @@ const TechnicianList: React.FC = () => {
     );
   }
 
-  // REMEDIATION ITEM 10: Show error state with retry
+  // Show error state with retry using DataContext refresh
   if (error) {
     return (
       <div>
@@ -148,7 +134,7 @@ const TechnicianList: React.FC = () => {
           <ErrorState
             title="Failed to load technicians"
             message={error}
-            onRetry={loadData}
+            onRetry={refresh}
             secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
           />
         </PageContent>

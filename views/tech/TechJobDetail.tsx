@@ -6,10 +6,10 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
-import { getJobs, getClients, updateJob } from '../../hooks/useWorkspaceData';
+import { useData } from '../../lib/DataContext';
 import { Job, Client } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 
@@ -25,43 +25,26 @@ const TechJobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [job, setJob] = useState<Job | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
+
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!jobId) return;
+  // Derive job and client from DataContext (memoized for performance)
+  const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
+  const client = useMemo(() =>
+    job ? clients.find(c => c.id === job.clientId) || null : null,
+    [clients, job]
+  );
 
-      try {
-        const [jobsData, clientsData] = await Promise.all([
-          getJobs(),
-          getClients(),
-        ]);
-
-        const foundJob = jobsData.find(j => j.id === jobId);
-        setJob(foundJob || null);
-
-        if (foundJob) {
-          setClient(clientsData.find(c => c.id === foundJob.clientId) || null);
-        }
-      } catch (error) {
-        console.error('Failed to load job:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [jobId]);
+  const loading = isLoading;
 
   const handleStartJob = async () => {
     if (!job) return;
 
     try {
-      await updateJob(job.id, { status: 'In Progress' });
-      setJob({ ...job, status: 'In Progress' });
+      const updatedJob: Job = { ...job, status: 'In Progress' };
+      contextUpdateJob(updatedJob);
     } catch (error) {
       console.error('Failed to start job:', error);
       alert('Failed to start job. Please try again.');
@@ -73,7 +56,8 @@ const TechJobDetail: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await updateJob(job.id, { status: 'Complete' });
+      const updatedJob: Job = { ...job, status: 'Complete' };
+      contextUpdateJob(updatedJob);
       navigate('/tech');
     } catch (error) {
       console.error('Failed to complete job:', error);
