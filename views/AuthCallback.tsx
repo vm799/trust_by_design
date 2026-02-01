@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { getSupabase } from '../lib/supabase';
+import { resumeIntentAndGetPath, getNavigationIntent } from '../lib/navigationIntent';
 
 /**
  * Phase 6.5: Auth Callback Handler (Fixed Jan 2026)
@@ -130,9 +131,14 @@ const AuthCallback: React.FC = () => {
 
             hasRedirected.current = true;
             setProcessing(false);
+
+            // UX Flow Contract: Resume navigation intent if one exists
+            const targetPath = resumeIntentAndGetPath();
+            console.log('[AuthCallback] Resuming intent, navigating to:', targetPath);
+
             // Clean up the URL hash to remove tokens
-            window.history.replaceState(null, '', window.location.pathname + '#/');
-            navigate('/', { replace: true });
+            window.history.replaceState(null, '', window.location.pathname + '#' + targetPath);
+            navigate(targetPath, { replace: true });
             return;
           }
         } catch (err) {
@@ -158,10 +164,12 @@ const AuthCallback: React.FC = () => {
       if (hasRedirected.current) return;
 
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
-        console.log(`[AuthCallback] ${event} event received with session, redirecting to dashboard`);
+        // UX Flow Contract: Resume navigation intent if one exists
+        const targetPath = resumeIntentAndGetPath();
+        console.log(`[AuthCallback] ${event} event received with session, navigating to:`, targetPath);
         hasRedirected.current = true;
         setProcessing(false);
-        navigate('/', { replace: true });
+        navigate(targetPath, { replace: true });
       }
       // Don't show error on INITIAL_SESSION without session - token extraction may still work
     });
@@ -177,10 +185,12 @@ const AuthCallback: React.FC = () => {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session && !hasRedirected.current) {
-          console.log('[AuthCallback] Existing session found, redirecting');
+          // UX Flow Contract: Resume navigation intent if one exists
+          const targetPath = resumeIntentAndGetPath();
+          console.log('[AuthCallback] Existing session found, navigating to:', targetPath);
           hasRedirected.current = true;
           setProcessing(false);
-          navigate('/', { replace: true });
+          navigate(targetPath, { replace: true });
         }
       };
 
@@ -197,10 +207,12 @@ const AuthCallback: React.FC = () => {
   // Fallback: Once authenticated via AuthContext, redirect
   useEffect(() => {
     if (!isLoading && isAuthenticated && !hasRedirected.current) {
-      console.log('[AuthCallback] AuthContext confirmed auth, redirecting');
+      // UX Flow Contract: Resume navigation intent if one exists
+      const targetPath = resumeIntentAndGetPath();
+      console.log('[AuthCallback] AuthContext confirmed auth, navigating to:', targetPath);
       hasRedirected.current = true;
       setProcessing(false);
-      navigate('/', { replace: true });
+      navigate(targetPath, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -224,6 +236,10 @@ const AuthCallback: React.FC = () => {
   }, [processing, isAuthenticated]);
 
   if (error) {
+    // UX Flow Contract: Show intent context in error state
+    const storedIntent = getNavigationIntent();
+    const hasJobIntent = storedIntent?.jobId;
+
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-md space-y-6 text-center">
@@ -235,17 +251,22 @@ const AuthCallback: React.FC = () => {
               Sign In Failed
             </h1>
             <p className="text-slate-400 text-sm">{error}</p>
+            {hasJobIntent && (
+              <p className="text-slate-500 text-xs mt-2">
+                You were trying to access Job #{storedIntent.jobId}
+              </p>
+            )}
           </div>
           <div className="space-y-3">
             <button
               onClick={() => navigate('/auth', { replace: true })}
-              className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+              className="w-full min-h-[44px] py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
             >
-              Try Again
+              {hasJobIntent ? 'Resend Link' : 'Try Again'}
             </button>
             <button
               onClick={() => navigate('/home', { replace: true })}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+              className="w-full min-h-[44px] py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
             >
               Back to Home
             </button>
