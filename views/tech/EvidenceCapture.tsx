@@ -180,16 +180,28 @@ const EvidenceCapture: React.FC = () => {
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];
-      // Use DataContext updateJob with full Job object
       const updatedJob: Job = { ...job, photos: updatedPhotos };
-      contextUpdateJob(updatedJob);
 
-      // Clear draft from IndexedDB (photo is now committed to job)
-      try {
+      // Sprint 1 Task 1.5: Atomic draft cleanup using Dexie transaction
+      // CRITICAL: Job update and draft deletion must be atomic
+      // If app crashes between these operations, we either:
+      // - Lose the photo (if job update fails after draft delete)
+      // - Have orphaned draft (if draft delete fails after job update)
+      // Using a transaction ensures both succeed or both fail
+      await db.transaction('rw', db.jobs, db.media, async () => {
+        // 1. Commit job update to local DB
+        await db.jobs.put({
+          ...updatedJob,
+          syncStatus: SYNC_STATUS.PENDING,
+          lastUpdated: Date.now()
+        });
+
+        // 2. Delete draft atomically (if job put fails, this won't run)
         await db.media.delete(draftKey);
-      } catch {
-        // Non-critical - draft will be orphaned but not cause issues
-      }
+      });
+
+      // 3. Update context (reflects the committed DB state)
+      contextUpdateJob(updatedJob);
 
       // Show "Saved to device" confirmation (Sprint 1 Task 1.2)
       // CRITICAL: Technician needs certainty that photo is safe
