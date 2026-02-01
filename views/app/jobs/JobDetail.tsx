@@ -213,6 +213,37 @@ const JobDetail: React.FC = () => {
     }
   };
 
+  // Calculate magic link expiry countdown
+  const getExpiryInfo = (): { text: string; isUrgent: boolean; isExpired: boolean } => {
+    if (!job?.magicLinkCreatedAt && !job?.magicLinkToken) {
+      return { text: 'Expires in 7 days', isUrgent: false, isExpired: false };
+    }
+
+    const createdAt = job.magicLinkCreatedAt ? new Date(job.magicLinkCreatedAt).getTime() : Date.now();
+    const expiresAt = createdAt + 7 * 24 * 60 * 60 * 1000; // 7 days
+    const remaining = expiresAt - Date.now();
+
+    if (remaining <= 0) {
+      return { text: 'Link expired - generate a new one', isUrgent: true, isExpired: true };
+    }
+
+    const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+
+    if (days > 1) {
+      return { text: `Expires in ${days} days`, isUrgent: false, isExpired: false };
+    }
+    if (days === 1) {
+      return { text: `Expires in ${days} day, ${hours} hours`, isUrgent: true, isExpired: false };
+    }
+    if (hours > 0) {
+      return { text: `Expires in ${hours} hours`, isUrgent: true, isExpired: false };
+    }
+    return { text: 'Expires soon!', isUrgent: true, isExpired: false };
+  };
+
+  const expiryInfo = getExpiryInfo();
+
   // Get computed status
   const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' => {
     if (!job) return 'draft';
@@ -621,12 +652,44 @@ const JobDetail: React.FC = () => {
             </button>
           ) : (
             <div className="space-y-4">
-              {/* Magic Link Display */}
+              {/* Magic Link Display with Dynamic Expiry */}
               <div className="p-4 bg-slate-800 rounded-xl">
                 <p className="text-xs text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
                 <p className="text-sm text-white font-mono break-all">{magicLink}</p>
-                <p className="text-xs text-slate-500 mt-2">Expires in 7 days</p>
+                <p className={`text-xs mt-2 flex items-center gap-1 ${
+                  expiryInfo.isExpired ? 'text-red-400' :
+                  expiryInfo.isUrgent ? 'text-amber-400' :
+                  'text-slate-500'
+                }`}>
+                  {expiryInfo.isUrgent && (
+                    <span className="material-symbols-outlined text-sm">warning</span>
+                  )}
+                  {expiryInfo.text}
+                </p>
               </div>
+
+              {/* Prominent Resend Button - Show when link exists */}
+              <button
+                onClick={handleGenerateMagicLink}
+                disabled={generatingLink}
+                className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                  expiryInfo.isExpired || expiryInfo.isUrgent
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    : 'bg-slate-700 hover:bg-slate-600 text-white'
+                }`}
+              >
+                {generatingLink ? (
+                  <>
+                    <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-lg">refresh</span>
+                    {expiryInfo.isExpired ? 'Generate New Link' : 'Resend with New Link'}
+                  </>
+                )}
+              </button>
 
               {/* QR Code */}
               <div className="flex justify-center">
@@ -678,16 +741,6 @@ const JobDetail: React.FC = () => {
                   More Share Options...
                 </button>
               )}
-
-              {/* Regenerate Link */}
-              <button
-                onClick={handleGenerateMagicLink}
-                disabled={generatingLink}
-                className="w-full py-2 text-slate-400 hover:text-white text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1"
-              >
-                <span className="material-symbols-outlined text-sm">refresh</span>
-                Generate New Link
-              </button>
             </div>
           )}
         </div>
