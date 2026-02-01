@@ -1,15 +1,18 @@
 /**
- * TechPortal - Action-First Technician Dashboard
+ * TechPortal - Focus Stack Technician Dashboard
  *
- * Redesigned based on UX Architecture v2.0
- * Single question: "What job do I continue right now?"
+ * Implements Context Thrash Prevention pattern:
+ * - ONE job in focus (the active "In Progress" job)
+ * - Max 3 jobs in queue (next assigned, read-only)
+ * - Everything else collapsed (scroll-only)
  *
- * NO tabs. NO categorization. ONLY action.
+ * Core principle: Technicians execute the queue, they don't manage it.
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, EmptyState, LoadingSkeleton } from '../../components/ui';
+import { motion } from 'framer-motion';
+import { Card, LoadingSkeleton, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
 import { Job } from '../../types';
@@ -17,6 +20,7 @@ import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import QuickJobForm from '../../components/QuickJobForm';
 import { createJob } from '../../lib/db';
+import { fadeInUp } from '../../lib/animations';
 
 const TechPortal: React.FC = () => {
   const navigate = useNavigate();
@@ -59,37 +63,127 @@ const TechPortal: React.FC = () => {
     navigate(`/tech/job/${job.id}`);
   }, [navigate, workspaceId, addJob]);
 
-  // Categorize jobs - prioritize active job
-  const { activeJob, todayJobs, upcomingJobs, completedCount } = useMemo(() => {
-    const today = new Date().toDateString();
-
-    // Find the currently active job (In Progress)
+  // Focus Stack: Find the ONE focus job and count completed
+  const { focusJobId, completedCount } = useMemo(() => {
+    // Find the currently active job (In Progress) - this is the focus job
     const inProgressJob = allJobs.find(j => j.status === 'In Progress');
 
-    // Active jobs (not complete)
-    const active = allJobs.filter(j => j.status !== 'Complete' && j.status !== 'Submitted');
-
-    // Today's jobs (excluding active job if exists)
-    const todayActive = active
-      .filter(j => new Date(j.date).toDateString() === today)
-      .filter(j => j.id !== inProgressJob?.id);
-
-    // Upcoming jobs
-    const upcoming = active
-      .filter(j => new Date(j.date).toDateString() !== today)
-      .filter(j => j.id !== inProgressJob?.id)
-      .slice(0, 3);
-
-    // Completed count
-    const completed = allJobs.filter(j => j.status === 'Complete' || j.status === 'Submitted').length;
+    // Completed count for history link
+    const completed = allJobs.filter(j =>
+      j.status === 'Complete' || j.status === 'Submitted'
+    ).length;
 
     return {
-      activeJob: inProgressJob,
-      todayJobs: todayActive,
-      upcomingJobs: upcoming,
+      focusJobId: inProgressJob?.id || null,
       completedCount: completed,
     };
   }, [allJobs]);
+
+  // Queue sorting: by scheduled time, then by last updated
+  const sortQueueJobs = useCallback((jobs: Job[]) => {
+    return [...jobs].sort((a, b) => {
+      // Primary: Scheduled date (earliest first)
+      const aDate = new Date(a.date).getTime();
+      const bDate = new Date(b.date).getTime();
+      if (aDate !== bDate) return aDate - bDate;
+
+      // Secondary: Last updated (most recent first)
+      return (b.lastUpdated || 0) - (a.lastUpdated || 0);
+    });
+  }, []);
+
+  // Navigate to focus job
+  const handleContinueFocusJob = useCallback((job: Job) => {
+    navigate(`/tech/job/${job.id}`);
+  }, [navigate]);
+
+  // Render: Focus job (dominant, ~50% screen)
+  const renderFocusJob = useCallback(({ job, client }: FocusJobRenderProps) => (
+    <Link to={`/tech/job/${job.id}`} className="block">
+      <Card className="bg-primary/5 border-primary/30 dark:bg-primary/10">
+        <div className="flex items-center gap-4 py-2">
+          {/* Pulsing indicator */}
+          <div className="size-16 rounded-2xl bg-primary/20 flex items-center justify-center relative shrink-0">
+            <span className="material-symbols-outlined text-3xl text-primary">play_arrow</span>
+            <span className="absolute -top-1 -right-1 size-3 bg-primary rounded-full animate-pulse" />
+          </div>
+
+          {/* Job info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-primary uppercase tracking-wide mb-1">
+              Continue Working
+            </p>
+            <p className="font-bold text-slate-900 dark:text-white text-lg truncate">
+              {job.title || `Job #${job.id.slice(0, 6)}`}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+              {client?.name || 'Unknown client'}
+            </p>
+            {/* Evidence indicator */}
+            {job.photos && job.photos.length > 0 && (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">check_circle</span>
+                {job.photos.length} photo{job.photos.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          <span className="material-symbols-outlined text-2xl text-primary">chevron_right</span>
+        </div>
+      </Card>
+    </Link>
+  ), []);
+
+  // Render: Queue job (compact, read-only)
+  const renderQueueJob = useCallback(({ job, client, position }: QueueJobRenderProps) => {
+    const hasEvidence = job.photos && job.photos.length > 0;
+
+    return (
+      <Link to={`/tech/job/${job.id}`}>
+        <Card variant="interactive" padding="sm">
+          <div className="flex items-center gap-3">
+            {/* Position indicator */}
+            <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{position}</span>
+            </div>
+
+            {/* Evidence status bar */}
+            <div className={`w-0.5 h-10 rounded-full ${hasEvidence ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-white/10'}`} />
+
+            {/* Job info */}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                {job.title || `Job #${job.id.slice(0, 6)}`}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {client?.name || 'Unknown client'}
+              </p>
+            </div>
+
+            {/* Time */}
+            <div className="text-xs text-slate-400 shrink-0">
+              {new Date(job.date).toLocaleTimeString('en-AU', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
+          </div>
+        </Card>
+      </Link>
+    );
+  }, []);
+
+  // Render: Collapsed job (minimal, scroll-only)
+  const renderCollapsedJob = useCallback(({ job, client }: CollapsedJobRenderProps) => (
+    <Link
+      to={`/tech/job/${job.id}`}
+      className="block py-2 px-3 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
+    >
+      <span className="font-medium">{job.title || `Job #${job.id.slice(0, 6)}`}</span>
+      <span className="mx-2 opacity-50">•</span>
+      <span>{client?.name || 'Unknown'}</span>
+    </Link>
+  ), []);
 
   // Show QuickJobForm modal
   if (showQuickJob) {
@@ -131,7 +225,7 @@ const TechPortal: React.FC = () => {
         </div>
       </header>
 
-      {/* Content */}
+      {/* Content - Focus Stack Pattern */}
       <main className="flex-1 px-4 py-6 pb-32">
         {isLoading ? (
           <LoadingSkeleton variant="card" count={3} />
@@ -155,177 +249,37 @@ const TechPortal: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* PRIMARY ACTION: Continue Current Job (if active) */}
-            {activeJob && (
-              <section>
-                <Link to={`/tech/job/${activeJob.id}`} className="block">
-                  <Card className="bg-primary/5 border-primary/30 dark:bg-primary/10">
-                    <div className="flex items-center gap-4 py-2">
-                      {/* Pulsing indicator */}
-                      <div className="size-14 rounded-2xl bg-primary/20 flex items-center justify-center relative">
-                        <span className="material-symbols-outlined text-2xl text-primary">play_arrow</span>
-                        <span className="absolute -top-1 -right-1 size-3 bg-primary rounded-full animate-pulse" />
-                      </div>
-
-                      {/* Job info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary uppercase tracking-wide mb-1">
-                          Continue Working
-                        </p>
-                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate">
-                          {activeJob.title || `Job #${activeJob.id.slice(0, 6)}`}
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                          {clients.find(c => c.id === activeJob.clientId)?.name || 'Unknown client'}
-                        </p>
-                      </div>
-
-                      <span className="material-symbols-outlined text-2xl text-primary">chevron_right</span>
-                    </div>
-                  </Card>
-                </Link>
-              </section>
-            )}
-
-            {/* TODAY'S JOBS */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">today</span>
-                  Today
-                  {todayJobs.length > 0 && (
-                    <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">
-                      {todayJobs.length}
-                    </span>
-                  )}
+            {/* Focus Stack: 1 Focus + 3 Queue + Collapsed */}
+            <FocusStack
+              jobs={allJobs}
+              clients={clients}
+              focusJobId={focusJobId}
+              renderFocusJob={renderFocusJob}
+              renderQueueJob={renderQueueJob}
+              renderCollapsedJob={renderCollapsedJob}
+              onContinueFocusJob={handleContinueFocusJob}
+              maxQueueSize={3}
+              sortQueue={sortQueueJobs}
+              showCollapsed={true}
+              queueHeader={
+                <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">queue</span>
+                  Next Up
                 </h2>
-              </div>
-
-              {todayJobs.length === 0 && !activeJob ? (
-                <Card className="text-center py-6">
-                  <span className="material-symbols-outlined text-3xl text-slate-400 dark:text-slate-600 mb-2">event_busy</span>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">No jobs scheduled today</p>
-                </Card>
-              ) : todayJobs.length === 0 && activeJob ? (
-                <Card className="text-center py-4">
-                  <p className="text-slate-500 text-sm">Only your active job is scheduled for today</p>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {todayJobs.map(job => {
-                    const client = clients.find(c => c.id === job.clientId);
-                    const hasEvidence = job.photos && job.photos.length > 0;
-
-                    return (
-                      <Link key={job.id} to={`/tech/job/${job.id}`}>
-                        <Card variant="interactive">
-                          <div className="flex items-center gap-4">
-                            {/* Time */}
-                            <div className="text-center min-w-[50px]">
-                              <p className="text-lg font-bold text-slate-900 dark:text-white">
-                                {new Date(job.date).toLocaleTimeString('en-AU', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </p>
-                            </div>
-
-                            {/* Divider */}
-                            <div className={`w-0.5 h-12 rounded-full ${hasEvidence ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-white/10'}`} />
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-slate-900 dark:text-white truncate">
-                                {job.title || `Job #${job.id.slice(0, 6)}`}
-                              </p>
-                              <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                                {client?.name || 'Unknown client'}
-                              </p>
-                              {/* Evidence status indicator */}
-                              <div className="flex items-center gap-2 mt-1">
-                                {hasEvidence ? (
-                                  <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-xs">check_circle</span>
-                                    {job.photos?.length} photo{job.photos?.length !== 1 ? 's' : ''}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-slate-500 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-xs">photo_camera</span>
-                                    No evidence yet
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-                          </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            {/* UPCOMING JOBS - Collapsed by default */}
-            {upcomingJobs.length > 0 && (
-              <section>
-                <details className="group">
-                  <summary className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-300 py-2">
-                    <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
-                    <span className="material-symbols-outlined text-sm">event</span>
-                    Upcoming ({upcomingJobs.length})
-                  </summary>
-
-                  <div className="space-y-3 pt-3">
-                    {upcomingJobs.map(job => {
-                      const client = clients.find(c => c.id === job.clientId);
-
-                      return (
-                        <Link key={job.id} to={`/tech/job/${job.id}`}>
-                          <Card variant="interactive">
-                            <div className="flex items-center gap-4">
-                              {/* Date */}
-                              <div className="text-center min-w-[50px]">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                  {new Date(job.date).toLocaleDateString('en-AU', {
-                                    day: 'numeric',
-                                  })}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {new Date(job.date).toLocaleDateString('en-AU', {
-                                    month: 'short',
-                                  })}
-                                </p>
-                              </div>
-
-                              {/* Info */}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-slate-900 dark:text-white truncate">
-                                  {job.title || `Job #${job.id.slice(0, 6)}`}
-                                </p>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                                  {client?.name || 'Unknown client'}
-                                </p>
-                              </div>
-
-                              <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-                            </div>
-                          </Card>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
-              </section>
-            )}
+              }
+            />
 
             {/* HISTORY LINK - Tertiary */}
             {completedCount > 0 && (
-              <section className="pt-4 border-t border-slate-200 dark:border-white/5">
+              <motion.section
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                className="pt-4 border-t border-slate-200 dark:border-white/5"
+              >
                 <Link
                   to="/tech/history"
-                  className="flex items-center justify-between py-3 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="flex items-center justify-between py-3 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px]"
                 >
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-emerald-500">history</span>
@@ -336,7 +290,7 @@ const TechPortal: React.FC = () => {
                     <span className="material-symbols-outlined text-sm">chevron_right</span>
                   </div>
                 </Link>
-              </section>
+              </motion.section>
             )}
           </div>
         )}
