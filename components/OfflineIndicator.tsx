@@ -41,22 +41,27 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
 
   return (
     <div className={`animate-in ${className}`}>
-      {/* Offline Banner */}
+      {/* Bunker Mode Banner - Full Offline Access */}
       {!isOnline && (
-        <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4 flex items-center gap-4">
-          <div className="size-10 bg-warning/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className={`material-symbols-outlined text-warning text-xl ${isChecking ? 'animate-spin' : ''}`}>
-              {isChecking ? 'sync' : 'wifi_off'}
+        <div className="bg-amber-500/15 border border-amber-400/30 rounded-2xl p-4 flex items-center gap-4">
+          <div className="size-10 bg-amber-500/25 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className={`material-symbols-outlined text-amber-400 text-xl ${isChecking ? 'animate-spin' : ''}`}>
+              {isChecking ? 'sync' : 'signal_cellular_off'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-black uppercase text-warning tracking-tight">
-              {isChecking ? 'Checking Connection...' : 'Working Offline'}
+            <h3 className="text-sm font-black uppercase text-amber-400 tracking-tight flex items-center gap-2">
+              {isChecking ? 'Checking Connection...' : (
+                <>
+                  <span className="material-symbols-outlined text-base">shield</span>
+                  Bunker Mode
+                </>
+              )}
             </h3>
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
               {isChecking
                 ? 'Verifying network connectivity...'
-                : "Your work is being saved locally. Changes will sync when you're back online."}
+                : 'Full access enabled. All features available. Changes sync when online.'}
             </p>
           </div>
         </div>

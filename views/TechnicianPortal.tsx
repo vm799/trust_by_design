@@ -344,6 +344,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [, setLocalSyncStatus] = useState<SyncStatus>('synced');
   const [signerName, setSignerName] = useState('');
   const [signerRole, setSignerRole] = useState('Client');
+  // UX Flow Contract: Legal attestation checkbox required before sealing
+  const [attestationConfirmed, setAttestationConfirmed] = useState(false);
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
   const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'denied'>('idle');
   const [w3w, setW3w] = useState('');
@@ -2007,6 +2009,33 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </div>
             </div>
 
+            {/* UX Flow Contract: Legal attestation checkbox - REQUIRED before sealing */}
+            <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4">
+              <label className="flex items-start gap-4 cursor-pointer group">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={attestationConfirmed}
+                    onChange={(e) => setAttestationConfirmed(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="size-6 rounded-lg border-2 border-slate-600 bg-slate-800 peer-checked:bg-success peer-checked:border-success transition-all flex items-center justify-center">
+                    {attestationConfirmed && (
+                      <span className="material-symbols-outlined text-white text-sm font-black">check</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-white leading-relaxed">
+                    I confirm I am satisfied with the work completed
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    By signing below, the signatory acknowledges that the work described has been completed to their satisfaction and authorizes the sealing of this evidence record.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <div className="space-y-4">
               <div className="bg-slate-50 rounded-[3rem] p-8 border-4 border-slate-900 shadow-2xl relative">
                 <p className="text-[9px] font-black text-slate-300 absolute top-4 inset-x-0 text-center uppercase tracking-[0.3em] pointer-events-none">JobProof Secure Sign-Off</p>
@@ -2147,12 +2176,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     )}
                   </div>
                 </div>
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${attestationConfirmed ? 'bg-success/10' : 'bg-slate-800'}`}>
+                  <span className={`material-symbols-outlined text-lg ${attestationConfirmed ? 'text-success' : 'text-slate-500'}`}>
+                    {attestationConfirmed ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${attestationConfirmed ? 'text-white' : 'text-slate-400'}`}>Satisfaction Confirmed</p>
+                    <p className="text-[10px] text-slate-400">Legal attestation checkbox</p>
+                  </div>
+                </div>
               </div>
             </div>
 
             <button
               onClick={handleSealWithConfirmation}
-              disabled={isSubmitting || !signerName || photos.length === 0}
+              disabled={isSubmitting || !signerName || photos.length === 0 || !attestationConfirmed}
               className="w-full py-7 bg-success rounded-[3rem] font-black text-xl tracking-tighter text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 press-spring uppercase disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

@@ -674,3 +674,165 @@ h1, h2, h3, h4, h5, h6 {
   word-break: break-word;
   hyphens: auto;
 }
+
+/* ============================================
+   PRINT STYLESHEET - Construction Report PDFs
+   Light background, readable fonts for paper
+   ============================================ */
+
+@media print {
+  /* Reset to light background for paper printing */
+  body,
+  html {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force light theme for report pages */
+  .print-light,
+  .report-container,
+  [data-print="light"] {
+    background: white !important;
+    color: #1a1a1a !important;
+  }
+
+  /* Ensure dark backgrounds become light */
+  .bg-slate-950,
+  .bg-slate-900,
+  .bg-slate-800 {
+    background: white !important;
+  }
+
+  /* Ensure light text becomes dark */
+  .text-white,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300 {
+    color: #1a1a1a !important;
+  }
+
+  /* Muted text becomes gray for readability */
+  .text-slate-400,
+  .text-slate-500 {
+    color: #555555 !important;
+  }
+
+  /* Hide non-essential UI elements */
+  .no-print,
+  .print-hidden,
+  nav,
+  footer,
+  button,
+  .btn,
+  [role="button"],
+  .offline-indicator,
+  .sync-badge {
+    display: none !important;
+  }
+
+  /* Keep essential buttons visible if needed */
+  .print-keep {
+    display: block !important;
+  }
+
+  /* Photo grid - ensure images print correctly */
+  .photo-grid img,
+  .evidence-photo {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Signature canvas - ensure visibility */
+  .signature-canvas,
+  .signature-preview {
+    border: 1px solid #333 !important;
+    background: white !important;
+  }
+
+  /* Status badges - high contrast for print */
+  .status-badge,
+  .seal-badge {
+    border: 1px solid #333 !important;
+    background: #f0f0f0 !important;
+    color: #1a1a1a !important;
+  }
+
+  /* Headers and sections */
+  h1, h2, h3, h4, h5, h6 {
+    color: #1a1a1a !important;
+    page-break-after: avoid;
+  }
+
+  /* Page break controls */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .avoid-page-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure borders are visible */
+  .border,
+  [class*="border-"] {
+    border-color: #cccccc !important;
+  }
+
+  /* Card backgrounds for print */
+  .card,
+  .bg-card,
+  [class*="rounded-"] {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #e0e0e0 !important;
+  }
+
+  /* Timeline and metadata sections */
+  .timeline-item,
+  .metadata-row {
+    border-left: 2px solid #333 !important;
+  }
+
+  /* GPS/W3W/Timestamp metadata */
+  .photo-metadata {
+    font-size: 10px !important;
+    color: #333 !important;
+    background: #f5f5f5 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Certificate/seal section */
+  .seal-certificate {
+    border: 2px solid #333 !important;
+    background: #fafafa !important;
+  }
+
+  /* Reduce margins for paper */
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+
+  /* Ensure links show URL */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 10px;
+    color: #666;
+  }
+
+  /* Hide decorative link suffixes */
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after,
+  a.no-print-href::after {
+    content: "";
+  }
+}
