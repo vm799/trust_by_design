@@ -6,9 +6,9 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getJobs, updateJob } from '../../hooks/useWorkspaceData';
+import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
 
 type PhotoType = 'before' | 'during' | 'after';
@@ -24,27 +24,21 @@ const EvidenceCapture: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
+  // Use DataContext for state management
+  const { jobs, updateJob: contextUpdateJob } = useData();
+
+  // Memoized job derivation from DataContext
+  const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [job, setJob] = useState<Job | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoType, setPhotoType] = useState<PhotoType>('before');
   const [capturedPhoto, setCapturedPhoto] = useState<CapturedPhoto | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-
-  // Load job
-  useEffect(() => {
-    const loadJob = async () => {
-      if (!jobId) return;
-      const jobs = await getJobs();
-      const foundJob = jobs.find(j => j.id === jobId);
-      setJob(foundJob || null);
-    };
-    loadJob();
-  }, [jobId]);
 
   // Start camera
   useEffect(() => {
@@ -143,7 +137,9 @@ const EvidenceCapture: React.FC = () => {
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];
-      await updateJob(job.id, { photos: updatedPhotos });
+      // Use DataContext updateJob with full Job object
+      const updatedJob: Job = { ...job, photos: updatedPhotos };
+      contextUpdateJob(updatedJob);
 
       // Go back to job detail
       navigate(`/tech/job/${job.id}`);

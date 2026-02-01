@@ -6,11 +6,11 @@
  * Phase D: Client Registry
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
-import { getClients, getJobs, deleteClient } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
@@ -18,41 +18,29 @@ const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [client, setClient] = useState<Client | null>(null);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const {
+    clients,
+    jobs: allJobs,
+    deleteClient: contextDeleteClient,
+    isLoading
+  } = useData();
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!id) return;
+  // Derive client and jobs from DataContext (memoized for performance)
+  const client = useMemo(() => clients.find(c => c.id === id) || null, [clients, id]);
+  const jobs = useMemo(() => allJobs.filter(j => j.clientId === id), [allJobs, id]);
 
-      try {
-        const [clientsData, jobsData] = await Promise.all([
-          getClients(),
-          getJobs(),
-        ]);
-
-        const foundClient = clientsData.find(c => c.id === id);
-        setClient(foundClient || null);
-        setJobs(jobsData.filter(j => j.clientId === id));
-      } catch (error) {
-        console.error('Failed to load client:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [id]);
+  const loading = isLoading;
 
   const handleDelete = async () => {
     if (!client) return;
 
     setDeleting(true);
     try {
-      await deleteClient(client.id);
+      contextDeleteClient(client.id);
       navigate(ROUTES.CLIENTS);
     } catch (error) {
       console.error('Failed to delete client:', error);

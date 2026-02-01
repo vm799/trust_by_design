@@ -6,11 +6,11 @@
  * Phase I: Invoice Flow
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
-import { getInvoices, getClients, getJobs, updateInvoice, deleteInvoice } from '../../../hooks/useWorkspaceData';
+import { useData } from '../../../lib/DataContext';
 import { Invoice, Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
@@ -18,48 +18,37 @@ const InvoiceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
-  const [job, setJob] = useState<Job | null>(null);
+  // Use DataContext for state management
+  const {
+    invoices,
+    clients,
+    jobs,
+    updateInvoice: contextUpdateInvoice,
+    deleteInvoice: contextDeleteInvoice,
+    isLoading: loading
+  } = useData();
+
+  // Memoized derivation from DataContext
+  const invoice = useMemo(() => invoices.find(i => i.id === id) || null, [invoices, id]);
+  const client = useMemo(() =>
+    invoice ? clients.find(c => c.id === invoice.clientId) || null : null,
+    [clients, invoice]
+  );
+  const job = useMemo(() =>
+    invoice ? jobs.find(j => j.id === invoice.jobId) || null : null,
+    [jobs, invoice]
+  );
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMarkPaidDialog, setShowMarkPaidDialog] = useState(false);
   const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!id) return;
-
-      try {
-        const [invoicesData, clientsData, jobsData] = await Promise.all([
-          getInvoices(),
-          getClients(),
-          getJobs(),
-        ]);
-
-        const foundInvoice = invoicesData.find(i => i.id === id);
-        setInvoice(foundInvoice || null);
-
-        if (foundInvoice) {
-          setClient(clientsData.find(c => c.id === foundInvoice.clientId) || null);
-          setJob(jobsData.find(j => j.id === foundInvoice.jobId) || null);
-        }
-      } catch (error) {
-        console.error('Failed to load invoice:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [id]);
 
   const handleDelete = async () => {
     if (!invoice) return;
 
     setProcessing(true);
     try {
-      await deleteInvoice(invoice.id);
+      contextDeleteInvoice(invoice.id);
       navigate(ROUTES.INVOICES);
     } catch (error) {
       console.error('Failed to delete invoice:', error);
@@ -75,8 +64,9 @@ const InvoiceDetail: React.FC = () => {
 
     setProcessing(true);
     try {
-      await updateInvoice(invoice.id, { paidAt: new Date().toISOString() });
-      setInvoice({ ...invoice, paidAt: new Date().toISOString() });
+      // Use DataContext updateInvoice with full Invoice object
+      const updatedInvoice: Invoice = { ...invoice, paidAt: new Date().toISOString() };
+      contextUpdateInvoice(updatedInvoice);
       setShowMarkPaidDialog(false);
     } catch (error) {
       console.error('Failed to mark invoice as paid:', error);
