@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './lib/AuthContext';
 import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
+import BuildFingerprint from './components/ui/BuildFingerprint';
 
 // REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
 // These are loaded on-demand when first needed
@@ -73,6 +74,8 @@ const TechJobDetail = lazy(() => import('./views/tech/TechJobDetail'));
 const EvidenceCapture = lazy(() => import('./views/tech/EvidenceCapture'));
 // Stripe Trial: Plan selection after signup
 const SelectPlan = lazy(() => import('./views/SelectPlan'));
+// Developer Tools: Reset utility for clearing all persistence layers
+const DevReset = lazy(() => import('./views/DevReset'));
 
 // Dynamic onboarding step loader component
 // Note: Onboarding pages are currently Next.js format and need adaptation to React Router
@@ -748,10 +751,15 @@ const AppContent: React.FC = () => {
         <Route path="/docs/audit" element={<AuditReport />} />
         <Route path="/legal/:type" element={<LegalPage />} />
 
+        {/* Developer Tools - Hidden route for cache/storage reset */}
+        <Route path="/dev/reset" element={<DevReset />} />
+
         {/* Fallbacks */}
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      {/* Developer build badge - visible in dev mode or with ?debug=1 */}
+      <BuildFingerprint position="bottom-right" />
     </HashRouter>
   );
 };

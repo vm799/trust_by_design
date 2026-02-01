@@ -8,13 +8,21 @@
  * - Static assets: Cache-first (fast loads)
  * - API requests: Network-first with cache fallback
  * - Photos/Media: Cache-first (large files)
+ *
+ * Developer Mode:
+ * - More aggressive cache invalidation
+ * - Schema version checking
+ * - Auto-clear on version mismatch
  */
 
 // Cache version - increment to force cache refresh on deployment
 // v2.0.0: Added CSP fix, database error handling
 // v2.1.0: Fixed stale asset detection - auto-clear on 404 JS/CSS
 // v2.2.0: Fixed index.html cache strategy - network-first prevents stale asset refs
-const CACHE_VERSION = 'bunker-v2.2';
+// v2.3.0: Added schema version tracking, dev mode support, enhanced reset
+const CACHE_VERSION = 'bunker-v2.3';
+// Schema version must match lib/offline/db.ts DB_SCHEMA_VERSION
+const SCHEMA_VERSION = 4;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const MEDIA_CACHE = `${CACHE_VERSION}-media`;
@@ -425,11 +433,57 @@ self.addEventListener('message', (event) => {
     });
   }
 
-  // Get current cache version
+  // Get current cache version and schema version
   if (event.data.type === 'GET_VERSION') {
     event.source.postMessage({
       type: 'VERSION_INFO',
-      version: CACHE_VERSION
+      version: CACHE_VERSION,
+      schemaVersion: SCHEMA_VERSION
+    });
+  }
+
+  // Developer reset - clears everything and unregisters
+  if (event.data.type === 'DEV_RESET') {
+    console.log('[SW] Developer reset initiated');
+
+    // Clear all caches
+    caches.keys().then((names) => {
+      return Promise.all(names.map((name) => {
+        console.log('[SW] DEV_RESET: Deleting cache:', name);
+        return caches.delete(name);
+      }));
+    }).then(() => {
+      // Clear IndexedDB
+      if (typeof indexedDB !== 'undefined' && indexedDB.databases) {
+        return indexedDB.databases().then((dbs) => {
+          return Promise.all(dbs.map((db) => {
+            console.log('[SW] DEV_RESET: Deleting IndexedDB:', db.name);
+            return new Promise((resolve) => {
+              const req = indexedDB.deleteDatabase(db.name);
+              req.onsuccess = resolve;
+              req.onerror = resolve;
+              req.onblocked = resolve;
+            });
+          }));
+        });
+      }
+    }).then(() => {
+      // Notify client
+      event.source.postMessage({
+        type: 'DEV_RESET_COMPLETE',
+        success: true
+      });
+      // Unregister this service worker
+      return self.registration.unregister();
+    }).then(() => {
+      console.log('[SW] DEV_RESET: Service worker unregistered');
+    }).catch((error) => {
+      console.error('[SW] DEV_RESET error:', error);
+      event.source.postMessage({
+        type: 'DEV_RESET_COMPLETE',
+        success: false,
+        error: error.message
+      });
     });
   }
 });
