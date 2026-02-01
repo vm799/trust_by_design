@@ -11,6 +11,7 @@ import { getMedia } from '../db';
 import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
 import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
+import { prepareJobForSync } from './utils/technicianIdNormalization';
 
 interface SyncQueueItem {
   id: string;
@@ -37,6 +38,9 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
 
   const supabase = getSupabase();
   if (!supabase) return false;
+
+  // Sprint 2 Task 2.6: Normalize technician IDs before sync
+  const normalizedJob = prepareJobForSync(job);
 
   try {
     // 1. Upload photos from IndexedDB to Supabase Storage
@@ -156,25 +160,27 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
     }
 
     // 3. Upsert job to database
+    // Sprint 2 Task 2.6: Use normalizedJob for consistent technician IDs
     const { error: jobError } = await supabase
       .from('jobs')
       .upsert({
-        id: job.id,
-        title: job.title,
-        client: job.client,
-        address: job.address,
-        notes: job.notes,
-        status: job.status,
-        lat: job.lat,
-        lng: job.lng,
-        w3w: job.w3w,
-        assignee: job.technician,
-        signer_name: job.signerName,
-        signer_role: job.signerRole,
+        id: normalizedJob.id,
+        title: normalizedJob.title,
+        client: normalizedJob.client,
+        address: normalizedJob.address,
+        notes: normalizedJob.notes,
+        status: normalizedJob.status,
+        lat: normalizedJob.lat,
+        lng: normalizedJob.lng,
+        w3w: normalizedJob.w3w,
+        assignee: normalizedJob.technician,
+        technician_id: normalizedJob.technicianId || normalizedJob.techId, // Normalized technician ID
+        signer_name: normalizedJob.signerName,
+        signer_role: normalizedJob.signerRole,
         signature_url: signatureUrl,
-        created_at: job.date,
-        completed_at: job.completedAt,
-        last_updated: job.lastUpdated,
+        created_at: normalizedJob.date,
+        completed_at: normalizedJob.completedAt,
+        last_updated: normalizedJob.lastUpdated,
         sync_status: SYNC_STATUS.SYNCED
       });
 

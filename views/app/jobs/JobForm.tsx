@@ -237,14 +237,17 @@ const JobForm: React.FC = () => {
 
       if (isEdit && id && existingJob) {
         // Update existing job - use full Job object
+        // Sprint 2 Task 2.6: Use single technicianId - DataContext normalizes to both fields
+        const selectedTech = formData.technicianId ? technicians.find(t => t.id === formData.technicianId) : null;
         const updatedJob: Job = {
           ...existingJob,
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           notes: formData.description.trim() || '',
           clientId: formData.clientId,
-          technicianId: formData.technicianId || undefined,
-          techId: formData.technicianId || '',
+          technicianId: formData.technicianId || '',
+          techId: formData.technicianId || '', // Will be normalized by DataContext
+          technician: selectedTech?.name || existingJob.technician || '',
           address: formData.address.trim() || undefined,
           date: dateTime.toISOString(),
           total: formData.total ? parseFloat(formData.total) : undefined,
@@ -255,14 +258,19 @@ const JobForm: React.FC = () => {
         navigate(route(ROUTES.JOB_DETAIL, { id }));
       } else {
         // Create new job
+        // Sprint 2 Task 2.6: Use single technicianId - DataContext normalizes to both fields
+        const selectedTech = formData.technicianId ? technicians.find(t => t.id === formData.technicianId) : null;
+        const selectedClient = formData.clientId ? clients.find(c => c.id === formData.clientId) : null;
         const newJob: Job = {
           id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           notes: formData.description.trim() || '',
           clientId: formData.clientId,
-          technicianId: formData.technicianId || undefined,
-          techId: formData.technicianId || '',
+          client: selectedClient?.name || '',
+          technicianId: formData.technicianId || '',
+          techId: formData.technicianId || '', // Will be normalized by DataContext
+          technician: selectedTech?.name || '',
           address: formData.address.trim() || undefined,
           date: dateTime.toISOString(),
           total: formData.total ? parseFloat(formData.total) : undefined,
