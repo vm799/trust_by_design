@@ -583,6 +583,14 @@ export default function BunkerRun() {
     loadJob(jobId);
   }, [jobId, isHandshakeLoading, handshake.managerEmail, handshake.clientEmail]);
 
+  // Sprint 3 Task 3.6: Retry handler - replaces window.location.reload()
+  const handleRetryLoad = () => {
+    setLoadError(null);
+    if (jobId) {
+      loadJob(jobId);
+    }
+  };
+
   // Auto-save to IndexedDB
   useEffect(() => {
     if (job) {
@@ -977,8 +985,9 @@ export default function BunkerRun() {
             <h1 className="text-2xl font-bold">{loadError}</h1>
             <p className={isDaylight ? 'text-slate-600' : 'text-slate-400'}>The job could not be found or loaded.</p>
             <div className="flex gap-4 justify-center">
+              {/* Sprint 3 Task 3.6: Use retry handler instead of page reload */}
               <button
-                onClick={() => window.location.reload()}
+                onClick={handleRetryLoad}
                 className={`px-6 py-3 rounded-lg min-h-[56px] ${buttonSecondaryClasses}`}
               >
                 Retry
