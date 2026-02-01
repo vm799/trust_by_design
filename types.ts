@@ -420,3 +420,73 @@ export interface ClientReceipt {
   sent_at?: string;
   sent_via?: 'email' | 'sms' | 'copy' | 'share';
 }
+
+// ============================================================================
+// FOCUS STACK SYSTEM (2026-02 - Context Thrash Prevention)
+// ============================================================================
+
+/**
+ * User role determines dashboard behavior
+ * - solo_contractor: Self-dispatched, needs overview without planning overhead
+ * - technician: Assigned work, tight sequencing, no queue management
+ * - manager: Exception handling, technician oversight (counts, not lists)
+ */
+export type FocusRole = 'solo_contractor' | 'technician' | 'manager';
+
+/**
+ * Attention level for jobs in the focus system
+ * - focus: The ONE job currently being worked on
+ * - queue: Next 3 jobs (preview only)
+ * - collapsed: All remaining jobs (hidden, scroll-only)
+ */
+export type AttentionLevel = 'focus' | 'queue' | 'collapsed';
+
+/**
+ * Focus state for a user/workspace
+ * Only ONE job can be in focus at any time
+ */
+export interface FocusState {
+  activeJobId: string | null;
+  lastActivityAt: number;
+  role: FocusRole;
+}
+
+/**
+ * Job with focus-related metadata for queue ordering
+ */
+export interface JobFocusMetadata {
+  queuePosition?: number;        // Order in queue (system-determined, not user-editable)
+  lastActivityAt?: number;       // Timestamp of last user interaction
+  focusEnteredAt?: number;       // When job entered focus state
+  focusExitedAt?: number;        // When job left focus state
+}
+
+/**
+ * Attention item for manager dashboard
+ * Only exceptions appear in the attention queue
+ */
+export interface AttentionItem {
+  id: string;
+  type: 'idle_technician' | 'rapid_switching' | 'stuck_job' | 'sync_failed' | 'urgent_job';
+  technicianId?: string;
+  technicianName?: string;
+  jobId?: string;
+  jobTitle?: string;
+  message: string;
+  severity: 'warning' | 'critical';
+  timestamp: number;
+}
+
+/**
+ * Technician summary for manager view
+ * Shows counts, not job lists
+ */
+export interface TechnicianSummary {
+  id: string;
+  name: string;
+  activeJobId: string | null;
+  activeJobTitle?: string;
+  jobsRemaining: number;
+  lastActivityAt: number;
+  status: 'working' | 'idle' | 'offline';
+}
