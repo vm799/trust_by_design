@@ -137,7 +137,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
   const handleSeal = useCallback(async () => {
     const canSeal = canSealJob(job);
     if (!canSeal.canSeal) {
-      showToast(canSeal.reason || 'Cannot seal job yet', 'error');
+      showToast(canSeal.reasons.join(', ') || 'Cannot seal job yet', 'error');
       return;
     }
 

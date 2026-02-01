@@ -24,3 +24,14 @@ export {
   TechnicianCreationBreadcrumbs,
 } from './Breadcrumbs';
 export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
+export {
+  default as FocusStack,
+  DefaultFocusJobCard,
+  DefaultQueueJobCard,
+  DefaultCollapsedJobCard,
+} from './FocusStack';
+export type {
+  FocusJobRenderProps,
+  QueueJobRenderProps,
+  CollapsedJobRenderProps,
+} from './FocusStack';

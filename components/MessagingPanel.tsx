@@ -74,6 +74,13 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
     deps: [userId, currentJobId],
   });
 
+  // Scroll to bottom of messages
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
+
   // Load messages when thread selected
   useEffect(() => {
     if (selectedThread) {
@@ -103,13 +110,6 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  // Scroll to bottom of messages
-  const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
   }, []);
 
   useEffect(() => {
