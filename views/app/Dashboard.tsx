@@ -1,300 +1,187 @@
 /**
- * Dashboard - Risk-Radar Field-First Dashboard
+ * Dashboard - Action-First Manager Dashboard
  *
- * A body-cam-style dashboard focused on evidence defensibility.
- * Jobs are risk containers. The app is a silent witness.
+ * Redesigned based on UX Architecture v2.0
+ * Single question: "Which job needs proof right now?"
  *
- * Three states only:
- * 1. Needs Proof (red) - Missing evidence, financial/legal risk
- * 2. In Progress (amber) - Active work, time risk
- * 3. Defensible (green) - Has minimum evidence, protected
- *
- * Design principles:
- * - One primary action: "Continue Current Job"
- * - Jobs sorted by risk, not date
- * - Shield indicator for defensibility (silent, binary)
- * - Zero cognitive load, zero training required
- * - Field-first, not manager-first
+ * NO vanity metrics. NO decorative greetings. ONLY actions.
  */
 
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { PageContent } from '../../components/layout';
+import { PageHeader, PageContent } from '../../components/layout';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
-import { staggerContainer, fadeInUp } from '../../lib/animations';
-import type { Job } from '../../types';
+import { Job, Client, Technician } from '../../types';
 
-// ============================================================================
-// DEFENSIBILITY LOGIC
-// ============================================================================
+/**
+ * Evidence status determination
+ * A job is "defensible" only when it has complete evidence chain
+ */
+type EvidenceStatus = 'no_evidence' | 'partial_evidence' | 'ready_to_seal' | 'sealed' | 'invoiced';
 
-type RiskLevel = 'needs_proof' | 'in_progress' | 'defensible';
-
-interface JobRisk {
+interface JobWithEvidence {
   job: Job;
-  level: RiskLevel;
-  issues: string[];
-  isDefensible: boolean;
+  client: Client | undefined;
+  technician: Technician | undefined;
+  evidenceStatus: EvidenceStatus;
+  actionLabel: string;
+  actionRoute: string;
+  urgencyLevel: 'critical' | 'warning' | 'ready' | 'complete';
 }
 
 /**
- * Calculate if a job has minimum evidence for defensibility.
- *
- * Minimum evidence requirements:
- * - At least 1 photo
- * - Signature captured
- * - Signer name provided
- *
- * This is NOT the same as seal-ready (which requires Submitted status).
- * A job can be defensible while still in progress.
+ * Determine evidence status for a job
+ * This is the core business logic - when is a job "defensible"?
  */
-const calculateJobRisk = (job: Job): JobRisk => {
-  const issues: string[] = [];
+function getEvidenceStatus(job: Job): EvidenceStatus {
+  // Already invoiced - fully complete
+  if (job.invoiceId) {
+    return 'invoiced';
+  }
 
-  // Check photos
+    // SPRINT 4 FIX: Jobs ready for sealing (Submitted status, not sealed)
+    // Sealing requires: status=Submitted, photos, signature, signer name
+    // Jobs in "Complete" need manager review → "Submit" before they can be sealed
+    jobs
+      .filter(j => j.status === 'Submitted' && !j.sealedAt)
+      .slice(0, 3)
+      .forEach(job => {
+        const hasPhotos = job.photos && job.photos.length > 0;
+        const hasSignature = !!job.signature && !!job.signerName;
+        items.push({
+          id: `seal-${job.id}`,
+          type: 'seal',
+          title: `Job #${job.id.slice(0, 6)}`,
+          subtitle: hasPhotos && hasSignature
+            ? 'Ready to seal evidence'
+            : `Missing: ${!hasPhotos ? 'photos' : ''}${!hasPhotos && !hasSignature ? ', ' : ''}${!hasSignature ? 'signature' : ''}`,
+          action: { label: 'Review & Seal', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
+          urgency: hasPhotos && hasSignature ? 'medium' : 'high',
+        });
+      });
+
+    // Jobs in Complete status need manager review before sealing
+    jobs
+      .filter(j => j.status === 'Complete' && !j.sealedAt)
+      .slice(0, 3)
+      .forEach(job => {
+        const client = clients.find(c => c.id === job.clientId);
+        items.push({
+          id: `review-${job.id}`,
+          type: 'seal',
+          title: `Job #${job.id.slice(0, 6)}`,
+          subtitle: `Needs review${client ? ` - ${client.name}` : ''}`,
+          action: { label: 'Review Evidence', to: route(ROUTES.JOB_EVIDENCE, { id: job.id }) },
+          urgency: 'medium',
+        });
+      });
+
   const hasPhotos = job.photos && job.photos.length > 0;
-  if (!hasPhotos) {
-    issues.push('No photos');
-  }
-
-  // Check signature
   const hasSignature = !!job.signature;
-  if (!hasSignature) {
-    issues.push('No signature');
+
+  // Has both photos and signature - ready to seal
+  if (hasPhotos && hasSignature) {
+    return 'ready_to_seal';
   }
 
-  // Check signer name
-  const hasSignerName = !!job.signerName && job.signerName.trim() !== '';
-  if (!hasSignerName && hasSignature) {
-    issues.push('Missing signer name');
+  // Has some evidence but incomplete
+  if (hasPhotos || hasSignature) {
+    return 'partial_evidence';
   }
 
-  // Determine risk level
-  const isDefensible = hasPhotos && hasSignature && hasSignerName;
-
-  // Already sealed = fully defensible
-  if (job.sealedAt) {
-    return {
-      job,
-      level: 'defensible',
-      issues: [],
-      isDefensible: true,
-    };
-  }
-
-  // In progress with some evidence
-  if (job.status === 'In Progress') {
-    return {
-      job,
-      level: isDefensible ? 'defensible' : 'in_progress',
-      issues,
-      isDefensible,
-    };
-  }
-
-  // Complete or Submitted with full evidence
-  if ((job.status === 'Complete' || job.status === 'Submitted') && isDefensible) {
-    return {
-      job,
-      level: 'defensible',
-      issues: [],
-      isDefensible: true,
-    };
-  }
-
-  // Any job missing evidence
-  if (!isDefensible) {
-    return {
-      job,
-      level: 'needs_proof',
-      issues,
-      isDefensible: false,
-    };
-  }
-
-  return {
-    job,
-    level: 'defensible',
-    issues: [],
-    isDefensible: true,
-  };
-};
-
-/**
- * Sort jobs by risk level (highest risk first)
- * Within each level, sort by date (most recent first)
- */
-const sortByRisk = (jobs: JobRisk[]): JobRisk[] => {
-  const riskOrder: Record<RiskLevel, number> = {
-    needs_proof: 0,
-    in_progress: 1,
-    defensible: 2,
-  };
-
-  return [...jobs].sort((a, b) => {
-    // First sort by risk level
-    const riskDiff = riskOrder[a.level] - riskOrder[b.level];
-    if (riskDiff !== 0) return riskDiff;
-
-    // Then by date (most recent first)
-    return new Date(b.job.date).getTime() - new Date(a.job.date).getTime();
-  });
-};
-
-// ============================================================================
-// SHIELD COMPONENT
-// ============================================================================
-
-interface ShieldProps {
-  isDefensible: boolean;
-  size?: 'sm' | 'md';
+  // No evidence at all
+  return 'no_evidence';
 }
 
 /**
- * Silent shield indicator.
- * Green = defensible (minimum evidence present)
- * Grey = needs proof (financial/legal risk)
- *
- * No legal language. No explanation needed.
- * Field workers feel protection, not compliance burden.
+ * Get action details for a job based on evidence status
  */
-const Shield: React.FC<ShieldProps> = ({ isDefensible, size = 'sm' }) => {
-  const sizeClasses = size === 'md' ? 'size-8 text-xl' : 'size-6 text-base';
-
-  return (
-    <div
-      className={`
-        ${sizeClasses} rounded-full flex items-center justify-center flex-shrink-0
-        ${isDefensible
-          ? 'bg-emerald-500/20 text-emerald-400'
-          : 'bg-slate-700/50 text-slate-500'
-        }
-      `}
-      aria-label={isDefensible ? 'Protected' : 'Needs proof'}
-    >
-      <span className="material-symbols-outlined" style={{ fontSize: 'inherit' }}>
-        {isDefensible ? 'verified_user' : 'shield'}
-      </span>
-    </div>
-  );
-};
-
-// ============================================================================
-// JOB ROW COMPONENT
-// ============================================================================
-
-interface JobRowProps {
-  jobRisk: JobRisk;
-  clientName?: string;
+function getJobAction(job: Job, status: EvidenceStatus): { label: string; route: string; urgency: 'critical' | 'warning' | 'ready' | 'complete' } {
+  switch (status) {
+    case 'no_evidence':
+      return {
+        label: 'Capture Evidence',
+        route: route(ROUTES.JOB_DETAIL, { id: job.id }),
+        urgency: 'critical',
+      };
+    case 'partial_evidence':
+      return {
+        label: job.signature ? 'Add Photos' : 'Get Signature',
+        route: route(ROUTES.JOB_DETAIL, { id: job.id }),
+        urgency: 'warning',
+      };
+    case 'ready_to_seal':
+      return {
+        label: 'Seal Evidence',
+        route: route(ROUTES.JOB_EVIDENCE, { id: job.id }),
+        urgency: 'ready',
+      };
+    case 'sealed':
+      return {
+        label: 'Generate Invoice',
+        route: route(ROUTES.JOB_DETAIL, { id: job.id }),
+        urgency: 'complete',
+      };
+    case 'invoiced':
+      return {
+        label: 'View Invoice',
+        route: route(ROUTES.INVOICE_DETAIL, { id: job.invoiceId || '' }),
+        urgency: 'complete',
+      };
+  }
 }
-
-const JobRow: React.FC<JobRowProps> = ({ jobRisk, clientName }) => {
-  const { job, level, issues, isDefensible } = jobRisk;
-
-  // Status indicator colors
-  const statusColors: Record<RiskLevel, string> = {
-    needs_proof: 'border-l-red-500',
-    in_progress: 'border-l-amber-500',
-    defensible: 'border-l-emerald-500',
-  };
-
-  return (
-    <Link to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
-      <motion.div variants={fadeInUp}>
-        <Card
-          variant="interactive"
-          className={`border-l-4 ${statusColors[level]}`}
-        >
-          <div className="flex items-center gap-4 min-h-[56px]">
-            {/* Shield indicator */}
-            <Shield isDefensible={isDefensible} />
-
-            {/* Job info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-white truncate">
-                {job.title || `Job #${job.id.slice(0, 6)}`}
-              </p>
-              <p className="text-sm text-slate-400 truncate">
-                {clientName || job.client || 'Unknown client'}
-                {job.address && ` • ${job.address.split(',')[0]}`}
-              </p>
-            </div>
-
-            {/* Issues or status */}
-            <div className="flex items-center gap-2">
-              {level === 'needs_proof' && issues.length > 0 && (
-                <span className="text-xs text-red-400 hidden sm:block">
-                  {issues[0]}
-                </span>
-              )}
-              {level === 'in_progress' && (
-                <span className="text-xs text-amber-400 hidden sm:block">
-                  In progress
-                </span>
-              )}
-              {level === 'defensible' && job.sealedAt && (
-                <span className="text-xs text-emerald-400 hidden sm:block">
-                  Sealed
-                </span>
-              )}
-              <span className="material-symbols-outlined text-slate-500">
-                chevron_right
-              </span>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-    </Link>
-  );
-};
-
-// ============================================================================
-// MAIN DASHBOARD
-// ============================================================================
 
 const Dashboard: React.FC = () => {
-  const { jobs, clients, isLoading } = useData();
+  // Use DataContext - the ONLY source of truth (CLAUDE.md mandate)
+  const { jobs, clients, technicians, isLoading, error, refresh } = useData();
 
-  // Calculate risk for all active jobs (exclude Archived, Cancelled)
-  const jobsWithRisk = useMemo(() => {
-    const activeJobs = jobs.filter(
-      j => j.status !== 'Archived' && j.status !== 'Cancelled'
-    );
-    const withRisk = activeJobs.map(calculateJobRisk);
-    return sortByRisk(withRisk);
-  }, [jobs]);
+  // Memoize job categorization to prevent recalculation
+  const { needsProof, readyToSeal, recentlySealed, allJobsWithEvidence } = useMemo(() => {
+    const jobsWithEvidence: JobWithEvidence[] = jobs.map(job => {
+      const status = getEvidenceStatus(job);
+      const action = getJobAction(job, status);
+      return {
+        job,
+        client: clients.find(c => c.id === job.clientId),
+        technician: technicians.find(t => t.id === job.technicianId),
+        evidenceStatus: status,
+        actionLabel: action.label,
+        actionRoute: action.route,
+        urgencyLevel: action.urgency,
+      };
+    });
 
-  // Find the current/next job to continue
-  const currentJob = useMemo(() => {
-    // Priority: In Progress jobs first, then needs proof
-    const inProgress = jobsWithRisk.find(jr => jr.job.status === 'In Progress');
-    if (inProgress) return inProgress;
+    // Jobs that need proof NOW (no evidence or partial)
+    const needsProofJobs = jobsWithEvidence
+      .filter(j => j.evidenceStatus === 'no_evidence' || j.evidenceStatus === 'partial_evidence')
+      .filter(j => j.job.status !== 'Complete' && j.job.status !== 'Submitted')
+      .sort((a, b) => {
+        // Critical first, then by date
+        if (a.urgencyLevel === 'critical' && b.urgencyLevel !== 'critical') return -1;
+        if (b.urgencyLevel === 'critical' && a.urgencyLevel !== 'critical') return 1;
+        return new Date(a.job.date).getTime() - new Date(b.job.date).getTime();
+      });
 
-    // Then any job needing proof (highest risk)
-    const needsProof = jobsWithRisk.find(jr => jr.level === 'needs_proof');
-    if (needsProof) return needsProof;
+    // Jobs ready to seal
+    const readyToSealJobs = jobsWithEvidence
+      .filter(j => j.evidenceStatus === 'ready_to_seal');
 
-    // Then any non-sealed job
-    return jobsWithRisk.find(jr => !jr.job.sealedAt) || null;
-  }, [jobsWithRisk]);
+    // Recently sealed (for invoice generation)
+    const recentlySealedJobs = jobsWithEvidence
+      .filter(j => j.evidenceStatus === 'sealed')
+      .slice(0, 5);
 
-  // Get client name for a job
-  const getClientName = (clientId: string) => {
-    return clients.find(c => c.id === clientId)?.name;
-  };
-
-  // Count jobs by risk level
-  const riskCounts = useMemo(() => {
     return {
-      needsProof: jobsWithRisk.filter(jr => jr.level === 'needs_proof').length,
-      inProgress: jobsWithRisk.filter(jr => jr.level === 'in_progress').length,
-      defensible: jobsWithRisk.filter(jr => jr.level === 'defensible').length,
+      needsProof: needsProofJobs,
+      readyToSeal: readyToSealJobs,
+      recentlySealed: recentlySealedJobs,
+      allJobsWithEvidence: jobsWithEvidence,
     };
-  }, [jobsWithRisk]);
+  }, [jobs, clients, technicians]);
 
+  // Loading state
   if (isLoading) {
     return (
       <div>
@@ -305,134 +192,286 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  // Error state with retry
+  if (error) {
+    return (
+      <div>
+        <PageHeader title="Dashboard" />
+        <PageContent>
+          <Card className="text-center py-8">
+            <span className="material-symbols-outlined text-4xl text-red-400 mb-4">error</span>
+            <p className="text-white font-medium mb-2">Failed to load data</p>
+            <p className="text-slate-400 text-sm mb-4">{error}</p>
+            <ActionButton variant="secondary" onClick={refresh} icon="refresh">
+              Retry
+            </ActionButton>
+          </Card>
+        </PageContent>
+      </div>
+    );
+  }
+
+  // Empty state - no jobs yet
+  if (jobs.length === 0) {
+    return (
+      <div>
+        <PageHeader title="Dashboard" />
+        <PageContent>
+          <EmptyState
+            icon="work"
+            title="No jobs yet"
+            description="Create your first job to start capturing evidence."
+            action={{ label: 'Create First Job', to: ROUTES.JOB_NEW, icon: 'add' }}
+          />
+        </PageContent>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Primary Action Area */}
-      <div className="px-4 lg:px-8 py-8 border-b border-white/5">
-        {currentJob ? (
-          <div className="max-w-2xl">
-            {/* Current job status */}
-            <div className="flex items-center gap-3 mb-4">
-              <Shield isDefensible={currentJob.isDefensible} size="md" />
-              <div>
-                <p className="text-sm text-slate-400">
-                  {currentJob.job.status === 'In Progress' ? 'Continue working on' : 'Next up'}
-                </p>
-                <p className="text-lg font-semibold text-white">
-                  {currentJob.job.title || `Job #${currentJob.job.id.slice(0, 6)}`}
-                </p>
-              </div>
-            </div>
-
-            {/* Issues warning (if any) */}
-            {currentJob.issues.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 text-sm text-slate-400">
-                <span className="material-symbols-outlined text-lg text-amber-400">
-                  info
-                </span>
-                <span>Needs: {currentJob.issues.join(', ')}</span>
-              </div>
+      {/* Minimal header with primary action */}
+      <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-bold text-white">Dashboard</h1>
+          {/* Evidence summary - single line */}
+          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400">
+            {needsProof.length > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-red-500" />
+                {needsProof.length} need proof
+              </span>
             )}
-
-            {/* Primary CTA - One action only */}
-            <ActionButton
-              variant="primary"
-              size="lg"
-              icon={currentJob.job.status === 'In Progress' ? 'play_arrow' : 'arrow_forward'}
-              to={route(ROUTES.JOB_DETAIL, { id: currentJob.job.id })}
-              className="w-full sm:w-auto min-h-[56px] text-lg"
-            >
-              {currentJob.job.status === 'In Progress' ? 'Continue Job' : 'Start Job'}
-            </ActionButton>
+            {readyToSeal.length > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-amber-500" />
+                {readyToSeal.length} ready to seal
+              </span>
+            )}
           </div>
-        ) : (
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="size-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl text-emerald-400">
-                  check_circle
-                </span>
-              </div>
-              <p className="text-lg font-semibold text-white">All caught up</p>
-            </div>
-            <ActionButton
-              variant="secondary"
-              size="lg"
-              icon="add"
-              to={ROUTES.JOB_NEW}
-              className="min-h-[56px]"
-            >
-              Create New Job
-            </ActionButton>
-          </div>
-        )}
+        </div>
+        <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
+          Start Job
+        </ActionButton>
       </div>
 
       <PageContent>
-        {/* Risk Summary - Minimal, no charts */}
-        {jobsWithRisk.length > 0 && (
-          <div className="flex items-center gap-6 mb-6 text-sm">
-            {riskCounts.needsProof > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="size-3 rounded-full bg-red-500" />
-                <span className="text-slate-400">
-                  {riskCounts.needsProof} need{riskCounts.needsProof === 1 ? 's' : ''} proof
-                </span>
+        {/* SECTION 1: NEEDS PROOF NOW - Primary concern */}
+        {needsProof.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-8 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-red-400">priority_high</span>
               </div>
-            )}
-            {riskCounts.inProgress > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="size-3 rounded-full bg-amber-500" />
-                <span className="text-slate-400">
-                  {riskCounts.inProgress} in progress
-                </span>
+              <div>
+                <h2 className="text-base font-bold text-white">Needs Proof Now</h2>
+                <p className="text-xs text-slate-400">{needsProof.length} job{needsProof.length !== 1 ? 's' : ''} missing evidence</p>
               </div>
-            )}
-            {riskCounts.defensible > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="size-3 rounded-full bg-emerald-500" />
-                <span className="text-slate-400">
-                  {riskCounts.defensible} protected
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+
+            <div className="space-y-3">
+              {needsProof.slice(0, 10).map(({ job, client, technician, actionLabel, actionRoute, urgencyLevel, evidenceStatus }) => (
+                <Card key={job.id} variant="interactive" className={urgencyLevel === 'critical' ? 'border-red-500/30' : 'border-amber-500/30'}>
+                  <div className="flex items-center gap-4">
+                    {/* Status indicator */}
+                    <div className={`size-10 rounded-xl flex items-center justify-center ${
+                      urgencyLevel === 'critical' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                    }`}>
+                      <span className="material-symbols-outlined">
+                        {evidenceStatus === 'no_evidence' ? 'photo_camera' : 'edit_document'}
+                      </span>
+                    </div>
+
+                    {/* Job info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">
+                        {job.title || `Job #${job.id.slice(0, 6)}`}
+                      </p>
+                      <p className="text-sm text-slate-400 truncate">
+                        {client?.name || 'Unknown client'}
+                        {technician && ` • ${technician.name}`}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {evidenceStatus === 'no_evidence' ? 'No evidence captured' : 'Missing: ' + (job.signature ? 'photos' : 'signature')}
+                      </p>
+                    </div>
+
+                    {/* Action button */}
+                    <ActionButton
+                      variant={urgencyLevel === 'critical' ? 'danger' : 'warning'}
+                      size="sm"
+                      to={actionRoute}
+                    >
+                      {actionLabel}
+                    </ActionButton>
+                  </div>
+                </Card>
+              ))}
+
+              {needsProof.length > 10 && (
+                <Link to={ROUTES.JOBS} className="block text-center py-3 text-sm text-primary hover:text-primary/80">
+                  View all {needsProof.length} jobs needing proof
+                </Link>
+              )}
+            </div>
+          </section>
         )}
 
-        {/* Job List - Sorted by risk */}
-        {jobsWithRisk.length === 0 ? (
-          <EmptyState
-            icon="work"
-            title="No active jobs"
-            description="Create your first job to start capturing evidence."
-            action={{ label: 'Create Job', to: ROUTES.JOB_NEW, icon: 'add' }}
-          />
-        ) : (
-          <motion.div
-            className="space-y-3"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {jobsWithRisk.slice(0, 10).map(jobRisk => (
-              <JobRow
-                key={jobRisk.job.id}
-                jobRisk={jobRisk}
-                clientName={getClientName(jobRisk.job.clientId)}
-              />
-            ))}
+        {/* SECTION 2: READY TO SEAL - Secondary concern */}
+        {readyToSeal.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="size-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-emerald-400">verified</span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">Ready to Seal</h2>
+                <p className="text-xs text-slate-400">{readyToSeal.length} job{readyToSeal.length !== 1 ? 's' : ''} with complete evidence</p>
+              </div>
+            </div>
 
-            {/* View all link if more jobs */}
-            {jobsWithRisk.length > 10 && (
-              <Link
-                to={ROUTES.JOBS}
-                className="block text-center py-4 text-sm text-primary hover:text-primary/80"
-              >
-                View all {jobsWithRisk.length} jobs
+            <div className="space-y-3">
+              {readyToSeal.slice(0, 5).map(({ job, client, actionRoute }) => (
+                <Card key={job.id} variant="interactive" className="border-emerald-500/30">
+                  <div className="flex items-center gap-4">
+                    {/* Status indicator */}
+                    <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <span className="material-symbols-outlined">lock_open</span>
+                    </div>
+
+                    {/* Job info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">
+                        {job.title || `Job #${job.id.slice(0, 6)}`}
+                      </p>
+                      <p className="text-sm text-slate-400 truncate">
+                        {client?.name || 'Unknown client'}
+                      </p>
+                      <p className="text-xs text-emerald-400 mt-0.5">
+                        Evidence complete • Ready to seal
+                      </p>
+                    </div>
+
+                    {/* Action button */}
+                    <ActionButton variant="success" size="sm" to={actionRoute}>
+                      Seal Evidence
+                    </ActionButton>
+                  </div>
+                </Card>
+              ))}
+
+              {readyToSeal.length > 5 && (
+                <Link to={`${ROUTES.JOBS}?status=review`} className="block text-center py-3 text-sm text-primary hover:text-primary/80">
+                  View all {readyToSeal.length} ready to seal
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* SECTION 3: RECENTLY SEALED - Tertiary (for invoicing) */}
+        {recentlySealed.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-blue-400">receipt_long</span>
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">Ready for Invoice</h2>
+                  <p className="text-xs text-slate-400">{recentlySealed.length} sealed job{recentlySealed.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <Link to={ROUTES.INVOICES} className="text-sm text-primary hover:text-primary/80">
+                View Invoices
               </Link>
-            )}
-          </motion.div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {recentlySealed.map(({ job, client, actionRoute }) => (
+                <Link key={job.id} to={actionRoute}>
+                  <Card variant="interactive" padding="sm">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <span className="material-symbols-outlined text-sm">lock</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {job.title || `Job #${job.id.slice(0, 6)}`}
+                        </p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {client?.name || 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
+
+        {/* ALL CAUGHT UP STATE */}
+        {needsProof.length === 0 && readyToSeal.length === 0 && (
+          <section className="mb-8">
+            <Card className="text-center py-12">
+              <div className="size-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl text-emerald-400">verified_user</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">All Jobs Protected</h3>
+              <p className="text-slate-400 text-sm mb-6">
+                No jobs need evidence. All active jobs are defensible.
+              </p>
+              <ActionButton variant="secondary" to={ROUTES.JOBS} icon="list">
+                View All Jobs
+              </ActionButton>
+            </Card>
+          </section>
+        )}
+
+        {/* Quick links - minimal, collapsed */}
+        <section>
+          <details className="group">
+            <summary className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer hover:text-slate-300 py-2">
+              <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
+              Quick Actions
+            </summary>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+              <Link to={ROUTES.JOBS}>
+                <Card variant="interactive" padding="sm">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400">list</span>
+                    <span className="text-sm text-white">All Jobs</span>
+                  </div>
+                </Card>
+              </Link>
+              <Link to={ROUTES.CLIENTS}>
+                <Card variant="interactive" padding="sm">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400">people</span>
+                    <span className="text-sm text-white">Clients</span>
+                  </div>
+                </Card>
+              </Link>
+              <Link to={ROUTES.TECHNICIANS}>
+                <Card variant="interactive" padding="sm">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400">engineering</span>
+                    <span className="text-sm text-white">Technicians</span>
+                  </div>
+                </Card>
+              </Link>
+              <Link to={ROUTES.INVOICES}>
+                <Card variant="interactive" padding="sm">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400">receipt</span>
+                    <span className="text-sm text-white">Invoices</span>
+                  </div>
+                </Card>
+              </Link>
+            </div>
+          </details>
+        </section>
       </PageContent>
     </div>
   );
