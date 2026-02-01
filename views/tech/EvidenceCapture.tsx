@@ -42,6 +42,7 @@ const EvidenceCapture: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [saveConfirmation, setSaveConfirmation] = useState(false);
 
   // Draft key for photo persistence (survives app crash)
   const draftKey = `photo_draft_${jobId}`;
@@ -175,28 +176,45 @@ const EvidenceCapture: React.FC = () => {
         lat: capturedPhoto.location?.lat,
         lng: capturedPhoto.location?.lng,
         verified: false,
-        syncStatus: 'pending' as const,
+        syncStatus: SYNC_STATUS.PENDING,
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];
-      // Use DataContext updateJob with full Job object
       const updatedJob: Job = { ...job, photos: updatedPhotos };
+
+      // Sprint 1 Task 1.5: Atomic draft cleanup using Dexie transaction
+      // CRITICAL: Job update and draft deletion must be atomic
+      // If app crashes between these operations, we either:
+      // - Lose the photo (if job update fails after draft delete)
+      // - Have orphaned draft (if draft delete fails after job update)
+      // Using a transaction ensures both succeed or both fail
+      await db.transaction('rw', db.jobs, db.media, async () => {
+        // 1. Commit job update to local DB
+        await db.jobs.put({
+          ...updatedJob,
+          syncStatus: SYNC_STATUS.PENDING,
+          lastUpdated: Date.now()
+        });
+
+        // 2. Delete draft atomically (if job put fails, this won't run)
+        await db.media.delete(draftKey);
+      });
+
+      // 3. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
-      // Clear draft from IndexedDB (photo is now committed to job)
-      try {
-        await db.media.delete(draftKey);
-      } catch {
-        // Non-critical - draft will be orphaned but not cause issues
-      }
+      // Show "Saved to device" confirmation (Sprint 1 Task 1.2)
+      // CRITICAL: Technician needs certainty that photo is safe
+      setSaveConfirmation(true);
 
       // FIELD UX: Show confirmation toast before navigating
       showToast('Photo Captured', 'Saved locally - will sync when online', 'success');
 
-      // Go back to job detail
-      navigate(`/tech/job/${job.id}`);
+      // Wait 1.5s so user sees confirmation, then navigate
+      setTimeout(() => {
+        navigate(`/tech/job/${job.id}`);
+      }, 1500);
     } catch (error) {
-      console.error('Failed to save photo:', error);
       setError('Failed to save photo. Please try again.');
     } finally {
       setSaving(false);
@@ -210,18 +228,83 @@ const EvidenceCapture: React.FC = () => {
     navigate(`/tech/job/${jobId}`);
   };
 
+  // Sprint 3 Task 3.3: Check if this is a camera permission error
+  const isCameraPermissionError = error?.includes('camera') || error?.includes('permission');
+
+  // Try again handler - attempts to restart camera
+  const handleTryAgain = async () => {
+    setError(null);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error('Camera retry failed:', err);
+      setError('Unable to access camera. Please grant camera permissions.');
+    }
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="text-center">
-          <span className="material-symbols-outlined text-5xl text-red-400 mb-4">error</span>
-          <p className="text-white mb-4">{error}</p>
-          <button
-            onClick={goBack}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-medium"
-          >
-            Go Back
-          </button>
+        <div className="max-w-sm mx-auto text-center">
+          <span className="material-symbols-outlined text-5xl text-red-400 mb-4">
+            {isCameraPermissionError ? 'no_photography' : 'error'}
+          </span>
+          <h2 className="text-white text-lg font-bold mb-2">
+            {isCameraPermissionError ? 'Camera Access Required' : 'Something Went Wrong'}
+          </h2>
+          <p className="text-slate-300 text-sm mb-6">{error}</p>
+
+          {/* Sprint 3 Task 3.3: Step-by-step instructions for camera permission */}
+          {isCameraPermissionError && (
+            <div className="bg-slate-900 border border-white/10 rounded-xl p-4 mb-6 text-left">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">How to enable camera:</p>
+              <ol className="space-y-2 text-sm text-slate-300">
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">1.</span>
+                  <span>Open your device <strong className="text-white">Settings</strong></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">2.</span>
+                  <span>Find <strong className="text-white">JobProof</strong> in the app list</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">3.</span>
+                  <span>Enable <strong className="text-white">Camera</strong> permission</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">4.</span>
+                  <span>Return here and tap <strong className="text-white">Try Again</strong></span>
+                </li>
+              </ol>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleTryAgain}
+              className="w-full px-6 py-4 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 min-h-[56px]"
+            >
+              <span className="material-symbols-outlined">refresh</span>
+              Try Again
+            </button>
+            <button
+              onClick={goBack}
+              className="w-full px-6 py-4 bg-slate-800 text-slate-300 rounded-xl font-medium min-h-[56px]"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -231,6 +314,18 @@ const EvidenceCapture: React.FC = () => {
     <div className="min-h-screen bg-black flex flex-col">
       {/* Offline status indicator */}
       <OfflineIndicator />
+
+      {/* Save Confirmation Toast (Sprint 1 Task 1.2) */}
+      {/* CRITICAL: Technician needs visual certainty that photo is safe */}
+      {saveConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-emerald-500 text-white px-8 py-6 rounded-2xl flex flex-col items-center gap-3 shadow-2xl shadow-emerald-500/30 animate-scale-in">
+            <span className="material-symbols-outlined text-5xl">check_circle</span>
+            <span className="font-black text-lg uppercase tracking-wider">Saved to Device</span>
+            <span className="text-sm text-emerald-100">Photo stored safely</span>
+          </div>
+        </div>
+      )}
 
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />

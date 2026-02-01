@@ -10,6 +10,7 @@ import {
 } from '../lib/db';
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
 import { generateSecureJobId } from '../lib/secureId';
+import { JOB_STATUS, SYNC_STATUS } from '../lib/constants';
 
 interface QuickJobFormProps {
   techId: string;
@@ -150,7 +151,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         clientId: '', // Will be linked later if needed
         technician: techName,
         techId: techId,
-        status: 'In Progress',
+        status: JOB_STATUS.IN_PROGRESS,
         date: new Date().toISOString().split('T')[0],
         address: clientAddress.trim() || w3w || 'Current Location',
         lat: coords.lat,
@@ -166,7 +167,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
           { id: 'sc3', label: 'Required Permits/Authorisations Checked', checked: false, required: true },
           { id: 'sc4', label: 'Area Clear of Bystanders', checked: false, required: true }
         ],
-        syncStatus: 'pending',
+        syncStatus: SYNC_STATUS.PENDING,
         lastUpdated: Date.now(),
         price: price ? parseFloat(price) : undefined,
         workspaceId: workspaceId,

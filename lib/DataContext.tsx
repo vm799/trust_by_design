@@ -21,6 +21,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Job, Client, Technician, Invoice, JobTemplate } from '../types';
 import { useAuth } from './AuthContext';
+import { normalizeJobs, normalizeJobTechnicianId } from './utils/technicianIdNormalization';
 
 // REMEDIATION ITEM 5: Lazy load heavy db module (2,445 lines)
 // Dynamic import defers parsing until actually needed
@@ -172,7 +173,8 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       const savedJobs = localStorage.getItem('jobproof_jobs_v2');
       const savedInvoices = localStorage.getItem('jobproof_invoices_v2');
 
-      if (savedJobs) setJobs(JSON.parse(savedJobs));
+      // Sprint 2 Task 2.6: Normalize technician IDs on load
+      if (savedJobs) setJobs(normalizeJobs(JSON.parse(savedJobs)));
       if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
 
       // CLAUDE.md mandate: Try Dexie first for clients/technicians (offline-first)
@@ -307,11 +309,13 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           // Continue with regular jobs - bunker_jobs is additive, not required
         }
 
-        setJobs(allJobs);
+        // Sprint 2 Task 2.6: Normalize technician IDs on load
+        setJobs(normalizeJobs(allJobs));
       } else {
         console.warn('[DataContext] Supabase jobs failed, using localStorage');
         const saved = localStorage.getItem('jobproof_jobs_v2');
-        if (saved) setJobs(JSON.parse(saved));
+        // Sprint 2 Task 2.6: Normalize technician IDs on load
+        if (saved) setJobs(normalizeJobs(JSON.parse(saved)));
       }
 
       if (clientsResult.success && clientsResult.data) {
@@ -438,12 +442,15 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, [jobs, clients, technicians, invoices, templates, isInitialized, saveToLocalStorage]);
 
   // Job mutations
+  // Sprint 2 Task 2.6: Normalize technician IDs on mutation
   const addJob = useCallback((job: Job) => {
-    setJobs(prev => [job, ...prev]);
+    setJobs(prev => [normalizeJobTechnicianId(job), ...prev]);
   }, []);
 
   const updateJob = useCallback((updatedJob: Job) => {
-    setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
+    // Sprint 2 Task 2.6: Normalize technician IDs on mutation
+    const normalizedJob = normalizeJobTechnicianId(updatedJob);
+    setJobs(prev => prev.map(j => j.id === normalizedJob.id ? normalizedJob : j));
   }, []);
 
   const deleteJob = useCallback((id: string) => {

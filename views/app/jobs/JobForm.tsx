@@ -16,9 +16,10 @@ import { Card, LoadingSkeleton, Modal } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
 import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
+import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offline/db';
+import { JOB_STATUS, SYNC_STATUS, TECHNICIAN_STATUS } from '../../../lib/constants';
 
-const DRAFT_STORAGE_KEY = 'jobproof_job_draft';
-const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
+const DRAFT_FORM_TYPE = 'job_form';
 
 interface FormData {
   title: string;
@@ -32,10 +33,7 @@ interface FormData {
   priority: JobPriority;
 }
 
-interface DraftData {
-  formData: FormData;
-  savedAt: number;
-}
+// DraftData interface removed - using IndexedDB FormDraft from lib/offline/db.ts
 
 const JobForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,27 +71,10 @@ const JobForm: React.FC = () => {
   const [newTechEmail, setNewTechEmail] = useState('');
   const [addingClient, setAddingClient] = useState(false);
   const [addingTech, setAddingTech] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
-  // Load saved draft or start fresh
-  const loadDraft = useCallback((): FormData => {
-    if (isEdit) return getDefaultFormData(); // Don't load drafts when editing
-
-    try {
-      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (saved) {
-        const draft: DraftData = JSON.parse(saved);
-        if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
-          return draft.formData;
-        }
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-      }
-    } catch (e) {
-      console.warn('Failed to load draft:', e);
-    }
-    return getDefaultFormData();
-  }, [isEdit]);
-
-  function getDefaultFormData(): FormData {
+  // Default form data factory
+  const getDefaultFormData = useCallback((): FormData => {
     return {
       title: '',
       description: '',
@@ -105,10 +86,39 @@ const JobForm: React.FC = () => {
       total: '',
       priority: 'normal',
     };
-  }
+  }, [searchParams]);
 
-  const [formData, setFormData] = useState<FormData>(loadDraft);
+  const [formData, setFormData] = useState<FormData>(getDefaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+
+  // Load saved draft from IndexedDB on mount (CLAUDE.md: Dexie/IndexedDB draft saving)
+  useEffect(() => {
+    if (isEdit || draftLoaded) return; // Don't load drafts when editing
+
+    const loadDraftFromDB = async () => {
+      try {
+        const draft = await getFormDraft(DRAFT_FORM_TYPE);
+        if (draft?.data) {
+          // Validate draft has expected fields before using
+          const draftData = draft.data as Partial<FormData>;
+          if (draftData.title !== undefined) {
+            setFormData(prev => ({
+              ...prev,
+              ...draftData,
+              // Preserve clientId from URL if present
+              clientId: searchParams.get('clientId') || draftData.clientId || '',
+            }));
+          }
+        }
+      } catch (e) {
+        // IndexedDB read failed - continue with defaults (non-critical)
+      } finally {
+        setDraftLoaded(true);
+      }
+    };
+
+    loadDraftFromDB();
+  }, [isEdit, draftLoaded, searchParams]);
 
   // Auto-focus refs
   const titleRef = useRef<HTMLInputElement>(null);
@@ -117,25 +127,29 @@ const JobForm: React.FC = () => {
   const dateRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
 
-  // Save draft on form changes (debounced)
+  // Save draft to IndexedDB on form changes (debounced)
+  // CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
   useEffect(() => {
-    if (isEdit) return;
+    if (isEdit || !draftLoaded) return; // Don't save until draft is loaded
 
     const timer = setTimeout(() => {
-      const draft: DraftData = {
-        formData,
-        savedAt: Date.now(),
-      };
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      // Save form data to IndexedDB (async, non-blocking)
+      saveFormDraft(DRAFT_FORM_TYPE, formData as Record<string, unknown>).catch(() => {
+        // IndexedDB write failed - non-critical, will retry on next change
+      });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [formData, isEdit]);
+  }, [formData, isEdit, draftLoaded]);
 
   // Clear draft on successful save
-  const clearDraft = () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-  };
+  const handleClearDraft = useCallback(async () => {
+    try {
+      await clearFormDraft(DRAFT_FORM_TYPE);
+    } catch {
+      // Non-critical - draft will be orphaned but expire after 8h
+    }
+  }, []);
 
   // Auto-focus title field on mount
   useEffect(() => {
@@ -219,7 +233,7 @@ const JobForm: React.FC = () => {
     try {
       const dateTime = new Date(`${formData.date}T${formData.time || '09:00'}`);
 
-      clearDraft();
+      await handleClearDraft();
 
       // Get client and tech names for display fields
       const selectedClient = clients.find(c => c.id === formData.clientId);
@@ -227,6 +241,8 @@ const JobForm: React.FC = () => {
 
       if (isEdit && id && existingJob) {
         // Update existing job - use full Job object
+        // Sprint 2 Task 2.6: Use single technicianId - DataContext normalizes to both fields
+        const selectedTech = formData.technicianId ? technicians.find(t => t.id === formData.technicianId) : null;
         const updatedJob: Job = {
           ...existingJob,
           title: formData.title.trim(),
@@ -247,6 +263,9 @@ const JobForm: React.FC = () => {
         navigate(route(ROUTES.JOB_DETAIL, { id }));
       } else {
         // Create new job
+        // Sprint 2 Task 2.6: Use single technicianId - DataContext normalizes to both fields
+        const selectedTech = formData.technicianId ? technicians.find(t => t.id === formData.technicianId) : null;
+        const selectedClient = formData.clientId ? clients.find(c => c.id === formData.clientId) : null;
         const newJob: Job = {
           id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           title: formData.title.trim(),
@@ -262,12 +281,12 @@ const JobForm: React.FC = () => {
           total: formData.total ? parseFloat(formData.total) : undefined,
           price: formData.total ? parseFloat(formData.total) : undefined,
           priority: formData.priority,
-          status: 'Pending',
+          status: JOB_STATUS.PENDING,
           photos: [],
           signature: null,
           safetyChecklist: [],
           siteHazards: [],
-          syncStatus: 'pending',
+          syncStatus: SYNC_STATUS.PENDING,
           lastUpdated: Date.now(),
         };
         contextAddJob(newJob);
@@ -370,11 +389,11 @@ const JobForm: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <Card className="max-w-2xl">
             <div className="space-y-6">
-              {/* Draft indicator */}
-              {!isEdit && formData.title && (
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="material-symbols-outlined text-sm">save</span>
-                  Draft auto-saved
+              {/* Draft indicator - shows when draft exists in IndexedDB */}
+              {!isEdit && draftLoaded && formData.title && (
+                <div className="flex items-center gap-2 text-xs text-emerald-500">
+                  <span className="material-symbols-outlined text-sm">cloud_done</span>
+                  Saved to device
                 </div>
               )}
 

@@ -128,9 +128,14 @@ export const useWorkspaceData = () => {
 // STANDALONE FUNCTIONS (for non-React code)
 // These read from localStorage which is kept in sync by DataContext
 // NOTE: Mutations should use the hook when possible for proper state updates
+//
+// ⚠️ SPRINT 2 TASK 2.1: These functions are deprecated and marked @internal.
+// DO NOT USE IN COMPONENTS - they bypass DataContext reactivity.
+// Use useWorkspaceData() hook or useData() from lib/DataContext.tsx instead.
 // ============================================================================
 
 /**
+ * @internal - DO NOT use in components. Use useWorkspaceData() hook instead.
  * @deprecated Use useWorkspaceData() hook instead for reactive updates
  * Standalone function for reading jobs from localStorage
  */
@@ -144,6 +149,7 @@ export const getJobs = async (): Promise<Job[]> => {
 };
 
 /**
+ * @internal - DO NOT use in components. Use useWorkspaceData().createJob() instead.
  * @deprecated Use useWorkspaceData().createJob() instead
  * Standalone function - writes to localStorage (DataContext will sync on next load)
  */
@@ -159,6 +165,7 @@ export const addJob = async (job: Omit<Job, 'id'>): Promise<Job> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().updateJob() instead
  */
 export const updateJob = async (id: string, updates: Partial<Job>): Promise<Job> => {
@@ -171,6 +178,7 @@ export const updateJob = async (id: string, updates: Partial<Job>): Promise<Job>
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().deleteJob() instead
  */
 export const deleteJob = async (id: string): Promise<void> => {
@@ -180,6 +188,7 @@ export const deleteJob = async (id: string): Promise<void> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData() hook instead
  */
 export const getClients = async (): Promise<Client[]> => {
@@ -192,6 +201,7 @@ export const getClients = async (): Promise<Client[]> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().createClient() instead
  */
 export const addClient = async (client: Omit<Client, 'id'>): Promise<Client> => {
@@ -206,6 +216,7 @@ export const addClient = async (client: Omit<Client, 'id'>): Promise<Client> => 
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().updateClient() instead
  */
 export const updateClient = async (id: string, updates: Partial<Client>): Promise<Client> => {
@@ -218,6 +229,7 @@ export const updateClient = async (id: string, updates: Partial<Client>): Promis
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().deleteClient() instead
  */
 export const deleteClient = async (id: string): Promise<void> => {
@@ -227,6 +239,7 @@ export const deleteClient = async (id: string): Promise<void> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData() hook instead
  */
 export const getTechnicians = async (): Promise<Technician[]> => {
@@ -239,6 +252,7 @@ export const getTechnicians = async (): Promise<Technician[]> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().createTechnician() instead
  */
 export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Technician> => {
@@ -253,6 +267,7 @@ export const addTechnician = async (tech: Omit<Technician, 'id'>): Promise<Techn
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().updateTechnician() instead
  */
 export const updateTechnician = async (id: string, updates: Partial<Technician>): Promise<Technician> => {
@@ -265,6 +280,7 @@ export const updateTechnician = async (id: string, updates: Partial<Technician>)
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().deleteTechnician() instead
  */
 export const deleteTechnician = async (id: string): Promise<void> => {
@@ -274,6 +290,7 @@ export const deleteTechnician = async (id: string): Promise<void> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData() hook instead
  */
 export const getInvoices = async (): Promise<Invoice[]> => {
@@ -286,6 +303,7 @@ export const getInvoices = async (): Promise<Invoice[]> => {
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().createInvoice() instead
  */
 export const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice> => {
@@ -300,6 +318,7 @@ export const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice>
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().updateInvoice() instead
  */
 export const updateInvoice = async (id: string, updates: Partial<Invoice>): Promise<Invoice> => {
@@ -312,6 +331,7 @@ export const updateInvoice = async (id: string, updates: Partial<Invoice>): Prom
 };
 
 /**
+ * @internal - DO NOT use in components.
  * @deprecated Use useWorkspaceData().deleteInvoice() instead
  */
 export const deleteInvoice = async (id: string): Promise<void> => {

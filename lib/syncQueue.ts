@@ -9,6 +9,9 @@ import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
 import { getMedia } from '../db';
 import { showPersistentNotification } from './utils/syncUtils';
+import { SYNC_STATUS } from './constants';
+import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
+import { prepareJobForSync } from './utils/technicianIdNormalization';
 
 interface SyncQueueItem {
   id: string;
@@ -37,10 +40,15 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
   const supabase = getSupabase();
   if (!supabase) return false;
 
+  // Sprint 2 Task 2.6: Normalize technician IDs before sync
+  const normalizedJob = prepareJobForSync(job);
+
   try {
     // 1. Upload photos from IndexedDB to Supabase Storage
     const uploadedPhotos: Photo[] = [];
     const failedPhotos: string[] = [];
+
+    const orphanedPhotos: OrphanPhoto[] = [];
 
     for (const photo of job.photos) {
       if (photo.isIndexedDBRef) {
@@ -49,6 +57,30 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         if (!dataUrl) {
           console.error(`Failed to retrieve photo ${photo.id} from IndexedDB`);
           failedPhotos.push(photo.id);
+
+          // Sprint 1 Task 1.3: Preserve metadata in orphan log instead of silently losing it
+          const orphan: OrphanPhoto = {
+            id: photo.id,
+            jobId: job.id,
+            jobTitle: job.title,
+            type: photo.type,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            w3w: photo.w3w,
+            reason: 'IndexedDB data lost - binary not found',
+            orphanedAt: Date.now(),
+            recoveryAttempts: 0
+          };
+          orphanedPhotos.push(orphan);
+
+          // Save to IndexedDB orphan log
+          try {
+            await saveOrphanPhoto(orphan);
+            console.warn(`📸 Photo ${photo.id} metadata preserved in orphan log`);
+          } catch (saveErr) {
+            console.error('Failed to save orphan photo metadata:', saveErr);
+          }
           continue;
         }
 
@@ -57,6 +89,29 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         if (!publicUrl) {
           console.error(`Failed to upload photo ${photo.id} to Supabase`);
           failedPhotos.push(photo.id);
+
+          // Preserve metadata for upload failures too (network issue, not data loss)
+          const orphan: OrphanPhoto = {
+            id: photo.id,
+            jobId: job.id,
+            jobTitle: job.title,
+            type: photo.type,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            w3w: photo.w3w,
+            reason: 'Upload failed - data exists locally but cloud upload failed',
+            orphanedAt: Date.now(),
+            recoveryAttempts: 0
+          };
+          orphanedPhotos.push(orphan);
+
+          try {
+            await saveOrphanPhoto(orphan);
+            console.warn(`📸 Photo ${photo.id} metadata preserved (upload failed)`);
+          } catch (saveErr) {
+            console.error('Failed to save orphan photo metadata:', saveErr);
+          }
           continue;
         }
 
@@ -65,11 +120,27 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
           ...photo,
           url: publicUrl, // Replace IndexedDB key with public URL
           isIndexedDBRef: false,
-          syncStatus: 'synced'
+          syncStatus: SYNC_STATUS.SYNCED
         });
       } else {
         uploadedPhotos.push(photo);
       }
+    }
+
+    // Notify user if any photos were orphaned
+    if (orphanedPhotos.length > 0) {
+      const totalOrphans = await countOrphanPhotos();
+      showPersistentNotification({
+        type: 'warning',
+        title: 'Photo Sync Issue',
+        message: `${orphanedPhotos.length} photo(s) could not sync for "${job.title}". Metadata preserved. ${totalOrphans} total photos need attention. Check your connection and try again.`,
+        persistent: true,
+        actionLabel: 'View Details',
+        onAction: () => {
+          console.log('[Orphan Recovery] User requested details for orphaned photos:', orphanedPhotos.map(p => p.id));
+          // Future: Navigate to recovery UI
+        }
+      });
     }
 
     // SECURITY FIX (BACKEND_AUDIT.md Risk #8): Fail sync if any photos failed to upload
@@ -90,26 +161,28 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
     }
 
     // 3. Upsert job to database
+    // Sprint 2 Task 2.6: Use normalizedJob for consistent technician IDs
     const { error: jobError } = await supabase
       .from('jobs')
       .upsert({
-        id: job.id,
-        title: job.title,
-        client: job.client,
-        address: job.address,
-        notes: job.notes,
-        status: job.status,
-        lat: job.lat,
-        lng: job.lng,
-        w3w: job.w3w,
-        assignee: job.technician,
-        signer_name: job.signerName,
-        signer_role: job.signerRole,
+        id: normalizedJob.id,
+        title: normalizedJob.title,
+        client: normalizedJob.client,
+        address: normalizedJob.address,
+        notes: normalizedJob.notes,
+        status: normalizedJob.status,
+        lat: normalizedJob.lat,
+        lng: normalizedJob.lng,
+        w3w: normalizedJob.w3w,
+        assignee: normalizedJob.technician,
+        technician_id: normalizedJob.technicianId || normalizedJob.techId, // Normalized technician ID
+        signer_name: normalizedJob.signerName,
+        signer_role: normalizedJob.signerRole,
         signature_url: signatureUrl,
-        created_at: job.date,
-        completed_at: job.completedAt,
-        last_updated: job.lastUpdated,
-        sync_status: 'synced'
+        created_at: normalizedJob.date,
+        completed_at: normalizedJob.completedAt,
+        last_updated: normalizedJob.lastUpdated,
+        sync_status: SYNC_STATUS.SYNCED
       });
 
     if (jobError) throw jobError;
@@ -126,7 +199,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         lat: photo.lat,
         lng: photo.lng,
         w3w: photo.w3w,
-        sync_status: 'synced'
+        sync_status: SYNC_STATUS.SYNCED
       }));
 
       const { error: photoError } = await supabase
