@@ -8,9 +8,9 @@
  * - Technician is optional (jobs can be unassigned)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getClients, getTechnicians } from './useWorkspaceData';
+import { useData } from '../lib/DataContext';
 import { showToast } from '../lib/microInteractions';
 import type { Client, Technician } from '../types';
 
@@ -46,36 +46,13 @@ export const useJobGuard = (redirectOnFail = false): JobGuardState => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  // Use DataContext for state management
+  const { clients, technicians, isLoading, refresh } = useData();
 
   // Derived state
   const hasClients = clients.length > 0;
   const hasTechnicians = technicians.length > 0;
   const canCreateJob = hasClients; // Only clients are required
-
-  // Load data
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [clientsData, techniciansData] = await Promise.all([
-        getClients(),
-        getTechnicians(),
-      ]);
-      setClients(clientsData);
-      setTechnicians(techniciansData);
-    } catch (error) {
-      console.error('Error loading job guard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Initial load
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   // Auto-redirect on fail if enabled
   useEffect(() => {
@@ -104,7 +81,7 @@ export const useJobGuard = (redirectOnFail = false): JobGuardState => {
   // Check prerequisites and redirect if needed
   const checkAndRedirect = useCallback(async (): Promise<boolean> => {
     // Refresh data first
-    await loadData();
+    await refresh();
 
     if (!hasClients) {
       showClientRequiredToast();
@@ -119,7 +96,7 @@ export const useJobGuard = (redirectOnFail = false): JobGuardState => {
     }
 
     return true;
-  }, [loadData, hasClients, hasTechnicians, showClientRequiredToast, showNoTechnicianWarning, navigate, location.pathname]);
+  }, [refresh, hasClients, hasTechnicians, showClientRequiredToast, showNoTechnicianWarning, navigate, location.pathname]);
 
   return {
     isLoading,
@@ -131,7 +108,7 @@ export const useJobGuard = (redirectOnFail = false): JobGuardState => {
     checkAndRedirect,
     showClientRequiredToast,
     showNoTechnicianWarning,
-    refresh: loadData,
+    refresh,
   };
 };
 

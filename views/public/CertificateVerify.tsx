@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Card, ActionButton, LoadingSkeleton } from '../../components/ui';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
-import { verifyEvidence, getSealStatus, formatHash, formatSealDate } from '../../lib/sealing';
+import { verifyEvidence, getSealStatus, formatSealDate } from '../../lib/sealing';
 import type { VerificationResult, SealStatus } from '../../lib/sealing';
 
 const CertificateVerify: React.FC = () => {

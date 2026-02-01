@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase';
-import { getValidatedHandshakeUrl, getBunkerRunUrl } from './redirects';
+import { getValidatedHandshakeUrl } from './redirects';
 
 // Re-export getSupabase for modules that lazy-load db (like DataContext)
 export { getSupabase };
@@ -2351,7 +2351,7 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
 // TECHNICIAN-INITIATED JOBS & NOTIFICATIONS
 // ============================================================================
 
-import type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';
+import type { TechJobNotification, ClientReceipt } from '../types';
 
 // Re-export types for convenience
 export type { TechJobNotification, TechJobMetadata, ClientReceipt } from '../types';

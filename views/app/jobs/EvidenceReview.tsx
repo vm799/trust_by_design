@@ -6,11 +6,11 @@
  * Phase E: Job Lifecycle / Phase H: Seal & Verify
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
-import { getJobs } from '../../../hooks/useWorkspaceData';
+import { ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
+import { useData } from '../../../lib/DataContext';
 import { sealEvidence } from '../../../lib/sealing';
 import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
@@ -27,31 +27,17 @@ interface Photo {
 
 const EvidenceReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [job, setJob] = useState<Job | null>(null);
+  // Use DataContext for state management
+  const { jobs, updateJob: contextUpdateJob, isLoading: loading, refresh } = useData();
+
+  // Memoized job derivation from DataContext
+  const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
+
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [showSealDialog, setShowSealDialog] = useState(false);
   const [sealing, setSealing] = useState(false);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!id) return;
-
-      try {
-        const jobs = await getJobs();
-        const foundJob = jobs.find(j => j.id === id);
-        setJob(foundJob || null);
-      } catch (error) {
-        console.error('Failed to load job:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [id]);
 
   const handleSeal = async () => {
     if (!job) return;
@@ -61,10 +47,15 @@ const EvidenceReview: React.FC = () => {
       const result = await sealEvidence(job.id);
 
       if (result.success) {
-        // Refresh job data
-        const jobs = await getJobs();
-        const updatedJob = jobs.find(j => j.id === id);
-        setJob(updatedJob || null);
+        // Update job in DataContext with sealed state
+        const sealedJob: Job = {
+          ...job,
+          sealedAt: new Date().toISOString(),
+          sealHash: result.hash,
+        };
+        contextUpdateJob(sealedJob);
+        // Also refresh from server to ensure consistency
+        await refresh();
         setShowSealDialog(false);
       } else {
         throw new Error(result.error || 'Failed to seal evidence');

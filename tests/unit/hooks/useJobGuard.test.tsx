@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import React from 'react';
 import { useJobGuard, useJobCreationRedirect } from '../../../hooks/useJobGuard';
-import * as workspaceData from '../../../hooks/useWorkspaceData';
+import * as DataContext from '../../../lib/DataContext';
 import * as microInteractions from '../../../lib/microInteractions';
 
 // Mock react-router-dom
@@ -16,15 +17,22 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock workspace data functions
-vi.mock('../../../hooks/useWorkspaceData', () => ({
-  getClients: vi.fn(),
-  getTechnicians: vi.fn(),
-}));
-
 // Mock microInteractions
 vi.mock('../../../lib/microInteractions', () => ({
   showToast: vi.fn(),
+}));
+
+// Mock DataContext
+const mockRefresh = vi.fn().mockResolvedValue(undefined);
+let mockDataContextValue = {
+  clients: [] as Array<{ id: string; name: string; email?: string; address?: string; totalJobs?: number }>,
+  technicians: [] as Array<{ id: string; name: string; email?: string; status?: string; rating?: number; jobsCompleted?: number }>,
+  isLoading: false,
+  refresh: mockRefresh,
+};
+
+vi.mock('../../../lib/DataContext', () => ({
+  useData: () => mockDataContextValue,
 }));
 
 // Wrapper component for router context
@@ -36,6 +44,13 @@ describe('useJobGuard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // Reset mock data
+    mockDataContextValue = {
+      clients: [],
+      technicians: [],
+      isLoading: false,
+      refresh: mockRefresh,
+    };
   });
 
   afterEach(() => {
@@ -44,8 +59,7 @@ describe('useJobGuard', () => {
 
   describe('Initial State', () => {
     it('starts with loading state', () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.isLoading = true;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
 
@@ -54,17 +68,15 @@ describe('useJobGuard', () => {
 
     it('loads clients and technicians on mount', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available' as const, rating: 5, jobsCompleted: 0 }];
+      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available', rating: 5, jobsCompleted: 0 }];
 
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue(mockTechs);
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = mockTechs;
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
+      expect(result.current.isLoading).toBe(false);
       expect(result.current.clients).toEqual(mockClients);
       expect(result.current.technicians).toEqual(mockTechs);
     });
@@ -73,69 +85,54 @@ describe('useJobGuard', () => {
   describe('Validation Flags', () => {
     it('hasClients is true when clients exist', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       expect(result.current.hasClients).toBe(true);
     });
 
     it('hasClients is false when no clients exist', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       expect(result.current.hasClients).toBe(false);
     });
 
     it('hasTechnicians is true when technicians exist', async () => {
-      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available' as const, rating: 5, jobsCompleted: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue(mockTechs);
+      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available', rating: 5, jobsCompleted: 0 }];
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = mockTechs;
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       expect(result.current.hasTechnicians).toBe(true);
     });
 
     it('canCreateJob is true only when clients exist', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       // Can create job even without technicians
       expect(result.current.canCreateJob).toBe(true);
     });
 
     it('canCreateJob is false when no clients exist', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       expect(result.current.canCreateJob).toBe(false);
     });
@@ -143,8 +140,9 @@ describe('useJobGuard', () => {
 
   describe('Auto-Redirect Mode', () => {
     it('redirects to client creation when no clients and redirectOnFail is true', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       renderHook(() => useJobGuard(true), { wrapper });
 
@@ -157,8 +155,9 @@ describe('useJobGuard', () => {
     });
 
     it('shows warning toast when redirecting', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       renderHook(() => useJobGuard(true), { wrapper });
 
@@ -173,19 +172,22 @@ describe('useJobGuard', () => {
 
     it('does not redirect when clients exist', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       renderHook(() => useJobGuard(true), { wrapper });
 
+      // Wait a tick to ensure useEffect runs
       await waitFor(() => {
         expect(mockNavigate).not.toHaveBeenCalled();
       });
     });
 
     it('includes returnTo parameter in redirect URL', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       renderHook(() => useJobGuard(true), { wrapper });
 
@@ -200,14 +202,11 @@ describe('useJobGuard', () => {
 
   describe('Toast Notifications', () => {
     it('showClientRequiredToast shows correct message', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       act(() => {
         result.current.showClientRequiredToast();
@@ -221,14 +220,11 @@ describe('useJobGuard', () => {
     });
 
     it('showNoTechnicianWarning shows correct message', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       act(() => {
         result.current.showNoTechnicianWarning();
@@ -245,15 +241,12 @@ describe('useJobGuard', () => {
   describe('checkAndRedirect', () => {
     it('returns true when clients exist', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available' as const, rating: 5, jobsCompleted: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue(mockTechs);
+      const mockTechs = [{ id: '1', name: 'Test Tech', email: 'tech@example.com', status: 'Available', rating: 5, jobsCompleted: 0 }];
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = mockTechs;
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       let canProceed: boolean = false;
       await act(async () => {
@@ -264,14 +257,11 @@ describe('useJobGuard', () => {
     });
 
     it('returns false and redirects when no clients', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       let canProceed: boolean = true;
       await act(async () => {
@@ -284,14 +274,11 @@ describe('useJobGuard', () => {
 
     it('warns about missing technicians but allows proceeding', async () => {
       const mockClients = [{ id: '1', name: 'Test Client', email: 'test@example.com', address: '123 Main St', totalJobs: 0 }];
-      vi.mocked(workspaceData.getClients).mockResolvedValue(mockClients);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+      mockDataContextValue.clients = mockClients;
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
 
       await act(async () => {
         await result.current.checkAndRedirect();
@@ -306,24 +293,18 @@ describe('useJobGuard', () => {
   });
 
   describe('Refresh', () => {
-    it('refresh reloads data', async () => {
-      vi.mocked(workspaceData.getClients).mockResolvedValue([]);
-      vi.mocked(workspaceData.getTechnicians).mockResolvedValue([]);
+    it('refresh calls DataContext refresh', async () => {
+      mockDataContextValue.clients = [];
+      mockDataContextValue.technicians = [];
+      mockDataContextValue.isLoading = false;
 
       const { result } = renderHook(() => useJobGuard(), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      // Initial call count
-      const initialCalls = vi.mocked(workspaceData.getClients).mock.calls.length;
 
       await act(async () => {
         await result.current.refresh();
       });
 
-      expect(vi.mocked(workspaceData.getClients).mock.calls.length).toBeGreaterThan(initialCalls);
+      expect(mockRefresh).toHaveBeenCalled();
     });
   });
 });

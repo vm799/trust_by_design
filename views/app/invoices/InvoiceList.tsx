@@ -7,11 +7,11 @@
  * Phase I: Invoice Flow
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
-import { getInvoices, getClients, getJobs } from '../../../hooks/useWorkspaceData';
+import { Card, StatusBadge, EmptyState, ErrorState, LoadingSkeleton } from '../../../components/ui';
+import { useData } from '../../../lib/DataContext';
 import { Invoice, Client, Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
@@ -19,38 +19,19 @@ type StatusType = 'pending' | 'paid' | 'overdue';
 type FilterStatus = 'all' | StatusType;
 
 const InvoiceList: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);  // REMEDIATION ITEM 10
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  useSearchParams();
+
+  // Use DataContext for state management
+  const {
+    invoices,
+    clients,
+    jobs,
+    isLoading: loading,
+    error,
+    refresh
+  } = useData();
+
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
-
-  // REMEDIATION ITEM 10: Extracted loadData for retry functionality
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [invoicesData, clientsData, jobsData] = await Promise.all([
-        getInvoices(),
-        getClients(),
-        getJobs(),
-      ]);
-      setInvoices(invoicesData);
-      setClients(clientsData);
-      setJobs(jobsData);
-    } catch (err) {
-      console.error('Failed to load invoices:', err);
-      setError('Failed to load invoices. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   // Get invoice status
   const getInvoiceStatus = (invoice: Invoice): StatusType => {
@@ -120,7 +101,7 @@ const InvoiceList: React.FC = () => {
           <ErrorState
             title="Failed to load invoices"
             message={error}
-            onRetry={loadData}
+            onRetry={refresh}
             secondaryAction={{ label: 'Go Back', onClick: () => window.history.back(), icon: 'arrow_back' }}
           />
         </PageContent>

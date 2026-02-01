@@ -5,7 +5,7 @@
  * Implements retry logic, exponential backoff, and conflict resolution.
  */
 
-import { Job, Photo, SafetyCheck } from '../types';
+import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
 import { getMedia } from '../db';
 import { showPersistentNotification } from './utils/syncUtils';

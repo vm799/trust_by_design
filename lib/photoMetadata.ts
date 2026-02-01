@@ -73,7 +73,7 @@ export function captureCameraMetadata(track?: MediaStreamTrack): CameraMetadata 
 
   try {
     const settings = track.getSettings();
-    const capabilities = track.getCapabilities?.() || {};
+    track.getCapabilities?.(); // Capture capabilities for potential future use
 
     return {
       facingMode: settings.facingMode as 'user' | 'environment' | undefined,

@@ -141,8 +141,14 @@ const AuthCallback: React.FC = () => {
       }
     };
 
-    // Run token extraction immediately
-    tryTokenExtraction();
+    // Check if URL has tokens - if so, tryTokenExtraction will handle auth
+    // Only use fallback session check if no tokens in URL
+    const tokensInUrl = window.location.hash.includes('access_token=');
+
+    // Run token extraction immediately if tokens present
+    if (tokensInUrl) {
+      tryTokenExtraction();
+    }
 
     // Also subscribe to auth state changes as backup
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -160,26 +166,31 @@ const AuthCallback: React.FC = () => {
       // Don't show error on INITIAL_SESSION without session - token extraction may still work
     });
 
-    // Check for existing session immediately (no delay)
-    const checkExistingSession = async () => {
-      if (hasRedirected.current) return;
+    // Only check for existing session if NO tokens in URL
+    // This prevents redundant getSession() call when setSession() is already handling auth
+    let sessionCheckTimer: ReturnType<typeof setTimeout> | undefined;
 
-      const { data: { session } } = await supabase.auth.getSession();
+    if (!tokensInUrl) {
+      const checkExistingSession = async () => {
+        if (hasRedirected.current) return;
 
-      if (session && !hasRedirected.current) {
-        console.log('[AuthCallback] Existing session found, redirecting');
-        hasRedirected.current = true;
-        setProcessing(false);
-        navigate('/', { replace: true });
-      }
-    };
+        const { data: { session } } = await supabase.auth.getSession();
 
-    // Run session check immediately - no 1-second delay
-    const sessionCheckTimer = setTimeout(checkExistingSession, 50);
+        if (session && !hasRedirected.current) {
+          console.log('[AuthCallback] Existing session found, redirecting');
+          hasRedirected.current = true;
+          setProcessing(false);
+          navigate('/', { replace: true });
+        }
+      };
+
+      // Run session check after brief delay - only when no tokens present
+      sessionCheckTimer = setTimeout(checkExistingSession, 50);
+    }
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(sessionCheckTimer);
+      if (sessionCheckTimer) clearTimeout(sessionCheckTimer);
     };
   }, [navigate, searchParams]);
 

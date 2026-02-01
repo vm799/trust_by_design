@@ -9,11 +9,11 @@
  * - Button click affordance
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, ActionButton, LoadingSkeleton, Modal } from '../../../components/ui';
-import { getJobs, getClients, getTechnicians, addJob, updateJob, addClient, addTechnician } from '../../../hooks/useWorkspaceData';
+import { Card, LoadingSkeleton, Modal } from '../../../components/ui';
+import { useData } from '../../../lib/DataContext';
 import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
@@ -43,10 +43,26 @@ const JobForm: React.FC = () => {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
+  // Use DataContext for state management
+  const {
+    jobs,
+    clients,
+    technicians,
+    addJob: contextAddJob,
+    updateJob: contextUpdateJob,
+    addClient: contextAddClient,
+    addTechnician: contextAddTechnician,
+    isLoading: dataLoading
+  } = useData();
+
+  // Memoized job derivation for edit mode
+  const existingJob = useMemo(() =>
+    isEdit && id ? jobs.find(j => j.id === id) || null : null,
+    [jobs, id, isEdit]
+  );
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
 
   // Inline creation modals
   const [showAddClient, setShowAddClient] = useState(false);
@@ -128,52 +144,37 @@ const JobForm: React.FC = () => {
     }
   }, [loading]);
 
+  // Initialize form data from existing job or client address
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [clientsData, techsData, jobsData] = await Promise.all([
-          getClients(),
-          getTechnicians(),
-          isEdit ? getJobs() : Promise.resolve([]),
-        ]);
+    // Wait for DataContext to finish loading
+    if (dataLoading) return;
 
-        setClients(clientsData);
-        setTechnicians(techsData);
+    // Edit mode: populate form from existing job
+    if (isEdit && existingJob) {
+      const jobDate = new Date(existingJob.date);
+      setFormData({
+        title: existingJob.title || '',
+        description: existingJob.description || existingJob.notes || '',
+        clientId: existingJob.clientId || '',
+        technicianId: existingJob.technicianId || existingJob.techId || '',
+        address: existingJob.address || '',
+        date: jobDate.toISOString().split('T')[0],
+        time: jobDate.toTimeString().slice(0, 5),
+        total: existingJob.total?.toString() || existingJob.price?.toString() || '',
+        priority: existingJob.priority || 'normal',
+      });
+    }
 
-        if (isEdit && id) {
-          const job = jobsData.find(j => j.id === id);
-          if (job) {
-            const jobDate = new Date(job.date);
-            setFormData({
-              title: job.title || '',
-              description: job.description || job.notes || '',
-              clientId: job.clientId || '',
-              technicianId: job.technicianId || job.techId || '',
-              address: job.address || '',
-              date: jobDate.toISOString().split('T')[0],
-              time: jobDate.toTimeString().slice(0, 5),
-              total: job.total?.toString() || job.price?.toString() || '',
-              priority: job.priority || 'normal',
-            });
-          }
-        }
-
-        // Auto-fill address from client (only for new jobs without draft)
-        if (!isEdit && searchParams.get('clientId') && !formData.address) {
-          const client = clientsData.find(c => c.id === searchParams.get('clientId'));
-          if (client?.address) {
-            setFormData(prev => ({ ...prev, address: client.address || '' }));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load data:', error);
-      } finally {
-        setLoading(false);
+    // Auto-fill address from client (only for new jobs without draft)
+    if (!isEdit && searchParams.get('clientId') && !formData.address) {
+      const client = clients.find(c => c.id === searchParams.get('clientId'));
+      if (client?.address) {
+        setFormData(prev => ({ ...prev, address: client.address || '' }));
       }
-    };
+    }
 
-    loadData();
-  }, [id, isEdit, searchParams]);
+    setLoading(false);
+  }, [dataLoading, isEdit, existingJob, searchParams, clients, formData.address]);
 
   // Update address when client changes
   const handleClientChange = (clientId: string) => {
@@ -218,28 +219,49 @@ const JobForm: React.FC = () => {
     try {
       const dateTime = new Date(`${formData.date}T${formData.time || '09:00'}`);
 
-      const jobData: Partial<Job> = {
-        title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        notes: formData.description.trim() || '',
-        clientId: formData.clientId,
-        technicianId: formData.technicianId || undefined,
-        techId: formData.technicianId || '',
-        address: formData.address.trim() || undefined,
-        date: dateTime.toISOString(),
-        total: formData.total ? parseFloat(formData.total) : undefined,
-        price: formData.total ? parseFloat(formData.total) : undefined,
-        priority: formData.priority,
-        status: 'Pending',
-      };
-
       clearDraft();
 
-      if (isEdit && id) {
-        await updateJob(id, jobData);
+      if (isEdit && id && existingJob) {
+        // Update existing job - use full Job object
+        const updatedJob: Job = {
+          ...existingJob,
+          title: formData.title.trim(),
+          description: formData.description.trim() || undefined,
+          notes: formData.description.trim() || '',
+          clientId: formData.clientId,
+          technicianId: formData.technicianId || undefined,
+          techId: formData.technicianId || '',
+          address: formData.address.trim() || undefined,
+          date: dateTime.toISOString(),
+          total: formData.total ? parseFloat(formData.total) : undefined,
+          price: formData.total ? parseFloat(formData.total) : undefined,
+          priority: formData.priority,
+        };
+        contextUpdateJob(updatedJob);
         navigate(route(ROUTES.JOB_DETAIL, { id }));
       } else {
-        const newJob = await addJob(jobData as Omit<Job, 'id'>);
+        // Create new job
+        const newJob: Job = {
+          id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          title: formData.title.trim(),
+          description: formData.description.trim() || undefined,
+          notes: formData.description.trim() || '',
+          clientId: formData.clientId,
+          technicianId: formData.technicianId || undefined,
+          techId: formData.technicianId || '',
+          address: formData.address.trim() || undefined,
+          date: dateTime.toISOString(),
+          total: formData.total ? parseFloat(formData.total) : undefined,
+          price: formData.total ? parseFloat(formData.total) : undefined,
+          priority: formData.priority,
+          status: 'Pending',
+          photos: [],
+          safetyChecklist: [],
+          siteHazards: [],
+          syncStatus: 'pending',
+          lastUpdated: Date.now(),
+        };
+        contextAddJob(newJob);
         navigate(route(ROUTES.JOB_DETAIL, { id: newJob.id }));
       }
     } catch (error) {
@@ -264,13 +286,14 @@ const JobForm: React.FC = () => {
     if (!newClientName.trim()) return;
     setAddingClient(true);
     try {
-      const newClient = await addClient({
+      const newClient: Client = {
+        id: `client-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         name: newClientName.trim(),
         email: newClientEmail.trim() || undefined,
         phone: '',
         address: '',
-      } as Omit<Client, 'id'>);
-      setClients(prev => [...prev, newClient]);
+      };
+      contextAddClient(newClient);
       setFormData(prev => ({ ...prev, clientId: newClient.id }));
       setShowAddClient(false);
       setNewClientName('');
@@ -288,13 +311,14 @@ const JobForm: React.FC = () => {
     if (!newTechName.trim()) return;
     setAddingTech(true);
     try {
-      const newTech = await addTechnician({
+      const newTech: Technician = {
+        id: `tech-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         name: newTechName.trim(),
         email: newTechEmail.trim() || undefined,
         phone: '',
         status: 'Authorised',
-      } as Omit<Technician, 'id'>);
-      setTechnicians(prev => [...prev, newTech]);
+      };
+      contextAddTechnician(newTech);
       setFormData(prev => ({ ...prev, technicianId: newTech.id }));
       setShowAddTech(false);
       setNewTechName('');
@@ -481,8 +505,8 @@ const JobForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Date & Time - Responsive grid for mobile (stacked) vs desktop (side-by-side) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="date" className="block text-sm font-medium text-slate-300 mb-2">
                     Date <span className="text-red-400">*</span>
@@ -493,7 +517,7 @@ const JobForm: React.FC = () => {
                     type="date"
                     value={formData.date}
                     onChange={handleChange('date')}
-                    className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                    className={`w-full px-4 py-4 min-h-[56px] bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
                       errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'
                     }`}
                   />
@@ -511,7 +535,7 @@ const JobForm: React.FC = () => {
                       handleChange('time')(e);
                       setTimeout(() => addressRef.current?.focus(), 100);
                     }}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full px-4 py-4 min-h-[56px] bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
               </div>

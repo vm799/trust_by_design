@@ -6,13 +6,11 @@
  * Phase C: Dashboard Redesign
  */
 
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
-import { useAuth } from '../../lib/AuthContext';
 import { useWorkspaceData } from '../../hooks/useWorkspaceData';
-import { Job, Client, Technician } from '../../types';
 import { route, ROUTES } from '../../lib/routes';
 
 interface QuickStat {
@@ -34,10 +32,12 @@ interface AttentionItem {
 }
 
 const Dashboard: React.FC = () => {
-  const { userId, userEmail } = useAuth();
   // Use reactive DataContext hook instead of deprecated standalone functions
   // This ensures dashboard updates when data changes elsewhere in the app
   const { jobs, clients, technicians, isLoading: loading } = useWorkspaceData();
+
+  // State for "Show incomplete only" filter
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
 
   // Calculate stats with clickable links
   const stats: QuickStat[] = [
@@ -126,11 +126,20 @@ const Dashboard: React.FC = () => {
 
   const attentionItems = loading ? [] : getAttentionItems();
 
-  // Get today's jobs
+  // Get today's jobs with optional incomplete filter
   const todayJobs = jobs.filter(j => {
     const jobDate = new Date(j.date);
     const today = new Date();
-    return jobDate.toDateString() === today.toDateString();
+    const isToday = jobDate.toDateString() === today.toDateString();
+
+    if (!isToday) return false;
+
+    // If filter is on, only show incomplete jobs (not Complete, Submitted, or sealed)
+    if (showIncompleteOnly) {
+      return j.status !== 'Complete' && j.status !== 'Submitted' && !j.sealedAt;
+    }
+
+    return true;
   });
 
   // Get greeting based on time
@@ -254,7 +263,20 @@ const Dashboard: React.FC = () => {
         {/* Today's Schedule */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Today's Schedule</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-white">Today's Schedule</h2>
+              {/* Incomplete filter toggle */}
+              <button
+                onClick={() => setShowIncompleteOnly(!showIncompleteOnly)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  showIncompleteOnly
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
+                }`}
+              >
+                {showIncompleteOnly ? 'Showing Incomplete' : 'Show Incomplete Only'}
+              </button>
+            </div>
             <Link to={ROUTES.JOBS} className="text-sm text-primary hover:text-primary/80">
               View All
             </Link>

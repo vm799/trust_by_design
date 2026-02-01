@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import { getSupabase } from '../lib/supabase';
 
+interface UserWithEmail {
+  email: string;
+  email_confirmed_at?: string;
+  confirmed_at?: string;
+}
+
 interface EmailVerificationBannerProps {
-  user: any;
+  user: UserWithEmail;
   onDismiss?: () => void;
 }
 

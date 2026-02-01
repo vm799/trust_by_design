@@ -27,10 +27,19 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
   unseenNotificationsCount = 0
 }) => {
   const navigate = useNavigate();
-  const displayName = user?.name?.split(' ')[0] || 'Manager';
 
-  // Check if this is a first-time user (name is just email or 'Manager')
-  const isFirstTimeUser = !user?.name || user.name === user?.email || displayName === 'Manager';
+  // Extract display name - handle email-as-name fallback gracefully
+  const rawName = user?.name || '';
+  const isEmailAsName = rawName.includes('@');
+  const displayName = isEmailAsName
+    ? rawName.split('@')[0] // Extract part before @ for emails
+    : (rawName.split(' ')[0] || 'Manager'); // First name or fallback
+
+  // Check if this is a first-time user
+  // CRITICAL FIX: Don't treat name===email as first-time if user has complete profile
+  // A complete profile means they went through OAuthSetup (workspace + persona exist)
+  const hasCompleteProfile = !!(user?.workspace?.id && user?.persona);
+  const isFirstTimeUser = !hasCompleteProfile;
 
   // PWA tip banner - show once per session if not installed
   const [showPwaTip, setShowPwaTip] = React.useState(() => {

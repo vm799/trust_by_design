@@ -77,7 +77,7 @@ export const uploadPhoto = async (
 
     // Upload to storage bucket
     const filePath = `${jobId}/${photoId}.jpg`;
-    const { data, error } = await client.storage
+    const { error } = await client.storage
       .from('job-photos')
       .upload(filePath, blob, {
         contentType: mimeType,
@@ -116,7 +116,7 @@ export const uploadSignature = async (
     const blob = await fetch(`data:image/png;base64,${base64Data}`).then(r => r.blob());
 
     const filePath = `${jobId}/signature.png`;
-    const { data, error } = await client.storage
+    const { error } = await client.storage
       .from('job-signatures')
       .upload(filePath, blob, {
         contentType: 'image/png',

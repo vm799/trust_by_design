@@ -12,7 +12,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Job, Technician, Client } from '../types';
-import { generateMagicLink, getMagicLinksForJob, type MagicLinkInfo } from '../lib/db';
+import { generateMagicLink, getMagicLinksForJob } from '../lib/db';
 import { getValidatedHandshakeUrl } from '../lib/redirects';
 import { showToast } from '../lib/microInteractions';
 import { sealEvidence, canSealJob } from '../lib/sealing';
@@ -39,7 +39,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
   onNavigate,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showActions, setShowActions] = useState(false);
+  const [, setShowActions] = useState(false);
 
   // Get link info for this job
   const links = getMagicLinksForJob(job.id);

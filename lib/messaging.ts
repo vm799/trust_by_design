@@ -588,7 +588,7 @@ function notifyMessageSubscribers(message: Message): void {
 /**
  * Notify subscribers of thread update
  */
-function notifyThreadSubscribers(thread: MessageThread): void {
+function _notifyThreadSubscribers(thread: MessageThread): void {
   threadSubscribers.forEach(handler => handler(thread));
 }
 

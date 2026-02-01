@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, EmptyState, LoadingSkeleton } from '../../components/ui';
-import { getJobs, getClients } from '../../hooks/useWorkspaceData';
+import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
 import { Job, Client } from '../../types';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
@@ -23,11 +23,11 @@ type TabType = 'jobs' | 'history' | 'profile';
 const TechPortal: React.FC = () => {
   const navigate = useNavigate();
   const { userId, session } = useAuth();
-  const [loading, setLoading] = useState(true);
+
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const { jobs: allJobsData, clients: clientsData, isLoading, addJob } = useData();
+
   const [activeTab, setActiveTab] = useState<TabType>('jobs');
-  const [allJobs, setAllJobs] = useState<Job[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [syncPending, setSyncPending] = useState(0);
   const [showQuickJob, setShowQuickJob] = useState(false);
 
   // Get user info for QuickJobForm (defined early for use in callbacks)
@@ -36,51 +36,36 @@ const TechPortal: React.FC = () => {
   const techEmail = session?.user?.email;
   const workspaceId = 'local-workspace'; // Default for sole contractors
 
-  // Load jobs data - extracted as callback for reuse after job creation
-  const loadData = useCallback(async () => {
-    try {
-      const [jobsData, clientsData] = await Promise.all([
-        getJobs(),
-        getClients(),
-      ]);
+  // Filter jobs assigned to this technician OR created by them (self-employed)
+  const allJobs = useMemo(() => {
+    return allJobsData.filter(j =>
+      j.technicianId === userId ||
+      j.techId === userId ||
+      j.techMetadata?.createdByTechId === userId ||
+      // Fallback: show all jobs with a technician assigned (demo mode)
+      j.technicianId
+    );
+  }, [allJobsData, userId]);
 
-      // Filter jobs assigned to this technician OR created by them (self-employed)
-      // This ensures sole contractors see their own created jobs
-      const myJobs = jobsData.filter(j =>
-        j.technicianId === userId ||
-        j.techId === userId ||
-        j.techMetadata?.createdByTechId === userId ||
-        // Fallback: show all jobs with a technician assigned (demo mode)
-        j.technicianId
-      );
-      setAllJobs(myJobs);
-      setClients(clientsData);
+  const clients = clientsData;
+  const loading = isLoading;
 
-      // Check for pending sync items
-      const pendingCount = myJobs.filter(j => j.syncStatus === 'pending').length;
-      setSyncPending(pendingCount);
-    } catch (error) {
-      console.error('Failed to load jobs:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // Check for pending sync items
+  const syncPending = useMemo(() => {
+    return allJobs.filter(j => j.syncStatus === 'pending').length;
+  }, [allJobs]);
 
   // Handle job creation from QuickJobForm
   const handleJobCreated = useCallback(async (job: Job) => {
     // Save job to database (mock or Supabase)
     await createJob(job, job.workspaceId || workspaceId);
-    // Add to local state immediately for optimistic UI
-    setAllJobs(prev => [job, ...prev]);
+    // Add to DataContext for optimistic UI (syncs across app)
+    addJob(job);
     // Close the form
     setShowQuickJob(false);
     // Navigate to the job detail to start working
     navigate(`/tech/job/${job.id}`);
-  }, [navigate, workspaceId]);
+  }, [navigate, workspaceId, addJob]);
 
   // Close the quick job form
   const handleQuickJobCancel = useCallback(() => {

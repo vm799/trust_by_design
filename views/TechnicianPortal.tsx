@@ -2,15 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../types';
-import { OfflineBanner } from '../components/OfflineBanner';
 import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
 import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
-import { convertToW3WCached, generateMockW3W, getVerifiedLocation, createManualLocationResult, VerifiedLocationResult } from '../lib/services/what3words';
+import { getVerifiedLocation, createManualLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
-import { notifyJobSealed, notifyLinkOpened } from '../lib/notificationService';
-import { hapticTap, hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
+import { notifyJobSealed } from '../lib/notificationService';
+import { hapticSuccess, hapticConfirm, hapticWarning } from '../lib/haptics';
 import { celebrateSuccess, showToast } from '../lib/microInteractions';
 import { secureRandomString } from '../lib/secureId';
 import QuickJobForm from '../components/QuickJobForm';
@@ -42,7 +41,6 @@ import {
   logSignatureCleared,
   logLocationCapture,
   logMockLocationFallback,
-  logJobSealed,
 } from '../lib/auditLog';
 
 const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, onAddJob?: (j: Job) => void }> = ({ jobs, onUpdateJob, onAddJob }) => {
@@ -72,7 +70,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   // Quick Job creation (technician-initiated)
   const [showQuickJobForm, setShowQuickJobForm] = useState(false);
-  const workMode = getTechnicianWorkMode();
+  getTechnicianWorkMode(); // Check work mode for potential future use
 
   // Handle quick job creation
   const handleQuickJobCreated = useCallback((newJob: Job) => {
@@ -343,7 +341,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [localSyncStatus, setLocalSyncStatus] = useState<SyncStatus>('synced');
+  const [, setLocalSyncStatus] = useState<SyncStatus>('synced');
   const [signerName, setSignerName] = useState('');
   const [signerRole, setSignerRole] = useState('Client');
   const [activePhotoType, setActivePhotoType] = useState<PhotoType>('Before');
@@ -382,8 +380,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     });
   }, []);
 
-  // Helper to show styled prompt dialog
-  const showPrompt = useCallback((
+  // Helper to show styled prompt dialog - available for future use
+  const _showPrompt = useCallback((
     title: string,
     message: string,
     onConfirm: (value: string) => void,
@@ -561,7 +559,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [photos]);
 
   // Offline-First Sync: Write to Local DB and Queue is handled by writeLocalDraft
-  const triggerSync = useCallback(async (data: Job) => {
+  const _triggerSync = useCallback(async (data: Job) => {
     // Legacy compatibility: ensure data is queued
     await queueAction('UPDATE_JOB', data);
     setLocalSyncStatus('pending');
@@ -857,7 +855,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   };
 
   // Track previous signature hash for audit trail
-  const [previousSignatureHash, setPreviousSignatureHash] = useState<string | null>(null);
+  const [, setPreviousSignatureHash] = useState<string | null>(null);
 
   const clearSignature = () => {
     // CRITICAL FIX: Require confirmation before clearing signature using styled dialog

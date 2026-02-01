@@ -51,8 +51,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   sectionName,
   fallbackRoute = '/home',
   authRedirect = '/auth',
-  requireUser = false,
-  userRedirect = '/auth/setup',
 }) => {
   const { isAuthenticated } = useAuth();
 
@@ -82,12 +80,6 @@ interface ProtectedRouteWithUserProps extends ProtectedRouteProps {
   loadingFallback?: React.ReactNode;
 }
 
-const DefaultLoadingSpinner = () => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-    <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
-
 export const ProtectedRouteWithUser: React.FC<ProtectedRouteWithUserProps> = ({
   children,
   sectionName,
@@ -95,7 +87,6 @@ export const ProtectedRouteWithUser: React.FC<ProtectedRouteWithUserProps> = ({
   authRedirect = '/auth',
   userRedirect = '/auth/setup',
   user,
-  loadingFallback,
 }) => {
   const { isAuthenticated } = useAuth();
 

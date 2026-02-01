@@ -52,7 +52,7 @@ const TechnicianForm: React.FC = () => {
     notes: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [draftRestored, setDraftRestored] = useState(false);
+  const [, setDraftRestored] = useState(false);
   const draftSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Load draft from localStorage on mount (only for new technicians)

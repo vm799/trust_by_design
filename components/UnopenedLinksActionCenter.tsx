@@ -9,7 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { Modal, ActionButton, ConfirmDialog } from './ui';
 import { Job, Technician } from '../types';
 import { showToast } from '../lib/microInteractions';
-import { generateMagicLink, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
+import { generateMagicLink, type MagicLinkInfo } from '../lib/db';
 import { getBunkerRunUrl } from '../lib/redirects';
 
 interface UnopenedLinksActionCenterProps {
@@ -125,7 +125,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
       showToast('Cannot reassign: Manager email not available. Please try again later.', 'error', 4000);
       return;
     }
-    const newLinkResult = await generateMagicLink(job.id, managerEmail);
+    await generateMagicLink(job.id, managerEmail);
 
     showToast(`Reassigned to ${newTech.name}${newTech.phone ? ` (${newTech.phone})` : ''}`, 'success', 4000);
     setShowReassignDropdown(null);

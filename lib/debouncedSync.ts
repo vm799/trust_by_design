@@ -16,7 +16,6 @@
 import { getSupabase, isSupabaseAvailable } from './supabase';
 import { toSnakeCaseKeys } from './caseConvert';
 import { setCache, invalidateCache } from './cacheFirst';
-import { addToSyncQueue } from './syncQueue';
 
 // Debounce delay in milliseconds
 const DEBOUNCE_DELAY = 2000;

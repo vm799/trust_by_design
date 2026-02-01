@@ -1,104 +1,6 @@
-# PROJECT CONSTITUTION: JobProof
-
-**Date:** February 1, 2026 | **Status:** ENFORCE ALL RULES | **Creator:** Solo AI Builder
-
----
-
-## Tech Stack (2026 Standard)
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | React 18 + Vite 6 | Fast dev, optimized builds |
-| **Language** | TypeScript 5.8 (strict) | Type safety |
-| **Styling** | Tailwind CSS 3.4 | Utility-first responsive design |
-| **Routing** | React Router 6 | Hash-based routing (`/#/...`) |
-| **Animations** | Framer Motion 12 | Declarative motion |
-| **Auth** | Supabase Auth | Email + magic links + OAuth |
-| **Database** | Supabase (PostgreSQL 17, RLS, PostgREST) | Cloud storage + RLS |
-| **Offline** | Dexie (IndexedDB) | Local-first storage |
-| **Testing** | Vitest + Playwright | Unit + E2E |
-| **Deployment** | Vercel (Edge Runtime) | CDN + serverless |
-
----
-
-## Core Mission
-
-Build bulletproof **offline-first field service evidence platform** for poor service areas.
-
-- Contractors managing field technicians
-- Technicians capturing job evidence with GPS/W3W verification
-- Clients reviewing sealed, tamper-proof job reports
-
-**NO REGRESSIONS ALLOWED.**
-
----
-
-## Cognitive Workflow (Orchestration)
-
-### 1. PONDERING
-Before coding complex features, create a `thinking.md` in `.claude/`:
-
-```markdown
-# Thinking: [Feature Name]
-
-## Problem Statement
-What exactly are we solving?
-
-## Current State
-How does it work now?
-
-## Proposed Solution
-What's the plan?
-
-## Risks
-What could go wrong?
-
-## Test Plan
-How will we verify?
-```
-
-### 2. SUB-AGENTING
-For any task > 100 lines of changes, use specialized exploration:
-- Use `Task` tool with `subagent_type=Explore` for codebase research
-- Use `Task` tool with `subagent_type=Plan` for architecture decisions
-- Keep fixes atomic: **MAXIMUM 1 FILE CHANGED PER FIX**
-
-### 3. RALPH LOOP (Loop-to-Success Debugging)
-```
-1. READ the error/bug description completely
-2. ANALYZE root cause with grep/read tools
-3. LOCATE the exact file:line causing the issue
-4. PATCH with minimal, targeted fix
-5. HAMMER the tests until green (npm test)
-```
-
----
-
-## RLS & Security (Zero-Trust)
-
-### Mandatory Rules
-
-```
-1. Every table MUST have RLS policies in supabase/migrations/
-2. auth.uid() is the ONLY valid primary identifier for user-data isolation
-3. NO service_role keys allowed in components/, views/, or lib/
-4. All 14+ tables have RLS policies enforced
-5. Workspace isolation at DB level - users see only their data
-```
-
-### Security Patterns
-
-```tsx
-// CORRECT - Uses session from AuthContext
-const { userId, session } = useAuth();
-const supabase = getSupabase();
-const { data } = await supabase.from('jobs').select('*');
-// RLS automatically filters by auth.uid()
-
-// WRONG - Bypasses RLS
-const { data } = await supabase.from('jobs').select('*').eq('user_id', someId);
-// Manual filtering = security hole
-```
+# 🏛️ PROJECT CONSTITUTION: JobProof
+**Offline-First Field Service Evidence Platform**
+**Last Updated:** February 2026 | **Status:** ENFORCE ALL RULES | **Tests:** 367+
 
 ### Encryption Standards
 
@@ -190,22 +92,62 @@ npm test -- --run && npm run lint && npm run type-check && npm run build
 # Deployment
 vercel deploy            # Preview deployment
 vercel --prod            # Production deployment
+## 🎯 CORE MISSION
+
+Build bulletproof **offline-first web app** for field workers in poor service areas.
+- **NO REGRESSIONS ALLOWED**
+- **PROVE IT WORKS** (test output required)
+- **DELETE, DON'T COMMENT** (no legacy code)
+
+---
+
+## 🧬 Tech Stack
+
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| Frontend | React | 18.x | UI Components |
+| Build | Vite | 6.x | Fast builds, code splitting |
+| Language | TypeScript | 5.8 (strict) | Type safety |
+| Styling | Tailwind CSS | 3.4 | Utility-first |
+| Routing | React Router | 6.x | Hash-based (`/#/...`) |
+| Animation | Framer Motion | 12.x | Declarative motion |
+| Auth | Supabase Auth | - | Magic links, OAuth |
+| Database | Supabase (PostgreSQL) | 17 | Cloud + RLS |
+| Offline | Dexie (IndexedDB) | - | Local-first storage |
+| Testing | Vitest + Playwright | - | Unit + E2E |
+
+---
+
+## 🚨 ABSOLUTE RULES (Break = REJECT)
+
+```
+1. READ FILES BEFORE MODIFYING - Always understand existing code first
+2. USE DATACONTEXT - Never useState for jobs/clients/technicians
+3. DELETE LEGACY CODE - Never comment out, always delete
+4. PROVE IT WORKS - npm test && npm run build must pass
+5. ONE CONCERN PER FIX - Keep changes focused and atomic
+6. MEMOIZE DERIVATIONS - useMemo for computed values from DataContext
+7. 44px TOUCH TARGETS - WCAG accessibility minimum
+8. ERROR STATES WITH RETRY - Every data fetch needs ErrorState component
 ```
 
 ---
 
-## Architecture Guidelines (CRITICAL)
+## 🔴 CRITICAL ARCHITECTURE PATTERNS
 
-These patterns prevent regressions. **All code MUST follow these.**
-
-### 1. State Management - Use DataContext
+### Pattern 1: DataContext is the ONLY Source of Truth
 
 ```tsx
-// CORRECT
+// ✅ CORRECT - Use DataContext
 import { useData } from '../lib/DataContext';
-const { jobs, clients, addJob, updateJob } = useData();
+const {
+  jobs, clients, technicians,
+  updateJob, deleteJob, addJob,
+  isLoading, error, refresh
+} = useData();
 
-// WRONG - Creates duplicate state
+// ❌ WRONG - Creates duplicate state, breaks reactivity
+import { getJobs, updateJob } from '../hooks/useWorkspaceData';
 const [jobs, setJobs] = useState<Job[]>([]);
 ```
 
@@ -227,108 +169,75 @@ const { data } = await supabase.auth.getUser();
 <RouteErrorBoundary sectionName="Dashboard" fallbackRoute="/home">
   <Dashboard />
 </RouteErrorBoundary>
-
-// WRONG - No error isolation
-<Route element={isAuthenticated ? <Dashboard /> : <Navigate to="/auth" />} />
-```
-
-### 4. Animation Objects - Use Shared Constants
+### Pattern 2: DataContext Function Signatures (CRITICAL)
 
 ```tsx
-// CORRECT
-import { fadeInUp, hoverLiftQuick } from '../lib/animations';
-<motion.div variants={fadeInUp} whileHover={hoverLiftQuick}>
+// updateJob takes FULL Job object, not partial updates
+const updatedJob: Job = { ...job, status: 'Complete', technicianId: techId };
+contextUpdateJob(updatedJob);  // ✅ CORRECT
 
-// WRONG - Creates new object every render
-<motion.div animate={{ opacity: 1 }} whileHover={{ y: -5 }}>
+updateJob(job.id, { status: 'Complete' });  // ❌ WRONG - deprecated signature
+
+// deleteJob takes just the ID
+contextDeleteJob(job.id);  // ✅ CORRECT
 ```
 
-### 5. List Keys - Use Stable IDs
+### Pattern 3: Memoize Derived State
 
 ```tsx
-// CORRECT
-{photos.map(photo => <img key={photo.id} src={photo.url} />)}
-
-// WRONG - Causes re-render issues
-{photos.map((photo, index) => <img key={index} src={photo.url} />)}
-```
-
-### 6. Expensive Computations - Use useMemo
-
-```tsx
-// CORRECT
-const clientsById = useMemo(() =>
-  new Map(clients.map(c => [c.id, c])),
-  [clients]
+// ✅ CORRECT - Memoized derivation from DataContext
+const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
+const client = useMemo(() =>
+  job ? clients.find(c => c.id === job.clientId) || null : null,
+  [clients, job]
 );
 
-// WRONG - Recomputes every render
-const clientsById = new Map(clients.map(c => [c.id, c]));
+// ❌ WRONG - Recomputes every render
+const job = jobs.find(j => j.id === id);
 ```
 
-### 7. Navigation Components - Use React.memo
+### Pattern 4: AuthContext for Authentication
 
 ```tsx
-// CORRECT
-export const Sidebar = memo(function Sidebar({ ... }) { ... });
+// ✅ CORRECT - Use AuthContext
+import { useAuth } from '../lib/AuthContext';
+const { isAuthenticated, userId, session, userEmail } = useAuth();
 
-// WRONG - Re-renders on every parent update
-export const Sidebar = ({ ... }) => { ... };
+// ❌ WRONG - Causes 877 req/hr auth loop bug
+const { data } = await supabase.auth.getUser();
 ```
 
-### 8. Lazy Loading - Use Dynamic Imports
+### Pattern 5: Error States with Retry
 
 ```tsx
-// CORRECT - Route components
-const Dashboard = lazy(() => import('./views/Dashboard'));
+// ✅ CORRECT - Show error with retry using DataContext refresh
+if (error) {
+  return <ErrorState message={error} onRetry={refresh} />;
+}
 
-// CORRECT - Heavy libraries
-const auth = await import('../lib/auth');
-
-// WRONG - Increases initial bundle
-import { Dashboard } from './views/Dashboard';
-```
-
-### 9. Error Handling - Use ErrorState Component
-
-```tsx
-// CORRECT
-import { ErrorState } from '../components/ui/ErrorState';
-if (error) return <ErrorState message={error} onRetry={loadData} />;
-
-// WRONG - No recovery option
+// ❌ WRONG - No recovery option
 if (error) return <div>Error: {error}</div>;
 ```
 
-### 10. Supabase Access - Through Auth Module
+### Pattern 6: Stable React Keys
 
 ```tsx
-// CORRECT
-const auth = await import('../lib/auth');
-const supabase = auth.getSupabaseClient();
+// ✅ CORRECT - Use stable IDs
+{photos.map(photo => <img key={photo.id} src={photo.url} />)}
 
-// WRONG - Breaks code splitting
-import { getSupabase } from '../lib/supabase';
+// ❌ WRONG - Causes re-render issues
+{photos.map((photo, index) => <img key={index} src={photo.url} />)}
 ```
 
-### 11. Magic Link Auth - Use Callback Route
+### Pattern 7: Animation Constants
 
 ```tsx
-// CORRECT (in lib/auth.ts)
-emailRedirectTo: getAuthRedirectUrl('/#/auth/callback')
+// ✅ CORRECT - Use shared constants from animations.ts
+import { fadeInUp, hoverLiftQuick } from '../lib/animations';
+<motion.div variants={fadeInUp} whileHover={hoverLiftQuick}>
 
-// WRONG - Race condition with auth state
-emailRedirectTo: getAuthRedirectUrl('/#/')
-```
-
-### 12. Code Splitting - Update vite.config.ts
-
-When adding new views, add them to appropriate chunk in `manualChunks`:
-
-```js
-// vite.config.ts
-'admin-routes': ['./views/NewAdminView.tsx', ...],
-'public-routes': ['./views/NewPublicView.tsx', ...],
+// ❌ WRONG - Creates new object every render
+<motion.div animate={{ opacity: 1 }} whileHover={{ y: -5 }}>
 ```
 
 ---
@@ -380,22 +289,133 @@ When adding new views, add them to appropriate chunk in `manualChunks`:
 ├── App.tsx                    # Root app with lazy routes
 └── vite.config.ts             # Build config with code splitting
 ```
+## 🚫 FORBIDDEN PATTERNS
+
+| Pattern | Why Forbidden | Correct Alternative |
+|---------|--------------|---------------------|
+| `useState` for jobs/clients/techs | Breaks reactivity | `useData()` |
+| `getJobs()` from useWorkspaceData | Deprecated, localStorage only | `useData().jobs` |
+| `updateJob(id, partial)` | Wrong signature | `contextUpdateJob(fullJob)` |
+| `supabase.auth.getUser()` | Auth loop bug (877 req/hr) | `useAuth()` |
+| `key={index}` in lists | Re-render issues | Use stable IDs |
+| Inline animation objects | Performance | `animations.ts` constants |
+| `console.log` in production | Debug artifacts | Remove before commit |
+| `// TODO` or `// FIXME` | Tech debt | Fix immediately |
+| Commenting out code | Tech debt | Delete completely |
+| Touch targets < 44px | Accessibility | `min-h-[44px]` |
 
 ---
 
-## Diagnostic Commands
+## 🔒 OFFLINE-FIRST MANDATES
+
+Every form and data operation MUST have:
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Draft saving | Dexie/IndexedDB, every keystroke |
+| Offline queue | `lib/syncQueue.ts` |
+| Network awareness | `navigator.onLine` checks |
+| Optimistic UI | Update DataContext before server confirms |
+| Data survival | Airplane mode → app restart → data persists |
+
+### Sync Queue Retry Strategy
+```typescript
+const RETRY_DELAYS = [2000, 5000, 15000, 30000, 60000, 120000, 180000, 300000];
+const MAX_RETRIES = 8;
+```
+
+---
+
+## 📱 Accessibility Requirements
+
+| Element | Minimum Size | CSS Class |
+|---------|-------------|-----------|
+| All touch targets | 44x44px | `min-h-[44px]` |
+| Field worker buttons | 56x56px | `min-h-[56px]` |
+| Date/time inputs | 56px height | `py-4 min-h-[56px]` |
+| StatusBadge compact | 44px height | `min-h-[44px] px-3 py-2` |
+
+---
+
+## ✅ VERIFICATION COMMANDS
 
 ```bash
-# Find architecture violations
-grep -r "supabase.auth.getUser" components/    # Should be 0
-grep -r "useState.*Job\[\]" components/        # Should be 0
-grep -r "key={index}" components/              # Should be 0
+# Before ANY commit (MANDATORY):
+npm test -- --run              # All 367+ tests must pass
+npm run build                  # Build must succeed
 
-# Verify offline support
-grep -r "Dexie\|IndexedDB" lib/ | wc -l        # Should be > 10
+# Full verification:
+npm test && npm run build && echo "✅ READY TO COMMIT"
+```
 
-# Check for debug artifacts
-grep -r "console.log\|debugger" src/ | wc -l   # Should be 0 in prod
+---
+
+## 📁 Critical Files
+
+```
+lib/
+├── DataContext.tsx     # 🔴 CRITICAL: Centralized state (use this!)
+├── AuthContext.tsx     # 🔴 CRITICAL: Auth state (use this!)
+├── animations.ts       # Animation constants (use this!)
+├── db.ts               # Dexie + Supabase operations
+└── syncQueue.ts        # Offline sync
+
+hooks/
+├── useWorkspaceData.ts # ⚠️ DEPRECATED: Do NOT use standalone functions
+└── useJobGuard.ts      # Client-first validation
+
+views/
+├── app/                # Admin views (jobs/, clients/, technicians/)
+└── tech/               # Technician portal views
+```
+
+---
+
+## 🔐 Security Rules
+
+1. **RLS Required:** Every Supabase table MUST have Row-Level Security
+2. **auth.uid() Only:** User isolation via `auth.uid()`, never trust client
+3. **No service_role:** Never use `service_role` keys in frontend code
+4. **Sealed Evidence:** RSA-2048 signing, jobs with `sealedAt` cannot be deleted
+5. **Invoiced Jobs:** Jobs with `invoiceId` cannot be deleted
+
+---
+
+## 🔄 Job Status Lifecycle
+
+```
+Draft → Dispatched → In Progress → Complete → Submitted → Sealed → Invoiced
+         ↓              ↓            ↓          ↓           ↓
+    (needs tech)   (tech working)  (evidence)  (review)   (locked)
+```
+
+**Deletion Rules:**
+- `sealedAt` present → Cannot delete (evidence preserved)
+- `invoiceId` present → Cannot delete (delete invoice first)
+- Hide delete button for non-deletable jobs
+
+---
+
+## 🧪 Test Requirements
+
+**367+ tests must pass. Coverage thresholds:**
+- Lines: 80%
+- Functions: 75%
+- Branches: 75%
+
+**Architecture tests enforce:**
+- No `supabase.auth.getUser()` in components
+- No `useState` for jobs/clients/technicians
+- All routes lazy-loaded
+- Animation constants used
+
+---
+
+## 🚀 Deployment
+
+```bash
+# Preview
+vercel deploy
 
 # Find broken patterns
 grep -r "service_role" components/ views/ lib/ # MUST be 0 (security)
@@ -418,7 +438,20 @@ git stash pop               # Restore changes if baseline passes
 ```
 
 ### When Build Fails
+# Production
+vercel --prod
 
+# Required env vars:
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbG...
+VITE_APP_URL=https://jobproof.pro
+```
+
+---
+
+## 🔧 Emergency Procedures
+
+### Tests Fail After Changes
 ```bash
 rm -rf node_modules/.cache
 npm ci                      # Clean install
@@ -532,3 +565,94 @@ MANDATORY:
 ---
 
 *This document is the source of truth for JobProof development. Every Claude response must obey these rules.*
+git stash push -m "work in progress"
+npm test -- --run    # Verify baseline
+git stash pop        # Restore and fix
+```
+
+### Build Fails
+```bash
+rm -rf node_modules/.cache
+npm ci
+npm run build
+```
+
+### Auth Loop (877 req/hr)
+Check `AuthContext.tsx` - token refresh should update ref, not state.
+
+---
+
+## 📋 PR Checklist
+
+```
+□ npm test -- --run passes (367+ tests)
+□ npm run build succeeds
+□ All views use useData() from DataContext
+□ No deprecated hooks (getJobs, updateJob from useWorkspaceData)
+□ updateJob uses FULL job object, not partial
+□ No supabase.auth.getUser() in components
+□ No useState for jobs/clients/technicians
+□ Memoized derivations (useMemo for computed values)
+□ Error states have retry via DataContext.refresh()
+□ Touch targets ≥ 44px
+□ No inline animation objects
+□ No array index as React key
+□ Sealed/invoiced jobs cannot be deleted
+□ Offline mode tested
+```
+
+---
+
+## 🎯 Known Patterns That Cause Bugs
+
+| Bug | Root Cause | Prevention |
+|-----|-----------|------------|
+| Changes lost on refresh | Using deprecated hooks | Use DataContext |
+| Assign technician fails | Wrong updateJob signature | Use full Job object |
+| Can't delete some jobs | Sealed/invoiced check missing | Check sealedAt, invoiceId |
+| Auth loop (877 req/hr) | Direct supabase.auth calls | Use AuthContext |
+| Touch too small for gloves | < 44px targets | min-h-[44px] |
+| Actions don't navigate | Missing `to` prop | Add route navigation |
+
+---
+
+## 📊 Current Status
+
+**Fixed (Feb 2026):**
+- ✅ Job deletion with DataContext
+- ✅ Technician assignment persistence
+- ✅ JobList quick action buttons
+- ✅ StatusBadge 44px touch targets
+- ✅ Network error states with retry
+- ✅ Magic link expiry countdown
+- ✅ Dashboard incomplete filter
+- ✅ TechPortal DataContext migration
+- ✅ TechJobDetail DataContext migration
+- ✅ ClientList/ClientDetail DataContext migration
+- ✅ TechnicianList DataContext migration
+
+**Remaining Tech Debt:**
+- `views/tech/EvidenceCapture.tsx`
+- `views/app/jobs/JobForm.tsx`
+- `views/app/jobs/EvidenceReview.tsx`
+- `views/app/invoices/InvoiceList.tsx`
+- `views/app/invoices/InvoiceDetail.tsx`
+- `hooks/useJobGuard.ts`
+
+---
+
+## 🏆 Success Metrics
+
+```
+□ npm test = 367+ tests green
+□ npm run build = SUCCESS
+□ Airplane mode: forms persist + sync
+□ "Job not found" errors = 0
+□ Auth loop (877 req/hr) = NEVER
+□ Touch targets = ALL ≥ 44px
+□ Deprecated hook usage = 0 in fixed views
+```
+
+---
+
+*This constitution is the source of truth. Every code change must follow these patterns. Violations cause regressions.*

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { UserProfile } from './types';
 import { AuthProvider, useAuth } from './lib/AuthContext';
@@ -103,28 +103,6 @@ const LoadingFallback: React.FC = () => (
   </div>
 );
 
-// Error fallback for failed chunk loads
-const ChunkErrorFallback: React.FC<{ error: Error; resetError: () => void }> = ({ error, resetError }) => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-    <div className="text-center space-y-4 max-w-md">
-      <span className="material-symbols-outlined text-5xl text-amber-400">wifi_off</span>
-      <h2 className="text-white text-xl font-bold">Failed to Load</h2>
-      <p className="text-slate-400 text-sm">
-        This might be a network issue. Please check your connection and try again.
-      </p>
-      <button
-        onClick={() => {
-          resetError();
-          window.location.reload();
-        }}
-        className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition"
-      >
-        Retry
-      </button>
-    </div>
-  </div>
-);
-
 // Inner component that consumes AuthContext and DataContext
 const AppContent: React.FC = () => {
   // CRITICAL FIX: Consume AuthContext instead of managing own auth state
@@ -137,7 +115,6 @@ const AppContent: React.FC = () => {
     technicians,
     invoices,
     templates,
-    isLoading: dataLoading,
     addJob,
     updateJob,
     addClient,
@@ -340,6 +317,7 @@ const AppContent: React.FC = () => {
     };
 
     loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionUserId]); // FIXED: Only depends on primitive userId, not session object
 
   // REMEDIATION #1: Data loading and mutations now handled by DataContext
@@ -379,12 +357,6 @@ const AppContent: React.FC = () => {
     localStorage.setItem('jobproof_onboarding_v4', 'true');
   };
 
-  // Phase C.1: Real authentication callbacks
-  const handleLogin = () => {
-    // Session is managed by AuthContext
-    // This callback just exists for compatibility with AuthView
-  };
-
   // REMEDIATION ITEM 5: Lazy load auth module for logout
   const handleLogout = async () => {
     const auth = await getAuth();
@@ -408,7 +380,7 @@ const AppContent: React.FC = () => {
   // Helper for Persona-Aware Routing
   // CRITICAL FIX: This component only renders AFTER profileLoading is false (blocked at top level)
   // So if user is null here, it means the profile is truly missing, not just loading
-  const PersonaRedirect: React.FC<{ user: UserProfile | null }> = ({ user }) => {
+  const PersonaRedirect: React.FC<{ user: UserProfile | null; hasSeenOnboarding: boolean }> = ({ user, hasSeenOnboarding }) => {
     // Profile truly missing (not loading) - redirect to setup
     if (!user) {
       console.log('[PersonaRedirect] Profile missing (load complete), redirecting to setup');
@@ -432,7 +404,23 @@ const AppContent: React.FC = () => {
       return <Navigate to="/client" replace />;
     }
 
-    // Default to Manager Intent Selector for Managers/Owners (Intent-First UX)
+    // CRITICAL FIX: Managers with complete profiles go directly to dashboard
+    // The hasSeenOnboarding localStorage flag is unreliable (resets in incognito/new browser)
+    // If user has workspace + persona, they've completed setup - go to dashboard
+    const hasCompleteProfile = !!(user.workspace?.id && user.persona);
+
+    if (hasCompleteProfile) {
+      console.log('[PersonaRedirect] Manager with complete profile, going to dashboard');
+      // Auto-set onboarding flag to prevent future confusion
+      if (!hasSeenOnboarding) {
+        localStorage.setItem('jobproof_onboarding_v4', 'true');
+      }
+      return <Navigate to="/admin" replace />;
+    }
+
+    // Only show Intent Selector for users who just created persona but workspace setup incomplete
+    // This should be rare - most users complete both in OAuthSetup
+    console.log('[PersonaRedirect] Manager missing workspace, showing intent selector');
     return <Navigate to="/manager/intent" replace />;
   };
 
@@ -441,8 +429,11 @@ const AppContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
-          <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} /> : <Navigate to="/home" replace />} />
-        <Route path="/home" element={isAuthenticated ? <PersonaRedirect user={user} /> : <LandingPage />} />
+          <Route path="/" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <Navigate to="/home" replace />} />
+        {/* CRITICAL FIX: Always show LandingPage on /home - don't auto-redirect authenticated users
+            Users who want to go to dashboard can click CTAs. This prevents redirect loops for
+            users with incomplete profiles (missing persona/workspace). */}
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/pricing" element={<PricingView />} />
         <Route path="/roadmap" element={<RoadmapView />} />
         {/* Public Help Center - accessible without auth */}
@@ -452,7 +443,7 @@ const AppContent: React.FC = () => {
         <Route path="/track-lookup" element={<TrackLookup />} />
 
         {/* V1 MVP: Magic Link Only Authentication */}
-        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
         {/* Phase 6.5: Dedicated callback handler for magic link - processes auth tokens */}
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
@@ -479,8 +470,8 @@ const AppContent: React.FC = () => {
         } />
 
         {/* V1 MVP: Magic Link Auth Routes - All redirect to unified auth */}
-        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
-        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} /> : <AuthView />} />
+        <Route path="/auth/login" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
+        <Route path="/auth/signup" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
 
         {/* Onboarding & Setup */}
         <Route path="/setup" element={

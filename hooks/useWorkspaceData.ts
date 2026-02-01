@@ -16,7 +16,7 @@
 
 import { useCallback } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import { useData, useDataOptional } from '../lib/DataContext';
+import { useData } from '../lib/DataContext';
 import { generateSecureEntityId } from '../lib/secureId';
 import type { Job, Client, Technician, Invoice } from '../types';
 

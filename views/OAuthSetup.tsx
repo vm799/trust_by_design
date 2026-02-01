@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { JobProofLogo } from '../components/branding/jobproof-logo';
 import { generateSecureSlugSuffix } from '../lib/secureId';
 import { setTechnicianWorkMode } from '../lib/db';
-import { fadeInUp, fadeInScale, staggerContainer } from '../lib/animations';
+import { fadeInUp, staggerContainer } from '../lib/animations';
 
 /**
  * Account Setup View - Delightful Persona-Driven Onboarding
@@ -72,18 +71,30 @@ const OAuthSetup: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const hasCheckedRef = useRef(false);
+  const setupStartedRef = useRef(false); // Track if user has started setup flow
 
   useEffect(() => {
     if (authLoading) return;
     if (hasCheckedRef.current) return;
 
     const checkUser = async () => {
+      // CRITICAL FIX: Don't redirect to /auth if user has already started setup
+      // This prevents race condition where auth state changes mid-flow
+      if (setupStartedRef.current) {
+        console.log('[OAuthSetup] Setup already started, skipping auth check');
+        return;
+      }
+
       if (!isAuthenticated || !userId) {
         hasCheckedRef.current = true;
+        console.log('[OAuthSetup] Not authenticated, redirecting to /auth');
         navigate('/auth');
         return;
       }
 
+      // CRITICAL FIX: Mark setup as started immediately once authenticated
+      // This prevents any subsequent auth state changes from causing redirects
+      setupStartedRef.current = true;
       hasCheckedRef.current = true;
 
       const supabase = getSupabase();
@@ -123,6 +134,8 @@ const OAuthSetup: React.FC = () => {
       return;
     }
     setError(null);
+    // CRITICAL FIX: Mark setup as started to prevent auth redirect race condition
+    setupStartedRef.current = true;
     setStep('persona');
   };
 
@@ -149,7 +162,8 @@ const OAuthSetup: React.FC = () => {
 
   const handleFinalSetup = async (selectedPersona: Persona) => {
     if (!userId) {
-      setError('Session not ready. Please wait...');
+      console.error('[OAuthSetup] userId is null in handleFinalSetup');
+      setError('Session not ready. Please refresh the page and try again.');
       return;
     }
 
@@ -178,16 +192,31 @@ const OAuthSetup: React.FC = () => {
 
       if (workspaceError) {
         // Foreign key error = user doesn't exist in auth.users (stale session)
+        // CRITICAL FIX: Don't immediately sign out - show error and let user retry
         if (workspaceError.message?.includes('fk_users_auth') || workspaceError.code === '23503') {
-          // Clear stale session and redirect to auth
-          console.error('[OAuthSetup] User not in auth.users - clearing stale session');
-          await supabase.auth.signOut();
-          navigate('/auth', { replace: true });
+          console.error('[OAuthSetup] Foreign key error - session may be stale:', workspaceError);
+          setError('Session expired. Please sign in again.');
+          setLoading(false);
+          // Give user a moment to see the error before redirecting
+          setTimeout(() => {
+            supabase.auth.signOut();
+            navigate('/auth', { replace: true });
+          }, 2000);
           return;
         }
-        // 409/23505 = conflict, user already exists - that's OK, refetch and continue
+        // 409/23505 = conflict, user already exists - update their full_name and continue
         if (workspaceError.code === '409' || workspaceError.code === '23505') {
-          console.log('[OAuthSetup] User/workspace already exists, continuing...');
+          console.log('[OAuthSetup] User/workspace already exists, updating full_name...');
+          // CRITICAL FIX: Update full_name for existing users who may have NULL full_name
+          // This fixes the "Welcome to JobProof" bug for returning users
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ full_name: fullName.trim() })
+            .eq('id', userId);
+          if (updateError) {
+            console.error('[OAuthSetup] Failed to update full_name:', updateError);
+            // Non-fatal - continue with flow
+          }
         } else {
           throw new Error(workspaceError.message || 'Workspace creation failed');
         }
