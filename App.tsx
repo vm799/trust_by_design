@@ -55,6 +55,9 @@ const TrackLookup = lazy(() => import('./views/TrackLookup'));
 const GoEntryPoint = lazy(() => import('./views/GoEntryPoint'));
 const ManagerIntentSelector = lazy(() => import('./views/ManagerIntentSelector'));
 const JobsList = lazy(() => import('./views/app/jobs/JobsList'));
+const JobDetail = lazy(() => import('./views/app/jobs/JobDetail'));
+const JobForm = lazy(() => import('./views/app/jobs/JobForm'));
+const EvidenceReview = lazy(() => import('./views/app/jobs/EvidenceReview'));
 const ClientForm = lazy(() => import('./views/app/clients/ClientForm'));
 const TechnicianForm = lazy(() => import('./views/app/technicians/TechnicianForm'));
 // Bunker Mode: Offline-first "God Component" for cement bunker operation
@@ -307,6 +310,11 @@ const AppContent: React.FC = () => {
       } else {
         // CRITICAL FIX: Profile load failed - handle gracefully
         console.warn('[App] Session exists but profile missing. Redirecting to setup.');
+
+        // SPRINT 2 FIX: Clear stale localStorage cache when Supabase confirms profile doesn't exist
+        // This prevents the "flicker to dashboard" bug when a deleted user signs in again
+        localStorage.removeItem('jobproof_user_v2');
+        localStorage.removeItem('jobproof_onboarding_v4');
 
         // Create minimal user profile from session data for routing
         // Setting user to null indicates setup is needed (not just loading)
@@ -563,6 +571,27 @@ const AppContent: React.FC = () => {
         <Route path="/admin/jobs" element={isAuthenticated ? (
           <RouteErrorBoundary sectionName="Jobs" fallbackRoute="/admin">
             <JobsList jobs={jobs} user={user} />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        {/* SPRINT 3 FIX: Job Detail - Missing route causing "Assign Tech" button to fail */}
+        <Route path="/admin/jobs/new" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="New Job" fallbackRoute="/admin/jobs">
+            <JobForm />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/jobs/:id" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/admin/jobs">
+            <JobDetail />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/jobs/:id/edit" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Edit Job" fallbackRoute="/admin/jobs">
+            <JobForm />
+          </RouteErrorBoundary>
+        ) : <Navigate to="/auth" replace />} />
+        <Route path="/admin/jobs/:id/evidence" element={isAuthenticated ? (
+          <RouteErrorBoundary sectionName="Evidence Review" fallbackRoute="/admin/jobs">
+            <EvidenceReview />
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
         {/* Job Creation - UX Spec: 5-Step Guided Wizard */}
