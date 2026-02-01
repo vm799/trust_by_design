@@ -6,6 +6,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { logConflict, isConflictError } from './conflictTelemetry';
 
 // Environment variables (you'll add these to .env)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -132,6 +133,22 @@ export const uploadPhoto = async (
     return urlData.publicUrl;
   } catch (error) {
     console.error('Photo upload failed after all retries:', error);
+
+    // P1-1a: Log conflict telemetry
+    if (isConflictError(error)) {
+      logConflict(
+        'PHOTO_ALREADY_EXISTS',
+        'photo',
+        photoId,
+        'RETRY_FAILED',
+        {
+          jobId,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          retryCount: MAX_UPLOAD_RETRIES,
+        }
+      );
+    }
+
     return null;
   }
 };
@@ -177,6 +194,22 @@ export const uploadSignature = async (
     return urlData.publicUrl;
   } catch (error) {
     console.error('Signature upload failed after all retries:', error);
+
+    // P1-1a: Log conflict telemetry
+    if (isConflictError(error)) {
+      logConflict(
+        'SIGNATURE_ALREADY_EXISTS',
+        'signature',
+        jobId,
+        'RETRY_FAILED',
+        {
+          jobId,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          retryCount: MAX_UPLOAD_RETRIES,
+        }
+      );
+    }
+
     return null;
   }
 };
