@@ -9,8 +9,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton } from '../../../components/ui';
-import { getJobs, getClients, getTechnicians } from '../../../hooks/useWorkspaceData';
+import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ErrorState } from '../../../components/ui';
+import { useData } from '../../../lib/DataContext';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 
@@ -26,33 +26,12 @@ const statusFilters: { value: FilterStatus; label: string }[] = [
 ];
 
 const JobList: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  // Use DataContext for centralized state management (CLAUDE.md mandate)
+  const { jobs, clients, technicians, isLoading, error: dataError, refresh } = useData();
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [jobsData, clientsData, techsData] = await Promise.all([
-          getJobs(),
-          getClients(),
-          getTechnicians(),
-        ]);
-        setJobs(jobsData);
-        setClients(clientsData);
-        setTechnicians(techsData);
-      } catch (error) {
-        console.error('Failed to load jobs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  const loading = isLoading;
 
   // Get computed status for job
   const getJobStatus = (job: Job): StatusType => {
@@ -121,6 +100,24 @@ const JobList: React.FC = () => {
         />
         <PageContent>
           <LoadingSkeleton variant="list" count={5} />
+        </PageContent>
+      </div>
+    );
+  }
+
+  // Show error state with retry option when data fails to load
+  if (dataError) {
+    return (
+      <div>
+        <PageHeader
+          title="Jobs"
+          actions={[{ label: 'New Job', icon: 'add', to: ROUTES.JOB_NEW, variant: 'primary' }]}
+        />
+        <PageContent>
+          <ErrorState
+            message="Unable to load jobs. Please check your connection and try again."
+            onRetry={refresh}
+          />
         </PageContent>
       </div>
     );
@@ -237,20 +234,32 @@ const JobList: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Quick action based on status */}
-                      <div className="hidden sm:block">
+                      {/* Quick action based on status - onClick stops propagation to prevent parent Link */}
+                      <div className="hidden sm:block" onClick={(e) => e.stopPropagation()}>
                         {status === 'draft' && (
-                          <ActionButton variant="secondary" size="sm">
+                          <ActionButton
+                            variant="secondary"
+                            size="sm"
+                            to={route(ROUTES.JOB_DETAIL, { id: job.id })}
+                          >
                             Assign
                           </ActionButton>
                         )}
                         {status === 'review' && (
-                          <ActionButton variant="secondary" size="sm">
+                          <ActionButton
+                            variant="secondary"
+                            size="sm"
+                            to={route(ROUTES.JOB_EVIDENCE, { id: job.id })}
+                          >
                             Review
                           </ActionButton>
                         )}
                         {status === 'sealed' && (
-                          <ActionButton variant="secondary" size="sm">
+                          <ActionButton
+                            variant="secondary"
+                            size="sm"
+                            to={`${ROUTES.INVOICES}?jobId=${job.id}`}
+                          >
                             Invoice
                           </ActionButton>
                         )}
