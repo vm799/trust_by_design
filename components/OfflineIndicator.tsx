@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 interface OfflineIndicatorProps {
   syncStatus?: {
@@ -13,31 +14,23 @@ interface OfflineIndicatorProps {
  * Shows connection status and pending sync items
  *
  * Features:
- * - Real-time network status
+ * - P1-4: Real network status via ping (not just navigator.onLine)
  * - Sync queue visibility
  * - Auto-hide when online and synced
  * - Mobile-optimized
  * - Memoized to prevent unnecessary re-renders
  */
 const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStatus, className = '' }) => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  // P1-4: Use improved network detection (actual ping, not just navigator.onLine)
+  const { isOnline, isChecking } = useNetworkStatus();
   const [isDismissed, setIsDismissed] = useState(false);
 
+  // Reset dismissed state when going offline
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => {
-      setIsOnline(false);
-      setIsDismissed(false); // Show again when going offline
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    if (!isOnline) {
+      setIsDismissed(false);
+    }
+  }, [isOnline]);
 
   // Don't show if online and no pending syncs
   const hasPending = (syncStatus?.pending || 0) > 0;
@@ -52,24 +45,20 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
       {!isOnline && (
         <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4 flex items-center gap-4">
           <div className="size-10 bg-warning/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="material-symbols-outlined text-warning text-xl">wifi_off</span>
+            <span className={`material-symbols-outlined text-warning text-xl ${isChecking ? 'animate-spin' : ''}`}>
+              {isChecking ? 'sync' : 'wifi_off'}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-black uppercase text-warning tracking-tight">
-              Working Offline
+              {isChecking ? 'Checking Connection...' : 'Working Offline'}
             </h3>
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              Your work is being saved locally. Changes will sync when you&apos;re back online.
+              {isChecking
+                ? 'Verifying network connectivity...'
+                : "Your work is being saved locally. Changes will sync when you're back online."}
             </p>
           </div>
-          {isOnline && (
-            <button
-              onClick={() => setIsDismissed(true)}
-              className="p-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <span className="material-symbols-outlined text-lg">close</span>
-            </button>
-          )}
         </div>
       )}
 
