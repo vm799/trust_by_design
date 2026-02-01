@@ -631,13 +631,15 @@ Check `AuthContext.tsx` - token refresh should update ref, not state.
 - ✅ ClientList/ClientDetail DataContext migration
 - ✅ TechnicianList DataContext migration
 
-**Remaining Tech Debt:**
-- `views/tech/EvidenceCapture.tsx`
-- `views/app/jobs/JobForm.tsx`
-- `views/app/jobs/EvidenceReview.tsx`
-- `views/app/invoices/InvoiceList.tsx`
-- `views/app/invoices/InvoiceDetail.tsx`
-- `hooks/useJobGuard.ts`
+**Remaining Tech Debt:** *(Updated Feb 2026 - Sprint 2 Task 2.7)*
+- ✅ ~~`views/tech/EvidenceCapture.tsx`~~ - Uses DataContext + Dexie transaction
+- ✅ ~~`views/app/jobs/JobForm.tsx`~~ - Uses DataContext + IndexedDB drafts
+- ✅ ~~`views/app/jobs/EvidenceReview.tsx`~~ - Uses DataContext
+- ~~`views/app/invoices/InvoiceList.tsx`~~ - File doesn't exist (removed)
+- ~~`views/app/invoices/InvoiceDetail.tsx`~~ - File doesn't exist (removed)
+- ✅ ~~`hooks/useJobGuard.ts`~~ - Uses DataContext
+
+**All listed views now use DataContext pattern correctly.**
 
 ---
 
