@@ -1,8 +1,22 @@
+/**
+ * ContractorDashboard - Solo Contractor View
+ *
+ * Primary Question: "What job am I on, and what's next?"
+ *
+ * Design Principles:
+ * - One job can be "active" (visually dominant)
+ * - Others are "queued" in Up Next
+ * - Context switch is explicit, not implicit
+ * - No job creation in normal flow
+ * - Jobs can be started and abandoned without penalty
+ */
+
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
 import { Job, UserProfile } from '../types';
+import { OfflineIndicator } from '../components/OfflineIndicator';
 
 interface ContractorDashboardProps {
     jobs: Job[];
@@ -14,22 +28,56 @@ interface ContractorDashboardProps {
 const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, showOnboarding, onCloseOnboarding }) => {
     const navigate = useNavigate();
 
-    // PERFORMANCE OPTIMIZATION: Memoize job filtering to prevent recalculation on every render
+    // Filter jobs for this contractor
     const myJobs = useMemo(() => {
-        // Filter jobs for this contractor
-        // Logic: Match techId if available, otherwise match name (fallback)
         return jobs.filter(job => {
             if (!user) return false;
-            // Fallback: Match by name or email
             return job.technician === user.name || job.technician === user.email;
         });
     }, [jobs, user]);
 
-    const activeJobs = useMemo(() => myJobs.filter(j => j.status !== 'Submitted'), [myJobs]);
-    const completedJobs = useMemo(() => myJobs.filter(j => j.status === 'Submitted'), [myJobs]);
+    // Categorize jobs: Now (active) / Up Next / Later / Done
+    const { currentJob, upNextJobs, laterJobs, doneCount } = useMemo(() => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
-    // PERFORMANCE OPTIMIZATION: Memoize navigation handler to prevent JobCard re-renders
-    const handleNavigateToJob = useCallback((jobId: string) => {
+        // Active job: In Progress status (only one can be active)
+        const inProgress = myJobs.find(j => j.status === 'In Progress');
+
+        // Remaining incomplete jobs (excluding active)
+        const remaining = myJobs
+            .filter(j => j.status !== 'Submitted' && j.status !== 'Complete' && j.id !== inProgress?.id)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Up Next: Today's jobs + tomorrow's jobs (first 5)
+        const upNext = remaining
+            .filter(j => {
+                const jobDate = new Date(j.date);
+                return jobDate < tomorrow;
+            })
+            .slice(0, 5);
+
+        // Later: Everything else
+        const later = remaining.filter(j => !upNext.find(u => u.id === j.id));
+
+        // Done count
+        const done = myJobs.filter(j => j.status === 'Submitted' || j.status === 'Complete').length;
+
+        return {
+            currentJob: inProgress,
+            upNextJobs: upNext,
+            laterJobs: later,
+            doneCount: done,
+        };
+    }, [myJobs]);
+
+    // Navigation handlers
+    const handleJobClick = useCallback((jobId: string) => {
+        navigate(`/contractor/job/${jobId}`);
+    }, [navigate]);
+
+    const handleStartJob = useCallback((jobId: string) => {
         navigate(`/contractor/job/${jobId}`);
     }, [navigate]);
 
@@ -38,51 +86,163 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
             {showOnboarding && onCloseOnboarding && (
                 <OnboardingTour onComplete={onCloseOnboarding} persona={user?.persona} />
             )}
-            <div className="space-y-8 pb-32 max-w-2xl mx-auto">
-                <header className="space-y-2">
+
+            <div className="min-h-screen pb-32 max-w-2xl mx-auto px-4">
+                {/* Minimal header - just sync status */}
+                <header className="flex items-center justify-between py-4 mb-2">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary/20 p-3 rounded-2xl">
-                            <span className="material-symbols-outlined text-primary text-2xl font-black">engineering</span>
+                        <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-primary text-lg font-black">work</span>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">My Assignments</h2>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
-                                {activeJobs.length} Active • {completedJobs.length} Completed
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                                {myJobs.length === 0 ? 'No jobs' : `${myJobs.length - doneCount} active`}
                             </p>
                         </div>
                     </div>
+                    <OfflineIndicator />
                 </header>
 
                 {myJobs.length === 0 ? (
-                    <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-10 text-center space-y-6 animate-in">
-                        <div className="bg-slate-800 size-24 rounded-full flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-slate-400 text-5xl">assignment_turned_in</span>
+                    /* Empty state */
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="size-24 rounded-[2rem] bg-slate-900 flex items-center justify-center mb-6">
+                            <span className="material-symbols-outlined text-5xl text-slate-600">event_available</span>
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="text-xl font-black text-white uppercase">All Caught Up!</h3>
-                            <p className="text-slate-400 text-sm max-w-xs mx-auto">You have no active jobs assigned. Enjoy your downtime!</p>
-                        </div>
-                        <button onClick={() => window.location.reload()} className="text-primary text-xs font-black uppercase tracking-widest hover:underline">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">All Clear</h2>
+                        <p className="text-slate-400 text-sm max-w-xs">
+                            No jobs assigned. Pull to refresh or check back later.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-6 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm font-bold text-white transition-all"
+                        >
                             Check for updates
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-4" id="job-list-container">
-                        {activeJobs.map(job => (
-                            <JobCard key={job.id} job={job} onNavigate={handleNavigateToJob} />
-                        ))}
+                    <div className="space-y-6">
+                        {/* NOW - Current Active Job (Visually Dominant) */}
+                        {currentJob ? (
+                            <section>
+                                <button
+                                    onClick={() => handleJobClick(currentJob.id)}
+                                    className="w-full text-left group"
+                                >
+                                    <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-[2rem] p-6 shadow-2xl shadow-primary/10 transition-all active:scale-[0.98]">
+                                        {/* Pulsing NOW indicator */}
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <span className="relative flex size-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full size-3 bg-primary"></span>
+                                            </span>
+                                            <span className="text-xs font-black text-primary uppercase tracking-widest">Now</span>
+                                        </div>
 
-                        {completedJobs.length > 0 && (
-                            <>
-                                <div className="py-4 flex items-center gap-4">
-                                    <div className="h-px bg-white/10 flex-1"></div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Completed History</span>
-                                    <div className="h-px bg-white/10 flex-1"></div>
+                                        {/* Job title - large and prominent */}
+                                        <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-primary transition-colors">
+                                            {currentJob.title}
+                                        </h2>
+
+                                        {/* Client & Location */}
+                                        <div className="space-y-1 mb-4">
+                                            <p className="text-sm text-slate-300">{currentJob.client}</p>
+                                            <p className="text-xs text-slate-400 truncate">{currentJob.address}</p>
+                                        </div>
+
+                                        {/* Quick status */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                {currentJob.photos.length > 0 && (
+                                                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                                                        <span className="material-symbols-outlined text-sm">photo_camera</span>
+                                                        {currentJob.photos.length}
+                                                    </span>
+                                                )}
+                                                {currentJob.signature && (
+                                                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                                                        <span className="material-symbols-outlined text-sm">signature</span>
+                                                        Signed
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="flex items-center gap-1 text-primary font-bold text-sm">
+                                                Continue
+                                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            </section>
+                        ) : upNextJobs.length > 0 ? (
+                            /* No active job - prompt to start next */
+                            <section>
+                                <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-6 text-center">
+                                    <span className="material-symbols-outlined text-4xl text-slate-500 mb-3">play_circle</span>
+                                    <p className="text-white font-bold mb-1">Ready to start?</p>
+                                    <p className="text-slate-400 text-sm mb-4">Tap a job below to begin</p>
                                 </div>
-                                {completedJobs.map(job => (
-                                    <JobCard key={job.id} job={job} onNavigate={handleNavigateToJob} completed />
-                                ))}
-                            </>
+                            </section>
+                        ) : null}
+
+                        {/* UP NEXT - Queued jobs for today */}
+                        {upNextJobs.length > 0 && (
+                            <section>
+                                <h3 className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
+                                    <span className="material-symbols-outlined text-sm">schedule</span>
+                                    Up Next
+                                </h3>
+                                <div className="space-y-2">
+                                    {upNextJobs.map(job => (
+                                        <JobQueueCard
+                                            key={job.id}
+                                            job={job}
+                                            onClick={() => handleStartJob(job.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* LATER - Collapsed by default */}
+                        {laterJobs.length > 0 && (
+                            <section>
+                                <details className="group">
+                                    <summary className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1 cursor-pointer hover:text-slate-400 transition-colors list-none">
+                                        <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
+                                        Later ({laterJobs.length})
+                                    </summary>
+                                    <div className="space-y-2 pt-2">
+                                        {laterJobs.map(job => (
+                                            <JobQueueCard
+                                                key={job.id}
+                                                job={job}
+                                                onClick={() => handleJobClick(job.id)}
+                                                muted
+                                            />
+                                        ))}
+                                    </div>
+                                </details>
+                            </section>
+                        )}
+
+                        {/* DONE - Just a count, link to history */}
+                        {doneCount > 0 && (
+                            <section className="pt-4 border-t border-white/5">
+                                <button
+                                    onClick={() => navigate('/contractor/history')}
+                                    className="flex items-center justify-between w-full py-3 text-slate-500 hover:text-slate-300 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+                                        <span className="text-sm">Completed</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-bold">{doneCount}</span>
+                                        <span className="material-symbols-outlined text-sm">chevron_right</span>
+                                    </div>
+                                </button>
+                            </section>
                         )}
                     </div>
                 )}
@@ -91,51 +251,82 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
     );
 };
 
-// PERFORMANCE OPTIMIZATION: JobCard wrapped in React.memo to prevent unnecessary re-renders
-const JobCard = React.memo(({ job, onNavigate, completed = false }: { job: Job; onNavigate: (jobId: string) => void; completed?: boolean }) => {
-    // PERFORMANCE OPTIMIZATION: Memoize click handler with job ID
-    const handleClick = useCallback(() => {
-        onNavigate(job.id);
-    }, [onNavigate, job.id]);
+/**
+ * JobQueueCard - Compact job card for Up Next / Later sections
+ * Minimal info, max tap target
+ */
+const JobQueueCard = React.memo(({
+    job,
+    onClick,
+    muted = false
+}: {
+    job: Job;
+    onClick: () => void;
+    muted?: boolean;
+}) => {
+    const statusBadge = useMemo(() => {
+        if (job.status === 'Complete' || job.status === 'Submitted') {
+            return { label: 'Done', color: 'text-emerald-400 bg-emerald-400/10' };
+        }
+        if (job.photos.length > 0) {
+            return { label: 'Started', color: 'text-primary bg-primary/10' };
+        }
+        return { label: 'Not Started', color: 'text-slate-400 bg-slate-800' };
+    }, [job.status, job.photos.length]);
+
+    const formattedTime = useMemo(() => {
+        const date = new Date(job.date);
+        const today = new Date();
+        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+        if (date.toDateString() === today.toDateString()) {
+            return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (date.toDateString() === tomorrow.toDateString()) {
+            return 'Tomorrow';
+        }
+        return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric' });
+    }, [job.date]);
 
     return (
         <button
-            onClick={handleClick}
-            className={`w-full text-left group relative overflow-hidden transition-all duration-300 ${completed ? 'bg-slate-900/50 border border-white/5 opacity-70 hover:opacity-100' : 'bg-slate-900 border border-white/10 shadow-2xl hover:border-primary/50 hover:shadow-primary/10'
-                } rounded-[2rem] p-6`}
+            onClick={onClick}
+            className={`w-full text-left group transition-all active:scale-[0.98] ${
+                muted
+                    ? 'bg-slate-950/50 border border-white/5 opacity-70 hover:opacity-100'
+                    : 'bg-slate-900 border border-white/10 hover:border-primary/30'
+            } rounded-2xl p-4 min-h-[56px]`}
         >
-            <div className="flex justify-between items-start mb-4">
-                <div className="space-y-1">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
-                        }`}>
-                        {completed ? 'Completed' : 'Active Job'}
-                    </span>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors">
-                        {job.title}
-                    </h3>
+            <div className="flex items-center gap-4">
+                {/* Time */}
+                <div className="min-w-[60px] text-right">
+                    <p className={`text-sm font-bold ${muted ? 'text-slate-500' : 'text-white'}`}>
+                        {formattedTime}
+                    </p>
                 </div>
-                {!completed && (
-                    <div className="bg-white/5 p-2 rounded-full group-hover:bg-primary group-hover:text-white transition-all">
-                        <span className="material-symbols-outlined text-xl">arrow_forward</span>
-                    </div>
-                )}
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
-                    <p className="text-xs font-bold text-slate-300 uppercase">{job.client}</p>
+                {/* Divider */}
+                <div className={`w-0.5 h-10 rounded-full ${
+                    job.photos.length > 0 ? 'bg-primary' : 'bg-slate-700'
+                }`} />
+
+                {/* Job info */}
+                <div className="flex-1 min-w-0">
+                    <p className={`font-bold truncate ${muted ? 'text-slate-400' : 'text-white'} group-hover:text-primary transition-colors`}>
+                        {job.title}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{job.client}</p>
                 </div>
-                <div className="space-y-1">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
-                    <p className="text-xs font-bold text-slate-300 uppercase truncate">{job.address}</p>
-                </div>
+
+                {/* Status badge */}
+                <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${statusBadge.color}`}>
+                    {statusBadge.label}
+                </span>
             </div>
         </button>
     );
 });
 
-JobCard.displayName = 'ContractorJobCard';
+JobQueueCard.displayName = 'JobQueueCard';
 
-// PERFORMANCE OPTIMIZATION: Wrap main component in React.memo
 export default React.memo(ContractorDashboard);
