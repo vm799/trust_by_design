@@ -7,6 +7,7 @@ import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
 import BuildFingerprint from './components/ui/BuildFingerprint';
+import { captureNavigationIntentFromUrl } from './lib/navigationIntent';
 
 // REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
 // These are loaded on-demand when first needed
@@ -111,6 +112,19 @@ const LoadingFallback: React.FC = () => (
 
 // Inner component that consumes AuthContext and DataContext
 const AppContent: React.FC = () => {
+  // UX Flow Contract: Capture navigation intent FIRST, before any auth checks
+  // This ensures deep links survive the auth flow
+  const hasCapuredIntent = useRef(false);
+  useEffect(() => {
+    if (!hasCapuredIntent.current) {
+      const intent = captureNavigationIntentFromUrl();
+      if (intent) {
+        console.log('[App] Captured navigation intent:', intent.path, intent.type);
+      }
+      hasCapuredIntent.current = true;
+    }
+  }, []);
+
   // CRITICAL FIX: Consume AuthContext instead of managing own auth state
   const { session, isAuthenticated, isLoading: authLoading } = useAuth();
 
