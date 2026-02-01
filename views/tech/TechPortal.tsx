@@ -135,7 +135,7 @@ const TechPortal: React.FC = () => {
 
                       {/* Job info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded">
                             Started
                           </span>
@@ -143,6 +143,19 @@ const TechPortal: React.FC = () => {
                             <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1">
                               <span className="material-symbols-outlined text-xs">check</span>
                               Ready
+                            </span>
+                          )}
+                          {/* P0-6 FIX: Show sync status on started job */}
+                          {startedJob.syncStatus && startedJob.syncStatus !== 'synced' && (
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 ${
+                              startedJob.syncStatus === 'failed'
+                                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
+                                : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                            }`}>
+                              <span className={`material-symbols-outlined text-xs ${startedJob.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
+                                {startedJob.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+                              </span>
+                              {startedJob.syncStatus === 'failed' ? 'Sync Failed' : 'Syncing'}
                             </span>
                           )}
                         </div>
@@ -280,6 +293,20 @@ const TechJobCard = React.memo(({
               {client?.name || job.client || 'Client'}
             </p>
           </div>
+
+          {/* P0-6 FIX: Per-job sync status indicator */}
+          {job.syncStatus && job.syncStatus !== 'synced' && (
+            <span className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+              job.syncStatus === 'failed'
+                ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+            }`}>
+              <span className={`material-symbols-outlined text-xs ${job.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
+                {job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+              </span>
+              {job.syncStatus === 'failed' ? 'Failed' : 'Pending'}
+            </span>
+          )}
 
           {/* Status badge */}
           {status === 'finished' ? (

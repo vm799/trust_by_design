@@ -134,10 +134,12 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         title: 'Photo Sync Issue',
         message: `${orphanedPhotos.length} photo(s) could not sync for "${job.title}". Metadata preserved. ${totalOrphans} total photos need attention. Check your connection and try again.`,
         persistent: true,
-        actionLabel: 'View Details',
+        actionLabel: 'View Job',
         onAction: () => {
-          console.log('[Orphan Recovery] User requested details for orphaned photos:', orphanedPhotos.map(p => p.id));
-          // Future: Navigate to recovery UI
+          // P0-5 FIX: Navigate to job detail instead of doing nothing
+          // User can see the affected job and potentially re-capture photos
+          console.log('[Orphan Recovery] Navigating to job:', job.id);
+          window.location.hash = `#/app/jobs/${job.id}`;
         }
       });
     }
@@ -205,11 +207,12 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         .from('photos')
         .upsert(photoRecords);
 
+      // P0 FIX: Never return success if photo records failed to sync
       if (photoError) {
         console.error(`Failed to batch sync ${uploadedPhotos.length} photos:`, photoError);
-      } else {
-        console.log(`✓ Batch synced ${uploadedPhotos.length} photos in single query`);
+        throw new Error(`Photo batch sync failed: ${photoError.message}`);
       }
+      console.log(`✓ Batch synced ${uploadedPhotos.length} photos in single query`);
     }
 
     // 5. Batch upsert safety checklist (OPTIMIZED: single query instead of N queries)
@@ -226,11 +229,12 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         .from('safety_checks')
         .upsert(checklistRecords);
 
+      // P0 FIX: Never return success if safety checks failed to sync
       if (checkError) {
         console.error(`Failed to batch sync ${job.safetyChecklist.length} safety checks:`, checkError);
-      } else {
-        console.log(`✓ Batch synced ${job.safetyChecklist.length} safety checks in single query`);
+        throw new Error(`Safety checklist sync failed: ${checkError.message}`);
       }
+      console.log(`✓ Batch synced ${job.safetyChecklist.length} safety checks in single query`);
     }
 
     return true;

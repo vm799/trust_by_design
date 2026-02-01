@@ -386,11 +386,15 @@ if (typeof window !== 'undefined') {
   // When user switches apps or closes Safari tab
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      // Async operations are fine here - we have some time before the page dies
-      console.log('[DebouncedSync] Page hidden - flushing pending updates...');
+      // P0-4 FIX: ALWAYS emergency save first (sync, guaranteed)
+      // Page can be killed immediately on iOS - don't risk async completion
+      console.log('[DebouncedSync] Page hidden - emergency save first, then async flush...');
+      emergencySavePendingUpdates();
+
+      // Async flush is a bonus - data is already safe in localStorage queue
+      // If this completes before page death, duplicates are fine (upsert is idempotent)
       flushPendingUpdates().catch(() => {
-        // If async flush fails, emergency save to queue
-        emergencySavePendingUpdates();
+        // Already saved to localStorage, nothing more to do
       });
     }
   });
