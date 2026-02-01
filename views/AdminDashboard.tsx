@@ -302,7 +302,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             techsNeedingAttention={technicianRows.filter(t => t.hasAttention)}
             linksNeedingAttention={linksNeedingAttention}
             jobs={jobs}
-            technicians={technicians}
             onViewDetails={() => setShowActionCenter(true)}
             onDismissLink={(token) => {
               acknowledgeLinkFlag(token);
@@ -535,14 +534,16 @@ const InlineAttentionSection = React.memo(({
   techsNeedingAttention,
   linksNeedingAttention,
   jobs,
-  technicians,
   onViewDetails,
   onDismissLink
 }: {
-  techsNeedingAttention: Array<{ id: string; name: string; attentionFlags: Array<{ label: string; severity: string }> }>;
+  // Fix: Match actual technicianRows structure (tech object nested inside)
+  techsNeedingAttention: Array<{
+    tech: { id: string; name: string };
+    attentionFlags: Array<{ label: string; severity: string }>;
+  }>;
   linksNeedingAttention: Array<{ token: string; job_id: string; sent_at?: string }>;
   jobs: Job[];
-  technicians: { id: string; name: string }[];
   onViewDetails: () => void;
   onDismissLink: (token: string) => void;
 }) => {
@@ -609,14 +610,14 @@ const InlineAttentionSection = React.memo(({
           {techsNeedingAttention.length > 0 && (
             <div className="p-4 border-t border-danger/10 space-y-2">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Technician Issues</p>
-              {techsNeedingAttention.slice(0, 3).map(tech => (
-                <div key={tech.id} className="flex items-center gap-3 bg-slate-900/50 px-3 py-2 rounded-lg">
+              {techsNeedingAttention.slice(0, 3).map(row => (
+                <div key={row.tech.id} className="flex items-center gap-3 bg-slate-900/50 px-3 py-2 rounded-lg">
                   <div className="size-8 rounded-full bg-slate-800 flex items-center justify-center">
-                    <span className="text-xs font-bold text-slate-300">{tech.name.charAt(0).toUpperCase()}</span>
+                    <span className="text-xs font-bold text-slate-300">{row.tech.name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{tech.name}</p>
-                    <p className="text-xs text-warning">{tech.attentionFlags[0]?.label || 'Needs attention'}</p>
+                    <p className="text-sm font-medium text-white truncate">{row.tech.name}</p>
+                    <p className="text-xs text-warning">{row.attentionFlags[0]?.label || 'Needs attention'}</p>
                   </div>
                 </div>
               ))}
