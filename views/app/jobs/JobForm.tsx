@@ -481,8 +481,8 @@ const JobForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Date & Time - Responsive grid for mobile (stacked) vs desktop (side-by-side) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="date" className="block text-sm font-medium text-slate-300 mb-2">
                     Date <span className="text-red-400">*</span>
@@ -493,7 +493,7 @@ const JobForm: React.FC = () => {
                     type="date"
                     value={formData.date}
                     onChange={handleChange('date')}
-                    className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                    className={`w-full px-4 py-4 min-h-[56px] bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
                       errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'
                     }`}
                   />
@@ -511,7 +511,7 @@ const JobForm: React.FC = () => {
                       handleChange('time')(e);
                       setTimeout(() => addressRef.current?.focus(), 100);
                     }}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full px-4 py-4 min-h-[56px] bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
               </div>

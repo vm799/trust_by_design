@@ -120,11 +120,12 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   }
 
   if (variant === 'compact') {
+    // WCAG 2.1 AA: Minimum 44px touch target for field workers (gloved hands)
     return (
       <span className={`
-        inline-flex items-center gap-1 px-2 py-0.5
+        inline-flex items-center gap-1 px-3 py-2
         text-[10px] font-bold uppercase tracking-wide
-        rounded-md border
+        rounded-md border min-h-[44px]
         ${config.color}
         ${className}
       `}>
