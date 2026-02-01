@@ -18,6 +18,11 @@ import Layout from '../../../components/Layout';
 import EmptyState from '../../../components/EmptyState';
 import { Job, UserProfile } from '../../../types';
 import { ROUTES } from '../../../lib/routes';
+import {
+  JOB_STATUS,
+  SYNC_STATUS,
+  isSealedJobStatus,
+} from '../../../lib/constants';
 
 type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'sync_issues';
 
@@ -46,7 +51,7 @@ interface JobsListProps {
  */
 const getJobLifecycle = (job: Job) => {
   // VERIFIED: Submitted status (already sealed and verified)
-  if (job.status === 'Submitted') {
+  if (job.status === JOB_STATUS.SUBMITTED) {
     return {
       stage: 'verified',
       label: 'Verified',
@@ -82,7 +87,7 @@ const getJobLifecycle = (job: Job) => {
   }
 
   // CAPTURE: In progress with photos
-  if (job.status === 'In Progress' && job.photos.length > 0) {
+  if (job.status === JOB_STATUS.IN_PROGRESS && job.photos.length > 0) {
     return {
       stage: 'capture',
       label: 'Capturing',
@@ -108,7 +113,7 @@ const getJobLifecycle = (job: Job) => {
  * Get sync status display info
  */
 const getSyncStatus = (job: Job) => {
-  if (job.syncStatus === 'failed') {
+  if (job.syncStatus === SYNC_STATUS.FAILED) {
     return {
       label: 'Sync Failed',
       icon: 'sync_problem',
@@ -118,7 +123,7 @@ const getSyncStatus = (job: Job) => {
     };
   }
 
-  if (job.syncStatus === 'pending' || job.syncStatus === 'syncing') {
+  if (job.syncStatus === SYNC_STATUS.PENDING || job.syncStatus === SYNC_STATUS.SYNCING) {
     return {
       label: 'Syncing',
       icon: 'sync',
@@ -156,10 +161,11 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   };
 
   // Computed job lists for counting
-  const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
-  const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted' || j.sealedAt || j.isSealed), [jobs]);
-  const awaitingSealJobs = useMemo(() => activeJobs.filter(j => !j.signature && !j.sealedAt), [activeJobs]);
-  const syncIssuesJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const activeJobs = useMemo(() => jobs.filter(j => j.status !== JOB_STATUS.SUBMITTED), [jobs]);
+  const sealedJobs = useMemo(() => jobs.filter(j => j.status === JOB_STATUS.SUBMITTED || j.sealedAt || j.isSealed), [jobs]);
+  // FIXED: Awaiting seal = has evidence AND signature, ready to be sealed (not missing signature)
+  const awaitingSealJobs = useMemo(() => activeJobs.filter(j => j.photos.length > 0 && j.signature && !j.sealedAt && !j.isSealed), [activeJobs]);
+  const syncIssuesJobs = useMemo(() => jobs.filter(j => j.syncStatus === SYNC_STATUS.FAILED), [jobs]);
 
   // Get counts for each filter
   const filterCounts = useMemo(() => ({
@@ -177,16 +183,17 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     // Apply filter
     switch (currentFilter) {
       case 'active':
-        result = result.filter(j => j.status !== 'Submitted');
+        result = result.filter(j => j.status !== JOB_STATUS.SUBMITTED);
         break;
       case 'awaiting_seal':
-        result = result.filter(j => j.status !== 'Submitted' && !j.signature && !j.sealedAt);
+        // FIXED: Awaiting seal = has evidence AND signature, ready to be sealed
+        result = result.filter(j => j.photos.length > 0 && j.signature && !j.sealedAt && !j.isSealed);
         break;
       case 'sealed':
-        result = result.filter(j => j.status === 'Submitted' || j.sealedAt || j.isSealed);
+        result = result.filter(j => j.status === JOB_STATUS.SUBMITTED || j.sealedAt || j.isSealed);
         break;
       case 'sync_issues':
-        result = result.filter(j => j.syncStatus === 'failed');
+        result = result.filter(j => j.syncStatus === SYNC_STATUS.FAILED);
         break;
       default:
         // 'all' - no filter
@@ -357,7 +364,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                         </div>
 
                         {/* Sync Status */}
-                        {job.syncStatus === 'failed' && (
+                        {job.syncStatus === SYNC_STATUS.FAILED && (
                           <div className="mt-2 flex items-center gap-1 text-danger text-[10px] font-black uppercase">
                             <span className="material-symbols-outlined text-xs">sync_problem</span>
                             Sync Failed
@@ -454,7 +461,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                           </td>
                           <td className="px-8 py-5 text-right">
                             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
-                              <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === 'syncing' ? 'animate-spin' : ''}`}>
+                              <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
                                 {syncStatus.icon}
                               </span>
                               {syncStatus.label}

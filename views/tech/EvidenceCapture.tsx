@@ -12,6 +12,7 @@ import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
 import { saveMediaLocal, getMediaLocal, db } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
+import { SYNC_STATUS } from '../../lib/constants';
 
 type PhotoType = 'before' | 'during' | 'after';
 
@@ -174,7 +175,7 @@ const EvidenceCapture: React.FC = () => {
         lat: capturedPhoto.location?.lat,
         lng: capturedPhoto.location?.lng,
         verified: false,
-        syncStatus: 'pending' as const,
+        syncStatus: SYNC_STATUS.PENDING,
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];

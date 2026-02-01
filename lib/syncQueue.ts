@@ -9,6 +9,7 @@ import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
 import { getMedia } from '../db';
 import { showPersistentNotification } from './utils/syncUtils';
+import { SYNC_STATUS } from './constants';
 
 interface SyncQueueItem {
   id: string;
@@ -64,7 +65,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
           ...photo,
           url: publicUrl, // Replace IndexedDB key with public URL
           isIndexedDBRef: false,
-          syncStatus: 'synced'
+          syncStatus: SYNC_STATUS.SYNCED
         });
       } else {
         uploadedPhotos.push(photo);
@@ -108,7 +109,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         created_at: job.date,
         completed_at: job.completedAt,
         last_updated: job.lastUpdated,
-        sync_status: 'synced'
+        sync_status: SYNC_STATUS.SYNCED
       });
 
     if (jobError) throw jobError;
@@ -125,7 +126,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         lat: photo.lat,
         lng: photo.lng,
         w3w: photo.w3w,
-        sync_status: 'synced'
+        sync_status: SYNC_STATUS.SYNCED
       }));
 
       const { error: photoError } = await supabase

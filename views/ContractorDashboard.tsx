@@ -17,6 +17,8 @@ import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
 import { Job, UserProfile } from '../types';
 import { OfflineIndicator } from '../components/OfflineIndicator';
+import { useData } from '../lib/DataContext';
+import { JOB_STATUS, SYNC_STATUS, isCompletedJobStatus } from '../lib/constants';
 
 interface ContractorDashboardProps {
     jobs: Job[];
@@ -27,6 +29,7 @@ interface ContractorDashboardProps {
 
 const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, showOnboarding, onCloseOnboarding }) => {
     const navigate = useNavigate();
+    const { refresh } = useData();
 
     // Filter jobs for this contractor
     const myJobs = useMemo(() => {
@@ -43,11 +46,11 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
         const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
         // Active job: In Progress status (only one can be active)
-        const inProgress = myJobs.find(j => j.status === 'In Progress');
+        const inProgress = myJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
 
         // Remaining incomplete jobs (excluding active)
         const remaining = myJobs
-            .filter(j => j.status !== 'Submitted' && j.status !== 'Complete' && j.id !== inProgress?.id)
+            .filter(j => !isCompletedJobStatus(j.status) && j.id !== inProgress?.id)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         // Up Next: Today's jobs + tomorrow's jobs (first 5)
@@ -62,7 +65,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
         const later = remaining.filter(j => !upNext.find(u => u.id === j.id));
 
         // Done count
-        const done = myJobs.filter(j => j.status === 'Submitted' || j.status === 'Complete').length;
+        const done = myJobs.filter(j => isCompletedJobStatus(j.status)).length;
 
         return {
             currentJob: inProgress,
@@ -114,7 +117,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
                             No jobs assigned. Pull to refresh or check back later.
                         </p>
                         <button
-                            onClick={() => window.location.reload()}
+                            onClick={() => refresh()}
                             className="mt-6 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm font-bold text-white transition-all"
                         >
                             Check for updates
@@ -265,7 +268,7 @@ const JobQueueCard = React.memo(({
     muted?: boolean;
 }) => {
     const statusBadge = useMemo(() => {
-        if (job.status === 'Complete' || job.status === 'Submitted') {
+        if (isCompletedJobStatus(job.status)) {
             return { label: 'Done', color: 'text-emerald-400 bg-emerald-400/10' };
         }
         if (job.photos.length > 0) {

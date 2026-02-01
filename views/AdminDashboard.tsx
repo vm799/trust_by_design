@@ -23,6 +23,12 @@ import { retryFailedSyncs } from '../lib/syncQueue';
 import { useAuth } from '../lib/AuthContext';
 import { useData } from '../lib/DataContext';
 import { getLinksNeedingAttention, acknowledgeLinkFlag, type MagicLinkInfo } from '../lib/db';
+import {
+  JOB_STATUS,
+  SYNC_STATUS,
+  TECHNICIAN_STATUS,
+  canTechnicianAcceptJobs,
+} from '../lib/constants';
 
 interface AdminDashboardProps {
   jobs: Job[];
@@ -42,7 +48,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onCloseOnboarding
 }) => {
   const navigate = useNavigate();
-  const { updateJob, deleteJob } = useData();
+  const { updateJob, deleteJob, refresh } = useData();
 
   // Loading state with 300ms delay
   const [isLoading, setIsLoading] = useState(true);
@@ -56,9 +62,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   // Job categorization
-  const activeJobs = useMemo(() => jobs.filter(j => j.status !== 'Submitted'), [jobs]);
-  const sealedJobs = useMemo(() => jobs.filter(j => j.status === 'Submitted'), [jobs]);
-  const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === 'failed'), [jobs]);
+  const activeJobs = useMemo(() => jobs.filter(j => j.status !== JOB_STATUS.SUBMITTED), [jobs]);
+  const sealedJobs = useMemo(() => jobs.filter(j => j.status === JOB_STATUS.SUBMITTED), [jobs]);
+  const failedJobs = useMemo(() => jobs.filter(j => j.syncStatus === SYNC_STATUS.FAILED), [jobs]);
   const syncIssues = failedJobs.length;
 
   // Manual sync state
@@ -94,8 +100,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return technicians.map(tech => {
       // Jobs assigned to this tech
       const techJobs = activeJobs.filter(j => j.techId === tech.id);
-      const currentJob = techJobs.find(j => j.status === 'In Progress');
-      const pendingJobs = techJobs.filter(j => j.status !== 'In Progress');
+      const currentJob = techJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
+      const pendingJobs = techJobs.filter(j => j.status !== JOB_STATUS.IN_PROGRESS);
 
       // Calculate time since last activity
       const lastActivity = techJobs.reduce((latest, job) => {
@@ -113,7 +119,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }> = [];
 
       // Idle too long (no jobs, available status)
-      if (techJobs.length === 0 && (tech.status === 'Available' || tech.status === 'Authorised')) {
+      if (techJobs.length === 0 && canTechnicianAcceptJobs(tech.status as typeof TECHNICIAN_STATUS[keyof typeof TECHNICIAN_STATUS])) {
         attentionFlags.push({ type: 'idle', label: 'Idle - No jobs', severity: 'warning' });
       }
 
@@ -129,7 +135,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
 
       // Sync failed
-      const hasSyncFailed = techJobs.some(j => j.syncStatus === 'failed');
+      const hasSyncFailed = techJobs.some(j => j.syncStatus === SYNC_STATUS.FAILED);
       if (hasSyncFailed) {
         attentionFlags.push({ type: 'sync_failed', label: 'Sync failed', severity: 'danger' });
       }
@@ -143,13 +149,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         operationalStatus = 'in_field';
         statusLabel = 'In Field';
         statusColor = 'text-primary';
-      } else if (tech.status === 'Available' || tech.status === 'Authorised') {
+      } else if (canTechnicianAcceptJobs(tech.status as typeof TECHNICIAN_STATUS[keyof typeof TECHNICIAN_STATUS])) {
         operationalStatus = 'available';
-        statusLabel = 'Available';
+        statusLabel = TECHNICIAN_STATUS.AVAILABLE;
         statusColor = 'text-success';
       } else {
         operationalStatus = 'off_duty';
-        statusLabel = 'Off Duty';
+        statusLabel = TECHNICIAN_STATUS.OFF_DUTY;
         statusColor = 'text-slate-400';
       }
 
@@ -186,15 +192,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await retryFailedSyncs();
       setSyncMessage('Sync completed. Check job status for results.');
       setTimeout(() => setSyncMessage(null), 5000);
-      window.location.reload();
+      await refresh(); // Use DataContext refresh instead of page reload
     } catch (error) {
-      console.error('Manual sync failed:', error);
       setSyncMessage('Sync failed. Please check your connection.');
       setTimeout(() => setSyncMessage(null), 5000);
     } finally {
       setIsSyncing(false);
     }
-  }, [isSyncing]);
+  }, [isSyncing, refresh]);
 
   // Show skeleton while loading
   if (isLoading) {
@@ -216,7 +221,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Offline Indicator */}
         <OfflineIndicator
           syncStatus={{
-            pending: jobs.filter(j => j.syncStatus === 'pending').length,
+            pending: jobs.filter(j => j.syncStatus === SYNC_STATUS.PENDING).length,
             failed: syncIssues
           }}
         />
