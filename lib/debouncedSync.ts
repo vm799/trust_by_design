@@ -291,6 +291,66 @@ export function debouncedPhotoUpdate(photoId: string, jobId: string, data: Recor
   debouncedUpdate('photos', photoId, { ...data, jobId }, `photos_${jobId}`);
 }
 
+/**
+ * Get summary of pending updates for sendBeacon/emergency save
+ * Returns data in a format ready for serialization
+ */
+export function getPendingUpdatesSummary(): Array<{
+  table: string;
+  id: string;
+  data: Record<string, unknown>;
+}> {
+  const summary: Array<{ table: string; id: string; data: Record<string, unknown> }> = [];
+
+  for (const [, pending] of pendingUpdates) {
+    summary.push({
+      table: pending.table,
+      id: pending.id,
+      data: pending.data,
+    });
+  }
+
+  return summary;
+}
+
+/**
+ * Emergency save all pending updates to localStorage queue (sync operation)
+ * Called on beforeunload when async operations won't complete
+ */
+function emergencySavePendingUpdates(): void {
+  const pending = getPendingUpdatesSummary();
+  if (pending.length === 0) return;
+
+  const queueKey = 'jobproof_debounced_queue';
+  try {
+    // Get existing queue
+    const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+
+    // Add all pending updates to queue
+    for (const item of pending) {
+      queue.push({
+        table: item.table,
+        id: item.id,
+        data: item.data,
+        queuedAt: new Date().toISOString(),
+        emergencySave: true, // Mark as emergency save for debugging
+      });
+    }
+
+    // Save synchronously (guaranteed to complete before unload)
+    localStorage.setItem(queueKey, JSON.stringify(queue));
+    console.log(`[DebouncedSync] Emergency saved ${pending.length} pending updates to queue`);
+
+    // Clear pending updates since they're now queued
+    for (const [entityKey, p] of pendingUpdates) {
+      if (p.timer) clearTimeout(p.timer);
+    }
+    pendingUpdates.clear();
+  } catch (e) {
+    console.error('[DebouncedSync] Emergency save failed:', e);
+  }
+}
+
 // Auto-process offline queue when coming back online
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
@@ -298,9 +358,40 @@ if (typeof window !== 'undefined') {
     processOfflineQueue();
   });
 
-  // Flush pending updates before page unload
+  // Sprint 1 Task 1.6: Fix beforeunload sync flush
+  // PROBLEM: Async operations don't complete before page unload
+  // SOLUTION: Use sync localStorage save (emergency queue) instead of async Supabase calls
   window.addEventListener('beforeunload', () => {
-    // Note: async operations may not complete, but we try our best
-    flushPendingUpdates();
+    // Emergency save to localStorage queue (sync, guaranteed to complete)
+    emergencySavePendingUpdates();
+
+    // If online, try sendBeacon as a bonus (browser will try to deliver after unload)
+    if (navigator.onLine && 'sendBeacon' in navigator) {
+      const pending = getPendingUpdatesSummary();
+      if (pending.length > 0) {
+        try {
+          // sendBeacon is designed for unload - browser queues for delivery
+          // Note: This requires a server endpoint to receive the data
+          // For now, we just log - data is safely in localStorage queue
+          console.log('[DebouncedSync] Would sendBeacon with:', pending.length, 'updates');
+          // navigator.sendBeacon('/api/sync-flush', JSON.stringify(pending));
+        } catch (e) {
+          // sendBeacon failed, data is still safe in localStorage
+        }
+      }
+    }
+  });
+
+  // iOS Safari: visibilitychange is more reliable than beforeunload
+  // When user switches apps or closes Safari tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      // Async operations are fine here - we have some time before the page dies
+      console.log('[DebouncedSync] Page hidden - flushing pending updates...');
+      flushPendingUpdates().catch(() => {
+        // If async flush fails, emergency save to queue
+        emergencySavePendingUpdates();
+      });
+    }
   });
 }
