@@ -393,6 +393,12 @@ export const getSession = async (): Promise<Session | null> => {
 
 /**
  * Get current user
+ *
+ * @internal - DO NOT use in React components. Use useAuth() hook instead.
+ * @deprecated Using this in components causes the 877 req/hr auth loop bug.
+ * This function calls supabase.auth.getUser() which is expensive.
+ * For components, use useAuth() from lib/AuthContext.tsx which uses
+ * memoized session state.
  */
 export const getCurrentUser = async (): Promise<User | null> => {
   const supabase = getSupabase();
