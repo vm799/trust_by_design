@@ -31,11 +31,12 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({ jobs, user, s
     const navigate = useNavigate();
     const { refresh } = useData();
 
-    // Filter jobs for this contractor
+    // Filter jobs for this contractor (P0 fix: use stable IDs, not name strings)
     const myJobs = useMemo(() => {
         return jobs.filter(job => {
-            if (!user) return false;
-            return job.technician === user.name || job.technician === user.email;
+            if (!user?.id) return false;
+            // Check both techId and technicianId for consistency across codebase
+            return job.techId === user.id || job.technicianId === user.id;
         });
     }, [jobs, user]);
 

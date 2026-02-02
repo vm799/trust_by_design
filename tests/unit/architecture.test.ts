@@ -252,4 +252,70 @@ describe('Architecture Compliance', () => {
       expect(content).toContain('vercel.app');
     });
   });
+
+  describe('P0: Technician Identity Matching', () => {
+    /**
+     * CRITICAL: Technician-job associations must use stable IDs only.
+     * Name/email string matching causes:
+     * - Job bleed between users with same name
+     * - Phantom attention counts
+     * - Click-does-nothing bugs
+     *
+     * This test prevents regression of the P0 identity bug fix.
+     */
+    it('dashboard views should not match technicians by name or email string', () => {
+      const dashboardFiles = [
+        'views/AdminDashboard.tsx',
+        'views/ContractorDashboard.tsx',
+        'views/app/ManagerFocusDashboard.tsx',
+        'views/app/SoloContractorDashboard.tsx',
+        'views/ClientDashboard.tsx',
+      ];
+
+      const violations: string[] = [];
+
+      for (const file of dashboardFiles) {
+        const content = readFile(file);
+        if (!content) continue;
+
+        // Forbidden patterns: matching job.technician to user.name/email
+        // These indicate name-based matching instead of ID-based matching
+        const forbiddenPatterns = [
+          /job\.technician\s*===\s*user\.name/,
+          /job\.technician\s*===\s*user\.email/,
+          /\.technician\s*===\s*\w+\.name/,
+          /\.technician\s*===\s*\w+\.email/,
+        ];
+
+        for (const pattern of forbiddenPatterns) {
+          if (pattern.test(content)) {
+            violations.push(`${file}: matches technician by name/email string`);
+          }
+        }
+      }
+
+      expect(violations).toEqual([]);
+    });
+
+    it('dashboard views should use techId or technicianId for job filtering', () => {
+      const dashboardFiles = [
+        'views/AdminDashboard.tsx',
+        'views/ContractorDashboard.tsx',
+        'views/app/ManagerFocusDashboard.tsx',
+        'views/app/SoloContractorDashboard.tsx',
+      ];
+
+      for (const file of dashboardFiles) {
+        const content = readFile(file);
+        if (!content) continue;
+
+        // If file filters jobs by technician, it should use ID fields
+        if (content.includes('techJobs') || content.includes('myJobs')) {
+          // Should contain techId or technicianId references
+          const usesIdFields = content.includes('techId') || content.includes('technicianId');
+          expect(usesIdFields).toBe(true);
+        }
+      }
+    });
+  });
 });
