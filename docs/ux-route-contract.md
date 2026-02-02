@@ -152,8 +152,8 @@ Current implementation: `views/DevReset.tsx` at route `/dev/reset`
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Dashboard hierarchy | 🔄 Pending | Refactor to single-purpose sections |
-| Per-job sync badges | 🔄 Pending | Visual sync status indicators |
+| Dashboard hierarchy | ✅ Complete | Active/Idle technicians split with collapsible idle section |
+| Per-job sync badges | ✅ Complete | JobCard and TechPortal display sync status per job |
 | Virtualized job lists | 🔄 Pending | Performance for 50+ jobs |
 
 ---

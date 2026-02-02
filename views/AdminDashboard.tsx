@@ -183,6 +183,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Count technicians needing attention
   const techsNeedingAttention = technicianRows.filter(t => t.hasAttention).length;
 
+  // Split technicians into active and idle for dashboard hierarchy (UX Contract)
+  const activeTechnicians = useMemo(() =>
+    technicianRows.filter(r => r.operationalStatus === 'in_field' || r.hasAttention || r.pendingJobs.length > 0),
+    [technicianRows]
+  );
+  const idleTechnicians = useMemo(() =>
+    technicianRows.filter(r => r.operationalStatus !== 'in_field' && !r.hasAttention && r.pendingJobs.length === 0),
+    [technicianRows]
+  );
+
   // Handle manual sync
   const handleManualSync = useCallback(async () => {
     if (isSyncing) return;
@@ -310,7 +320,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           />
         )}
 
-        {/* TECHNICIAN ROWS - Primary View */}
+        {/* TECHNICIAN ROWS - Split into Active and Idle per UX Contract */}
         {technicians.length === 0 ? (
           <div className="bg-slate-900 border border-white/5 rounded-2xl p-8 text-center">
             <span className="material-symbols-outlined text-5xl text-slate-600 mb-4">group_add</span>
@@ -324,26 +334,60 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
-              Workforce ({technicians.length})
-            </h2>
+          <div className="space-y-6">
+            {/* Active Technicians - Always visible */}
+            {activeTechnicians.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active ({activeTechnicians.length})
+                </h2>
 
-            {technicianRows.map(row => (
-              <TechnicianRow
-                key={row.tech.id}
-                tech={row.tech}
-                currentJob={row.currentJob}
-                pendingJobs={row.pendingJobs}
-                attentionFlags={row.attentionFlags}
-                statusLabel={row.statusLabel}
-                statusColor={row.statusColor}
-                hoursSinceActivity={row.hoursSinceActivity}
-                clients={clients}
-                onNavigateToJob={(jobId) => navigate(`/admin/report/${jobId}`)}
-                onCallTech={(phone) => window.location.href = `tel:${phone}`}
-              />
-            ))}
+                {activeTechnicians.map(row => (
+                  <TechnicianRow
+                    key={row.tech.id}
+                    tech={row.tech}
+                    currentJob={row.currentJob}
+                    pendingJobs={row.pendingJobs}
+                    attentionFlags={row.attentionFlags}
+                    statusLabel={row.statusLabel}
+                    statusColor={row.statusColor}
+                    hoursSinceActivity={row.hoursSinceActivity}
+                    clients={clients}
+                    onNavigateToJob={(jobId) => navigate(`/admin/report/${jobId}`)}
+                    onCallTech={(phone) => window.location.href = `tel:${phone}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Idle Technicians - Collapsed by default per UX Contract */}
+            {idleTechnicians.length > 0 && (
+              <details className="group">
+                <summary className="flex items-center gap-2 px-1 py-2 cursor-pointer list-none text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-slate-400 transition-colors">
+                  <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
+                  <span className="size-2 rounded-full bg-slate-600" />
+                  Idle ({idleTechnicians.length})
+                </summary>
+                <div className="space-y-3 mt-3 pl-1">
+                  {idleTechnicians.map(row => (
+                    <TechnicianRow
+                      key={row.tech.id}
+                      tech={row.tech}
+                      currentJob={row.currentJob}
+                      pendingJobs={row.pendingJobs}
+                      attentionFlags={row.attentionFlags}
+                      statusLabel={row.statusLabel}
+                      statusColor={row.statusColor}
+                      hoursSinceActivity={row.hoursSinceActivity}
+                      clients={clients}
+                      onNavigateToJob={(jobId) => navigate(`/admin/report/${jobId}`)}
+                      onCallTech={(phone) => window.location.href = `tel:${phone}`}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         )}
 
