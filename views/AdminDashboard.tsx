@@ -16,7 +16,7 @@
  * @see /docs/ux-flow-contract.md
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
