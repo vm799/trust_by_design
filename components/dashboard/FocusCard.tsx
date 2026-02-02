@@ -16,6 +16,12 @@ import { FocusEntity } from '../../lib/dashboardState';
 import SyncStatusBadge from './SyncStatusBadge';
 import { fadeInUp } from '../../lib/animations';
 
+/** Expected metadata shape for FocusEntity (typed locally to avoid core interface changes) */
+interface FocusEntityMetadata {
+  photoCount?: number;
+  hasSignature?: boolean;
+}
+
 interface FocusCardProps {
   /** Focus entity to display */
   entity: FocusEntity;
@@ -121,22 +127,25 @@ const FocusCard: React.FC<FocusCardProps> = ({
           )}
 
           {/* Metadata badges (photo count, etc.) */}
-          {entity.metadata && (
-            <div className="flex items-center gap-3 mt-2">
-              {typeof entity.metadata.photoCount === 'number' && (
-                <span className="flex items-center gap-1 text-xs text-slate-500">
-                  <span className="material-symbols-outlined text-sm">photo_camera</span>
-                  {entity.metadata.photoCount} photo{entity.metadata.photoCount !== 1 ? 's' : ''}
-                </span>
-              )}
-              {entity.metadata.hasSignature && (
-                <span className="flex items-center gap-1 text-xs text-emerald-500">
-                  <span className="material-symbols-outlined text-sm">check_circle</span>
-                  Signed
-                </span>
-              )}
-            </div>
-          )}
+          {entity.metadata && (() => {
+            const meta = entity.metadata as FocusEntityMetadata;
+            return (
+              <div className="flex items-center gap-3 mt-2">
+                {typeof meta.photoCount === 'number' && (
+                  <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <span className="material-symbols-outlined text-sm">photo_camera</span>
+                    {meta.photoCount} photo{meta.photoCount !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {meta.hasSignature && (
+                  <span className="flex items-center gap-1 text-xs text-emerald-500">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    Signed
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Action button - 44px minimum touch target */}

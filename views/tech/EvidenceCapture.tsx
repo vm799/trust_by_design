@@ -10,6 +10,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
+import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, db, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast } from '../../lib/microInteractions';
@@ -224,7 +225,7 @@ const EvidenceCapture: React.FC = () => {
       setSaveConfirmation(true);
 
       // FIELD UX: Show confirmation toast before navigating
-      showToast('Photo Captured', 'Saved locally - will sync when online', 'success');
+      showToast('Photo captured - saved locally, will sync when online', 'success');
 
       // Wait 1.5s so user sees confirmation, then navigate
       setTimeout(() => {
@@ -479,7 +480,7 @@ const EvidenceCapture: React.FC = () => {
 
           {/* FIELD UX: Offline safety indicator */}
           <div className="absolute top-4 right-4 z-10">
-            <OfflineIndicator variant="compact" />
+            <OfflineIndicator />
           </div>
 
           {/* Video Feed */}
