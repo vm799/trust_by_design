@@ -11,6 +11,27 @@
  * - Pending invoices "Action Required" section
  * - Invoice-to-job navigation
  *
+ * ## ARCHITECTURE NOTE: Invoice Logic Separation
+ *
+ * Invoice state is intentionally kept SEPARATE from deriveDashboardState for these reasons:
+ *
+ * 1. **Different Lifecycle**: Invoices persist after jobs are completed/archived.
+ *    A job can be "Submitted" while its invoice remains "Pending" for weeks.
+ *
+ * 2. **Different Permissions**: Invoice access is tied to billing relationships,
+ *    not job assignments. A client sees all their invoices regardless of which
+ *    technician worked the job.
+ *
+ * 3. **Different Sync Priority**: Invoice data requires higher consistency guarantees
+ *    (financial data) vs job status (operational data). Mixing them in derivation
+ *    would complicate offline-first sync reconciliation.
+ *
+ * 4. **Single Responsibility**: deriveDashboardState handles job/technician attention
+ *    routing. Adding invoice logic would violate its focused purpose and the
+ *    6 invariants it maintains (see lib/deriveDashboardState.ts).
+ *
+ * DO NOT refactor invoice logic into deriveDashboardState without PM approval.
+ *
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  * @see /docs/ux-flow-contract.md
  */
