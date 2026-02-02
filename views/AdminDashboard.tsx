@@ -98,8 +98,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // TECHNICIAN-CENTRIC DATA: Build technician rows with attention flags
   const technicianRows = useMemo(() => {
     return technicians.map(tech => {
-      // Jobs assigned to this tech
-      const techJobs = activeJobs.filter(j => j.techId === tech.id);
+      // Jobs assigned to this tech (check both techId and technicianId for consistency)
+      const techJobs = activeJobs.filter(j => j.techId === tech.id || j.technicianId === tech.id);
       const currentJob = techJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
       const pendingJobs = techJobs.filter(j => j.status !== JOB_STATUS.IN_PROGRESS);
 
