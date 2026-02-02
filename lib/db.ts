@@ -4,7 +4,6 @@ import { getValidatedHandshakeUrl } from './redirects';
 // Re-export getSupabase for modules that lazy-load db (like DataContext)
 export { getSupabase };
 import type { Job, Client, Technician } from '../types';
-import { mockJobs } from '../tests/mocks/mockData';
 import { requestCache, generateCacheKey } from './performanceUtils';
 
 /**
@@ -56,16 +55,19 @@ const mockDatabase: {
   magicLinks: new Map()
 };
 
-// Initialize mock database with test data
-export const initMockDatabase = () => {
+// Initialize mock database with test data (async - only loads mock data when called)
+export const initMockDatabase = async () => {
   MOCK_DB_ENABLED = true;
+
+  // Dynamic import - mock data only loaded in test context, not production
+  const { mockJobs } = await import('../tests/mocks/mockData');
 
   // Load mock jobs
   mockJobs.forEach(job => {
     mockDatabase.jobs.set(job.id, { ...job });
   });
 
-  // Setup magic link tokens
+  // Setup magic link tokens for testing
   mockDatabase.magicLinks.set('mock-token-123', {
     job_id: 'job-1',
     workspace_id: 'workspace-123',
@@ -76,7 +78,7 @@ export const initMockDatabase = () => {
   mockDatabase.magicLinks.set('expired-token', {
     job_id: 'job-1',
     workspace_id: 'workspace-123',
-    expires_at: new Date(Date.now() - 1000).toISOString(), // Expired
+    expires_at: new Date(Date.now() - 1000).toISOString(),
     is_sealed: false
   });
 
@@ -2615,7 +2617,5 @@ export const setTechnicianWorkMode = (mode: 'employed' | 'self_employed'): void 
   console.log(`[WorkMode] Set to ${mode}`);
 };
 
-// Auto-init mock database if in test environment
-if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-  initMockDatabase();
-}
+// Note: Tests should call initMockDatabase() explicitly when needed
+// The function is async so mock data is only loaded when actually required

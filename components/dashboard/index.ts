@@ -12,6 +12,7 @@ export { default as UnifiedDashboard } from './UnifiedDashboard';
 export { default as FocusCard, FocusCardSkeleton } from './FocusCard';
 export { default as QueueList, QueueListSkeleton } from './QueueList';
 export { default as BackgroundCollapse, BackgroundCollapseSkeleton } from './BackgroundCollapse';
+export { default as AttentionModal } from './AttentionModal';
 
 // Utilities
 export { default as SyncStatusBadge, SyncStatusIcon, getSyncStatusConfig } from './SyncStatusBadge';

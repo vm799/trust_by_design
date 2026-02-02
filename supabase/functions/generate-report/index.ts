@@ -135,18 +135,58 @@ serve(async (req) => {
       );
     }
 
+    const hasBeforePhoto = !!(job.before_photo_data || job.before_photo_url);
+    const hasAfterPhoto = !!(job.after_photo_data || job.after_photo_url);
+    const hasSignature = !!job.signature_data;
+    const isSealed = !!job.sealed_at;
+
     console.log('[GenerateReport] Job verified from database:', {
       id: job.id,
       title: job.title,
       client: job.client,
       status: job.status,
       source: jobSource,
-      hasBeforePhoto: !!(job.before_photo_data || job.before_photo_url),
-      hasAfterPhoto: !!(job.after_photo_data || job.after_photo_url),
-      hasSignature: !!job.signature_data,
+      hasBeforePhoto,
+      hasAfterPhoto,
+      hasSignature,
       hasW3W: !!job.w3w,
+      isSealed,
       managerEmail: job.manager_email,
     });
+
+    // =========================================================================
+    // EVIDENCE GUARD: Only generate PDF if there's actual evidence
+    // No evidence = return progress status (not an empty PDF)
+    // =========================================================================
+
+    const hasEvidence = hasBeforePhoto || hasAfterPhoto || hasSignature || isSealed;
+
+    if (!hasEvidence) {
+      console.log(`[GenerateReport] Job ${jobId} has no evidence - returning progress status`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          status: 'no_evidence',
+          message: 'Job has no evidence to report yet. Evidence collection in progress.',
+          job: {
+            id: job.id,
+            title: job.title,
+            status: job.status,
+            hasPhotos: false,
+            hasSignature: false,
+            isSealed: false,
+          },
+          pdfUrl: null,
+          emailSent: false,
+          action: 'await_evidence',
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     // =========================================================================
     // STEP 1: Generate PDF with VERIFIED DATABASE DATA
@@ -203,7 +243,75 @@ serve(async (req) => {
       });
     }
 
-    yPosition -= 30;
+    yPosition -= 35;
+
+    // -------------------------------------------------------------------------
+    // SEAL CERTIFICATE (ABOVE FOLD - First thing visible)
+    // -------------------------------------------------------------------------
+
+    if (isJobSealed && job.evidence_hash) {
+      // Large prominent seal certificate banner
+      const certHeight = 85;
+      const certY = yPosition - certHeight + 25;
+
+      // Background with gradient effect (dark green)
+      page.drawRectangle({
+        x: margin,
+        y: certY,
+        width: pageWidth - margin * 2,
+        height: certHeight,
+        color: rgb(0.02, 0.12, 0.05), // Dark green
+        borderColor: rgb(0.13, 0.77, 0.37), // Bright green border
+        borderWidth: 2,
+      });
+
+      // Checkmark and title
+      page.drawText('✓ CRYPTOGRAPHICALLY SEALED', {
+        x: margin + 20,
+        y: certY + certHeight - 25,
+        size: 16,
+        font: helveticaBold,
+        color: rgb(0.13, 0.77, 0.37),
+      });
+
+      // Hash line
+      const hashDisplay = job.evidence_hash.length > 40
+        ? job.evidence_hash.substring(0, 40) + '...'
+        : job.evidence_hash;
+      page.drawText(`SHA-256: ${hashDisplay}`, {
+        x: margin + 20,
+        y: certY + certHeight - 45,
+        size: 9,
+        font: helvetica,
+        color: rgb(0.6, 0.85, 0.65),
+      });
+
+      // Sealed timestamp
+      const sealDate = job.sealed_at
+        ? new Date(job.sealed_at).toLocaleString('en-GB', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })
+        : 'Unknown';
+      page.drawText(`Sealed: ${sealDate} | Algorithm: SHA-256 + RSA-2048`, {
+        x: margin + 20,
+        y: certY + certHeight - 62,
+        size: 8,
+        font: helvetica,
+        color: rgb(0.5, 0.7, 0.55),
+      });
+
+      // Verification note
+      page.drawText('Evidence integrity verified • Tamper-proof record', {
+        x: margin + 20,
+        y: certY + certHeight - 78,
+        size: 7,
+        font: helvetica,
+        color: rgb(0.4, 0.6, 0.45),
+      });
+
+      yPosition = certY - 15;
+    }
 
     // Job title if exists
     if (job.title) {
@@ -720,120 +828,58 @@ serve(async (req) => {
     yPosition -= 50;
 
     // -------------------------------------------------------------------------
-    // CRYPTOGRAPHIC SEAL BADGE
+    // FOOTER STATUS BAR (Compact - main seal info is at top)
     // -------------------------------------------------------------------------
 
-    const sealBadgeY = yPosition - 10;
-    const sealBadgeHeight = isSealed ? 70 : 40;
+    const statusBarY = yPosition - 10;
+    const statusBarHeight = 30;
 
-    // Draw seal badge background
     page.drawRectangle({
       x: margin,
-      y: sealBadgeY - sealBadgeHeight + 30,
+      y: statusBarY - statusBarHeight + 15,
       width: pageWidth - margin * 2,
-      height: sealBadgeHeight,
-      color: isSealed ? rgb(0.04, 0.2, 0.08) : rgb(0.95, 0.97, 0.95),
-      borderColor: isSealed ? rgb(0.13, 0.77, 0.37) : rgb(0.8, 0.8, 0.8),
-      borderWidth: 2,
+      height: statusBarHeight,
+      color: isSealed ? rgb(0.04, 0.15, 0.06) : rgb(0.96, 0.96, 0.94),
+      borderColor: isSealed ? rgb(0.13, 0.77, 0.37) : rgb(0.7, 0.7, 0.65),
+      borderWidth: 1,
     });
 
     if (isSealed && job.evidence_hash) {
-      // Sealed state - show full badge
-      page.drawText('CRYPTOGRAPHICALLY SEALED', {
+      // Compact sealed reference (full details at top)
+      page.drawText('✓ SEALED', {
         x: margin + 15,
-        y: sealBadgeY + 10,
-        size: 12,
+        y: statusBarY - 5,
+        size: 10,
         font: helveticaBold,
         color: rgb(0.13, 0.77, 0.37),
       });
 
-      page.drawText('Evidence integrity verified • Tamper-proof', {
-        x: margin + 15,
-        y: sealBadgeY - 5,
+      page.drawText(`${job.evidence_hash.substring(0, 16)}...`, {
+        x: margin + 90,
+        y: statusBarY - 5,
         size: 8,
         font: helvetica,
-        color: rgb(0.4, 0.6, 0.4),
-      });
-
-      // Hash display
-      const hashDisplay = job.evidence_hash.length > 32
-        ? `${job.evidence_hash.substring(0, 32)}...`
-        : job.evidence_hash;
-      page.drawText(`Hash: ${hashDisplay}`, {
-        x: margin + 15,
-        y: sealBadgeY - 20,
-        size: 7,
-        font: helvetica,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-
-      page.drawText('Algorithm: SHA-256 + RSA-2048', {
-        x: margin + 15,
-        y: sealBadgeY - 32,
-        size: 7,
-        font: helvetica,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-
-      // Sealed timestamp
-      if (job.sealed_at) {
-        const sealedDate = new Date(job.sealed_at).toLocaleString('en-GB', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        page.drawText(`Sealed: ${sealedDate}`, {
-          x: pageWidth - margin - 140,
-          y: sealBadgeY + 10,
-          size: 8,
-          font: helveticaBold,
-          color: rgb(0.13, 0.77, 0.37),
-        });
-      }
-
-      if (job.sealed_by) {
-        page.drawText(`By: ${job.sealed_by}`, {
-          x: pageWidth - margin - 140,
-          y: sealBadgeY - 5,
-          size: 7,
-          font: helvetica,
-          color: rgb(0.4, 0.4, 0.4),
-        });
-      }
-
-      // Verified checkmark icon (text-based)
-      page.drawText('VERIFIED', {
-        x: pageWidth - margin - 55,
-        y: sealBadgeY - 25,
-        size: 9,
-        font: helveticaBold,
-        color: rgb(0.13, 0.77, 0.37),
+        color: rgb(0.4, 0.6, 0.45),
       });
 
     } else {
-      // Not sealed - show evidence summary
-      const hasEvidence = beforePhotoIncluded || afterPhotoIncluded || signatureIncluded;
+      // Unsealed - show evidence summary with clear action hint
+      const evidenceList = [
+        beforePhotoIncluded && 'Before',
+        afterPhotoIncluded && 'After',
+        signatureIncluded && 'Signature'
+      ].filter(Boolean);
 
-      const badgeText = hasEvidence
-        ? `Evidence: ${[beforePhotoIncluded && 'Before Photo', afterPhotoIncluded && 'After Photo', signatureIncluded && 'Signature'].filter(Boolean).join(' • ')}`
-        : 'NO EVIDENCE PHOTOS AVAILABLE';
+      const statusText = evidenceList.length > 0
+        ? `Evidence: ${evidenceList.join(' • ')} | Ready to seal`
+        : 'Awaiting evidence capture';
 
-      page.drawText(badgeText, {
+      page.drawText(statusText, {
         x: margin + 15,
-        y: sealBadgeY + 5,
-        size: 10,
-        font: helveticaBold,
-        color: hasEvidence ? rgb(0.2, 0.6, 0.3) : rgb(0.6, 0.2, 0.2),
-      });
-
-      page.drawText('Not yet sealed - awaiting cryptographic sealing', {
-        x: margin + 15,
-        y: sealBadgeY - 10,
-        size: 8,
+        y: statusBarY - 5,
+        size: 9,
         font: helvetica,
-        color: rgb(0.5, 0.5, 0.5),
+        color: evidenceList.length > 0 ? rgb(0.2, 0.5, 0.3) : rgb(0.5, 0.5, 0.5),
       });
     }
 
@@ -952,58 +998,60 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // STEP 4: AUTO-SEAL evidence when email is sent
-    // Evidence is cryptographically sealed immediately upon report generation
+    // STEP 4: AUTO-SEAL evidence via seal-evidence edge function
+    // Proper cryptographic sealing with RSA-2048 signature
     // =========================================================================
 
     let sealedAt: string | null = null;
     let evidenceHash: string | null = null;
 
-    // Auto-seal if not already sealed
-    if (!job.sealed_at) {
+    // Auto-seal if not already sealed and has evidence
+    if (!job.sealed_at && (beforePhotoIncluded || afterPhotoIncluded || signatureIncluded)) {
       try {
-        console.log(`[GenerateReport] Auto-sealing job ${job.id}...`);
+        console.log(`[GenerateReport] Invoking seal-evidence for job ${job.id}...`);
 
-        // Build evidence bundle for hashing
-        const evidenceBundle = {
-          job: {
-            id: job.id,
-            title: job.title,
-            client: job.client_name,
-            address: job.address,
-            notes: job.notes || '',
-            completedAt: job.completed_at || new Date().toISOString(),
-          },
-          photos: job.photos || [],
-          signature: {
-            url: job.signature_url || null,
-            signerName: job.signer_name,
-            signerRole: job.signer_role,
-          },
-          metadata: {
-            sealedAt: new Date().toISOString(),
-            version: '1.0',
-          },
-        };
+        // Call the seal-evidence edge function for proper cryptographic sealing
+        const sealResponse = await fetch(
+          `${supabaseUrl}/functions/v1/seal-evidence`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ jobId: job.id }),
+          }
+        );
 
-        // Compute SHA-256 hash
-        const canonicalJson = JSON.stringify(evidenceBundle, Object.keys(evidenceBundle).sort());
-        const encoder = new TextEncoder();
-        const data = encoder.encode(canonicalJson);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        evidenceHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-        sealedAt = evidenceBundle.metadata.sealedAt;
+        if (sealResponse.ok) {
+          const sealData = await sealResponse.json();
+          if (sealData.success) {
+            sealedAt = sealData.sealedAt;
+            evidenceHash = sealData.evidenceHash;
 
-        console.log(`[GenerateReport] Evidence hash: ${evidenceHash.substring(0, 16)}...`);
+            // Update job object for email template
+            job.sealed_at = sealedAt;
+            job.evidence_hash = evidenceHash;
+            job.sealed_by = sealData.sealedBy;
+
+            console.log(`[GenerateReport] Job ${job.id} sealed: ${evidenceHash?.substring(0, 16)}...`);
+          } else {
+            console.warn(`[GenerateReport] Seal returned non-success:`, sealData);
+          }
+        } else {
+          const errorText = await sealResponse.text();
+          console.error(`[GenerateReport] Seal request failed:`, sealResponse.status, errorText);
+        }
       } catch (sealError) {
         console.error(`[GenerateReport] Auto-seal failed:`, sealError);
-        // Non-blocking - report still generated
+        // Non-blocking - report still generated without seal
       }
-    } else {
+    } else if (job.sealed_at) {
       sealedAt = job.sealed_at;
       evidenceHash = job.evidence_hash;
       console.log(`[GenerateReport] Job already sealed at ${sealedAt}`);
+    } else {
+      console.log(`[GenerateReport] Skipping seal - no evidence to seal`);
     }
 
     // =========================================================================
@@ -1158,11 +1206,33 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <title>Evidence Report - ${job.title || job.id}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: Arial, sans-serif !important; }
+    .dark-bg { background-color: #0f172a !important; }
+  </style>
+  <![endif]-->
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body, .body-wrapper { background-color: #0f172a !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0f172a; color: #f8fafc;">
-  <div style="max-width: 640px; margin: 0 auto; padding: 24px 16px;">
+<body bgcolor="#0f172a" style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0f172a !important; color: #f8fafc;">
+  <!--[if mso]>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#0f172a" class="dark-bg">
+  <tr><td align="center">
+  <![endif]-->
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#0f172a" style="background-color: #0f172a !important;">
+    <tr>
+      <td align="center" style="padding: 24px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width: 640px; width: 100%;">
+          <tr>
+            <td>
 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- HERO HEADER WITH SEAL BADGE -->
@@ -1561,16 +1631,23 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <div style="text-align: center; padding: 24px 16px;">
       <p style="color: #cbd5e1; font-size: 13px; font-weight: 600; margin: 0;">
-        Powered by <strong style="color: #60a5fa;">JobProof</strong> • Professional Evidence Platform
+        Powered by <strong style="color: #60a5fa;">JobProof</strong>
       </p>
       <p style="color: #94a3b8; font-size: 11px; margin: 8px 0 0 0;">
         Job ID: ${job.id.substring(0, 8).toUpperCase()}
       </p>
-      <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">
-        Report generated ${new Date().toISOString().split('T')[0]}
-      </p>
     </div>
-  </div>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!--[if mso]>
+  </td></tr></table>
+  <![endif]-->
 </body>
 </html>
   `.trim();

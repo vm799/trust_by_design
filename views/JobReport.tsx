@@ -6,7 +6,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
 import { getMedia } from '../db';
 import SealBadge from '../components/SealBadge';
-import LegalDisclaimer from '../components/LegalDisclaimer';
 import ClientReceiptView from '../components/ClientReceiptView';
 import { getReportUrl, getValidatedHandshakeUrl } from '../lib/redirects';
 import { generateSecureInvoiceId } from '../lib/secureId';
@@ -411,8 +410,6 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
       navigate('/admin/invoices');
    };
 
-   const reportHash = btoa(`${job.id}-${job.completedAt}-${job.photos.length}`).substring(0, 32).toUpperCase();
-
    return (
       <Layout user={user} isAdmin={!publicView}>
          <div className={`max-w-5xl mx-auto flex flex-col ${publicView ? '' : 'lg:flex-row'} gap-4 sm:gap-8 main-content-area animate-in`}>
@@ -427,9 +424,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      <div className="bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
                      <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
                      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                        <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id}</span></p>
-                        <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
-                        <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Vault ID: <span className="font-mono text-slate-900">{reportHash.substring(0, 8)}</span></p>
+                        <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id.substring(0, 8)}</span></p>
+                        {isSealed && job.evidenceHash && (
+                           <>
+                              <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
+                              <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Seal: <span className="font-mono text-emerald-700">{job.evidenceHash.substring(0, 8)}</span></p>
+                           </>
+                        )}
                         {job.w3w && (
                            <>
                               <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
@@ -779,14 +780,11 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
                )}
 
-               {/* Legal Disclaimer - Phase C.5 */}
-               <div className="mt-12 relative z-10">
-                  <LegalDisclaimer />
-               </div>
-
                <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between items-center text-[9px] font-mono text-slate-300 uppercase tracking-widest relative z-10">
-                  <p>HASH: {reportHash}</p>
-                  <p>JOBPROOF V2.4 • GLOBAL INFRASTRUCTURE</p>
+                  {isSealed && job.evidenceHash && (
+                     <p>SEAL: {job.evidenceHash.substring(0, 12).toUpperCase()}</p>
+                  )}
+                  <p>JOBPROOF</p>
                   <p>PAGE 01 OF 01</p>
                </div>
             </div>

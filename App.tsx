@@ -38,7 +38,6 @@ const AuditReport = lazy(() => import('./views/docs/AuditReport'));
 const HelpCenter = lazy(() => import('./views/HelpCenter'));
 const OnboardingTour = lazy(() => import('./components/OnboardingTour'));
 const ClientDashboard = lazy(() => import('./views/ClientDashboard'));
-const LegalPage = lazy(() => import('./views/LegalPage'));
 const PricingView = lazy(() => import('./views/PricingView'));
 const ProfileView = lazy(() => import('./views/ProfileView'));
 const AuthView = lazy(() => import('./views/AuthView'));
@@ -777,7 +776,6 @@ const AppContent: React.FC = () => {
 
         {/* System & Docs */}
         <Route path="/docs/audit" element={<AuditReport />} />
-        <Route path="/legal/:type" element={<LegalPage />} />
 
         {/* Developer Tools - Hidden route for cache/storage reset */}
         <Route path="/dev/reset" element={<DevReset />} />
