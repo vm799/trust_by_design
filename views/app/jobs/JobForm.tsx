@@ -134,7 +134,8 @@ const JobForm: React.FC = () => {
 
     const timer = setTimeout(() => {
       // Save form data to IndexedDB (async, non-blocking)
-      saveFormDraft(DRAFT_FORM_TYPE, formData as Record<string, unknown>).catch(() => {
+      // Cast through unknown for IndexedDB storage compatibility
+      saveFormDraft(DRAFT_FORM_TYPE, formData as unknown as Record<string, unknown>).catch(() => {
         // IndexedDB write failed - non-critical, will retry on next change
       });
     }, 500);
