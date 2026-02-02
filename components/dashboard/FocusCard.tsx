@@ -6,14 +6,17 @@
  * - Sync status badge
  * - Primary action button (44px+ touch target)
  * - Pulsing indicator for non-info severity
+ * - Optional modal for detailed view (enableModal prop)
  *
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FocusEntity } from '../../lib/dashboardState';
+import { Job } from '../../types';
 import SyncStatusBadge from './SyncStatusBadge';
+import AttentionModal from './AttentionModal';
 import { fadeInUp } from '../../lib/animations';
 
 /** Expected metadata shape for FocusEntity (typed locally to avoid core interface changes) */
@@ -28,6 +31,12 @@ interface FocusCardProps {
 
   /** Action handler for primary button */
   onAction: () => void;
+
+  /** Optional job data for modal evidence display */
+  job?: Job | null;
+
+  /** Enable modal for detailed view (default: false for backwards compatibility) */
+  enableModal?: boolean;
 
   /** Optional className for container */
   className?: string;
@@ -81,88 +90,121 @@ const TYPE_ICONS = {
 const FocusCard: React.FC<FocusCardProps> = ({
   entity,
   onAction,
+  job,
+  enableModal = false,
   className = '',
 }) => {
+  const [showModal, setShowModal] = useState(false);
   const config = SEVERITY_CONFIG[entity.severity];
   const icon = SEVERITY_ICONS[entity.severity] || TYPE_ICONS[entity.type];
 
-  return (
-    <motion.div
-      variants={fadeInUp}
-      className={`rounded-2xl border-2 p-5 transition-all ${config.container} ${className}`}
-    >
-      <div className="flex items-start gap-4">
-        {/* Icon with optional pulse */}
-        <div className={`size-14 rounded-2xl flex items-center justify-center relative shrink-0 ${config.iconBg}`}>
-          <span className={`material-symbols-outlined text-2xl ${config.iconColor}`}>
-            {icon}
-          </span>
-          {entity.severity !== 'info' && (
-            <span className={`absolute -top-1 -right-1 size-3 rounded-full animate-pulse ${config.pulseColor}`} />
-          )}
-        </div>
+  // Handle button click - show modal if enabled, otherwise direct action
+  const handleClick = useCallback(() => {
+    if (enableModal) {
+      setShowModal(true);
+    } else {
+      onAction();
+    }
+  }, [enableModal, onAction]);
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Reason badge + sync status */}
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-xs font-bold uppercase tracking-wide ${config.textColor}`}>
-              {entity.reason}
+  // Handle modal action - close modal and execute action
+  const handleModalAction = useCallback(() => {
+    setShowModal(false);
+    onAction();
+  }, [onAction]);
+
+  return (
+    <>
+      <motion.div
+        variants={fadeInUp}
+        className={`rounded-2xl border-2 p-5 transition-all ${config.container} ${className}`}
+      >
+        <div className="flex items-start gap-4">
+          {/* Icon with optional pulse */}
+          <div className={`size-14 rounded-2xl flex items-center justify-center relative shrink-0 ${config.iconBg}`}>
+            <span className={`material-symbols-outlined text-2xl ${config.iconColor}`}>
+              {icon}
             </span>
-            {entity.syncStatus && entity.syncStatus !== 'synced' && (
-              <SyncStatusBadge status={entity.syncStatus} />
+            {entity.severity !== 'info' && (
+              <span className={`absolute -top-1 -right-1 size-3 rounded-full animate-pulse ${config.pulseColor}`} />
             )}
           </div>
 
-          {/* Title */}
-          <h2 className="font-bold text-slate-900 dark:text-white text-lg truncate">
-            {entity.title}
-          </h2>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Reason badge + sync status */}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className={`text-xs font-bold uppercase tracking-wide ${config.textColor}`}>
+                {entity.reason}
+              </span>
+              {entity.syncStatus && entity.syncStatus !== 'synced' && (
+                <SyncStatusBadge status={entity.syncStatus} />
+              )}
+            </div>
 
-          {/* Subtitle */}
-          {entity.subtitle && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-              {entity.subtitle}
-            </p>
-          )}
+            {/* Title */}
+            <h2 className="font-bold text-slate-900 dark:text-white text-lg truncate">
+              {entity.title}
+            </h2>
 
-          {/* Metadata badges (photo count, etc.) */}
-          {entity.metadata && (() => {
-            const meta = entity.metadata as FocusEntityMetadata;
-            return (
-              <div className="flex items-center gap-3 mt-2">
-                {typeof meta.photoCount === 'number' && (
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-sm">photo_camera</span>
-                    {meta.photoCount} photo{meta.photoCount !== 1 ? 's' : ''}
-                  </span>
-                )}
-                {meta.hasSignature && (
-                  <span className="flex items-center gap-1 text-xs text-emerald-500">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    Signed
-                  </span>
-                )}
-              </div>
-            );
-          })()}
+            {/* Subtitle */}
+            {entity.subtitle && (
+              <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                {entity.subtitle}
+              </p>
+            )}
+
+            {/* Metadata badges (photo count, etc.) */}
+            {entity.metadata && (() => {
+              const meta = entity.metadata as FocusEntityMetadata;
+              return (
+                <div className="flex items-center gap-3 mt-2">
+                  {typeof meta.photoCount === 'number' && (
+                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                      <span className="material-symbols-outlined text-sm">photo_camera</span>
+                      {meta.photoCount} photo{meta.photoCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {meta.hasSignature && (
+                    <span className="flex items-center gap-1 text-xs text-emerald-500">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      Signed
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Action button - 44px minimum touch target */}
+          <button
+            onClick={handleClick}
+            className={`
+              shrink-0 px-5 py-3 bg-primary text-white font-bold text-sm rounded-xl
+              min-h-[44px] min-w-[44px] flex items-center gap-2
+              transition-all active:scale-95 shadow-lg shadow-primary/20
+              hover:shadow-xl hover:shadow-primary/30
+            `}
+          >
+            {enableModal ? 'View Details' : entity.actionLabel}
+            <span className="material-symbols-outlined text-lg">
+              {enableModal ? 'open_in_full' : 'chevron_right'}
+            </span>
+          </button>
         </div>
+      </motion.div>
 
-        {/* Action button - 44px minimum touch target */}
-        <button
-          onClick={onAction}
-          className={`
-            shrink-0 px-5 py-3 bg-primary text-white font-bold text-sm rounded-xl
-            min-h-[44px] min-w-[44px] flex items-center gap-2
-            transition-all active:scale-95 shadow-lg shadow-primary/20
-            hover:shadow-xl hover:shadow-primary/30
-          `}
-        >
-          {entity.actionLabel}
-          <span className="material-symbols-outlined text-lg">chevron_right</span>
-        </button>
-      </div>
-    </motion.div>
+      {/* Attention Modal for detailed view */}
+      {enableModal && (
+        <AttentionModal
+          entity={entity}
+          job={job}
+          isOpen={showModal}
+          onAction={handleModalAction}
+          onDismiss={() => setShowModal(false)}
+        />
+      )}
+    </>
   );
 };
 

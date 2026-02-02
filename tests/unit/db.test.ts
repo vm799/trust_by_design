@@ -4,10 +4,10 @@ import { createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
 
 describe('lib/db - Database Operations', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     // Initialize mock database for tests
-    initMockDatabase();
+    await initMockDatabase();
   });
 
   describe('createJob', () => {

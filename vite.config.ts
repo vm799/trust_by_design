@@ -141,8 +141,7 @@ export default defineConfig(({ mode }) => {
               ],
               'public-static': [
                 './views/PricingView.tsx',
-                './views/RoadmapView.tsx',
-                './views/LegalPage.tsx'
+                './views/RoadmapView.tsx'
               ],
 
               // Onboarding - separate chunk

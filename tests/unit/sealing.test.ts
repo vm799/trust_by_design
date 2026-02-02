@@ -5,9 +5,9 @@ import { mockJobs, createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
 
 describe('lib/sealing - Evidence Sealing Operations', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Initialize mock database and sealing for tests
-    initMockDatabase();
+    await initMockDatabase();
     enableMockSealing();
   });
 
