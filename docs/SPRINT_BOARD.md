@@ -6,6 +6,24 @@
 
 ---
 
+## ✅ BASELINE VERIFICATION (2026-02-02)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| **Test Suite** | ✅ 524/524 passed | All tests green in 18.43s |
+| **Type Check** | ⚠️ 14 errors | Pre-existing errors (documented in DEBT-1 to DEBT-4) |
+| **Production Build** | ✅ Success | Built in 10.72s, 39 chunks |
+| **Legacy Audit: technicianRows** | ✅ 0 matches | Legacy code fully removed |
+| **Legacy Audit: getJobs** | ✅ 0 matches | Deprecated hook not used |
+
+**Pre-existing TypeScript Errors (non-blocking):**
+- `FocusCard.tsx:132` - unknown to ReactNode (DEBT-3)
+- `views/app/*/index.ts` - module resolution (DEBT-2)
+- `JobForm.tsx:137` - FormData conversion (DEBT-4)
+- `EvidenceCapture.tsx:195,211,227,482` - SYNC_STATUS + variant prop (DEBT-1)
+
+---
+
 ## 📋 Architecture Invariants (MUST PRESERVE)
 
 All tasks must respect these 6 invariants from `lib/deriveDashboardState.ts`:
@@ -57,7 +75,7 @@ These items are tracked but not blocking current work. Address in future sprints
 | **Priority** | P0 |
 | **Estimated Effort** | 0.5h |
 | **Dependencies** | None |
-| **Status** | `todo` |
+| **Status** | ✅ `done` |
 | **Commands** | `npm test -- --run tests/unit/deriveDashboardState.test.ts` |
 | **Success Criteria** | All 33 tests pass, specifically "Count Consistency Regression" block (4 tests) |
 | **Invariants** | Validates INV-3 (no duplicate IDs) and count matching |
@@ -71,7 +89,7 @@ These items are tracked but not blocking current work. Address in future sprints
 | **Priority** | P0 |
 | **Estimated Effort** | 0.5h |
 | **Dependencies** | None |
-| **Status** | `todo` |
+| **Status** | ✅ `done` |
 | **Commands** | `npm test -- --run && npm run type-check && npm run build` |
 | **Success Criteria** | All tests pass, build succeeds (pre-existing TS errors acceptable) |
 | **Invariants** | All 6 invariants validated via unit tests |
@@ -85,10 +103,11 @@ These items are tracked but not blocking current work. Address in future sprints
 | **Priority** | P0 |
 | **Estimated Effort** | 1h |
 | **Dependencies** | TASK-001 |
-| **Status** | `todo` |
+| **Status** | ✅ `done` |
 | **Files** | `views/ContractorDashboard.tsx` |
 | **Success Criteria** | activeJobCount header matches queue length in all scenarios |
 | **Invariants** | INV-3 (no duplicate IDs) |
+| **Verification** | Line 45-54: Uses `user.id` (UUID) to match `job.techId` / `job.technicianId` |
 
 ---
 
