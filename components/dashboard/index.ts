@@ -5,11 +5,24 @@
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
+// Main container
+export { default as UnifiedDashboard } from './UnifiedDashboard';
+
+// Core components
+export { default as FocusCard, FocusCardSkeleton } from './FocusCard';
+export { default as QueueList, QueueListSkeleton } from './QueueList';
+export { default as BackgroundCollapse, BackgroundCollapseSkeleton } from './BackgroundCollapse';
+
+// Utilities
 export { default as SyncStatusBadge, SyncStatusIcon, getSyncStatusConfig } from './SyncStatusBadge';
 
-// Future exports (Phase 2):
-// export { default as UnifiedDashboard } from './UnifiedDashboard';
-// export { default as FocusCard } from './FocusCard';
-// export { default as QueueList } from './QueueList';
-// export { default as BackgroundCollapse } from './BackgroundCollapse';
-// export { default as DashboardSkeleton } from './DashboardSkeleton';
+// Re-export types for convenience
+export type {
+  DashboardState,
+  DashboardRole,
+  FocusEntity,
+  QueueItem,
+  BackgroundSection,
+  BackgroundItem,
+  SyncStatus,
+} from '../../lib/dashboardState';
