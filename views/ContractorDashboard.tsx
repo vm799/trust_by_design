@@ -42,11 +42,12 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
     }
   }
 
-  // Count active jobs for header (jobs not submitted/completed)
+  // Count active jobs for header (P0 fix: use stable IDs, not name strings)
   const activeJobCount = useMemo(() => {
-    if (!user) return 0;
+    if (!user?.id) return 0;
     return jobs.filter(job => {
-      const isMyJob = job.technician === user.name || job.technician === user.email;
+      // Check both techId and technicianId for consistency across codebase
+      const isMyJob = job.techId === user.id || job.technicianId === user.id;
       const isActive = job.status !== 'Submitted' && job.status !== 'Complete';
       return isMyJob && isActive;
     }).length;

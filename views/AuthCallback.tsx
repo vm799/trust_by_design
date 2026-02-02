@@ -113,12 +113,14 @@ const AuthCallback: React.FC = () => {
 
           if (sessionError) {
             console.error('[AuthCallback] setSession error:', sessionError);
-            // Token might be expired or invalid
+            // Token might be expired or invalid - navigate to dedicated expired view
             if (sessionError.message?.includes('expired') ||
                 sessionError.message?.includes('invalid') ||
                 sessionError.message?.includes('already used')) {
-              setError('Sign-in link expired or already used. Please request a new link.');
+              console.log('[AuthCallback] Link expired/invalid, navigating to /auth/expired');
+              hasRedirected.current = true;
               setProcessing(false);
+              navigate('/auth/expired', { replace: true });
               return;
             }
             // Other errors - let the listener handle it
@@ -216,7 +218,7 @@ const AuthCallback: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  // Timeout fallback - if stuck for too long, show error
+  // Timeout fallback - if stuck for too long, navigate to expired view
   // Give enough time for token extraction and session establishment
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -224,16 +226,21 @@ const AuthCallback: React.FC = () => {
         // Check if there were tokens in the URL but session failed
         const hadTokens = window.location.hash.includes('access_token=');
         if (hadTokens) {
-          setError('Sign-in link expired or already used. Please request a new link.');
+          // Token was present but failed - navigate to dedicated expired view
+          console.log('[AuthCallback] Timeout with tokens - link likely expired');
+          hasRedirected.current = true;
+          setProcessing(false);
+          navigate('/auth/expired', { replace: true });
         } else {
+          // No tokens - generic auth timeout
           setError('Authentication timed out. Please try signing in again.');
+          setProcessing(false);
         }
-        setProcessing(false);
       }
     }, 10000); // 10 second timeout - tokens should process quickly
 
     return () => clearTimeout(timeout);
-  }, [processing, isAuthenticated]);
+  }, [processing, isAuthenticated, navigate]);
 
   if (error) {
     // UX Flow Contract: Show intent context in error state

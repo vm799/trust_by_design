@@ -44,6 +44,8 @@ const ProfileView = lazy(() => import('./views/ProfileView'));
 const AuthView = lazy(() => import('./views/AuthView'));
 // Phase 6.5: Dedicated callback handler for magic link auth
 const AuthCallback = lazy(() => import('./views/AuthCallback'));
+// UX Flow Contract: Dedicated expired link view with resend functionality
+const LinkExpiredView = lazy(() => import('./views/LinkExpiredView'));
 // V1 MVP: EmailFirstAuth removed - Magic Link only via AuthView
 // const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
 const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
@@ -481,6 +483,8 @@ const AppContent: React.FC = () => {
         <Route path="/auth" element={isAuthenticated ? <PersonaRedirect user={user} hasSeenOnboarding={hasSeenOnboarding} /> : <AuthView />} />
         {/* Phase 6.5: Dedicated callback handler for magic link - processes auth tokens */}
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* UX Flow Contract: Dedicated expired link view - NOT inline error in AuthCallback */}
+        <Route path="/auth/expired" element={<LinkExpiredView />} />
         <Route path="/auth/signup-success" element={<SignupSuccess />} />
         <Route path="/auth/setup" element={isAuthenticated ? <OAuthSetup /> : <Navigate to="/auth" replace />} />
         {/* Stripe Trial: Plan selection after account creation */}
