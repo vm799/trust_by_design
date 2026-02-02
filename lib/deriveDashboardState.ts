@@ -11,6 +11,13 @@
  * @invariant INV-5: Queue sorted by urgency descending
  * @invariant INV-6: Idle technicians never in focus or queue
  *
+ * ARCHITECTURE FREEZE (Feb 2026):
+ * This function is the SINGLE SOURCE OF TRUTH for all dashboard state.
+ * Dashboards (Admin, Contractor, Client) are render-only—they pass role
+ * to UnifiedDashboard, which calls useDashboard → deriveDashboardState.
+ * Parallel attention derivations are FORBIDDEN. If counts diverge from
+ * content, the bug is HERE, not in the dashboard views.
+ *
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
