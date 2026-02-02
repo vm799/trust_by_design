@@ -137,6 +137,53 @@ const DevReset: React.FC = () => {
     await gatherLayerStats();
   };
 
+  /**
+   * Auth-Only Reset: Clears auth state while preserving offline data
+   *
+   * Clears:
+   * - Supabase session (logout)
+   * - Auth-related localStorage (user profile, onboarding flag)
+   * - SessionStorage (navigation intent)
+   *
+   * Preserves:
+   * - IndexedDB (offline jobs, photos, drafts)
+   * - Service Worker cache (offline capability)
+   * - Cookies (non-auth)
+   */
+  const handleAuthOnlyReset = async () => {
+    if (!confirm('This will log you out but preserve offline data. Continue?')) {
+      return;
+    }
+
+    setIsResetting(true);
+
+    // 1. Clear Supabase session first
+    await clearSupabaseSession();
+
+    // 2. Clear only auth-related localStorage keys
+    const authPrefixes = ['jobproof_user', 'jobproof_onboarding', 'sb-', 'supabase.'];
+    const keysToRemove = Object.keys(localStorage).filter(key =>
+      authPrefixes.some(prefix => key.startsWith(prefix))
+    );
+    keysToRemove.forEach(key => {
+      console.log('[DevReset] Auth-only: removing', key);
+      localStorage.removeItem(key);
+    });
+
+    // 3. Clear sessionStorage (navigation intent, etc.)
+    clearSessionStorage();
+
+    // 4. DO NOT clear IndexedDB - preserves offline jobs/photos
+    // 5. DO NOT clear Service Worker - preserves offline capability
+
+    setIsResetting(false);
+    await gatherLayerStats();
+
+    // Navigate to auth page
+    navigate('/#/auth');
+    window.location.reload();
+  };
+
   const handleLayerReset = async (layerName: string) => {
     setIsResetting(true);
 
@@ -337,29 +384,43 @@ const DevReset: React.FC = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={handleFullReset}
-            disabled={isResetting}
-            className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 rounded-xl font-semibold transition-colors"
-          >
-            {isResetting ? 'Resetting...' : 'Nuclear Reset (All Layers)'}
-          </button>
-          <button
-            type="button"
-            onClick={handleShowDiagnostics}
-            className="px-6 py-3 bg-blue-800 hover:bg-blue-700 rounded-xl font-medium transition-colors"
-          >
-            Diagnostics
-          </button>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium transition-colors"
-          >
-            Reload
-          </button>
+        <div className="space-y-3">
+          {/* Primary Actions Row */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleAuthOnlyReset}
+              disabled={isResetting}
+              className="flex-1 px-6 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 disabled:opacity-50 rounded-xl font-semibold transition-colors"
+            >
+              {isResetting ? 'Resetting...' : 'Auth Reset (Keep Offline Data)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleFullReset}
+              disabled={isResetting}
+              className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 rounded-xl font-semibold transition-colors"
+            >
+              {isResetting ? 'Resetting...' : 'Nuclear Reset (All Layers)'}
+            </button>
+          </div>
+          {/* Secondary Actions Row */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleShowDiagnostics}
+              className="flex-1 px-6 py-3 bg-blue-800 hover:bg-blue-700 rounded-xl font-medium transition-colors"
+            >
+              Diagnostics
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="flex-1 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium transition-colors"
+            >
+              Reload
+            </button>
+          </div>
         </div>
 
         {/* Help Text */}
