@@ -291,8 +291,8 @@ interface RouteContract {
 
 ### Phase 2: Dashboard Hierarchy
 
-- [ ] Refactor dashboard to single-purpose sections
-- [ ] Implement collapsible idle technicians section
+- [x] Refactor dashboard to single-purpose sections
+- [x] Implement collapsible idle technicians section
 - [ ] Remove duplicate items across sections
 
 ### Phase 3: Offline Resilience
