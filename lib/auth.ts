@@ -235,6 +235,13 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
 const magicLinkRequestCache = new Map<string, number>();
 const MAGIC_LINK_COOLDOWN_MS = 5000; // 5 second minimum between requests for same email
 
+/**
+ * Feature flag: Use Edge Function for magic link sending
+ * When true, uses the send-magic-link Edge Function with Postgres-backed rate limiting
+ * When false, falls back to direct Supabase Auth API call
+ */
+const USE_EDGE_FUNCTION_RATE_LIMITER = true;
+
 export const signInWithMagicLink = async (
   email: string,
   signupData?: { workspaceName?: string; fullName?: string }
@@ -276,6 +283,53 @@ export const signInWithMagicLink = async (
 
   console.log(`[Auth] Sending magic link to ${normalizedEmail}...`);
 
+  // =========================================
+  // Option A: Use Edge Function with rate limiting
+  // =========================================
+  if (USE_EDGE_FUNCTION_RATE_LIMITER) {
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('send-magic-link', {
+        body: {
+          email: normalizedEmail,
+          redirectUrl,
+        },
+      });
+
+      if (invokeError) {
+        console.error('[Auth] Edge Function invoke error:', invokeError);
+        // Fall back to direct API call if Edge Function fails
+        console.log('[Auth] Falling back to direct Supabase Auth API...');
+      } else if (data) {
+        // Check for rate limit response from Edge Function
+        if (data.error && data.code) {
+          console.warn('[Auth] Edge Function rate limit:', data);
+          magicLinkRequestCache.delete(normalizedEmail);
+
+          const isRateLimit = data.code.includes('RATE_LIMIT');
+          return {
+            success: false,
+            rateLimited: isRateLimit,
+            retryAfter: data.retry_after || 60,
+            error: new Error(data.error),
+          };
+        }
+
+        // Success from Edge Function
+        if (data.success) {
+          console.log(`[Auth] Magic link sent via Edge Function to ${normalizedEmail}`);
+          console.log(`[Auth] Rate limit remaining: email=${data.remaining?.email}, ip=${data.remaining?.ip}`);
+          return { success: true };
+        }
+      }
+    } catch (edgeFnError) {
+      console.error('[Auth] Edge Function error:', edgeFnError);
+      // Fall through to direct API call
+    }
+  }
+
+  // =========================================
+  // Option B: Direct Supabase Auth API (fallback)
+  // =========================================
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
     options: {
