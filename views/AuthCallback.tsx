@@ -112,11 +112,29 @@ const AuthCallback: React.FC = () => {
           });
 
           if (sessionError) {
-            console.error('[AuthCallback] setSession error:', sessionError);
+            console.error('[AuthCallback] setSession error:', {
+              message: sessionError.message,
+              status: (sessionError as { status?: number }).status,
+              code: (sessionError as { code?: string }).code,
+            });
+
+            // Check for rate limiting / security block errors
+            const errMsg = sessionError.message?.toLowerCase() || '';
+            if (errMsg.includes('rate') || errMsg.includes('too many') ||
+                errMsg.includes('security') || errMsg.includes('exceeded')) {
+              console.log('[AuthCallback] Rate limit detected, showing error');
+              hasRedirected.current = true;
+              setProcessing(false);
+              setError(
+                'Sign-in temporarily blocked due to too many attempts. ' +
+                'This is a security measure. Please wait 5-10 minutes and request a new link.'
+              );
+              return;
+            }
+
             // Token might be expired or invalid - navigate to dedicated expired view
-            if (sessionError.message?.includes('expired') ||
-                sessionError.message?.includes('invalid') ||
-                sessionError.message?.includes('already used')) {
+            if (errMsg.includes('expired') || errMsg.includes('invalid') ||
+                errMsg.includes('already used') || errMsg.includes('not found')) {
               console.log('[AuthCallback] Link expired/invalid, navigating to /auth/expired');
               hasRedirected.current = true;
               setProcessing(false);
