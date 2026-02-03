@@ -105,8 +105,9 @@ export async function clearIndexedDB(): Promise<boolean> {
   try {
     // First, try to close any open Dexie connections
     try {
-      const { db, clearAllData } = await import('./offline/db');
-      db.close();
+      const { closeAllConnections, _resetDbInstance, clearAllData } = await import('./offline/db');
+      await closeAllConnections();
+      _resetDbInstance();
       await clearAllData();
     } catch (e) {
       console.warn('[DevReset] Dexie cleanup failed (may already be closed):', e);
