@@ -228,12 +228,42 @@ export const signIn = async (email: string, password: string): Promise<AuthResul
  * @param email - User's email address
  * @param signupData - Optional workspace data for signup flow
  */
+/**
+ * Request deduplication for magic link sending
+ * Prevents accidental multiple requests within a short window
+ */
+const magicLinkRequestCache = new Map<string, number>();
+const MAGIC_LINK_COOLDOWN_MS = 5000; // 5 second minimum between requests for same email
+
+/**
+ * Feature flag: Use Edge Function for magic link sending
+ * When true, uses the send-magic-link Edge Function with Postgres-backed rate limiting
+ * When false, falls back to direct Supabase Auth API call
+ */
+const USE_EDGE_FUNCTION_RATE_LIMITER = true;
+
 export const signInWithMagicLink = async (
   email: string,
   signupData?: { workspaceName?: string; fullName?: string }
 ): Promise<AuthResult> => {
   const supabase = getSupabase();
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // RATE LIMIT FIX: Check for duplicate requests within cooldown period
+  const lastRequest = magicLinkRequestCache.get(normalizedEmail);
+  const now = Date.now();
+  if (lastRequest && (now - lastRequest) < MAGIC_LINK_COOLDOWN_MS) {
+    const waitTime = Math.ceil((MAGIC_LINK_COOLDOWN_MS - (now - lastRequest)) / 1000);
+    console.warn(`[Auth] Magic link request blocked: duplicate within ${waitTime}s cooldown for ${normalizedEmail}`);
+    return {
+      success: false,
+      rateLimited: true,
+      retryAfter: waitTime,
+      error: new Error(`Please wait ${waitTime} seconds before requesting another link.`)
+    };
+  }
 
   // Phase 6.5: Use dedicated callback route for proper session handling
   // The callback route waits for session establishment before redirecting
@@ -248,14 +278,81 @@ export const signInWithMagicLink = async (
     redirectUrl = getAuthRedirectUrl(`/#/auth/callback?${params.toString()}`);
   }
 
+  // Record this request BEFORE making it
+  magicLinkRequestCache.set(normalizedEmail, now);
+
+  console.log(`[Auth] Sending magic link to ${normalizedEmail}...`);
+
+  // =========================================
+  // Option A: Use Edge Function with rate limiting
+  // =========================================
+  if (USE_EDGE_FUNCTION_RATE_LIMITER) {
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('send-magic-link', {
+        body: {
+          email: normalizedEmail,
+          redirectUrl,
+        },
+      });
+
+      if (invokeError) {
+        console.error('[Auth] Edge Function invoke error:', invokeError);
+        // Fall back to direct API call if Edge Function fails
+        console.log('[Auth] Falling back to direct Supabase Auth API...');
+      } else if (data) {
+        // Check for rate limit response from Edge Function
+        if (data.error && data.code) {
+          console.warn('[Auth] Edge Function rate limit:', data);
+          magicLinkRequestCache.delete(normalizedEmail);
+
+          const isRateLimit = data.code.includes('RATE_LIMIT');
+          return {
+            success: false,
+            rateLimited: isRateLimit,
+            retryAfter: data.retry_after || 60,
+            error: new Error(data.error),
+          };
+        }
+
+        // Success from Edge Function
+        if (data.success) {
+          console.log(`[Auth] Magic link sent via Edge Function to ${normalizedEmail}`);
+          console.log(`[Auth] Rate limit remaining: email=${data.remaining?.email}, ip=${data.remaining?.ip}`);
+          return { success: true };
+        }
+      }
+    } catch (edgeFnError) {
+      console.error('[Auth] Edge Function error:', edgeFnError);
+      // Fall through to direct API call
+    }
+  }
+
+  // =========================================
+  // Option B: Direct Supabase Auth API (fallback)
+  // =========================================
   const { error } = await supabase.auth.signInWithOtp({
-    email,
+    email: normalizedEmail,
     options: {
       emailRedirectTo: redirectUrl,
     },
   });
 
-  if (error) return { success: false, error };
+  if (error) {
+    // Log detailed error for debugging rate limit issues
+    console.error('[Auth] Magic link error:', {
+      email: normalizedEmail,
+      message: error.message,
+      status: (error as { status?: number }).status,
+      code: (error as { code?: string }).code,
+    });
+
+    // Clear cache entry on error so user can retry immediately
+    magicLinkRequestCache.delete(normalizedEmail);
+
+    return enhanceWithRateLimitInfo({ success: false, error });
+  }
+
+  console.log(`[Auth] Magic link sent successfully to ${normalizedEmail}`);
   return { success: true };
 };
 

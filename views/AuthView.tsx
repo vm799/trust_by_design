@@ -40,6 +40,15 @@ const AuthView: React.FC = () => {
       if (!result.success) {
         const errorMsg = result.error?.message || 'Failed to send magic link';
 
+        // Handle rate limiting with specific, actionable message
+        if (result.rateLimited) {
+          const waitTime = result.retryAfter || 60;
+          throw new Error(
+            `Email service rate limit reached. Please wait ${waitTime > 60 ? Math.ceil(waitTime / 60) + ' minute(s)' : waitTime + ' seconds'} before trying again. ` +
+            'This is a security feature to prevent spam.'
+          );
+        }
+
         // Handle specific Supabase errors with user-friendly messages
         if (errorMsg.toLowerCase().includes('invalid') && errorMsg.toLowerCase().includes('email')) {
           throw new Error(
@@ -48,8 +57,19 @@ const AuthView: React.FC = () => {
           );
         }
 
-        if (errorMsg.includes('rate limit') || errorMsg.includes('too many')) {
-          throw new Error('Too many requests. Please wait a few minutes and try again.');
+        if (errorMsg.includes('rate limit') || errorMsg.includes('too many') || errorMsg.includes('exceeded')) {
+          throw new Error(
+            'Too many sign-in attempts. The email service has a limit of 4 emails per hour per address. ' +
+            'Please wait a few minutes and try again, or use a different email address.'
+          );
+        }
+
+        // Handle "For security purposes" errors from Supabase
+        if (errorMsg.includes('security') || errorMsg.includes('Security')) {
+          throw new Error(
+            'Temporarily blocked for security. This can happen after multiple sign-in attempts from the same network. ' +
+            'Please wait 5-10 minutes and try again.'
+          );
         }
 
         throw new Error(errorMsg);
