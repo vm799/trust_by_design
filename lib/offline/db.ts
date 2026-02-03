@@ -278,31 +278,67 @@ export async function clearAllData(): Promise<void> {
     console.log('[DB] All data cleared');
 }
 
-// Legacy export for backward compatibility - auto-opens on first use
-export const db = new JobProofDatabase();
+/**
+ * Get database instance - LAZY INITIALIZATION
+ *
+ * This is the ONLY way to access the database. No eager singleton.
+ * Critical for test isolation - tests can reset dbInstance before any access.
+ *
+ * @see lib/testingControlPlane.ts for test reset capabilities
+ */
+export async function getDb(): Promise<JobProofDatabase> {
+    return getDatabase();
+}
 
-// Initialize database with error handling on module load
-if (typeof window !== 'undefined') {
-    db.open().catch((error: any) => {
-        if (error.name === 'UpgradeError' || error.message?.includes('UpgradeError')) {
-            console.warn('[DB] UpgradeError on init - will purge on next access');
-            purgeAndRecreateDatabase().catch(console.error);
-        } else {
-            console.error('[DB] Failed to open database on init:', error);
+/**
+ * Close all database connections
+ * Required before deleteDatabase() to prevent "blocked" state
+ *
+ * @returns true if closed successfully
+ */
+export async function closeAllConnections(): Promise<boolean> {
+    if (dbInstance) {
+        try {
+            dbInstance.close();
+            dbInstance = null;
+            console.log('[DB] All connections closed');
+            return true;
+        } catch (error) {
+            console.warn('[DB] Error closing connections:', error);
+            return false;
         }
-    });
+    }
+    return true;
+}
+
+/**
+ * Reset database instance for testing
+ * ONLY call this from TestingControlPlane
+ */
+export function _resetDbInstance(): void {
+    if (dbInstance) {
+        try {
+            dbInstance.close();
+        } catch (_e) {
+            // Ignore
+        }
+    }
+    dbInstance = null;
 }
 
 export async function saveJobLocal(job: LocalJob) {
-    return await db.jobs.put(job);
+    const database = await getDatabase();
+    return await database.jobs.put(job);
 }
 
 export async function getJobLocal(id: string) {
-    return await db.jobs.get(id);
+    const database = await getDatabase();
+    return await database.jobs.get(id);
 }
 
 export async function getAllJobsLocal(workspaceId: string) {
-    return await db.jobs
+    const database = await getDatabase();
+    return await database.jobs
         .where('workspaceId')
         .equals(workspaceId)
         .reverse()
@@ -319,7 +355,8 @@ export class StorageQuotaExceededError extends Error {
 
 export async function saveMediaLocal(id: string, jobId: string, data: string) {
     try {
-        return await db.media.put({
+        const database = await getDatabase();
+        return await database.media.put({
             id,
             jobId,
             data,
@@ -340,12 +377,14 @@ export async function saveMediaLocal(id: string, jobId: string, data: string) {
 }
 
 export async function getMediaLocal(id: string) {
-    const record = await db.media.get(id);
+    const database = await getDatabase();
+    const record = await database.media.get(id);
     return record?.data || null;
 }
 
 export async function queueAction(type: OfflineAction['type'], payload: any) {
-    return await db.queue.add({
+    const database = await getDatabase();
+    return await database.queue.add({
         type,
         payload,
         createdAt: Date.now(),
@@ -365,7 +404,8 @@ const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
  * CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
  */
 export async function saveFormDraft(formType: string, data: Record<string, unknown>): Promise<void> {
-    await db.formDrafts.put({
+    const database = await getDatabase();
+    await database.formDrafts.put({
         formType,
         data,
         savedAt: Date.now()
@@ -377,7 +417,8 @@ export async function saveFormDraft(formType: string, data: Record<string, unkno
  * Returns null if draft is expired (8hr)
  */
 export async function getFormDraft(formType: string): Promise<FormDraft | undefined> {
-    const draft = await db.formDrafts.get(formType);
+    const database = await getDatabase();
+    const draft = await database.formDrafts.get(formType);
     if (!draft) return undefined;
 
     // Check expiry
@@ -393,7 +434,8 @@ export async function getFormDraft(formType: string): Promise<FormDraft | undefi
  * Clear form draft after successful submission
  */
 export async function clearFormDraft(formType: string): Promise<void> {
-    await db.formDrafts.delete(formType);
+    const database = await getDatabase();
+    await database.formDrafts.delete(formType);
 }
 
 // ============================================================================
@@ -404,21 +446,24 @@ export async function clearFormDraft(formType: string): Promise<void> {
  * Save a single client to IndexedDB
  */
 export async function saveClientLocal(client: LocalClient): Promise<string> {
-    return await db.clients.put(client);
+    const database = await getDatabase();
+    return await database.clients.put(client);
 }
 
 /**
  * Get a single client by ID
  */
 export async function getClientLocal(id: string): Promise<LocalClient | undefined> {
-    return await db.clients.get(id);
+    const database = await getDatabase();
+    return await database.clients.get(id);
 }
 
 /**
  * Get all clients for a workspace
  */
 export async function getClientsLocal(workspaceId: string): Promise<LocalClient[]> {
-    return await db.clients
+    const database = await getDatabase();
+    return await database.clients
         .where('workspaceId')
         .equals(workspaceId)
         .sortBy('name');
@@ -428,21 +473,24 @@ export async function getClientsLocal(workspaceId: string): Promise<LocalClient[
  * Batch save clients (for initial sync from Supabase)
  */
 export async function saveClientsBatch(clients: LocalClient[]): Promise<void> {
-    await db.clients.bulkPut(clients);
+    const database = await getDatabase();
+    await database.clients.bulkPut(clients);
 }
 
 /**
  * Delete a client from local storage
  */
 export async function deleteClientLocal(id: string): Promise<void> {
-    await db.clients.delete(id);
+    const database = await getDatabase();
+    await database.clients.delete(id);
 }
 
 /**
  * Count clients in a workspace
  */
 export async function countClientsLocal(workspaceId: string): Promise<number> {
-    return await db.clients
+    const database = await getDatabase();
+    return await database.clients
         .where('workspaceId')
         .equals(workspaceId)
         .count();
@@ -456,21 +504,24 @@ export async function countClientsLocal(workspaceId: string): Promise<number> {
  * Save a single technician to IndexedDB
  */
 export async function saveTechnicianLocal(technician: LocalTechnician): Promise<string> {
-    return await db.technicians.put(technician);
+    const database = await getDatabase();
+    return await database.technicians.put(technician);
 }
 
 /**
  * Get a single technician by ID
  */
 export async function getTechnicianLocal(id: string): Promise<LocalTechnician | undefined> {
-    return await db.technicians.get(id);
+    const database = await getDatabase();
+    return await database.technicians.get(id);
 }
 
 /**
  * Get all technicians for a workspace
  */
 export async function getTechniciansLocal(workspaceId: string): Promise<LocalTechnician[]> {
-    return await db.technicians
+    const database = await getDatabase();
+    return await database.technicians
         .where('workspaceId')
         .equals(workspaceId)
         .sortBy('name');
@@ -480,21 +531,24 @@ export async function getTechniciansLocal(workspaceId: string): Promise<LocalTec
  * Batch save technicians (for initial sync from Supabase)
  */
 export async function saveTechniciansBatch(technicians: LocalTechnician[]): Promise<void> {
-    await db.technicians.bulkPut(technicians);
+    const database = await getDatabase();
+    await database.technicians.bulkPut(technicians);
 }
 
 /**
  * Delete a technician from local storage
  */
 export async function deleteTechnicianLocal(id: string): Promise<void> {
-    await db.technicians.delete(id);
+    const database = await getDatabase();
+    await database.technicians.delete(id);
 }
 
 /**
  * Count technicians in a workspace
  */
 export async function countTechniciansLocal(workspaceId: string): Promise<number> {
-    return await db.technicians
+    const database = await getDatabase();
+    return await database.technicians
         .where('workspaceId')
         .equals(workspaceId)
         .count();
@@ -509,14 +563,16 @@ export async function countTechniciansLocal(workspaceId: string): Promise<number
  * Preserves metadata (GPS, timestamp, type) for audit trail even if binary is gone
  */
 export async function saveOrphanPhoto(orphan: OrphanPhoto): Promise<string> {
-    return await db.orphanPhotos.put(orphan);
+    const database = await getDatabase();
+    return await database.orphanPhotos.put(orphan);
 }
 
 /**
  * Get all orphan photos for a job
  */
 export async function getOrphanPhotosForJob(jobId: string): Promise<OrphanPhoto[]> {
-    return await db.orphanPhotos
+    const database = await getDatabase();
+    return await database.orphanPhotos
         .where('jobId')
         .equals(jobId)
         .toArray();
@@ -526,7 +582,8 @@ export async function getOrphanPhotosForJob(jobId: string): Promise<OrphanPhoto[
  * Get all orphan photos (for admin recovery view)
  */
 export async function getAllOrphanPhotos(): Promise<OrphanPhoto[]> {
-    return await db.orphanPhotos
+    const database = await getDatabase();
+    return await database.orphanPhotos
         .orderBy('orphanedAt')
         .reverse()
         .toArray();
@@ -536,22 +593,26 @@ export async function getAllOrphanPhotos(): Promise<OrphanPhoto[]> {
  * Count orphan photos (for dashboard badge)
  */
 export async function countOrphanPhotos(): Promise<number> {
-    return await db.orphanPhotos.count();
+    const database = await getDatabase();
+    return await database.orphanPhotos.count();
 }
 
 /**
  * Delete orphan photo after successful recovery or manual dismissal
  */
 export async function deleteOrphanPhoto(id: string): Promise<void> {
-    await db.orphanPhotos.delete(id);
+    const database = await getDatabase();
+    await database.orphanPhotos.delete(id);
 }
 
 /**
  * Update recovery attempts on orphan photo
  */
 export async function incrementOrphanRecoveryAttempts(id: string): Promise<void> {
-    await db.orphanPhotos.update(id, {
-        recoveryAttempts: (await db.orphanPhotos.get(id))?.recoveryAttempts ?? 0 + 1
+    const database = await getDatabase();
+    const current = await database.orphanPhotos.get(id);
+    await database.orphanPhotos.update(id, {
+        recoveryAttempts: (current?.recoveryAttempts ?? 0) + 1
     });
 }
 
@@ -559,6 +620,7 @@ export async function incrementOrphanRecoveryAttempts(id: string): Promise<void>
  * Clear all orphan photos (use with caution - only after verified recovery)
  */
 export async function clearAllOrphanPhotos(): Promise<void> {
-    await db.orphanPhotos.clear();
+    const database = await getDatabase();
+    await database.orphanPhotos.clear();
     console.log('[DB] All orphan photos cleared');
 }

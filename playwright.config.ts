@@ -34,6 +34,10 @@ export default defineConfig({
     actionTimeout: process.env.CI ? 15000 : 10000,
     // Add navigation timeout
     navigationTimeout: process.env.CI ? 30000 : 15000,
+    // CRITICAL: Disable Service Worker for deterministic E2E tests
+    // SW introduces non-determinism via caching. Test app behavior, not SW.
+    // To test offline flows specifically, create dedicated tests that enable SW.
+    serviceWorkers: 'block',
   },
 
   projects: [

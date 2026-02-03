@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { startMockServer, resetMockServer, closeMockServer } from './mocks/server';
@@ -8,10 +8,22 @@ beforeAll(() => {
   startMockServer();
 });
 
+// Reset persistence state before each test for isolation
+// CRITICAL: This ensures tests don't inherit state from previous tests
+beforeEach(() => {
+  // Clear browser storage - primary mechanism for test isolation
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // Note: IndexedDB is mocked (see below), so no real IDB state persists.
+  // For real browser E2E tests, use TestingControlPlane.resetAll()
+});
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();
   resetMockServer();
+  // Clear storage after test completes to ensure clean state for next test
   localStorage.clear();
   sessionStorage.clear();
 });

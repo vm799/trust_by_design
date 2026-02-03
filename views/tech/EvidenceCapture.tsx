@@ -11,7 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
 import { SYNC_STATUS } from '../../lib/constants';
-import { saveMediaLocal, getMediaLocal, db, StorageQuotaExceededError } from '../../lib/offline/db';
+import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast } from '../../lib/microInteractions';
 
@@ -173,7 +173,8 @@ const EvidenceCapture: React.FC = () => {
     setCapturedPhoto(null);
     // Clear draft - user wants to take a new photo
     try {
-      await db.media.delete(draftKey);
+      const database = await getDatabase();
+      await database.media.delete(draftKey);
     } catch {
       // Non-critical
     }
@@ -205,16 +206,17 @@ const EvidenceCapture: React.FC = () => {
       // - Lose the photo (if job update fails after draft delete)
       // - Have orphaned draft (if draft delete fails after job update)
       // Using a transaction ensures both succeed or both fail
-      await db.transaction('rw', db.jobs, db.media, async () => {
+      const database = await getDatabase();
+      await database.transaction('rw', database.jobs, database.media, async () => {
         // 1. Commit job update to local DB
-        await db.jobs.put({
+        await database.jobs.put({
           ...updatedJob,
           syncStatus: SYNC_STATUS.PENDING,
           lastUpdated: Date.now()
         });
 
         // 2. Delete draft atomically (if job put fails, this won't run)
-        await db.media.delete(draftKey);
+        await database.media.delete(draftKey);
       });
 
       // 3. Update context (reflects the committed DB state)
