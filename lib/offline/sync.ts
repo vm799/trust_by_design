@@ -1,4 +1,4 @@
-import { db, LocalJob } from './db';
+import { getDatabase, LocalJob } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
@@ -80,8 +80,9 @@ async function _pullJobsImpl(workspaceId: string) {
             const conflicts: ConflictResult[] = [];
             const jobsToUpdate: LocalJob[] = [];
 
+            const database = await getDatabase();
             for (const serverJob of serverJobs) {
-                const localJob = await db.jobs.get(serverJob.id);
+                const localJob = await database.jobs.get(serverJob.id);
 
                 if (!localJob) {
                     // No local job - accept server version
@@ -144,7 +145,7 @@ async function _pullJobsImpl(workspaceId: string) {
 
             // Apply updates
             if (jobsToUpdate.length > 0) {
-                await db.jobs.bulkPut(jobsToUpdate);
+                await database.jobs.bulkPut(jobsToUpdate);
             }
 
             // Store conflicts and notify user (Sprint 1 Task 1.4)
@@ -254,7 +255,8 @@ export async function pushQueue() {
  * Internal implementation of pushQueue
  */
 async function _pushQueueImpl() {
-    const pending = await db.queue.where('synced').equals(0).toArray();
+    const database = await getDatabase();
+    const pending = await database.queue.where('synced').equals(0).toArray();
     if (pending.length === 0) return;
 
     console.log(`[Sync] Processing ${pending.length} offline actions...`);
@@ -273,11 +275,11 @@ async function _pushQueueImpl() {
             }
 
             if (success) {
-                await db.queue.update(action.id!, { synced: true });
+                await database.queue.update(action.id!, { synced: true });
                 // Optional: delete from queue after success
-                await db.queue.delete(action.id!);
+                await database.queue.delete(action.id!);
             } else {
-                await db.queue.update(action.id!, { retryCount: action.retryCount + 1 });
+                await database.queue.update(action.id!, { retryCount: action.retryCount + 1 });
             }
         } catch (error) {
             console.error(`[Sync] Action ${action.id} failed:`, error);
@@ -314,10 +316,12 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
     const supabase = getSupabase();
     if (!supabase) return false;
 
+    const database = await getDatabase();
+
     // Get data from IndexedDB if not in payload
     let dataUrl = payload.dataUrl;
     if (!dataUrl) {
-        const record = await db.media.get(payload.id);
+        const record = await database.media.get(payload.id);
         if (!record) {
             console.error(`[Sync] Photo data not found in IndexedDB: ${payload.id}`);
             return false; // Media lost?
@@ -362,7 +366,7 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
         console.log(`[Sync] Photo ${payload.id} uploaded successfully to ${publicUrl}`);
 
         // Update photo in job (IndexedDB)
-        const job = await db.jobs.get(payload.jobId);
+        const job = await database.jobs.get(payload.jobId);
         if (job && job.photos) {
             const updatedPhotos = job.photos.map(p =>
                 p.url === payload.id || p.id === payload.id
@@ -371,7 +375,7 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
             );
 
             // Update job in IndexedDB
-            await db.jobs.update(payload.jobId, {
+            await database.jobs.update(payload.jobId, {
                 photos: updatedPhotos,
                 syncStatus: 'synced' as const,
                 lastUpdated: Date.now()
@@ -395,11 +399,11 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
         }
 
         // Clean up IndexedDB media record
-        await db.media.delete(payload.id);
+        await database.media.delete(payload.id);
         console.log(`[Sync] Cleaned up IndexedDB media: ${payload.id}`);
 
         // AUTO-SEAL: Check if all photos are synced and job should be sealed
-        const updatedJob = await db.jobs.get(payload.jobId);
+        const updatedJob = await database.jobs.get(payload.jobId);
         if (updatedJob) {
             const allPhotosUploaded = updatedJob.photos.every(
                 (p: Photo) => p.syncStatus === 'synced' && !p.isIndexedDBRef
@@ -427,7 +431,7 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                         });
 
                         // Update local job with seal data
-                        await db.jobs.update(payload.jobId, {
+                        await database.jobs.update(payload.jobId, {
                             sealedAt: sealResult.sealedAt,
                             evidenceHash: sealResult.evidenceHash,
                             status: 'Archived' as const,

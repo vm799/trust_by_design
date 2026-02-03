@@ -5,7 +5,7 @@
  * during the offline-to-online synchronization process.
  */
 
-import { db } from '../offline/db';
+import { getDatabase } from '../offline/db';
 import { Photo } from '../../types';
 
 /**
@@ -30,7 +30,8 @@ export async function waitForPhotoSync(
     const checkSync = async () => {
       try {
         // Get latest job data from IndexedDB
-        const job = await db.jobs.get(jobId);
+        const database = await getDatabase();
+        const job = await database.jobs.get(jobId);
 
         if (!job) {
           reject(new Error('Job not found in IndexedDB'));

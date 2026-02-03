@@ -11,7 +11,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  developerReset,
   clearServiceWorker,
   clearIndexedDB,
   clearLocalStorage,
@@ -23,10 +22,14 @@ import {
   isDevMode,
   enableDevMode,
   disableDevMode,
-  type DevResetResult,
 } from '../lib/devReset';
+import {
+  TestingControlPlane,
+  type ResetResult,
+  type LayerStatus,
+} from '../lib/testingControlPlane';
 
-interface LayerStatus {
+interface LayerDisplayStatus {
   name: string;
   items: number | string;
   size?: string;
@@ -36,16 +39,89 @@ interface LayerStatus {
 const DevReset: React.FC = () => {
   const navigate = useNavigate();
   const [isResetting, setIsResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<DevResetResult | null>(null);
-  const [layers, setLayers] = useState<LayerStatus[]>([]);
+  const [resetResult, setResetResult] = useState<ResetResult | null>(null);
+  const [layers, setLayers] = useState<LayerDisplayStatus[]>([]);
+  const [controlPlaneStatus, setControlPlaneStatus] = useState<LayerStatus | null>(null);
   const [devModeEnabled, setDevModeEnabled] = useState(isDevMode());
 
   const buildInfo = getBuildInfo();
 
-  // Gather stats about each persistence layer
+  // Gather stats about each persistence layer using TestingControlPlane
   const gatherLayerStats = useCallback(async () => {
-    const stats: LayerStatus[] = [];
+    const stats: LayerDisplayStatus[] = [];
 
+    // Use TestingControlPlane for comprehensive status if available
+    try {
+      if (TestingControlPlane.isTestingAllowed()) {
+        const cpStatus = await TestingControlPlane.getLayerStatus();
+        setControlPlaneStatus(cpStatus);
+
+        // Service Worker
+        stats.push({
+          name: 'Service Worker',
+          items: cpStatus.serviceWorker.active ? 'Active' : 'Inactive',
+          details: cpStatus.serviceWorker.active
+            ? [`Version: ${cpStatus.serviceWorker.version || 'unknown'}`, `Scope: ${cpStatus.serviceWorker.scope}`]
+            : undefined,
+        });
+
+        // Caches
+        stats.push({
+          name: 'Cache Storage',
+          items: `${cpStatus.caches.count} caches`,
+          details: cpStatus.caches.names.length > 0 ? cpStatus.caches.names : undefined,
+        });
+
+        // IndexedDB
+        const tableDetails = Object.entries(cpStatus.indexedDB.tables)
+          .map(([table, count]) => `${table}: ${count} rows`);
+        stats.push({
+          name: 'IndexedDB',
+          items: `${cpStatus.indexedDB.databaseCount} databases`,
+          details: tableDetails.length > 0 ? tableDetails : undefined,
+        });
+
+        // LocalStorage
+        stats.push({
+          name: 'LocalStorage',
+          items: `${cpStatus.localStorage.jobproofKeyCount} app keys (${cpStatus.localStorage.keyCount} total)`,
+          details: cpStatus.localStorage.keys.filter(k =>
+            k.startsWith('jobproof_') || k.startsWith('sb-') || k.startsWith('supabase.')
+          ).slice(0, 10),
+        });
+
+        // SessionStorage
+        stats.push({
+          name: 'SessionStorage',
+          items: `${cpStatus.sessionStorage.keyCount} keys`,
+          details: cpStatus.sessionStorage.keys.length > 0 ? cpStatus.sessionStorage.keys : undefined,
+        });
+
+        // Cookies
+        const cookies = document.cookie.split(';').filter(c => c.trim());
+        stats.push({
+          name: 'Cookies',
+          items: `${cookies.length} cookies`,
+          details: cookies.length > 0 ? cookies.map(c => c.trim().split('=')[0]) : undefined,
+        });
+
+        // Supabase Auth
+        stats.push({
+          name: 'Supabase Session',
+          items: cpStatus.supabaseAuth.hasSession ? 'Active' : 'None',
+          details: cpStatus.supabaseAuth.hasSession
+            ? [`User: ${cpStatus.supabaseAuth.userId || 'unknown'}`]
+            : undefined,
+        });
+
+        setLayers(stats);
+        return;
+      }
+    } catch (error) {
+      console.warn('[DevReset] TestingControlPlane not available, using fallback:', error);
+    }
+
+    // Fallback: manual stats gathering
     // 1. Service Worker
     if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.getRegistration();
@@ -129,12 +205,33 @@ const DevReset: React.FC = () => {
     }
 
     setIsResetting(true);
-    const result = await developerReset(false); // Don't auto-reload
-    setResetResult(result);
-    setIsResetting(false);
 
-    // Refresh stats
-    await gatherLayerStats();
+    try {
+      // Use TestingControlPlane for atomic reset with verification
+      const result = await TestingControlPlane.resetAll(false); // Don't auto-reload
+      setResetResult(result);
+
+      // Refresh stats to show clean state
+      await gatherLayerStats();
+    } catch (error) {
+      console.error('[DevReset] Reset failed:', error);
+      setResetResult({
+        success: false,
+        layers: {
+          serviceWorker: { cleared: false, unregistered: false, error: 'Failed' },
+          indexedDB: { deleted: false, wasBlocked: false, error: 'Failed' },
+          localStorage: { cleared: false, keyCount: 0, error: 'Failed' },
+          sessionStorage: { cleared: false, error: 'Failed' },
+          cookies: { cleared: false, error: 'Failed' },
+          supabaseAuth: { signedOut: false, error: 'Failed' },
+        },
+        durationMs: 0,
+        errors: [error instanceof Error ? error.message : String(error)],
+        verified: false,
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   /**
@@ -351,24 +448,55 @@ const DevReset: React.FC = () => {
           <div
             className={`
               rounded-xl p-4 mb-6 border
-              ${resetResult.success
+              ${resetResult.success && resetResult.verified
                 ? 'bg-green-900/20 border-green-800'
+                : resetResult.success
+                ? 'bg-yellow-900/20 border-yellow-800'
                 : 'bg-red-900/20 border-red-800'
               }
             `}
           >
-            <h3 className="font-semibold mb-2">
-              {resetResult.success ? '✓ Reset Complete' : '⚠ Reset Incomplete'}
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">
+                {resetResult.success && resetResult.verified
+                  ? '✓ Reset Complete & Verified'
+                  : resetResult.success
+                  ? '⚠ Reset Complete (Unverified)'
+                  : '✗ Reset Failed'}
+              </h3>
+              <span className="text-xs text-slate-500 font-mono">
+                {resetResult.durationMs}ms
+              </span>
+            </div>
+
+            {/* Verification Badge */}
+            <div className={`
+              inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
+              ${resetResult.verified
+                ? 'bg-green-900/50 text-green-300'
+                : 'bg-yellow-900/50 text-yellow-300'
+              }
+            `}>
+              {resetResult.verified ? '✓ Clean State Verified' : '⚠ State Not Fully Clean'}
+            </div>
+
             <div className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(resetResult.layers).map(([key, success]) => (
-                <div key={key} className="flex items-center gap-2">
-                  <span className={success ? 'text-green-400' : 'text-red-400'}>
-                    {success ? '✓' : '✗'}
-                  </span>
-                  <span className="text-slate-400">{key}</span>
-                </div>
-              ))}
+              {Object.entries(resetResult.layers).map(([key, layerResult]) => {
+                const isSuccess = typeof layerResult === 'object'
+                  ? layerResult.cleared || layerResult.deleted || layerResult.signedOut
+                  : layerResult;
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <span className={isSuccess ? 'text-green-400' : 'text-red-400'}>
+                      {isSuccess ? '✓' : '✗'}
+                    </span>
+                    <span className="text-slate-400">{key}</span>
+                    {typeof layerResult === 'object' && layerResult.error && (
+                      <span className="text-xs text-red-400">({layerResult.error})</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             {resetResult.errors.length > 0 && (
               <div className="mt-3 text-sm text-red-400">
