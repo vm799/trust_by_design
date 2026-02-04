@@ -21,6 +21,7 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Format date in British English with UTC timezone for legal validity
   const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return 'N/A';
     try {
@@ -30,7 +31,8 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-      });
+        timeZone: 'UTC',
+      }) + ' UTC';
     } catch {
       return dateString;
     }

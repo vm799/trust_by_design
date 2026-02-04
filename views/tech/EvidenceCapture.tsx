@@ -407,10 +407,10 @@ const EvidenceCapture: React.FC = () => {
               className="w-full h-full object-contain"
             />
 
-            {/* Metadata Overlay */}
+            {/* Metadata Overlay - British English with UTC */}
             <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur px-3 py-2 rounded-lg">
               <p className="text-xs text-white">
-                {new Date(capturedPhoto.timestamp).toLocaleString('en-AU')}
+                {new Date(capturedPhoto.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC
               </p>
               {capturedPhoto.location && (
                 <p className="text-[10px] text-slate-400">

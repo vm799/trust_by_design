@@ -110,12 +110,12 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
     return events;
   }, [events, filter]);
 
-  // Format timestamp
+  // Format timestamp - British English with UTC timezone
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return {
-      date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      time: date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
+      time: date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' }) + ' UTC',
     };
   };
 

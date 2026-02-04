@@ -262,10 +262,11 @@ const TechJobCard = React.memo(({
     const date = new Date(job.date);
     const today = new Date();
 
+    // British English locale (en-GB) with UTC timezone
     if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
     }
-    return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   }, [job.date]);
 
   return (

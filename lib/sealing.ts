@@ -659,6 +659,7 @@ export const formatHash = (hash: string | undefined, length: number = 16): strin
 
 /**
  * Format seal timestamp for display
+ * British English locale with explicit UTC timezone for legal clarity
  */
 export const formatSealDate = (timestamp: string | undefined): string => {
   if (!timestamp) return 'N/A';
@@ -672,8 +673,8 @@ export const formatSealDate = (timestamp: string | undefined): string => {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short'
-    });
+      timeZone: 'UTC',
+    }) + ' UTC';
   } catch (error) {
     return timestamp;
   }

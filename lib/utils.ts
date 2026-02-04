@@ -85,21 +85,94 @@ export const truncateString = (str: string, maxLength: number): string => {
 };
 
 // ============================================================================
-// DATE/TIME HELPERS
+// DATE/TIME HELPERS - British English (en-GB) with UTC timezone
 // ============================================================================
 
+/**
+ * Format date string in British English with UTC timezone
+ * Example: "15 Jan 2026"
+ */
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+    timeZone: 'UTC',
   });
 };
 
+/**
+ * Format date with full weekday in British English with UTC timezone
+ * Example: "Wednesday, 15 January 2026"
+ */
+export const formatDateFull = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+};
+
+/**
+ * Format time in British English with UTC timezone
+ * Example: "14:30 UTC"
+ */
+export const formatTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
+};
+
+/**
+ * Format timestamp (number) in British English with UTC timezone
+ * Example: "15 Jan 2026, 14:30 UTC"
+ */
 export const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
-  return date.toLocaleString('en-GB');
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
+};
+
+/**
+ * Format date and time in British English with UTC timezone
+ * Example: "15 Jan 2026, 14:30 UTC"
+ */
+export const formatDateTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
+};
+
+/**
+ * Format short date for compact display
+ * Example: "15 Jan"
+ */
+export const formatDateShort = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  });
 };
 
 export const isExpired = (expiresAt: string): boolean => {
