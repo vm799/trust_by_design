@@ -154,14 +154,21 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           return;
         }
 
+        // Use maybeSingle() to avoid 406 error for new users who don't have a profile yet
         const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('workspace_id')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.warn('[DataContext] Profile fetch failed:', profileError.message);
+          return;
+        }
+
+        // No profile found - new user, workspace_id will be set after OAuthSetup
+        if (!profile) {
+          console.log('[DataContext] No profile found for user, awaiting setup');
           return;
         }
 

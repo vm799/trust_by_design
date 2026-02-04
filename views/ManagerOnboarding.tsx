@@ -100,11 +100,12 @@ const ManagerOnboarding: React.FC = () => {
         const supabase = getSupabase();
         if (supabase && userId) {
           // Update workspace with company settings
+          // Use maybeSingle() to avoid 406 error if profile not found
           const { data: profile } = await supabase
             .from('users')
             .select('workspace_id')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
           if (profile?.workspace_id) {
             await supabase

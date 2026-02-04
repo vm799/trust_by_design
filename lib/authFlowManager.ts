@@ -151,23 +151,20 @@ class UserSubagent {
     if (!supabase) return false;
 
     try {
+      // Use maybeSingle() to avoid 406 HTTP error in console for new users
       const { data, error } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      // If error code is PGRST116 (no rows), user doesn't exist
-      if (error && error.code === 'PGRST116') {
-        return false;
-      }
-
-      // If other error, log and return false
+      // If error, log and return false
       if (error) {
         console.error('[UserSubagent] Error checking user existence:', error);
         return false;
       }
 
+      // maybeSingle() returns null if no rows - user doesn't exist
       return !!data;
     } catch (err) {
       console.error('[UserSubagent] Exception checking user existence:', err);
@@ -250,20 +247,21 @@ class WorkspaceSubagent {
     if (!supabase) return null;
 
     try {
+      // Use maybeSingle() to avoid 406 HTTP error in console for new users
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // If PGRST116 (no rows), user doesn't exist - return null
-        if (error.code === 'PGRST116') {
-          console.log('[WorkspaceSubagent] User profile not found:', userId);
-          return null;
-        }
         console.error('[WorkspaceSubagent] Error fetching user profile:', error);
         return null;
+      }
+
+      // maybeSingle() returns null if no rows - user doesn't exist
+      if (!data) {
+        console.log('[WorkspaceSubagent] User profile not found:', userId);
       }
 
       return data;
@@ -288,20 +286,21 @@ class WorkspaceSubagent {
     if (!supabase) return null;
 
     try {
+      // Use maybeSingle() to avoid 406 HTTP error in console
       const { data, error } = await supabase
         .from('workspaces')
         .select('*')
         .eq('id', workspaceId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // If PGRST116 (no rows), workspace doesn't exist - return null
-        if (error.code === 'PGRST116') {
-          console.log('[WorkspaceSubagent] Workspace not found:', workspaceId);
-          return null;
-        }
         console.error('[WorkspaceSubagent] Error fetching workspace:', error);
         return null;
+      }
+
+      // maybeSingle() returns null if no rows - workspace doesn't exist
+      if (!data) {
+        console.log('[WorkspaceSubagent] Workspace not found:', workspaceId);
       }
 
       return data;

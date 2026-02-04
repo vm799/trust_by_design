@@ -10,10 +10,11 @@
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FocusEntity } from '../../lib/dashboardState';
-import { Job } from '../../types';
+import { Job, Technician } from '../../types';
+import { showToast } from '../../lib/microInteractions';
 
 interface AttentionModalProps {
   /** Focus entity to display */
@@ -21,6 +22,9 @@ interface AttentionModalProps {
 
   /** Optional job data for evidence status */
   job?: Job | null;
+
+  /** Optional technician data for messaging actions */
+  technician?: Technician | null;
 
   /** Whether modal is open */
   isOpen: boolean;
@@ -122,11 +126,52 @@ function getConsequence(entity: FocusEntity): string {
 const AttentionModal: React.FC<AttentionModalProps> = ({
   entity,
   job,
+  technician,
   isOpen,
   onAction,
   onDismiss,
 }) => {
   const styles = SEVERITY_STYLES[entity.severity];
+
+  // Check if signature request is applicable
+  const canRequestSignature = job &&
+    !job.signature &&
+    (job.status === 'In Progress' || job.status === 'Complete') &&
+    technician &&
+    (technician.phone || technician.email);
+
+  // Build job link for technician access
+  const jobLink = job ? `${window.location.origin}/#/tech/job/${job.id}` : '';
+
+  // Request signature via WhatsApp (preferred) or Email
+  const handleRequestSignature = useCallback(() => {
+    if (!technician || !job) {
+      showToast('Cannot request signature: Missing technician or job data', 'error');
+      return;
+    }
+
+    const message = `Hi ${technician.name}, please capture the customer signature for job "${job.title}".\n\nJob link: ${jobLink}\n\nThank you!`;
+
+    // Prefer WhatsApp if phone is available
+    if (technician.phone) {
+      const phone = technician.phone.replace(/[^0-9]/g, '');
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+      showToast('Opening WhatsApp to request signature...', 'success');
+      return;
+    }
+
+    // Fallback to email
+    if (technician.email) {
+      const subject = encodeURIComponent(`Signature Required: ${job.title}`);
+      const body = encodeURIComponent(message);
+      window.open(`mailto:${technician.email}?subject=${subject}&body=${body}`, '_blank');
+      showToast('Opening email to request signature...', 'success');
+      return;
+    }
+
+    showToast('No contact method available for technician', 'error');
+  }, [technician, job, jobLink]);
 
   return (
     <AnimatePresence>
@@ -209,6 +254,36 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
                     <p className="text-[10px] text-slate-500 uppercase tracking-widest">Sealed</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Request Signature Action (when signature is missing) */}
+            {canRequestSignature && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-xl text-amber-500">draw</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">
+                      Signature Missing
+                    </p>
+                    <p className="text-sm text-amber-100/80">
+                      Remind technician to capture customer signature
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRequestSignature}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl
+                             transition-all flex items-center justify-center gap-2 min-h-[44px]
+                             active:scale-[0.98]"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {technician?.phone ? 'chat' : 'mail'}
+                  </span>
+                  Request Signature
+                </button>
               </div>
             )}
 

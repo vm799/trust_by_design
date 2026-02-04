@@ -44,24 +44,26 @@ interface FocusCardProps {
 
 /**
  * Severity-based styling configuration
+ * Glassmorphism: translucent dark surface, soft blur, thin light border
+ * Color applied to left border accent and icon background only (state, not decoration)
  */
 const SEVERITY_CONFIG = {
   info: {
-    container: 'bg-primary/5 dark:bg-primary/10 border-primary/30',
+    container: 'bg-slate-900/80 backdrop-blur-xl border border-white/10 border-l-4 border-l-primary',
     iconBg: 'bg-primary/20',
     iconColor: 'text-primary',
     textColor: 'text-primary',
     pulseColor: 'bg-primary',
   },
   warning: {
-    container: 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/30',
+    container: 'bg-slate-900/80 backdrop-blur-xl border border-white/10 border-l-4 border-l-amber-500',
     iconBg: 'bg-amber-500/20',
     iconColor: 'text-amber-500',
     textColor: 'text-amber-500',
     pulseColor: 'bg-amber-500',
   },
   critical: {
-    container: 'bg-red-500/5 dark:bg-red-500/10 border-red-500/30',
+    container: 'bg-slate-900/80 backdrop-blur-xl border border-white/10 border-l-4 border-l-red-500',
     iconBg: 'bg-red-500/20',
     iconColor: 'text-red-500',
     textColor: 'text-red-500',
@@ -117,12 +119,12 @@ const FocusCard: React.FC<FocusCardProps> = ({
     <>
       <motion.div
         variants={fadeInUp}
-        className={`rounded-2xl border-2 p-5 transition-all ${config.container} ${className}`}
+        className={`rounded-2xl p-6 transition-all ${config.container} ${className}`}
       >
-        <div className="flex items-start gap-4">
-          {/* Icon with optional pulse */}
-          <div className={`size-14 rounded-2xl flex items-center justify-center relative shrink-0 ${config.iconBg}`}>
-            <span className={`material-symbols-outlined text-2xl ${config.iconColor}`}>
+        <div className="flex items-start gap-5">
+          {/* Icon with optional pulse - increased size for dominance */}
+          <div className={`size-16 rounded-2xl flex items-center justify-center relative shrink-0 ${config.iconBg}`}>
+            <span className={`material-symbols-outlined text-3xl ${config.iconColor}`}>
               {icon}
             </span>
             {entity.severity !== 'info' && (
@@ -143,13 +145,13 @@ const FocusCard: React.FC<FocusCardProps> = ({
             </div>
 
             {/* Title */}
-            <h2 className="font-bold text-slate-900 dark:text-white text-lg truncate">
+            <h2 className="font-bold text-white text-xl truncate">
               {entity.title}
             </h2>
 
             {/* Subtitle */}
             {entity.subtitle && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+              <p className="text-sm text-slate-300 truncate">
                 {entity.subtitle}
               </p>
             )}
@@ -160,13 +162,13 @@ const FocusCard: React.FC<FocusCardProps> = ({
               return (
                 <div className="flex items-center gap-3 mt-2">
                   {typeof meta.photoCount === 'number' && (
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1 text-xs text-slate-400">
                       <span className="material-symbols-outlined text-sm">photo_camera</span>
                       {meta.photoCount} photo{meta.photoCount !== 1 ? 's' : ''}
                     </span>
                   )}
                   {meta.hasSignature && (
-                    <span className="flex items-center gap-1 text-xs text-emerald-500">
+                    <span className="flex items-center gap-1 text-xs text-emerald-400">
                       <span className="material-symbols-outlined text-sm">check_circle</span>
                       Signed
                     </span>
@@ -176,18 +178,18 @@ const FocusCard: React.FC<FocusCardProps> = ({
             })()}
           </div>
 
-          {/* Action button - 44px minimum touch target */}
+          {/* Action button - 44px minimum touch target, prominent for primary action */}
           <button
             onClick={handleClick}
             className={`
-              shrink-0 px-5 py-3 bg-primary text-white font-bold text-sm rounded-xl
-              min-h-[44px] min-w-[44px] flex items-center gap-2
-              transition-all active:scale-95 shadow-lg shadow-primary/20
-              hover:shadow-xl hover:shadow-primary/30
+              shrink-0 px-6 py-4 bg-primary text-white font-bold text-base rounded-xl
+              min-h-[56px] min-w-[56px] flex items-center gap-2
+              transition-all active:scale-95 shadow-lg shadow-primary/30
+              hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90
             `}
           >
             {enableModal ? 'View Details' : entity.actionLabel}
-            <span className="material-symbols-outlined text-lg">
+            <span className="material-symbols-outlined text-xl">
               {enableModal ? 'open_in_full' : 'chevron_right'}
             </span>
           </button>
@@ -212,17 +214,18 @@ export default React.memo(FocusCard);
 
 /**
  * FocusCardSkeleton - Loading state for FocusCard
+ * Matches glassmorphism styling
  */
 export const FocusCardSkeleton: React.FC = () => (
-  <div className="rounded-2xl border-2 border-slate-200 dark:border-white/10 p-5 animate-pulse">
-    <div className="flex items-start gap-4">
-      <div className="size-14 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+  <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 border-l-4 border-l-slate-700 p-6 animate-pulse">
+    <div className="flex items-start gap-5">
+      <div className="size-16 rounded-2xl bg-slate-800 shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
-        <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
-        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
+        <div className="h-4 w-20 bg-slate-800 rounded" />
+        <div className="h-6 w-48 bg-slate-800 rounded" />
+        <div className="h-4 w-32 bg-slate-800 rounded" />
       </div>
-      <div className="h-11 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl shrink-0" />
+      <div className="h-14 w-28 bg-slate-800 rounded-xl shrink-0" />
     </div>
   </div>
 );

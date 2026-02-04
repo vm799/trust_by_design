@@ -116,8 +116,8 @@ describe('FocusCard', () => {
 
     const { container } = renderWithRouter(<FocusCard entity={entity} onAction={onAction} />);
 
-    // Check for critical styling (red colors)
-    const card = container.querySelector('[class*="border-red"]');
+    // Check for critical styling (red left border accent on glassmorphism card)
+    const card = container.querySelector('[class*="border-l-red"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -127,8 +127,8 @@ describe('FocusCard', () => {
 
     const { container } = renderWithRouter(<FocusCard entity={entity} onAction={onAction} />);
 
-    // Check for warning styling (amber/orange colors)
-    const card = container.querySelector('[class*="border-amber"]');
+    // Check for warning styling (amber left border accent on glassmorphism card)
+    const card = container.querySelector('[class*="border-l-amber"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -138,8 +138,8 @@ describe('FocusCard', () => {
 
     const { container } = renderWithRouter(<FocusCard entity={entity} onAction={onAction} />);
 
-    // Check for info styling (primary/blue colors)
-    const card = container.querySelector('[class*="border-primary"]');
+    // Check for info styling (primary left border accent on glassmorphism card)
+    const card = container.querySelector('[class*="border-l-primary"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -161,14 +161,15 @@ describe('FocusCard', () => {
     expect(skeleton).toBeInTheDocument();
   });
 
-  it('has 44px minimum touch target for action button', () => {
+  it('has 56px minimum touch target for action button (field worker size)', () => {
     const entity = createFocusEntity();
     const onAction = vi.fn();
 
     renderWithRouter(<FocusCard entity={entity} onAction={onAction} />);
 
     const actionButton = screen.getByRole('button', { name: /view details/i });
-    expect(actionButton).toHaveClass('min-h-[44px]');
+    // Field worker buttons use 56px minimum per CLAUDE.md accessibility requirements
+    expect(actionButton).toHaveClass('min-h-[56px]');
   });
 });
 

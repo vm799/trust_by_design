@@ -24,7 +24,14 @@ import BackgroundCollapse, { BackgroundCollapseSkeleton } from './BackgroundColl
 import TeamStatusBar from './TeamStatusBar';
 import ReadyToInvoiceSection from './ReadyToInvoiceSection';
 import SyncStatusBadge from './SyncStatusBadge';
-import { staggerContainer, fadeInUp } from '../../lib/animations';
+import {
+  staggerContainer,
+  fadeInUp,
+  bgOrb1Animate,
+  bgOrb1Transition,
+  bgOrb2Animate,
+  bgOrb2Transition,
+} from '../../lib/animations';
 
 interface UnifiedDashboardProps {
   /** Dashboard role (auto-detected if not provided) */
@@ -112,8 +119,22 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      className={`space-y-6 pb-20 ${className}`}
+      className={`relative overflow-hidden space-y-6 pb-20 ${className}`}
     >
+      {/* Background Orbs - glassmorphism depth effect */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <motion.div
+          className="absolute -top-48 -left-48 size-96 rounded-full bg-emerald-500/10 blur-[120px]"
+          animate={bgOrb1Animate}
+          transition={bgOrb1Transition}
+        />
+        <motion.div
+          className="absolute -bottom-48 -right-48 size-96 rounded-full bg-primary/10 blur-[120px]"
+          animate={bgOrb2Animate}
+          transition={bgOrb2Transition}
+        />
+      </div>
+
       {/* Optional header */}
       {header}
 
