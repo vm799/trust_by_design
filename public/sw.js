@@ -40,6 +40,12 @@ const CRITICAL_PATHS = [
 // Track if we've done a fresh install/update
 let isNewInstall = false;
 
+// Track if we've already triggered a stale asset reload (prevents infinite loops)
+// Using in-memory flag - resets when SW restarts, which is fine
+let staleAssetReloadTriggered = false;
+const STALE_RELOAD_COOLDOWN = 30000; // 30 seconds between reload attempts
+let lastStaleReloadTime = 0;
+
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
   '/',
@@ -192,9 +198,37 @@ async function cacheFirstStrategy(request, cacheName) {
     const networkResponse = await fetch(request);
 
     // CRITICAL: If a JS/CSS file returns 404, the cached index.html is stale
-    // Clear all caches and notify clients to reload
+    // Clear all caches and notify clients to reload - BUT only ONCE to prevent infinite loops
     if (!networkResponse.ok && isCriticalAsset) {
       console.error('[SW] Critical asset 404 detected:', url.pathname);
+
+      const now = Date.now();
+      const timeSinceLastReload = now - lastStaleReloadTime;
+
+      // Guard against infinite reload loops
+      if (staleAssetReloadTriggered && timeSinceLastReload < STALE_RELOAD_COOLDOWN) {
+        console.warn('[SW] Reload already triggered recently, skipping to prevent loop');
+        // Return a helpful error page instead of looping
+        return new Response(
+          `<!DOCTYPE html>
+          <html><head><title>Update Required</title></head>
+          <body style="font-family:system-ui;padding:40px;text-align:center">
+            <h1>App Update Required</h1>
+            <p>A new version is available but couldn't load automatically.</p>
+            <p>Asset not found: ${url.pathname}</p>
+            <button onclick="caches.keys().then(n=>Promise.all(n.map(k=>caches.delete(k)))).then(()=>location.reload())"
+                    style="padding:12px 24px;font-size:16px;cursor:pointer">
+              Clear Cache & Reload
+            </button>
+          </body></html>`,
+          { status: 200, headers: { 'Content-Type': 'text/html' } }
+        );
+      }
+
+      // Mark that we're triggering a reload
+      staleAssetReloadTriggered = true;
+      lastStaleReloadTime = now;
+
       console.log('[SW] Clearing stale caches and triggering reload...');
 
       // Clear all caches
