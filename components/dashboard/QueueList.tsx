@@ -143,7 +143,7 @@ const QueueList: React.FC<QueueListProps> = ({
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className={`space-y-2 ${className}`}
+        className={`bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 ${className}`}
       >
         <QueueHeader count={items.length} />
         <div className="space-y-2">
@@ -168,7 +168,7 @@ const QueueList: React.FC<QueueListProps> = ({
 
   // Virtualized rendering for large lists
   return (
-    <div className={className}>
+    <div className={`bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 ${className}`}>
       <QueueHeader count={items.length} />
       <VirtualizedQueueList
         items={items}
@@ -465,18 +465,18 @@ export default React.memo(QueueList);
  * QueueListSkeleton - Loading state for QueueList
  */
 export const QueueListSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => (
-  <div className="space-y-2">
-    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+  <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 space-y-2">
+    <div className="h-4 w-24 bg-slate-700/50 rounded animate-pulse" />
     {Array.from({ length: count }).map((_, i) => (
       <div
         key={i}
-        className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl animate-pulse"
+        className="flex items-center gap-3 p-3 bg-slate-800/50 border border-white/5 rounded-xl animate-pulse"
       >
-        <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
-        <div className="size-8 rounded-lg bg-slate-200 dark:bg-slate-800" />
+        <div className="size-10 rounded-xl bg-slate-700/50" />
+        <div className="size-8 rounded-lg bg-slate-700/50" />
         <div className="flex-1 space-y-1">
-          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
-          <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-4 w-32 bg-slate-700/50 rounded" />
+          <div className="h-3 w-20 bg-slate-700/50 rounded" />
         </div>
       </div>
     ))}

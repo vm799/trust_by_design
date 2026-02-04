@@ -38,53 +38,59 @@ interface QuickActionCardProps {
   badge?: string | number;
 }
 
+/**
+ * Glassmorphism styling configuration
+ * - Translucent dark surface with soft blur
+ * - Thin light border with colored left accent for status
+ * - Color applied to left border accent and icon background (state indication)
+ */
 const STATUS_COLORS: Record<StatusColor, {
   container: string;
   iconBg: string;
   icon: string;
   hover: string;
   pulse: string;
-  border: string;
+  leftBorder: string;
 }> = {
   critical: {
-    container: 'bg-red-50 dark:bg-red-950/30',
+    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
     iconBg: 'bg-red-500/20',
-    icon: 'text-red-600 dark:text-red-400',
-    hover: 'hover:bg-red-100 dark:hover:bg-red-950/50',
+    icon: 'text-red-400',
+    hover: 'hover:bg-slate-900/80',
     pulse: 'bg-red-500',
-    border: 'border-red-200 dark:border-red-900/50',
+    leftBorder: 'border-l-4 border-l-red-500',
   },
   warning: {
-    container: 'bg-amber-50 dark:bg-amber-950/30',
+    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
     iconBg: 'bg-amber-500/20',
-    icon: 'text-amber-600 dark:text-amber-400',
-    hover: 'hover:bg-amber-100 dark:hover:bg-amber-950/50',
+    icon: 'text-amber-400',
+    hover: 'hover:bg-slate-900/80',
     pulse: 'bg-amber-500',
-    border: 'border-amber-200 dark:border-amber-900/50',
+    leftBorder: 'border-l-4 border-l-amber-500',
   },
   success: {
-    container: 'bg-emerald-50 dark:bg-emerald-950/30',
+    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
     iconBg: 'bg-emerald-500/20',
-    icon: 'text-emerald-600 dark:text-emerald-400',
-    hover: 'hover:bg-emerald-100 dark:hover:bg-emerald-950/50',
+    icon: 'text-emerald-400',
+    hover: 'hover:bg-slate-900/80',
     pulse: 'bg-emerald-500',
-    border: 'border-emerald-200 dark:border-emerald-900/50',
+    leftBorder: 'border-l-4 border-l-emerald-500',
   },
   info: {
-    container: 'bg-blue-50 dark:bg-blue-950/30',
-    iconBg: 'bg-blue-500/20',
-    icon: 'text-blue-600 dark:text-blue-400',
-    hover: 'hover:bg-blue-100 dark:hover:bg-blue-950/50',
-    pulse: 'bg-blue-500',
-    border: 'border-blue-200 dark:border-blue-900/50',
+    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    iconBg: 'bg-primary/20',
+    icon: 'text-primary',
+    hover: 'hover:bg-slate-900/80',
+    pulse: 'bg-primary',
+    leftBorder: 'border-l-4 border-l-primary',
   },
   neutral: {
-    container: 'bg-slate-50 dark:bg-slate-800/50',
+    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
     iconBg: 'bg-slate-500/20',
-    icon: 'text-slate-600 dark:text-slate-400',
-    hover: 'hover:bg-slate-100 dark:hover:bg-slate-800',
+    icon: 'text-slate-400',
+    hover: 'hover:bg-slate-900/80',
     pulse: 'bg-slate-400',
-    border: 'border-slate-200 dark:border-slate-700',
+    leftBorder: 'border-l-4 border-l-slate-500',
   },
 };
 
@@ -132,11 +138,11 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
         className={`
           w-full flex items-center gap-4 p-4 rounded-xl
           ${colorConfig.container}
-          ${colorConfig.border}
+          ${colorConfig.leftBorder}
           ${colorConfig.hover}
-          border-2 transition-all
+          transition-all
           group text-left min-h-[72px]
-          shadow-sm hover:shadow-md
+          shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30
         `}
       >
         {/* Left: Icon with status indicator */}
@@ -156,11 +162,11 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
 
         {/* Center: Title + Subtitle */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 dark:text-white truncate text-base">
+          <p className="font-bold text-white truncate text-base">
             {title}
           </p>
           {subtitle && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+            <p className="text-sm text-slate-300 truncate">
               {subtitle}
             </p>
           )}
@@ -191,8 +197,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                   whileTap={{ scale: 0.95 }}
                   className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] ${
                     action.variant === 'danger'
-                      ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
-                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                      ? 'text-red-400 hover:bg-red-500/20'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10'
                   }`}
                   title={action.label}
                 >
@@ -211,12 +217,12 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="sm:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[44px] min-w-[44px]"
+              className="sm:hidden p-2 rounded-lg text-slate-400 hover:bg-white/10 min-h-[44px] min-w-[44px]"
             >
               <span className="material-symbols-outlined">more_vert</span>
             </button>
           ) : (
-            <span className="material-symbols-outlined text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">
               chevron_right
             </span>
           )}
@@ -240,7 +246,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
               initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[180px] overflow-hidden"
+              className="absolute top-full right-0 mt-1 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 z-50 min-w-[180px] overflow-hidden"
             >
               {actions.map((action, i) => (
                 <button
@@ -248,9 +254,9 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                   onClick={(e) => handleAction(action, e)}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors min-h-[52px] ${
                     action.variant === 'danger'
-                      ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                  } ${i > 0 ? 'border-t border-slate-100 dark:border-slate-700' : ''}`}
+                      ? 'text-red-400 hover:bg-red-500/20'
+                      : 'text-slate-200 hover:bg-white/10'
+                  } ${i > 0 ? 'border-t border-white/10' : ''}`}
                 >
                   <span className="material-symbols-outlined text-lg">
                     {action.icon}
