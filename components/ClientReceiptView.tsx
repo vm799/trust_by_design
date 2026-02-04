@@ -166,115 +166,140 @@ Evidence is cryptographically sealed and verifiable.
           </div>
         )}
 
-        {/* Receipt Card */}
-        <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-md mx-auto">
+        {/* Receipt Card - Dark Mode Glassmorphism */}
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl max-w-md mx-auto">
           {/* Header */}
-          <div className="text-center border-b border-slate-200 pb-4 mb-4">
+          <div className="text-center border-b border-white/10 pb-4 mb-4">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="size-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="material-symbols-outlined text-white text-sm font-black">verified</span>
               </div>
-              <span className="text-xl font-black text-slate-900 uppercase tracking-tight">JobProof</span>
+              <span className="text-xl font-black text-white uppercase tracking-tight">JobProof</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Work Completion Receipt</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Work Completion Receipt</p>
           </div>
 
           {/* Date */}
           <div className="text-center mb-4">
-            <p className="text-sm font-bold text-slate-600">{formatDate(receipt.work_date)}</p>
+            <p className="text-sm font-bold text-slate-300">{formatDate(receipt.work_date)}</p>
           </div>
 
           {/* Client Info */}
-          <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Client</p>
-            <p className="text-sm font-bold text-slate-900">{receipt.client_name}</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
+            <p className="text-sm font-bold text-white">{receipt.client_name}</p>
             {receipt.client_address && (
-              <p className="text-xs text-slate-700 mt-1">{receipt.client_address}</p>
+              <p className="text-xs text-slate-300 mt-1">{receipt.client_address}</p>
             )}
           </div>
 
           {/* Work Details */}
           <div className="mb-4">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Work Completed</p>
-            <p className="text-lg font-black text-slate-900 uppercase tracking-tight">{receipt.job_title}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Work Completed</p>
+            <p className="text-lg font-black text-white uppercase tracking-tight">{receipt.job_title}</p>
             {receipt.job_description && (
-              <p className="text-xs text-slate-600 mt-2 leading-relaxed">{receipt.job_description}</p>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">{receipt.job_description}</p>
             )}
           </div>
 
-          {/* Location */}
-          <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Location</p>
-            <p className="text-sm font-bold text-slate-900">{receipt.work_location}</p>
+          {/* Location with Enhanced W3W Badge */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
+            <p className="text-sm font-bold text-white">{receipt.work_location}</p>
+
+            {/* W3W Red Badge - High Visibility */}
             {receipt.work_location_w3w && (
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-red-500 font-black text-xs">///</span>
-                <span className="text-xs text-slate-700">{receipt.work_location_w3w.replace('///', '')}</span>
+              <div className="mt-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-3">
+                <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1">What3Words</p>
+                <p className="text-lg font-mono font-black text-white tracking-wide">
+                  ///{receipt.work_location_w3w.replace('///', '')}
+                </p>
+              </div>
+            )}
+
+            {/* GPS Coordinates */}
+            {job.lat && job.lng && (
+              <div className="mt-2 pt-2 border-t border-white/10">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GPS Coordinates</p>
+                <p className="text-xs font-mono text-slate-400">
+                  {job.lat.toFixed(6)}, {job.lng.toFixed(6)}
+                </p>
               </div>
             )}
           </div>
 
           {/* Evidence Summary */}
-          <div className="border border-slate-200 rounded-2xl p-4 mb-4">
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">Evidence Summary</p>
+          <div className="border border-white/10 rounded-2xl p-4 mb-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Evidence Summary</p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-sm">photo_camera</span>
-                <span className="text-slate-600">{receipt.photos_count} Photos</span>
+                <span className="text-slate-300">{receipt.photos_count} Photos</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-sm ${receipt.has_signature ? 'text-success' : 'text-slate-400'}`}>
+                <span className={`material-symbols-outlined text-sm ${receipt.has_signature ? 'text-success' : 'text-slate-500'}`}>
                   signature
                 </span>
-                <span className="text-slate-600">{receipt.has_signature ? 'Signed' : 'Unsigned'}</span>
+                <span className="text-slate-300">{receipt.has_signature ? 'Signed' : 'Unsigned'}</span>
               </div>
               {receipt.signer_name && (
                 <div className="col-span-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-400 text-sm">person</span>
-                  <span className="text-slate-600">{receipt.signer_name}</span>
+                  <span className="material-symbols-outlined text-slate-500 text-sm">person</span>
+                  <span className="text-slate-300">{receipt.signer_name}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Seal Status */}
+          {/* Enhanced Cryptographic Seal Badge */}
           {receipt.sealed_at && (
-            <div className="bg-success/10 border border-success/20 rounded-2xl p-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 bg-success/20 rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-success font-black">lock</span>
+            <div className="bg-gradient-to-br from-emerald-900/50 to-emerald-800/30 border border-emerald-500/30 rounded-2xl p-4 mb-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="size-12 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-400 text-2xl font-black">verified_user</span>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-success uppercase tracking-widest">Evidence Sealed</p>
-                  <p className="text-xs text-slate-600">
-                    {formatDate(receipt.sealed_at)} at {formatTime(receipt.sealed_at)}
+                  <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">Tamper-Proof Evidence</p>
+                  <p className="text-[10px] text-slate-400">
+                    Sealed {formatDate(receipt.sealed_at)} at {formatTime(receipt.sealed_at)}
                   </p>
                 </div>
               </div>
-              {receipt.evidence_hash && (
-                <p className="text-[8px] font-mono text-slate-600 mt-2 break-all">
-                  Hash: {receipt.evidence_hash.substring(0, 32)}...
-                </p>
-              )}
+
+              {/* Cryptographic Details */}
+              <div className="bg-slate-950/50 rounded-xl p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-500 text-sm">lock</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SHA-256 + RSA-2048 Signature</p>
+                </div>
+                {receipt.evidence_hash && (
+                  <div>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Evidence Hash</p>
+                    <p className="text-xs font-mono text-emerald-400/80 break-all leading-relaxed">
+                      {receipt.evidence_hash}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* Amount */}
           {receipt.amount && (
-            <div className="border-t-2 border-dashed border-slate-200 pt-4 mt-4">
+            <div className="border-t-2 border-dashed border-white/10 pt-4 mt-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm font-black text-slate-700 uppercase">Amount Due</p>
-                <p className="text-2xl font-black text-slate-900">
+                <p className="text-sm font-black text-slate-400 uppercase">Amount Due</p>
+                <p className="text-2xl font-black text-white">
                   £{receipt.amount.toFixed(2)}
                 </p>
               </div>
-              <p className="text-[10px] text-slate-600 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
+              <p className="text-[10px] text-slate-500 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
             </div>
           )}
 
           {/* Verification Link */}
-          <div className="border-t border-slate-200 pt-4 mt-4 text-center">
-            <p className="text-[10px] text-slate-600 mb-2">Verify this receipt online</p>
+          <div className="border-t border-white/10 pt-4 mt-4 text-center">
+            <p className="text-[10px] text-slate-500 mb-2">Verify this receipt online</p>
             <p className="text-xs font-mono text-primary break-all">{getReportUrl(job.id)}</p>
           </div>
         </div>
