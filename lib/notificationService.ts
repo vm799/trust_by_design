@@ -240,16 +240,36 @@ async function sendInAppNotification(notification: NotificationPayload): Promise
 
 /**
  * Generate HTML email from notification payload
+ * Dark mode, high contrast, British English
  */
 function generateNotificationEmailHtml(notification: NotificationPayload): string {
-  const priorityColors: Record<NotificationPriority, string> = {
-    low: '#64748b',
-    normal: '#2563eb',
-    high: '#f59e0b',
-    urgent: '#ef4444',
+  // Priority-based accent colours (British English)
+  const priorityColours: Record<NotificationPriority, { gradient: string; glow: string }> = {
+    low: { gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', glow: 'rgba(100, 116, 139, 0.3)' },
+    normal: { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)' },
+    high: { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)' },
+    urgent: { gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', glow: 'rgba(239, 68, 68, 0.4)' },
   };
 
-  const color = priorityColors[notification.priority] || '#2563eb';
+  const colours = priorityColours[notification.priority] || priorityColours.normal;
+
+  // Priority badge text
+  const priorityBadge: Record<NotificationPriority, string> = {
+    low: '',
+    normal: '',
+    high: '⚠️ HIGH PRIORITY',
+    urgent: '🚨 URGENT',
+  };
+
+  // Format timestamp in British English with UTC
+  const timestamp = new Date(notification.createdAt).toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
 
   return `
     <!DOCTYPE html>
@@ -258,38 +278,64 @@ function generateNotificationEmailHtml(notification: NotificationPayload): strin
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 32px 16px;">
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 24px 16px;">
         <tr>
           <td align="center">
-            <table width="100%" style="max-width: 560px; background-color: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <table width="100%" style="max-width: 560px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155;">
               <!-- Header -->
               <tr>
-                <td style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%); padding: 24px; border-radius: 12px 12px 0 0;">
-                  <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
-                    ${notification.title}
-                  </h1>
+                <td style="background: ${colours.gradient}; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">
+                          ${notification.title}
+                        </h1>
+                      </td>
+                      ${priorityBadge[notification.priority] ? `
+                      <td align="right">
+                        <span style="display: inline-block; padding: 4px 10px; background-color: rgba(255,255,255,0.2); border-radius: 20px; color: white; font-size: 10px; font-weight: 600;">
+                          ${priorityBadge[notification.priority]}
+                        </span>
+                      </td>
+                      ` : ''}
+                    </tr>
+                  </table>
                 </td>
               </tr>
               <!-- Body -->
               <tr>
-                <td style="padding: 24px;">
-                  <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
+                <td style="padding: 28px 24px;">
+                  <p style="margin: 0 0 20px; color: #f1f5f9; font-size: 15px; line-height: 1.7;">
                     ${notification.message}
                   </p>
                   ${notification.jobId ? `
-                  <p style="margin: 0; color: #64748b; font-size: 13px;">
-                    Job ID: <strong>${notification.jobId}</strong>
-                  </p>
+                  <!-- Job Reference Card -->
+                  <div style="background-color: #0f172a; padding: 16px; border-radius: 10px; border: 1px solid #334155; margin-top: 20px;">
+                    <span style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Job Reference</span>
+                    <p style="margin: 4px 0 0; color: #f1f5f9; font-size: 14px; font-weight: 600; font-family: 'SF Mono', Monaco, monospace;">${notification.jobId}</p>
+                  </div>
                   ` : ''}
                 </td>
               </tr>
               <!-- Footer -->
               <tr>
-                <td style="padding: 16px 24px; background-color: #f8fafc; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
-                  <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center;">
-                    Powered by JobProof
-                  </p>
+                <td style="padding: 16px 24px; background-color: #0f172a; border-radius: 0 0 16px 16px; border-top: 1px solid #334155;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <p style="margin: 0; color: #64748b; font-size: 12px;">
+                          Powered by <strong style="color: #94a3b8;">JobProof</strong>
+                        </p>
+                      </td>
+                      <td align="right">
+                        <p style="margin: 0; color: #475569; font-size: 11px;">
+                          ${timestamp}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
             </table>
