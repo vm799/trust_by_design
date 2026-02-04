@@ -331,4 +331,182 @@ describe('Theme System', () => {
       consoleError.mockRestore();
     });
   });
+
+  // ============================================
+  // NEW TESTS: Dark Mode and Theme Persistence
+  // ============================================
+
+  describe('Dark Mode - Document Class Application', () => {
+    it('applies dark class to documentElement on initial render', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('removes all theme classes before applying new theme', () => {
+      // Start with both classes applied (simulating corrupted state)
+      document.documentElement.classList.add('dark', 'daylight');
+
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      // Should only have dark class, daylight should be removed
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.classList.contains('daylight')).toBe(false);
+    });
+
+    it('sets data-theme attribute matching resolved theme', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+
+      fireEvent.click(screen.getByTestId('set-daylight'));
+      expect(document.documentElement.getAttribute('data-theme')).toBe('daylight');
+    });
+  });
+
+  describe('Dark Mode - localStorage Persistence', () => {
+    it('persists dark theme to localStorage when set', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      // Start with daylight, then switch to dark
+      fireEvent.click(screen.getByTestId('set-daylight'));
+      fireEvent.click(screen.getByTestId('set-dark'));
+
+      const storedTheme = JSON.parse(localStorage.getItem('jobproof-theme-mode') || 'null');
+      expect(storedTheme).toBe('dark');
+    });
+
+    it('persists daylight mode enabled state to localStorage', () => {
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('enable-daylight'));
+
+      const storedDaylight = JSON.parse(localStorage.getItem('jobproof-daylight-mode') || 'null');
+      expect(storedDaylight).toBe(true);
+    });
+
+    it('restores theme from localStorage on mount (simulated reload)', () => {
+      // Set up localStorage as if user had selected daylight mode
+      localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
+      localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
+
+      // Mount component (simulating page reload)
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      expect(screen.getByTestId('theme').textContent).toBe('daylight');
+      expect(screen.getByTestId('daylight').textContent).toBe('yes');
+      expect(document.documentElement.classList.contains('daylight')).toBe(true);
+    });
+  });
+
+  describe('Daylight Mode - Safety Orange and Touch Targets', () => {
+    it('exports safety orange (#FF8C00) as primary color in DAYLIGHT_TOKENS', () => {
+      expect(DAYLIGHT_TOKENS.primary).toBe('#FF8C00');
+    });
+
+    it('exports 56px touch target size for gloved hands', () => {
+      expect(DAYLIGHT_TOKENS.touchTarget).toBe('56px');
+    });
+
+    it('exports anti-glare background color (#F8FAFC)', () => {
+      expect(DAYLIGHT_TOKENS.background).toBe('#F8FAFC');
+    });
+
+    it('exports high-contrast text color (#1E293B) for outdoor readability', () => {
+      expect(DAYLIGHT_TOKENS.text).toBe('#1E293B');
+    });
+  });
+
+  describe('System Theme Mode - Prefers Color Scheme', () => {
+    it('system mode always returns dark (light mode removed for poor contrast)', () => {
+      // Even when system prefers light, we return dark
+      window.matchMedia = createMatchMediaMock(false); // prefers-light
+
+      render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('set-system'));
+      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+    });
+
+    it('registers listener for prefers-color-scheme changes in system mode', () => {
+      const mockAddListener = vi.fn();
+      const mockRemoveListener = vi.fn();
+
+      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: mockAddListener,
+        removeEventListener: mockRemoveListener,
+        dispatchEvent: vi.fn(),
+      }));
+
+      const { unmount } = render(
+        <ThemeProvider>
+          <ThemeTestComponent />
+        </ThemeProvider>
+      );
+
+      fireEvent.click(screen.getByTestId('set-system'));
+
+      // Verify listener was registered
+      expect(mockAddListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+      // Unmount and verify cleanup
+      unmount();
+      expect(mockRemoveListener).toHaveBeenCalledWith('change', expect.any(Function));
+    });
+  });
+
+  describe('DAYLIGHT_TOKENS - Complete Token Validation', () => {
+    it('exports all required design tokens', () => {
+      expect(DAYLIGHT_TOKENS).toHaveProperty('primary');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('background');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('text');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('borderWidth');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('touchTarget');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('fontWeight');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('letterSpacing');
+      expect(DAYLIGHT_TOKENS).toHaveProperty('lineHeight');
+    });
+
+    it('exports border width of 2px for sunlight visibility', () => {
+      expect(DAYLIGHT_TOKENS.borderWidth).toBe('2px');
+    });
+
+    it('exports font weight 600 for outdoor readability', () => {
+      expect(DAYLIGHT_TOKENS.fontWeight).toBe(600);
+    });
+  });
 });

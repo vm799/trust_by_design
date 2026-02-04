@@ -19,6 +19,8 @@ import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
+import { sealEvidence } from '../../../lib/sealing';
+import { isFeatureEnabled } from '../../../lib/featureFlags';
 
 const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +49,10 @@ const JobDetail: React.FC = () => {
   const [generatingLink, setGeneratingLink] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [mailClientOpened, setMailClientOpened] = useState(false);
+
+  // Seal-on-dispatch state (Phase C.3)
+  const [sealingOnDispatch, setSealingOnDispatch] = useState(false);
+  const [sealError, setSealError] = useState<string | null>(null);
 
   // Derive job, client, technician from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
@@ -177,8 +183,42 @@ const JobDetail: React.FC = () => {
   };
 
   // Send email to technician
-  const handleSendEmail = () => {
-    if (!magicLink || !technician) return;
+  // When SEAL_ON_DISPATCH is enabled, seal evidence BEFORE sending the magic link
+  const handleSendEmail = async () => {
+    if (!magicLink || !technician || !job) return;
+
+    // Clear any previous seal error
+    setSealError(null);
+
+    // Phase C.3: Seal-on-dispatch - seal evidence before sending magic link
+    if (isFeatureEnabled('SEAL_ON_DISPATCH') && !job.sealedAt) {
+      setSealingOnDispatch(true);
+      try {
+        const sealResult = await sealEvidence(job.id);
+        if (!sealResult.success) {
+          setSealError(sealResult.error || 'Failed to seal evidence before dispatch');
+          setSealingOnDispatch(false);
+          return; // Don't send link if sealing fails
+        }
+
+        // Update job with sealedAt timestamp via DataContext
+        const updatedJob: Job = {
+          ...job,
+          sealedAt: sealResult.sealedAt,
+          evidenceHash: sealResult.evidenceHash,
+        };
+        contextUpdateJob(updatedJob);
+
+        console.log('[JobDetail] Evidence sealed on dispatch:', sealResult.evidenceHash?.substring(0, 16));
+      } catch (error) {
+        console.error('[JobDetail] Seal-on-dispatch error:', error);
+        setSealError(error instanceof Error ? error.message : 'Sealing failed');
+        setSealingOnDispatch(false);
+        return; // Don't send link if sealing fails
+      } finally {
+        setSealingOnDispatch(false);
+      }
+    }
 
     const subject = encodeURIComponent(`Job Assignment: ${job?.title || 'New Job'}`);
     const body = encodeURIComponent(

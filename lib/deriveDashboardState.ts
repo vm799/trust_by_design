@@ -38,6 +38,7 @@ import {
   URGENT_PRIORITY,
 } from './dashboardState';
 import { Job, Client, Technician } from '../types';
+import { JOB_STATUS, SYNC_STATUS, isCompletedJobStatus, isActiveJobStatus } from './constants';
 
 // ============================================================================
 // MAIN DERIVATION FUNCTION
@@ -110,8 +111,8 @@ function deriveManagerDashboard(
   // Find urgent jobs
   const urgentJobs = jobs.filter(j =>
     j.priority === URGENT_PRIORITY &&
-    j.status !== 'Complete' &&
-    j.status !== 'Submitted'
+    j.status !== JOB_STATUS.COMPLETE &&
+    j.status !== JOB_STATUS.SUBMITTED
   );
 
   // ---- FOCUS (INV-1: single or null) ----
@@ -288,7 +289,7 @@ function deriveBackgroundForManager(
 
   // Completed jobs section (collapsed by default)
   const completedJobs = jobs
-    .filter(j => j.status === 'Complete' || j.status === 'Submitted')
+    .filter(j => j.status === JOB_STATUS.COMPLETE || j.status === JOB_STATUS.SUBMITTED)
     .slice(0, 10); // Limit to recent 10
 
   if (completedJobs.length > 0) {
@@ -332,16 +333,16 @@ function deriveTechnicianDashboard(
   );
 
   // Categorize
-  const inProgress = myJobs.find(j => j.status === 'In Progress');
+  const inProgress = myJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
   const pending = myJobs
     .filter(j =>
-      j.status !== 'In Progress' &&
-      j.status !== 'Complete' &&
-      j.status !== 'Submitted'
+      j.status !== JOB_STATUS.IN_PROGRESS &&
+      j.status !== JOB_STATUS.COMPLETE &&
+      j.status !== JOB_STATUS.SUBMITTED
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const completed = myJobs.filter(j =>
-    j.status === 'Complete' || j.status === 'Submitted'
+    j.status === JOB_STATUS.COMPLETE || j.status === JOB_STATUS.SUBMITTED
   );
 
   // ---- FOCUS ----
@@ -492,11 +493,11 @@ function buildTechnicianAttentionData(
 ): TechnicianWithAttention[] {
   return technicians.map(tech => {
     const techJobs = jobs.filter(j => j.techId === tech.id || j.technicianId === tech.id);
-    const activeJob = techJobs.find(j => j.status === 'In Progress');
+    const activeJob = techJobs.find(j => j.status === JOB_STATUS.IN_PROGRESS);
     const pendingJobs = techJobs.filter(j =>
-      j.status !== 'In Progress' &&
-      j.status !== 'Complete' &&
-      j.status !== 'Submitted'
+      j.status !== JOB_STATUS.IN_PROGRESS &&
+      j.status !== JOB_STATUS.COMPLETE &&
+      j.status !== JOB_STATUS.SUBMITTED
     );
 
     const lastActivity = techJobs.reduce((latest, job) => {
@@ -511,7 +512,7 @@ function buildTechnicianAttentionData(
       (now - (activeJob.lastUpdated || 0) > STUCK_THRESHOLD_MS) &&
       activeJob.photos.length === 0);
 
-    const hasSyncFailed = techJobs.some(j => j.syncStatus === 'failed');
+    const hasSyncFailed = techJobs.some(j => j.syncStatus === SYNC_STATUS.FAILED);
 
     return {
       tech,
@@ -548,8 +549,8 @@ function buildMeta(
   return {
     totalJobs: jobs.length,
     totalTechnicians: technicians.length,
-    syncPending: jobs.filter(j => j.syncStatus === 'pending').length,
-    syncFailed: jobs.filter(j => j.syncStatus === 'failed').length,
+    syncPending: jobs.filter(j => j.syncStatus === SYNC_STATUS.PENDING).length,
+    syncFailed: jobs.filter(j => j.syncStatus === SYNC_STATUS.FAILED).length,
     lastUpdated: now,
     isOffline: false,
     isStale: false,
@@ -557,8 +558,8 @@ function buildMeta(
 }
 
 function toSyncStatus(status: string | undefined): SyncStatus | undefined {
-  if (status === 'synced' || status === 'pending' || status === 'failed') {
-    return status;
+  if (status === SYNC_STATUS.SYNCED || status === SYNC_STATUS.PENDING || status === SYNC_STATUS.FAILED) {
+    return status as SyncStatus;
   }
   return undefined;
 }
