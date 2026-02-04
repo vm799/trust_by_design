@@ -40,23 +40,28 @@ interface UseDashboardResult {
 
 /**
  * Detects dashboard role from user metadata
+ *
+ * IMPORTANT: Default to 'manager' for authenticated users without explicit persona
+ * This ensures new dashboard features are visible by default.
+ * Only explicitly technician personas get technician view.
  */
 function detectRole(userMetadata: Record<string, unknown> | null): DashboardRole {
-  if (!userMetadata) return 'technician';
+  if (!userMetadata) return 'manager'; // Default to manager for logged-in users
 
   const persona = userMetadata.persona as string | undefined;
 
-  switch (persona) {
-    case 'agency_owner':
-    case 'compliance_officer':
-    case 'safety_manager':
-    case 'site_supervisor':
-      return 'manager';
-    case 'solo_contractor':
-      return 'solo_contractor';
-    default:
-      return 'technician';
+  // Explicit technician personas
+  if (persona === 'technician' || persona === 'field_worker') {
+    return 'technician';
   }
+
+  // Explicit solo contractor
+  if (persona === 'solo_contractor') {
+    return 'solo_contractor';
+  }
+
+  // Everyone else (including undefined, agency_owner, compliance_officer, etc.) = manager
+  return 'manager';
 }
 
 /**
