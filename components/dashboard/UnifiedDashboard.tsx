@@ -11,11 +11,12 @@
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../lib/useDashboard';
 import { useAuth } from '../../lib/AuthContext';
+import { useData } from '../../lib/DataContext';
 import { DashboardRole, QueueItem, BackgroundItem } from '../../lib/dashboardState';
 import { isFeatureEnabled } from '../../lib/featureFlags';
 import FocusCard, { FocusCardSkeleton } from './FocusCard';
@@ -23,7 +24,7 @@ import QueueList, { QueueListSkeleton } from './QueueList';
 import BackgroundCollapse, { BackgroundCollapseSkeleton } from './BackgroundCollapse';
 import TeamStatusBar from './TeamStatusBar';
 import ReadyToInvoiceSection from './ReadyToInvoiceSection';
-import SyncStatusBadge from './SyncStatusBadge';
+import QuickActionCard from './QuickActionCard';
 import {
   staggerContainer,
   fadeInUp,
@@ -55,6 +56,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { jobs, clients, technicians } = useData();
   const {
     state,
     isLoading,
@@ -67,6 +69,33 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
   // Feature flags for new dashboard sections
   const showTeamStatusBar = isFeatureEnabled('TEAM_STATUS_BAR', userId || undefined);
   const showReadyToInvoice = isFeatureEnabled('READY_TO_INVOICE_SECTION', userId || undefined);
+
+  // Find the actual job object for the focus entity (needed for modal)
+  const focusJob = useMemo(() => {
+    if (!state?.focus) return null;
+    // Focus ID is prefixed with 'job-', extract the actual job ID
+    const jobId = state.focus.id.replace('job-', '');
+    return jobs.find(j => j.id === jobId) || null;
+  }, [state?.focus, jobs]);
+
+  // Compute stats for the quick stats section
+  const stats = useMemo(() => {
+    const inProgressJobs = jobs.filter(j => j.status === 'In Progress').length;
+    const pendingJobs = jobs.filter(j => j.status === 'Pending').length;
+    const completedJobs = jobs.filter(j => j.status === 'Complete' || j.status === 'Submitted').length;
+    const activeClients = clients.length;
+    const activeTechnicians = technicians.filter(t => t.status === 'Active').length;
+
+    return {
+      totalJobs: jobs.length,
+      inProgressJobs,
+      pendingJobs,
+      completedJobs,
+      activeClients,
+      activeTechnicians,
+      totalTechnicians: technicians.length,
+    };
+  }, [jobs, clients, technicians]);
 
   // Navigation handlers
   const handleFocusAction = useCallback(() => {
@@ -170,12 +199,89 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
         </motion.section>
       )}
 
-      {/* FOCUS - Primary attention item */}
+      {/* QUICK STATS - Clickable overview cards */}
+      {role === 'manager' && (
+        <motion.section variants={fadeInUp}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <QuickActionCard
+              id="stat-jobs"
+              title={`${stats.totalJobs}`}
+              subtitle="Total Jobs"
+              icon="work"
+              statusColor={stats.inProgressJobs > 0 ? 'info' : 'neutral'}
+              route="/admin/jobs"
+              badge={stats.inProgressJobs > 0 ? `${stats.inProgressJobs} active` : undefined}
+            />
+            <QuickActionCard
+              id="stat-clients"
+              title={`${stats.activeClients}`}
+              subtitle="Clients"
+              icon="business"
+              statusColor="success"
+              route="/admin/clients"
+            />
+            <QuickActionCard
+              id="stat-technicians"
+              title={`${stats.activeTechnicians}`}
+              subtitle="Technicians"
+              icon="engineering"
+              statusColor={stats.activeTechnicians > 0 ? 'success' : 'warning'}
+              route="/admin/technicians"
+              badge={stats.totalTechnicians > stats.activeTechnicians ? `${stats.totalTechnicians} total` : undefined}
+            />
+            <QuickActionCard
+              id="stat-completed"
+              title={`${stats.completedJobs}`}
+              subtitle="Completed"
+              icon="check_circle"
+              statusColor="success"
+              route="/admin/jobs?status=complete"
+            />
+          </div>
+        </motion.section>
+      )}
+
+      {/* QUICK ACTIONS - Create new items */}
+      {role === 'manager' && (
+        <motion.section variants={fadeInUp}>
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Actions</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <QuickActionCard
+              id="action-new-job"
+              title="New Job"
+              subtitle="Create a new job"
+              icon="add_circle"
+              statusColor="info"
+              route="/admin/jobs/new"
+            />
+            <QuickActionCard
+              id="action-new-client"
+              title="New Client"
+              subtitle="Add a client"
+              icon="person_add"
+              statusColor="info"
+              route="/admin/clients/new"
+            />
+            <QuickActionCard
+              id="action-new-tech"
+              title="Add Technician"
+              subtitle="Invite team member"
+              icon="group_add"
+              statusColor="info"
+              route="/admin/technicians/new"
+            />
+          </div>
+        </motion.section>
+      )}
+
+      {/* FOCUS - Primary attention item with modal */}
       {state.focus && (
         <motion.section variants={fadeInUp}>
           <FocusCard
             entity={state.focus}
             onAction={handleFocusAction}
+            job={focusJob}
+            enableModal={true}
           />
         </motion.section>
       )}
