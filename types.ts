@@ -100,6 +100,13 @@ export interface Job {
   evidenceHash?: string; // SHA-256 hash of evidence bundle
   isSealed?: boolean; // Computed: !!sealedAt
 
+  // Client confirmation (satisfaction sign-off)
+  clientConfirmation?: {
+    signature: string; // Data URL of signature image
+    timestamp: string; // ISO timestamp (UTC) when confirmed
+    confirmed: boolean; // Always true when present
+  };
+
   // Phase 15: Field Proof System (Security-Hardened)
   // NOTE: Raw tokens are NEVER stored - only hashes
   techTokenHash?: string; // SHA256 hash of token (raw never stored)

@@ -6,18 +6,20 @@
  *
  * Features:
  * - 56px touch targets for field worker gloves
- * - Urgency-sorted display
+ * - Colour-coded urgency display (British English)
  * - Sync status badges
- * - Position indicators
+ * - Quick action buttons on tiles
  * - Virtualized rendering for performance
  *
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
 import React, { useMemo, useCallback, CSSProperties, ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { List } from 'react-window';
 import { QueueItem } from '../../lib/dashboardState';
+import QuickActionCard, { StatusColor, QuickAction } from './QuickActionCard';
 import SyncStatusBadge from './SyncStatusBadge';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
 
@@ -36,7 +38,33 @@ interface QueueListProps {
 
   /** Optional className for container */
   className?: string;
+
+  /** Optional action handlers for quick actions */
+  onEditItem?: (item: QueueItem) => void;
+  onArchiveItem?: (item: QueueItem) => void;
 }
+
+/**
+ * Convert urgency score to status colour (British English)
+ */
+const getStatusColour = (urgency: number): StatusColor => {
+  if (urgency >= 80) return 'critical';
+  if (urgency >= 60) return 'warning';
+  if (urgency >= 40) return 'info';
+  return 'neutral';
+};
+
+/**
+ * Get icon based on item type
+ */
+const getTypeIcon = (type: QueueItem['type']): string => {
+  switch (type) {
+    case 'job': return 'work';
+    case 'technician': return 'person';
+    case 'attention': return 'notifications';
+    default: return 'circle';
+  }
+};
 
 const ITEM_HEIGHT = 64; // 56px content + 8px gap
 const VIRTUALIZATION_THRESHOLD = 10;
@@ -48,15 +76,67 @@ const QueueList: React.FC<QueueListProps> = ({
   virtualize,
   maxHeight = DEFAULT_MAX_HEIGHT,
   className = '',
+  onEditItem,
+  onArchiveItem,
 }) => {
+  const navigate = useNavigate();
+
   // Auto-enable virtualization for large lists
   const shouldVirtualize = virtualize ?? items.length > VIRTUALIZATION_THRESHOLD;
+
+  // Generate actions for a queue item
+  const getItemActions = useCallback((item: QueueItem): QuickAction[] => {
+    const actions: QuickAction[] = [];
+
+    // View/Navigate action
+    actions.push({
+      label: 'View',
+      icon: 'visibility',
+      onClick: () => navigate(item.route),
+    });
+
+    // Edit action if handler provided
+    if (onEditItem) {
+      actions.push({
+        label: 'Edit',
+        icon: 'edit',
+        onClick: () => onEditItem(item),
+      });
+    }
+
+    // Type-specific actions
+    if (item.type === 'job') {
+      actions.push({
+        label: 'Start',
+        icon: 'play_arrow',
+        onClick: () => navigate(`${item.route}?action=start`),
+      });
+    } else if (item.type === 'technician') {
+      actions.push({
+        label: 'Assign',
+        icon: 'assignment_ind',
+        onClick: () => navigate(`/app/jobs?assignTech=${item.id.replace('tech-', '')}`),
+      });
+    }
+
+    // Archive action if handler provided (danger variant)
+    if (onArchiveItem) {
+      actions.push({
+        label: 'Archive',
+        icon: 'archive',
+        onClick: () => onArchiveItem(item),
+        variant: 'danger',
+      });
+    }
+
+    return actions;
+  }, [navigate, onEditItem, onArchiveItem]);
 
   if (items.length === 0) {
     return null;
   }
 
-  // Standard rendering for small lists
+  // Standard rendering for small lists - use QuickActionCard
   if (!shouldVirtualize) {
     return (
       <motion.div
@@ -68,11 +148,17 @@ const QueueList: React.FC<QueueListProps> = ({
         <QueueHeader count={items.length} />
         <div className="space-y-2">
           {items.map((item, index) => (
-            <QueueItemCard
+            <QuickActionCard
               key={item.id}
-              item={item}
-              position={index + 1}
-              onClick={() => onItemClick(item)}
+              id={item.id}
+              title={item.title}
+              subtitle={item.subtitle}
+              icon={getTypeIcon(item.type)}
+              statusColor={getStatusColour(item.urgency)}
+              syncStatus={item.syncStatus}
+              route={item.route}
+              actions={getItemActions(item)}
+              badge={index + 1}
             />
           ))}
         </div>
@@ -187,61 +273,97 @@ const VirtualizedQueueList: React.FC<VirtualizedQueueListProps> = ({
 };
 
 /**
- * QueueItemCardSimple - Simplified card without motion for virtualized list
+ * Colour config for status-based styling (British English)
+ */
+const COLOUR_CONFIG: Record<StatusColor, {
+  container: string;
+  iconBg: string;
+  icon: string;
+  border: string;
+  badge: string;
+}> = {
+  critical: {
+    container: 'bg-red-50 dark:bg-red-950/30',
+    iconBg: 'bg-red-500/20',
+    icon: 'text-red-600 dark:text-red-400',
+    border: 'border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800',
+    badge: 'bg-red-500 text-white',
+  },
+  warning: {
+    container: 'bg-amber-50 dark:bg-amber-950/30',
+    iconBg: 'bg-amber-500/20',
+    icon: 'text-amber-600 dark:text-amber-400',
+    border: 'border-amber-200 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-800',
+    badge: 'bg-amber-500 text-white',
+  },
+  success: {
+    container: 'bg-emerald-50 dark:bg-emerald-950/30',
+    iconBg: 'bg-emerald-500/20',
+    icon: 'text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-800',
+    badge: 'bg-emerald-500 text-white',
+  },
+  info: {
+    container: 'bg-blue-50 dark:bg-blue-950/30',
+    iconBg: 'bg-blue-500/20',
+    icon: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-200 dark:border-blue-900/50 hover:border-blue-300 dark:hover:border-blue-800',
+    badge: 'bg-blue-500 text-white',
+  },
+  neutral: {
+    container: 'bg-slate-50 dark:bg-slate-800/50',
+    iconBg: 'bg-slate-500/20',
+    icon: 'text-slate-600 dark:text-slate-400',
+    border: 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600',
+    badge: 'bg-slate-500 text-white',
+  },
+};
+
+/**
+ * QueueItemCardSimple - Colour-coded card for virtualized list
+ * Performance optimised without motion animations
  */
 const QueueItemCardSimple: React.FC<{
   item: QueueItem;
   position: number;
   onClick: () => void;
 }> = React.memo(({ item, position, onClick }) => {
-  const urgencyColor = item.urgency >= 80 ? 'bg-red-500' :
-    item.urgency >= 50 ? 'bg-amber-500' : 'bg-slate-400';
-
-  const typeIcon = item.type === 'job' ? 'work' :
-    item.type === 'technician' ? 'person' : 'notifications';
+  const statusColour = getStatusColour(item.urgency);
+  const colourConfig = COLOUR_CONFIG[statusColour];
+  const typeIcon = getTypeIcon(item.type);
 
   return (
     <button
       onClick={onClick}
-      className="
+      className={`
         w-full flex items-center gap-3 p-3
-        bg-white dark:bg-slate-900
-        border border-slate-200 dark:border-white/5
+        ${colourConfig.container}
+        border-2 ${colourConfig.border}
         rounded-xl
-        hover:border-primary/30 dark:hover:border-primary/30
         transition-all active:scale-[0.98]
         min-h-[56px] text-left
-        group
-      "
+        group shadow-sm hover:shadow-md
+      `}
     >
-      {/* Position indicator with urgency color */}
-      <div className="relative shrink-0">
-        <div className="
-          size-10 rounded-xl bg-slate-100 dark:bg-slate-800
-          flex items-center justify-center
-          text-sm font-bold text-slate-600 dark:text-slate-400
-          group-hover:bg-primary/10 group-hover:text-primary
-          transition-colors
-        ">
-          {position}
-        </div>
-        <span className={`absolute -top-0.5 -right-0.5 size-2.5 rounded-full ${urgencyColor}`} />
+      {/* Position badge with status colour */}
+      <div className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold ${colourConfig.badge}`}>
+        {position}
       </div>
 
       {/* Type icon */}
-      <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-sm text-slate-500 dark:text-slate-400">
+      <div className={`size-10 rounded-xl ${colourConfig.iconBg} flex items-center justify-center shrink-0`}>
+        <span className={`material-symbols-outlined text-lg ${colourConfig.icon}`}>
           {typeIcon}
         </span>
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 dark:text-white truncate text-sm group-hover:text-primary transition-colors">
+        <p className="font-bold text-slate-900 dark:text-white truncate text-sm">
           {item.title}
         </p>
         {item.subtitle && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
             {item.subtitle}
           </p>
         )}
@@ -253,7 +375,7 @@ const QueueItemCardSimple: React.FC<{
       )}
 
       {/* Chevron */}
-      <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-sm group-hover:text-primary transition-colors">
+      <span className={`material-symbols-outlined ${colourConfig.icon} text-lg`}>
         chevron_right
       </span>
     </button>
@@ -269,74 +391,54 @@ interface QueueItemCardProps {
 }
 
 /**
- * QueueItemCard - Individual queue item display (with motion)
+ * QueueItemCard - Colour-coded queue item with motion
+ * Used for non-virtualized small lists
  */
 const QueueItemCard: React.FC<QueueItemCardProps> = React.memo(({
   item,
   position,
   onClick,
 }) => {
-  // Determine urgency indicator color
-  const urgencyColor = useMemo(() => {
-    if (item.urgency >= 80) return 'bg-red-500';
-    if (item.urgency >= 50) return 'bg-amber-500';
-    return 'bg-slate-400';
-  }, [item.urgency]);
-
-  // Type-based icon
-  const typeIcon = useMemo(() => {
-    switch (item.type) {
-      case 'job': return 'work';
-      case 'technician': return 'person';
-      case 'attention': return 'notifications';
-      default: return 'circle';
-    }
-  }, [item.type]);
+  // Get colour config based on urgency
+  const statusColour = useMemo(() => getStatusColour(item.urgency), [item.urgency]);
+  const colourConfig = COLOUR_CONFIG[statusColour];
+  const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
 
   return (
     <motion.button
       variants={fadeInUp}
       onClick={onClick}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
       className={`
-        w-full flex items-center gap-3 p-3
-        bg-white dark:bg-slate-900
-        border border-slate-200 dark:border-white/5
+        w-full flex items-center gap-3 p-4
+        ${colourConfig.container}
+        border-2 ${colourConfig.border}
         rounded-xl
-        hover:border-primary/30 dark:hover:border-primary/30
-        transition-all active:scale-[0.98]
-        min-h-[56px] text-left
-        group
+        transition-all
+        min-h-[72px] text-left
+        shadow-sm hover:shadow-md
       `}
     >
-      {/* Position indicator with urgency color */}
-      <div className="relative shrink-0">
-        <div className={`
-          size-10 rounded-xl bg-slate-100 dark:bg-slate-800
-          flex items-center justify-center
-          text-sm font-bold text-slate-600 dark:text-slate-400
-          group-hover:bg-primary/10 group-hover:text-primary
-          transition-colors
-        `}>
-          {position}
-        </div>
-        {/* Urgency dot */}
-        <span className={`absolute -top-0.5 -right-0.5 size-2.5 rounded-full ${urgencyColor}`} />
+      {/* Position badge with status colour */}
+      <div className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold ${colourConfig.badge}`}>
+        {position}
       </div>
 
       {/* Type icon */}
-      <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-sm text-slate-500 dark:text-slate-400">
+      <div className={`size-12 rounded-xl ${colourConfig.iconBg} flex items-center justify-center shrink-0`}>
+        <span className={`material-symbols-outlined text-xl ${colourConfig.icon}`}>
           {typeIcon}
         </span>
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 dark:text-white truncate text-sm group-hover:text-primary transition-colors">
+        <p className="font-bold text-slate-900 dark:text-white truncate text-base">
           {item.title}
         </p>
         {item.subtitle && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
             {item.subtitle}
           </p>
         )}
@@ -348,7 +450,7 @@ const QueueItemCard: React.FC<QueueItemCardProps> = React.memo(({
       )}
 
       {/* Chevron */}
-      <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-sm group-hover:text-primary transition-colors">
+      <span className={`material-symbols-outlined ${colourConfig.icon} text-lg`}>
         chevron_right
       </span>
     </motion.button>

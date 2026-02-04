@@ -6,12 +6,36 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
 import { Job, Client } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
+import ClientConfirmationCanvas from '../../components/ClientConfirmationCanvas';
+
+/**
+ * Format date in British English with UTC timezone indicator
+ */
+const formatDateUTC = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+};
+
+const formatTimeUTC = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
+};
 
 interface Photo {
   id?: string;  // REMEDIATION ITEM 9: Added for stable React keys
@@ -29,6 +53,7 @@ const TechJobDetail: React.FC = () => {
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
 
   const [submitting, setSubmitting] = useState(false);
+  const [showClientConfirmation, setShowClientConfirmation] = useState(false);
   // Task 3.4: Error state for retry functionality
   const [actionError, setActionError] = useState<{ type: 'start' | 'complete'; message: string } | null>(null);
 
@@ -40,6 +65,23 @@ const TechJobDetail: React.FC = () => {
   );
 
   const loading = isLoading;
+
+  // Handle client confirmation signature
+  const handleClientConfirmation = useCallback((signature: string, timestamp: string) => {
+    if (!job) return;
+
+    const updatedJob: Job = {
+      ...job,
+      clientConfirmation: {
+        signature,
+        timestamp,
+        confirmed: true,
+      },
+      status: 'Submitted', // Auto-advance to Submitted on client sign-off
+    };
+    contextUpdateJob(updatedJob);
+    setShowClientConfirmation(false);
+  }, [job, contextUpdateJob]);
 
   const handleStartJob = async () => {
     if (!job) return;
@@ -187,22 +229,15 @@ const TechJobDetail: React.FC = () => {
         {/* Job Info */}
         <Card className="mb-6">
           <div className="space-y-4">
-            {/* Date & Time */}
+            {/* Date & Time - British English, UTC */}
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-slate-500">schedule</span>
               <div>
                 <p className="text-white">
-                  {new Date(job.date).toLocaleDateString('en-AU', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {formatDateUTC(job.date)}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {new Date(job.date).toLocaleTimeString('en-AU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatTimeUTC(job.date)}
                 </p>
               </div>
             </div>
@@ -289,6 +324,63 @@ const TechJobDetail: React.FC = () => {
             )}
           </Card>
         </section>
+
+        {/* Client Confirmation Section - Shows when job is Complete but not yet confirmed */}
+        {job.status === 'Complete' && !job.clientConfirmation && (
+          <section className="mt-6">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+              Client Sign-off
+            </h3>
+            {showClientConfirmation ? (
+              <ClientConfirmationCanvas
+                jobId={job.id}
+                clientName={client?.name || 'Client'}
+                onConfirmed={handleClientConfirmation}
+                onCancel={() => setShowClientConfirmation(false)}
+              />
+            ) : (
+              <Card>
+                <div className="flex items-center gap-4 p-2">
+                  <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-emerald-400 text-xl">verified</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-white">Ready for Client Confirmation</p>
+                    <p className="text-sm text-slate-400">Get client signature to complete</p>
+                  </div>
+                </div>
+                <ActionButton
+                  variant="primary"
+                  icon="draw"
+                  onClick={() => setShowClientConfirmation(true)}
+                  fullWidth
+                  className="mt-4"
+                >
+                  Get Client Sign-off
+                </ActionButton>
+              </Card>
+            )}
+          </section>
+        )}
+
+        {/* Confirmed Badge - Shows when client has signed */}
+        {job.clientConfirmation && (
+          <section className="mt-6">
+            <Card className="bg-emerald-950/30 border-emerald-500/20">
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-emerald-400 text-xl">check_circle</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-emerald-400">Client Confirmed</p>
+                  <p className="text-sm text-slate-400">
+                    Signed {formatDateUTC(job.clientConfirmation.timestamp)} at {formatTimeUTC(job.clientConfirmation.timestamp)}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </section>
+        )}
       </main>
 
       {/* Bottom Actions */}

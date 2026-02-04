@@ -378,16 +378,20 @@ async function attemptDelivery(
 
 /**
  * Generate HTML email for magic link delivery
+ * Dark mode, high contrast, British English, UTC dates
  */
 function generateMagicLinkEmailHtml(delivery: MagicLinkDelivery): string {
   const expiryDate = new Date(delivery.expiresAt);
-  const formattedExpiry = expiryDate.toLocaleString('en-AU', {
+  // British English locale (en-GB) with UTC timezone
+  const formattedExpiry = expiryDate.toLocaleString('en-GB', {
     weekday: 'short',
-    month: 'short',
     day: 'numeric',
+    month: 'short',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+    timeZone: 'UTC',
+  }) + ' UTC';
 
   return `
     <!DOCTYPE html>
@@ -396,65 +400,99 @@ function generateMagicLinkEmailHtml(delivery: MagicLinkDelivery): string {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 12px 16px 24px;">
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 24px 16px;">
         <tr>
           <td align="center">
-            <table width="100%" style="max-width: 560px; background-color: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <!-- Header -->
+            <table width="100%" style="max-width: 560px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155;">
+              <!-- Header with emerald accent -->
               <tr>
-                <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 16px 20px; border-radius: 12px 12px 0 0;">
-                  <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
-                    New Job Assignment
-                  </h1>
+                <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 20px 24px; border-radius: 16px 16px 0 0;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <h1 style="margin: 0; color: white; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">
+                          🛠️ New Job Assignment
+                        </h1>
+                      </td>
+                      <td align="right">
+                        <span style="display: inline-block; padding: 4px 10px; background-color: rgba(255,255,255,0.2); border-radius: 20px; color: white; font-size: 11px; font-weight: 600;">
+                          SEALED ON RECEIPT
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
               <!-- Body -->
               <tr>
-                <td style="padding: 24px;">
-                  <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
+                <td style="padding: 32px 24px;">
+                  <p style="margin: 0 0 20px; color: #f1f5f9; font-size: 16px; line-height: 1.6;">
                     Hi${delivery.technicianName ? ` ${delivery.technicianName}` : ''},
                   </p>
-                  <p style="margin: 0 0 24px; color: #334155; font-size: 15px; line-height: 1.6;">
-                    You have been assigned a new job. Click the button below to view details and start capturing evidence.
+                  <p style="margin: 0 0 28px; color: #cbd5e1; font-size: 15px; line-height: 1.7;">
+                    You have been assigned a new job. Tap the button below to view details and start capturing evidence.
                   </p>
 
                   <!-- CTA Button -->
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td align="center" style="padding: 8px 0 24px;">
-                        <a href="${delivery.url}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
-                          View Job Details
+                      <td align="center" style="padding: 8px 0 32px;">
+                        <a href="${delivery.url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                          View Job Details →
                         </a>
                       </td>
                     </tr>
                   </table>
 
-                  <!-- Job Info -->
-                  <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <p style="margin: 0 0 8px; color: #64748b; font-size: 13px;">
-                      <strong>Job ID:</strong> ${delivery.jobId}
-                    </p>
-                    <p style="margin: 0; color: #64748b; font-size: 13px;">
-                      <strong>Link expires:</strong> ${formattedExpiry}
-                    </p>
+                  <!-- Job Info Card -->
+                  <div style="background-color: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom: 12px;">
+                          <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Job Reference</span>
+                          <p style="margin: 4px 0 0; color: #f1f5f9; font-size: 14px; font-weight: 600; font-family: 'SF Mono', Monaco, monospace;">${delivery.jobId}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Link Expires</span>
+                          <p style="margin: 4px 0 0; color: #fbbf24; font-size: 14px; font-weight: 600;">⏰ ${formattedExpiry}</p>
+                        </td>
+                      </tr>
+                    </table>
                   </div>
 
-                  <p style="margin: 24px 0 0; color: #94a3b8; font-size: 13px;">
+                  <p style="margin: 28px 0 0; color: #64748b; font-size: 13px; line-height: 1.6;">
                     If the button doesn't work, copy and paste this link:<br>
-                    <a href="${delivery.url}" style="color: #2563eb; word-break: break-all;">${delivery.url}</a>
+                    <a href="${delivery.url}" style="color: #10b981; word-break: break-all; text-decoration: underline;">${delivery.url}</a>
                   </p>
                 </td>
               </tr>
               <!-- Footer -->
               <tr>
-                <td style="padding: 16px 24px; background-color: #f8fafc; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
-                  <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center;">
-                    Powered by JobProof
-                  </p>
+                <td style="padding: 20px 24px; background-color: #0f172a; border-radius: 0 0 16px 16px; border-top: 1px solid #334155;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <p style="margin: 0; color: #64748b; font-size: 12px;">
+                          Powered by <strong style="color: #94a3b8;">JobProof</strong>
+                        </p>
+                      </td>
+                      <td align="right">
+                        <p style="margin: 0; color: #475569; font-size: 11px;">
+                          Tamper-proof evidence
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
             </table>
+            <!-- Security notice -->
+            <p style="margin: 16px 0 0; color: #475569; font-size: 11px; text-align: center;">
+              🔒 This email contains a secure, time-limited link. Do not forward.
+            </p>
           </td>
         </tr>
       </table>
