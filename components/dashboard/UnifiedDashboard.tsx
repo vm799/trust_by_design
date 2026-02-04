@@ -15,10 +15,14 @@ import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../lib/useDashboard';
+import { useAuth } from '../../lib/AuthContext';
 import { DashboardRole, QueueItem, BackgroundItem } from '../../lib/dashboardState';
+import { isFeatureEnabled } from '../../lib/featureFlags';
 import FocusCard, { FocusCardSkeleton } from './FocusCard';
 import QueueList, { QueueListSkeleton } from './QueueList';
 import BackgroundCollapse, { BackgroundCollapseSkeleton } from './BackgroundCollapse';
+import TeamStatusBar from './TeamStatusBar';
+import ReadyToInvoiceSection from './ReadyToInvoiceSection';
 import SyncStatusBadge from './SyncStatusBadge';
 import { staggerContainer, fadeInUp } from '../../lib/animations';
 
@@ -43,6 +47,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
   className = '',
 }) => {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const {
     state,
     isLoading,
@@ -51,6 +56,10 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
     refresh,
     role,
   } = useDashboard({ role: roleOverride });
+
+  // Feature flags for new dashboard sections
+  const showTeamStatusBar = isFeatureEnabled('TEAM_STATUS_BAR', userId || undefined);
+  const showReadyToInvoice = isFeatureEnabled('READY_TO_INVOICE_SECTION', userId || undefined);
 
   // Navigation handlers
   const handleFocusAction = useCallback(() => {
@@ -124,6 +133,20 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
           failed={state.meta.syncFailed}
           onRetry={refresh}
         />
+      )}
+
+      {/* TEAM STATUS - Technician work status (feature flagged) */}
+      {showTeamStatusBar && role === 'manager' && (
+        <motion.section variants={fadeInUp}>
+          <TeamStatusBar />
+        </motion.section>
+      )}
+
+      {/* READY TO INVOICE - Completed jobs awaiting invoicing (feature flagged) */}
+      {showReadyToInvoice && role === 'manager' && (
+        <motion.section variants={fadeInUp}>
+          <ReadyToInvoiceSection />
+        </motion.section>
       )}
 
       {/* FOCUS - Primary attention item */}
