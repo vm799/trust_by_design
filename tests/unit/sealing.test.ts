@@ -123,9 +123,11 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
       expect(result.reasons).toContain('Job is already sealed');
     });
 
-    it('should return false when job status is not Submitted', () => {
+    it('should return false when job status is not valid for sealing', () => {
+      // With SEAL_ON_DISPATCH enabled, valid statuses are Submitted and Pending
+      // 'In Progress' is not a valid status for sealing
       const job: Job = createMockJob({
-        status: 'Pending',
+        status: 'In Progress',
         photos: [
           {
             id: 'photo-1',
@@ -144,7 +146,8 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
       const result = canSealJob(job);
 
       expect(result.canSeal).toBe(false);
-      expect(result.reasons).toContain('Job must be in Submitted status');
+      // With SEAL_ON_DISPATCH, valid statuses are Submitted or Pending
+      expect(result.reasons).toContain('Job must be in Submitted or Pending status');
     });
 
     it('should return false when photos are pending sync', () => {
@@ -172,8 +175,9 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
     });
 
     it('should collect multiple failure reasons', () => {
+      // Use 'In Progress' status since Pending is now valid with SEAL_ON_DISPATCH
       const job: Job = createMockJob({
-        status: 'Pending',
+        status: 'In Progress',
         photos: [],
         signature: null,
       });
@@ -182,7 +186,8 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
 
       expect(result.canSeal).toBe(false);
       expect(result.reasons.length).toBeGreaterThan(2);
-      expect(result.reasons).toContain('Job must be in Submitted status');
+      // With SEAL_ON_DISPATCH enabled, valid statuses are Submitted or Pending
+      expect(result.reasons).toContain('Job must be in Submitted or Pending status');
       expect(result.reasons).toContain('Job must have at least one photo');
       expect(result.reasons).toContain('Job must have a signature');
     });

@@ -7,6 +7,7 @@ import { DataProvider, useData } from './lib/DataContext';
 import { generateSecureSlugSuffix } from './lib/secureId';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
 import BuildFingerprint from './components/ui/BuildFingerprint';
+import UpdateNotification from './components/UpdateNotification';
 import { captureNavigationIntentFromUrl } from './lib/navigationIntent';
 
 // REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
@@ -786,6 +787,8 @@ const AppContent: React.FC = () => {
       </Suspense>
       {/* Developer build badge - visible in dev mode or with ?debug=1 */}
       <BuildFingerprint position="bottom-right" />
+      {/* Service worker update notification - paid users auto-update off-hours */}
+      <UpdateNotification />
     </HashRouter>
   );
 };

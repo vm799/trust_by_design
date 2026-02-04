@@ -120,21 +120,21 @@ export const FEATURE_FLAGS = {
   SEAL_ON_DISPATCH: {
     key: 'SEAL_ON_DISPATCH',
     description: 'Automatically seal evidence when job is dispatched',
-    rolloutPercentage: 0,
+    rolloutPercentage: 100, // Enabled for all environments
     paidOnly: false,
     enabledEnvironments: ['local', 'staging', 'production'],
   },
   TEAM_STATUS_BAR: {
     key: 'TEAM_STATUS_BAR',
     description: 'Show real-time team status bar on manager dashboard',
-    rolloutPercentage: 0,
+    rolloutPercentage: 100, // Enabled for all environments
     paidOnly: false,
     enabledEnvironments: ['local', 'staging', 'production'],
   },
   READY_TO_INVOICE_SECTION: {
     key: 'READY_TO_INVOICE_SECTION',
     description: 'Show ready-to-invoice jobs section on dashboard',
-    rolloutPercentage: 0,
+    rolloutPercentage: 100, // Enabled for all environments
     paidOnly: false,
     enabledEnvironments: ['local', 'staging', 'production'],
   },
