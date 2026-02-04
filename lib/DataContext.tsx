@@ -22,6 +22,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Job, Client, Technician, Invoice, JobTemplate } from '../types';
 import { useAuth } from './AuthContext';
 import { normalizeJobs, normalizeJobTechnicianId } from './utils/technicianIdNormalization';
+import { getWorkspaceStorageKey } from './testingControlPlane';
 
 // REMEDIATION ITEM 5: Lazy load heavy db module (2,445 lines)
 // Dynamic import defers parsing until actually needed
@@ -29,6 +30,15 @@ const getDbModule = () => import('./db');
 
 // CLAUDE.md mandate: Dexie for offline-first persistence
 const getOfflineDbModule = () => import('./offline/db');
+
+// Base localStorage keys (may be suffixed with :workspaceId when isolation is enabled)
+const STORAGE_KEYS = {
+  jobs: 'jobproof_jobs_v2',
+  clients: 'jobproof_clients_v2',
+  technicians: 'jobproof_technicians_v2',
+  invoices: 'jobproof_invoices_v2',
+  templates: 'jobproof_templates_v2',
+} as const;
 
 // Debounce utility for batched localStorage writes
 function debounce<T extends (...args: unknown[]) => unknown>(
@@ -168,14 +178,24 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, [userId]);
 
   // Load data from localStorage with Dexie fallback for clients/technicians
+  // WORKSPACE_ISOLATED_STORAGE: When feature flag is enabled, uses workspace-scoped keys
   const loadFromLocalStorage = useCallback(async (wsId?: string | null) => {
     try {
-      const savedJobs = localStorage.getItem('jobproof_jobs_v2');
-      const savedInvoices = localStorage.getItem('jobproof_invoices_v2');
+      // Get workspace-scoped keys (falls back to base keys when isolation disabled)
+      const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, wsId);
+      const invoicesKey = getWorkspaceStorageKey(STORAGE_KEYS.invoices, wsId);
+      const clientsKey = getWorkspaceStorageKey(STORAGE_KEYS.clients, wsId);
+      const techsKey = getWorkspaceStorageKey(STORAGE_KEYS.technicians, wsId);
+      const templatesKey = getWorkspaceStorageKey(STORAGE_KEYS.templates, wsId);
+
+      const savedJobs = localStorage.getItem(jobsKey);
+      const savedInvoices = localStorage.getItem(invoicesKey);
+      const savedTemplates = localStorage.getItem(templatesKey);
 
       // Sprint 2 Task 2.6: Normalize technician IDs on load
       if (savedJobs) setJobs(normalizeJobs(JSON.parse(savedJobs)));
       if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
+      if (savedTemplates) setTemplates(JSON.parse(savedTemplates));
 
       // CLAUDE.md mandate: Try Dexie first for clients/technicians (offline-first)
       let clientsLoaded = false;
@@ -204,11 +224,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
       // Fall back to localStorage if Dexie didn't have data
       if (!clientsLoaded) {
-        const savedClients = localStorage.getItem('jobproof_clients_v2');
+        const savedClients = localStorage.getItem(clientsKey);
         if (savedClients) setClients(JSON.parse(savedClients));
       }
       if (!techniciansLoaded) {
-        const savedTechs = localStorage.getItem('jobproof_technicians_v2');
+        const savedTechs = localStorage.getItem(techsKey);
         if (savedTechs) setTechnicians(JSON.parse(savedTechs));
       }
     } catch (err) {
@@ -313,7 +333,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         setJobs(normalizeJobs(allJobs));
       } else {
         console.warn('[DataContext] Supabase jobs failed, using localStorage');
-        const saved = localStorage.getItem('jobproof_jobs_v2');
+        // WORKSPACE_ISOLATED_STORAGE: Use workspace-scoped key when enabled
+        const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, wsId);
+        const saved = localStorage.getItem(jobsKey);
         // Sprint 2 Task 2.6: Normalize technician IDs on load
         if (saved) setJobs(normalizeJobs(JSON.parse(saved)));
       }
@@ -336,6 +358,8 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         }
       } else {
         console.warn('[DataContext] Supabase clients failed, trying Dexie then localStorage');
+        // WORKSPACE_ISOLATED_STORAGE: Use workspace-scoped key when enabled
+        const clientsKey = getWorkspaceStorageKey(STORAGE_KEYS.clients, wsId);
         // Try Dexie first, then localStorage
         try {
           const offlineDb = await getOfflineDbModule();
@@ -344,11 +368,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
             setClients(dexieClients);
             console.log('[DataContext] Loaded', dexieClients.length, 'clients from Dexie fallback');
           } else {
-            const saved = localStorage.getItem('jobproof_clients_v2');
+            const saved = localStorage.getItem(clientsKey);
             if (saved) setClients(JSON.parse(saved));
           }
         } catch (dexieErr) {
-          const saved = localStorage.getItem('jobproof_clients_v2');
+          const saved = localStorage.getItem(clientsKey);
           if (saved) setClients(JSON.parse(saved));
         }
       }
@@ -417,13 +441,21 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, [workspaceId, loadFromSupabase, loadFromLocalStorage]);
 
   // Debounced localStorage persistence
+  // WORKSPACE_ISOLATED_STORAGE: When feature flag is enabled, uses workspace-scoped keys
   const saveToLocalStorage = useCallback(() => {
-    localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
-    localStorage.setItem('jobproof_clients_v2', JSON.stringify(clients));
-    localStorage.setItem('jobproof_technicians_v2', JSON.stringify(technicians));
-    localStorage.setItem('jobproof_invoices_v2', JSON.stringify(invoices));
-    localStorage.setItem('jobproof_templates_v2', JSON.stringify(templates));
-  }, [jobs, clients, technicians, invoices, templates]);
+    // Get workspace-scoped keys (falls back to base keys when isolation disabled)
+    const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, workspaceId);
+    const clientsKey = getWorkspaceStorageKey(STORAGE_KEYS.clients, workspaceId);
+    const techsKey = getWorkspaceStorageKey(STORAGE_KEYS.technicians, workspaceId);
+    const invoicesKey = getWorkspaceStorageKey(STORAGE_KEYS.invoices, workspaceId);
+    const templatesKey = getWorkspaceStorageKey(STORAGE_KEYS.templates, workspaceId);
+
+    localStorage.setItem(jobsKey, JSON.stringify(jobs));
+    localStorage.setItem(clientsKey, JSON.stringify(clients));
+    localStorage.setItem(techsKey, JSON.stringify(technicians));
+    localStorage.setItem(invoicesKey, JSON.stringify(invoices));
+    localStorage.setItem(templatesKey, JSON.stringify(templates));
+  }, [jobs, clients, technicians, invoices, templates, workspaceId]);
 
   const debouncedSave = useRef(debounce(saveToLocalStorage, 1000));
 

@@ -20,12 +20,22 @@
 // v2.1.0: Fixed stale asset detection - auto-clear on 404 JS/CSS
 // v2.2.0: Fixed index.html cache strategy - network-first prevents stale asset refs
 // v2.3.0: Added schema version tracking, dev mode support, enhanced reset
-const CACHE_VERSION = 'bunker-v2.3';
+// v2.4.0: Added automatic version detection and paid user auto-updates
+const CACHE_VERSION = 'bunker-v2.4';
 // Schema version must match lib/offline/db.ts DB_SCHEMA_VERSION
 const SCHEMA_VERSION = 4;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const MEDIA_CACHE = `${CACHE_VERSION}-media`;
+
+// Critical paths that should be fetched with priority (network-first, no caching delay)
+const CRITICAL_PATHS = [
+  '/api/subscription',
+  '/api/seal-evidence',
+  '/api/generate-report',
+  '/rest/v1/rpc/seal_evidence',
+  '/rest/v1/rpc/verify_evidence',
+];
 
 // Track if we've done a fresh install/update
 let isNewInstall = false;
@@ -139,7 +149,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle different request types
-  if (isApiRequest(url)) {
+  if (isCriticalPath(url)) {
+    // Critical paths: network-first with no caching (always fresh)
+    event.respondWith(priorityFetchStrategy(request));
+  } else if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
   } else if (isNavigationRequest(request, url)) {
     // CRITICAL: index.html must be network-first to get latest asset references
@@ -258,9 +271,36 @@ async function refreshCache(request, cache) {
   }
 }
 
+/**
+ * Priority fetch strategy - network only, no caching
+ * Best for: Critical API endpoints that must always be fresh
+ */
+async function priorityFetchStrategy(request) {
+  try {
+    const networkResponse = await fetch(request, {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
+    return networkResponse;
+  } catch (error) {
+    console.log('[SW] Priority fetch failed:', request.url);
+    return new Response(JSON.stringify({ error: 'Offline' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
 // ============================================================================
 // REQUEST TYPE DETECTION
 // ============================================================================
+
+/**
+ * Check if request is a critical path that needs priority handling
+ */
+function isCriticalPath(url) {
+  return CRITICAL_PATHS.some(path => url.pathname.includes(path));
+}
 
 function isApiRequest(url) {
   return url.pathname.startsWith('/rest/') ||
@@ -486,6 +526,79 @@ self.addEventListener('message', (event) => {
       });
     });
   }
+
+  // Check for updates - compares version from index.html meta tag
+  if (event.data.type === 'CHECK_FOR_UPDATES') {
+    const currentVersion = event.data.currentVersion;
+    console.log('[SW] Checking for updates, current version:', currentVersion);
+    checkForUpdates(currentVersion).then((result) => {
+      if (result.updateAvailable) {
+        console.log('[SW] Update available:', result.newVersion);
+      }
+    });
+  }
 });
 
-console.log(`[SW] Service worker loaded - Bunker Mode Ready (${CACHE_VERSION})`);
+// ============================================================================
+// VERSION CHECKING - Automatic update detection
+// ============================================================================
+
+/**
+ * Check for updates by fetching index.html and comparing version meta tag
+ * Posts UPDATE_AVAILABLE message to all clients if version differs
+ *
+ * @param {string} currentVersion - The current app version from the client
+ * @returns {Promise<{updateAvailable: boolean, newVersion: string|null}>}
+ */
+async function checkForUpdates(currentVersion) {
+  try {
+    // Fetch index.html with cache bypass
+    const response = await fetch('/index.html', {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
+
+    if (!response.ok) {
+      console.log('[SW] Failed to fetch index.html for version check');
+      return { updateAvailable: false, newVersion: null };
+    }
+
+    const html = await response.text();
+
+    // Extract version from meta tag: <meta name="app-version" content="...">
+    const versionMatch = html.match(/<meta\s+name=["']app-version["']\s+content=["']([^"']+)["']/i);
+
+    if (!versionMatch) {
+      console.log('[SW] No app-version meta tag found in index.html');
+      return { updateAvailable: false, newVersion: null };
+    }
+
+    const newVersion = versionMatch[1];
+    console.log('[SW] Version check: current=' + currentVersion + ', server=' + newVersion);
+
+    if (currentVersion && newVersion !== currentVersion) {
+      // Notify all clients about the update
+      const clients = await self.clients.matchAll({ includeUncontrolled: true });
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'UPDATE_AVAILABLE',
+          currentVersion: currentVersion,
+          newVersion: newVersion,
+          timestamp: Date.now()
+        });
+      });
+
+      return { updateAvailable: true, newVersion: newVersion };
+    }
+
+    return { updateAvailable: false, newVersion: newVersion };
+  } catch (error) {
+    console.error('[SW] Error checking for updates:', error);
+    return { updateAvailable: false, newVersion: null };
+  }
+}
+
+console.log(`[SW] Service worker loaded - Bunker Mode Ready (${CACHE_VERSION}) with auto-update detection`);

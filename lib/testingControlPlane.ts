@@ -45,6 +45,29 @@ export interface ResetResult {
     verified: boolean;
 }
 
+/**
+ * Result of workspace-scoped reset operation.
+ * Unlike ResetResult, this only affects a single workspace's data.
+ */
+export interface WorkspaceResetResult {
+    success: boolean;
+    workspaceId: string;
+    indexedDB: {
+        jobsDeleted: number;
+        clientsDeleted: number;
+        techniciansDeleted: number;
+        formDraftsDeleted: number;
+        error?: string;
+    };
+    localStorage: {
+        keysDeleted: number;
+        keys: string[];
+        error?: string;
+    };
+    durationMs: number;
+    errors: string[];
+}
+
 export interface LayerStatus {
     serviceWorker: {
         active: boolean;
@@ -136,6 +159,281 @@ async function withTimeout<T>(
         clearTimeout(timeoutId!);
         throw error;
     }
+}
+
+// ============================================================================
+// FEATURE FLAGS
+// ============================================================================
+
+/**
+ * Check if workspace-isolated storage is enabled.
+ * When enabled, localStorage keys are prefixed with workspaceId.
+ */
+export function isWorkspaceIsolatedStorageEnabled(): boolean {
+    return localStorage.getItem('jobproof_feature_workspace_isolated_storage') === 'true';
+}
+
+/**
+ * Enable workspace-isolated storage feature flag.
+ * Use this in test setup to enable isolation.
+ */
+export function enableWorkspaceIsolatedStorage(): void {
+    guardTestingAccess('enableWorkspaceIsolatedStorage');
+    localStorage.setItem('jobproof_feature_workspace_isolated_storage', 'true');
+    console.log('[TestingControlPlane] Workspace-isolated storage ENABLED');
+}
+
+/**
+ * Disable workspace-isolated storage feature flag.
+ * Data will use shared keys (default behavior).
+ */
+export function disableWorkspaceIsolatedStorage(): void {
+    guardTestingAccess('disableWorkspaceIsolatedStorage');
+    localStorage.removeItem('jobproof_feature_workspace_isolated_storage');
+    console.log('[TestingControlPlane] Workspace-isolated storage DISABLED');
+}
+
+/**
+ * Get the localStorage key for a given base key and workspace.
+ * When isolation is enabled: `${baseKey}:${workspaceId}`
+ * When disabled: `${baseKey}` (backward compatible)
+ */
+export function getWorkspaceStorageKey(baseKey: string, workspaceId?: string | null): string {
+    if (isWorkspaceIsolatedStorageEnabled() && workspaceId) {
+        return `${baseKey}:${workspaceId}`;
+    }
+    return baseKey;
+}
+
+// ============================================================================
+// WORKSPACE-SCOPED RESET
+// ============================================================================
+
+/**
+ * Reset only a single workspace's data while preserving other workspaces.
+ *
+ * This is the KEY function for test isolation - allows parallel tests
+ * to run without interfering with each other.
+ *
+ * Clears:
+ * 1. IndexedDB records where workspaceId matches
+ * 2. localStorage keys prefixed with workspace ID (when isolation enabled)
+ *
+ * Does NOT clear:
+ * - Service Worker (shared across all workspaces)
+ * - Session Storage (shared)
+ * - Cookies (shared)
+ * - Supabase auth (shared)
+ * - Other workspaces' data
+ *
+ * @param workspaceId - The workspace ID to reset
+ * @returns Detailed result with counts of deleted items
+ */
+async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult> {
+    guardTestingAccess('resetWorkspace');
+
+    const startTime = Date.now();
+    const errors: string[] = [];
+    const result: WorkspaceResetResult = {
+        success: false,
+        workspaceId,
+        indexedDB: {
+            jobsDeleted: 0,
+            clientsDeleted: 0,
+            techniciansDeleted: 0,
+            formDraftsDeleted: 0,
+        },
+        localStorage: {
+            keysDeleted: 0,
+            keys: [],
+        },
+        durationMs: 0,
+        errors: [],
+    };
+
+    console.log('[TestingControlPlane] ========================================');
+    console.log('[TestingControlPlane] RESET WORKSPACE:', workspaceId);
+    console.log('[TestingControlPlane] Time:', new Date().toISOString());
+    console.log('[TestingControlPlane] ========================================');
+
+    try {
+        // Step 1: Delete IndexedDB records for this workspace
+        console.log('[TestingControlPlane] Step 1: Clearing IndexedDB for workspace...');
+        try {
+            const database = await getDatabase();
+
+            // Delete jobs for this workspace
+            const jobsDeleted = await database.jobs
+                .where('workspaceId')
+                .equals(workspaceId)
+                .delete();
+            result.indexedDB.jobsDeleted = jobsDeleted;
+            console.log(`[TestingControlPlane] Deleted ${jobsDeleted} jobs`);
+
+            // Delete clients for this workspace
+            const clientsDeleted = await database.clients
+                .where('workspaceId')
+                .equals(workspaceId)
+                .delete();
+            result.indexedDB.clientsDeleted = clientsDeleted;
+            console.log(`[TestingControlPlane] Deleted ${clientsDeleted} clients`);
+
+            // Delete technicians for this workspace
+            const techniciansDeleted = await database.technicians
+                .where('workspaceId')
+                .equals(workspaceId)
+                .delete();
+            result.indexedDB.techniciansDeleted = techniciansDeleted;
+            console.log(`[TestingControlPlane] Deleted ${techniciansDeleted} technicians`);
+
+            // Delete form drafts (these are keyed by formType, not workspaceId)
+            // We need to check if workspace isolation is enabled and handle accordingly
+            if (isWorkspaceIsolatedStorageEnabled()) {
+                // When isolation is enabled, form drafts use workspaceId in key
+                // Form types might be like 'client:ws-123', 'job:ws-123'
+                const allDrafts = await database.formDrafts.toArray();
+                const workspaceDrafts = allDrafts.filter(d =>
+                    d.formType.includes(`:${workspaceId}`)
+                );
+                for (const draft of workspaceDrafts) {
+                    await database.formDrafts.delete(draft.formType);
+                    result.indexedDB.formDraftsDeleted++;
+                }
+                console.log(`[TestingControlPlane] Deleted ${result.indexedDB.formDraftsDeleted} form drafts`);
+            }
+
+        } catch (error) {
+            const msg = `IndexedDB workspace clear: ${error instanceof Error ? error.message : String(error)}`;
+            errors.push(msg);
+            result.indexedDB.error = msg;
+        }
+
+        // Step 2: Delete workspace-prefixed localStorage keys
+        console.log('[TestingControlPlane] Step 2: Clearing localStorage for workspace...');
+        try {
+            const keysToDelete: string[] = [];
+
+            // When isolation is enabled, keys have :workspaceId suffix
+            if (isWorkspaceIsolatedStorageEnabled()) {
+                const suffix = `:${workspaceId}`;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.endsWith(suffix)) {
+                        keysToDelete.push(key);
+                    }
+                }
+            }
+
+            // Also check for any keys that contain the workspaceId explicitly
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.includes(workspaceId) && !keysToDelete.includes(key)) {
+                    keysToDelete.push(key);
+                }
+            }
+
+            // Delete the keys
+            for (const key of keysToDelete) {
+                console.log(`[TestingControlPlane] Removing localStorage key: ${key}`);
+                localStorage.removeItem(key);
+            }
+
+            result.localStorage.keysDeleted = keysToDelete.length;
+            result.localStorage.keys = keysToDelete;
+            console.log(`[TestingControlPlane] Deleted ${keysToDelete.length} localStorage keys`);
+
+        } catch (error) {
+            const msg = `localStorage workspace clear: ${error instanceof Error ? error.message : String(error)}`;
+            errors.push(msg);
+            result.localStorage.error = msg;
+        }
+
+    } catch (error) {
+        const msg = `Unexpected error: ${error instanceof Error ? error.message : String(error)}`;
+        errors.push(msg);
+    }
+
+    result.durationMs = Date.now() - startTime;
+    result.errors = errors;
+    result.success = errors.length === 0;
+
+    console.log('[TestingControlPlane] ========================================');
+    console.log('[TestingControlPlane] WORKSPACE RESET COMPLETE');
+    console.log('[TestingControlPlane] Success:', result.success);
+    console.log('[TestingControlPlane] Duration:', result.durationMs, 'ms');
+    console.log('[TestingControlPlane] IndexedDB:', result.indexedDB);
+    console.log('[TestingControlPlane] localStorage:', result.localStorage);
+    console.log('[TestingControlPlane] Errors:', result.errors);
+    console.log('[TestingControlPlane] ========================================');
+
+    return result;
+}
+
+/**
+ * Get the status of a specific workspace's data.
+ * Useful for verifying isolation between workspaces.
+ */
+async function getWorkspaceStatus(workspaceId: string): Promise<{
+    workspaceId: string;
+    indexedDB: {
+        jobsCount: number;
+        clientsCount: number;
+        techniciansCount: number;
+    };
+    localStorage: {
+        keyCount: number;
+        keys: string[];
+    };
+}> {
+    guardTestingAccess('getWorkspaceStatus');
+
+    const status = {
+        workspaceId,
+        indexedDB: {
+            jobsCount: 0,
+            clientsCount: 0,
+            techniciansCount: 0,
+        },
+        localStorage: {
+            keyCount: 0,
+            keys: [] as string[],
+        },
+    };
+
+    try {
+        const database = await getDatabase();
+
+        status.indexedDB.jobsCount = await database.jobs
+            .where('workspaceId')
+            .equals(workspaceId)
+            .count();
+
+        status.indexedDB.clientsCount = await database.clients
+            .where('workspaceId')
+            .equals(workspaceId)
+            .count();
+
+        status.indexedDB.techniciansCount = await database.technicians
+            .where('workspaceId')
+            .equals(workspaceId)
+            .count();
+    } catch (error) {
+        console.warn('[TestingControlPlane] Failed to get IndexedDB status:', error);
+    }
+
+    // Check localStorage for workspace-specific keys
+    const workspaceKeys: string[] = [];
+    const suffix = `:${workspaceId}`;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.endsWith(suffix) || key.includes(workspaceId))) {
+            workspaceKeys.push(key);
+        }
+    }
+    status.localStorage.keyCount = workspaceKeys.length;
+    status.localStorage.keys = workspaceKeys;
+
+    return status;
 }
 
 // ============================================================================
@@ -485,10 +783,24 @@ function isTestingAllowed(): boolean {
  * Exposed at window.__JOBPROOF_TEST__ in dev mode.
  */
 export const TestingControlPlane = {
+    // Core reset functions
     resetAll,
+    resetWorkspace,
+
+    // Status inspection
     getLayerStatus,
+    getWorkspaceStatus,
     verifyCleanState,
+
+    // Feature flags for workspace isolation
+    isWorkspaceIsolatedStorageEnabled,
+    enableWorkspaceIsolatedStorage,
+    disableWorkspaceIsolatedStorage,
+    getWorkspaceStorageKey,
+
+    // Access control
     isTestingAllowed,
+
     // Build info for debugging
     buildInfo: BUILD_INFO,
 };

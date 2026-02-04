@@ -10,6 +10,8 @@
 import { getSupabase } from './supabase';
 import { updateJob } from './db';
 import type { Job } from '../types';
+import { JOB_STATUS } from './constants';
+import { isFeatureEnabled } from './featureFlags';
 
 // ============================================================================
 // TYPES
@@ -179,8 +181,16 @@ export const canSealJob = (job: any): CanSealResult => {
   }
 
   // Check status
-  if (job.status !== 'Submitted') {
-    reasons.push('Job must be in Submitted status');
+  // When SEAL_ON_DISPATCH is enabled, allow sealing from Pending status (at dispatch time)
+  // Otherwise, require Submitted status (after tech submission)
+  const sealOnDispatchEnabled = isFeatureEnabled('SEAL_ON_DISPATCH');
+  const validStatuses = sealOnDispatchEnabled
+    ? [JOB_STATUS.SUBMITTED, JOB_STATUS.PENDING]
+    : [JOB_STATUS.SUBMITTED];
+
+  if (!validStatuses.includes(job.status)) {
+    const statusList = validStatuses.join(' or ');
+    reasons.push(`Job must be in ${statusList} status`);
   }
 
   // Check photos

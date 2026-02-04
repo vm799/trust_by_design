@@ -30,7 +30,7 @@ export const BUILD_INFO = {
   // Schema version from offline/db.ts
   schemaVersion: 4,
   // Service worker version (must match sw.js CACHE_VERSION)
-  swVersion: 'bunker-v2.3',
+  swVersion: 'bunker-v2.4',
   // App version from package.json
   appVersion: import.meta.env.VITE_APP_VERSION || '0.0.0',
 };
