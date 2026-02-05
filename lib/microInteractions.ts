@@ -3,6 +3,16 @@
  * PhD-Level UX Delight - Haptic feedback, celebrations, and subtle animations
  */
 
+/**
+ * Escape HTML special characters to prevent XSS attacks.
+ * All user-facing text in innerHTML MUST be escaped.
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Haptic feedback for mobile (if supported)
 export const hapticFeedback = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') => {
   if (!navigator.vibrate) return;
@@ -256,7 +266,7 @@ export const showToast = (
   toast.innerHTML = `
     <div class="bg-slate-900 border-2 ${colors[type]} rounded-2xl p-4 shadow-2xl backdrop-blur-sm flex items-center gap-3">
       <span class="material-symbols-outlined text-xl">${icons[type]}</span>
-      <p class="text-sm font-medium text-white flex-1">${message}</p>
+      <p class="text-sm font-medium text-white flex-1">${escapeHtml(message)}</p>
       <button onclick="this.parentElement.parentElement.remove()" class="text-slate-500 hover:text-white transition-colors">
         <span class="material-symbols-outlined text-sm">close</span>
       </button>
@@ -287,8 +297,8 @@ export const showKeyboardHint = (key: string, action: string) => {
   hint.className = 'fixed bottom-6 left-6 z-[200] animate-in fade-in slide-in-from-bottom-2 duration-200';
   hint.innerHTML = `
     <div class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 shadow-lg flex items-center gap-2">
-      <kbd class="bg-slate-700 px-2 py-1 rounded text-xs font-mono text-white">${key}</kbd>
-      <span class="text-slate-400 text-sm">${action}</span>
+      <kbd class="bg-slate-700 px-2 py-1 rounded text-xs font-mono text-white">${escapeHtml(key)}</kbd>
+      <span class="text-slate-400 text-sm">${escapeHtml(action)}</span>
     </div>
   `;
 

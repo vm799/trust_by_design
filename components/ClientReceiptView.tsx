@@ -121,7 +121,7 @@ Evidence is cryptographically sealed and verifiable.
           <h1 className="text-xl font-black text-white uppercase tracking-tight">Client Receipt</h1>
           <button
             onClick={onClose}
-            className="size-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -148,7 +148,7 @@ Evidence is cryptographically sealed and verifiable.
         </div>
         <button
           onClick={onClose}
-          className="size-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
         >
           <span className="material-symbols-outlined">close</span>
         </button>

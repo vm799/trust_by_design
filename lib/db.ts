@@ -610,7 +610,14 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
     if (job.sealedAt) {
       return {
         success: false,
-        error: 'Cannot delete a sealed job'
+        error: 'Cannot delete a sealed job - evidence has been cryptographically preserved'
+      };
+    }
+
+    if (job.invoiceId) {
+      return {
+        success: false,
+        error: 'Cannot delete a job with an invoice - delete the invoice first'
       };
     }
 

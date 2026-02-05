@@ -179,7 +179,8 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
         <h2 className="text-sm font-bold text-white uppercase tracking-wide">Messages</h2>
         <button
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800"
+          aria-label="Close messages"
+          className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-full bg-slate-800"
         >
           <span className="material-symbols-outlined text-lg text-slate-400">close</span>
         </button>
@@ -264,7 +265,8 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
         <div className="flex items-center gap-3 p-4 border-b border-white/10">
           <button
             onClick={handleBack}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800"
+            aria-label="Go back to message list"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-full bg-slate-800"
           >
             <span className="material-symbols-outlined text-lg text-slate-400">arrow_back</span>
           </button>
@@ -278,7 +280,8 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800"
+            aria-label="Close messages"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-full bg-slate-800"
           >
             <span className="material-symbols-outlined text-lg text-slate-400">close</span>
           </button>
@@ -329,7 +332,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
                       {msg.attachments.map(att => (
                         <div key={att.id} className="text-xs text-slate-300">
                           {att.type === 'image' ? (
-                            <img src={att.url} alt="" className="max-w-full rounded-lg" />
+                            <img src={att.url} alt={att.filename || 'Attached image'} className="max-w-full rounded-lg" />
                           ) : att.type === 'voice' ? (
                             // eslint-disable-next-line jsx-a11y/media-has-caption
                             <audio src={att.url} controls className="w-full" />
@@ -429,7 +432,8 @@ export const MessageBadge: React.FC<{ userId: string; onClick: () => void }> = (
   return (
     <button
       onClick={() => { hapticTap(); onClick(); }}
-      className="relative w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 border border-white/10"
+      aria-label={`Open messages${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+      className="relative min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 border border-white/10"
     >
       <span className="material-symbols-outlined text-white">chat</span>
       {unreadCount > 0 && (

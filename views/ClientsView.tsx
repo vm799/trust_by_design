@@ -51,9 +51,9 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
-            <input required placeholder="Client Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-            <input required type="email" placeholder="Verification Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
-            <input required placeholder="Operational Address" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
+            <input required placeholder="Client Name" aria-label="Client Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
             <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
           </form>
         )}

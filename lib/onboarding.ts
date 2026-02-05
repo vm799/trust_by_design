@@ -5,6 +5,16 @@
 
 // Note: ReactNode was previously imported but unused - removed for lint compliance
 
+/**
+ * Escape HTML special characters to prevent XSS attacks.
+ * All user-facing text in innerHTML MUST be escaped.
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -567,7 +577,7 @@ export const showToast = (options: {
         <span class="material-symbols-outlined text-xl">${icon}</span>
         <div class="flex-1">
           <p class="font-semibold text-white mb-1">Guided Flow</p>
-          <p class="text-sm ${bgColor.split(' ')[2]}">${message}</p>
+          <p class="text-sm ${bgColor.split(' ')[2]}">${escapeHtml(message)}</p>
         </div>
         <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-slate-500 hover:text-white transition-colors">
           <span class="material-symbols-outlined text-sm">close</span>
