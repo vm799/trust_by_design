@@ -126,22 +126,97 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
     );
   }
 
-  // No data state
+  // No data state - but for managers, still show Quick Stats/Actions
   if (!state) {
+    // For managers, show a minimal dashboard with quick actions even without data
+    if (role === 'manager') {
+      return (
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className={`relative overflow-hidden space-y-6 pb-20 ${className}`}
+        >
+          {header}
+          {/* QUICK STATS - Always show for managers */}
+          <motion.section variants={fadeInUp}>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <QuickActionCard
+                id="stat-jobs"
+                title="0"
+                subtitle="Total Jobs"
+                icon="work"
+                statusColor="neutral"
+                route="/admin/jobs"
+              />
+              <QuickActionCard
+                id="stat-clients"
+                title={`${clients.length}`}
+                subtitle="Clients"
+                icon="business"
+                statusColor={clients.length > 0 ? 'success' : 'neutral'}
+                route="/admin/clients"
+              />
+              <QuickActionCard
+                id="stat-technicians"
+                title={`${technicians.length}`}
+                subtitle="Technicians"
+                icon="engineering"
+                statusColor={technicians.length > 0 ? 'success' : 'warning'}
+                route="/admin/technicians"
+              />
+              <QuickActionCard
+                id="stat-completed"
+                title="0"
+                subtitle="Completed"
+                icon="check_circle"
+                statusColor="neutral"
+                route="/admin/jobs?status=complete"
+              />
+            </div>
+          </motion.section>
+          {/* QUICK ACTIONS */}
+          <motion.section variants={fadeInUp}>
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Actions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <QuickActionCard
+                id="action-new-job"
+                title="New Job"
+                subtitle="Create a new job"
+                icon="add_circle"
+                statusColor="info"
+                route="/admin/jobs/new"
+              />
+              <QuickActionCard
+                id="action-new-client"
+                title="New Client"
+                subtitle="Add a client"
+                icon="person_add"
+                statusColor="info"
+                route="/admin/clients/new"
+              />
+              <QuickActionCard
+                id="action-new-tech"
+                title="Add Technician"
+                subtitle="Invite team member"
+                icon="group_add"
+                statusColor="info"
+                route="/admin/technicians/new"
+              />
+            </div>
+          </motion.section>
+          {emptyState || <DefaultEmptyState role={role} />}
+        </motion.div>
+      );
+    }
     return emptyState || <DefaultEmptyState role={role} />;
   }
 
-  // Check for completely empty dashboard
-  const isEmpty =
-    state.meta.totalJobs === 0 &&
-    state.meta.totalTechnicians === 0 &&
+  // Check if work items are empty (focus, queue, background)
+  const hasNoWorkItems =
     !state.focus &&
     state.queue.length === 0 &&
     state.background.every(s => s.items.length === 0);
-
-  if (isEmpty) {
-    return emptyState || <DefaultEmptyState role={role} />;
-  }
 
   return (
     <motion.div
@@ -305,6 +380,31 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
           />
         </motion.section>
       ))}
+
+      {/* NO WORK ITEMS - Show helpful message when queue is empty */}
+      {hasNoWorkItems && role === 'manager' && (
+        <motion.section variants={fadeInUp}>
+          <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-8 text-center">
+            <div className="size-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-3xl text-emerald-400">check_circle</span>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">All Caught Up!</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              No jobs need attention right now. Use the quick actions above to get started.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <QuickActionCard
+                id="empty-new-job"
+                title="Create First Job"
+                subtitle="Start tracking work"
+                icon="add_circle"
+                statusColor="info"
+                route="/admin/jobs/new"
+              />
+            </div>
+          </div>
+        </motion.section>
+      )}
     </motion.div>
   );
 };
