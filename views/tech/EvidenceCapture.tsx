@@ -14,7 +14,7 @@ import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast } from '../../lib/microInteractions';
-import { MetadataHUD, SealingAnimation, BunkerStatusBadge } from '../../components/evidence';
+import { MetadataHUD, BunkerStatusBadge } from '../../components/evidence';
 import { convertToW3W } from '../../lib/services/what3words';
 
 type PhotoType = 'before' | 'during' | 'after';
@@ -56,7 +56,6 @@ const EvidenceCapture: React.FC = () => {
   const [w3w, setW3w] = useState<string | null>(null);
   const [w3wVerified, setW3wVerified] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [showSealingAnimation, setShowSealingAnimation] = useState(false);
   const [isAcquiringGPS, setIsAcquiringGPS] = useState(true);
 
   // Track online/offline status
@@ -276,12 +275,11 @@ const EvidenceCapture: React.FC = () => {
       // 3. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
-      // Show sealing animation (bunker-proof UI)
-      // CRITICAL: Technician needs certainty that photo is cryptographically sealed
-      setShowSealingAnimation(true);
-
-      // FIELD UX: Show confirmation toast before navigating
-      showToast('Evidence sealed - stored in local vault, will sync when online', 'success');
+      // FIELD UX: Show confirmation toast and navigate back
+      // NOTE: Photo is saved to local vault but NOT yet cryptographically sealed
+      // Sealing happens later via manager review in EvidenceReview.tsx
+      showToast('Photo saved to local vault - will sync when online', 'success');
+      navigate(`/tech/job/${job?.id}`);
     } catch (error) {
       setError('Failed to save photo. Please try again.');
     } finally {
@@ -409,18 +407,6 @@ const EvidenceCapture: React.FC = () => {
     <div className="min-h-screen bg-black flex flex-col">
       {/* Offline status indicator */}
       <OfflineIndicator />
-
-      {/* Sealing Animation (Bunker-Proof UI) */}
-      {/* CRITICAL: Technician sees cryptographic sealing process */}
-      <SealingAnimation
-        isActive={showSealingAnimation}
-        photoUrl={capturedPhoto?.dataUrl}
-        duration={2500}
-        onComplete={() => {
-          setShowSealingAnimation(false);
-          navigate(`/tech/job/${job?.id}`);
-        }}
-      />
 
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
