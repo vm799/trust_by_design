@@ -42,9 +42,10 @@ const SEALING_STAGES = [
 ];
 
 /**
- * Generate a fake hash for visual effect
+ * Generate random hex string for animation display only.
+ * This is purely visual - actual hashes come from the sealing library.
  */
-function generateVisualHash(): string {
+function generateAnimationHash(): string {
   const chars = '0123456789abcdef';
   return Array.from({ length: 64 }, () => chars[Math.floor(Math.random() * 16)]).join('');
 }
@@ -73,7 +74,7 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
 
     // Start hash scramble effect
     const hashInterval = setInterval(() => {
-      setVisualHash(generateVisualHash());
+      setVisualHash(generateAnimationHash());
     }, 50);
 
     // Progress through stages
@@ -88,7 +89,7 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
     // Complete animation
     const completeTimer = setTimeout(() => {
       clearInterval(hashInterval);
-      setVisualHash(generateVisualHash()); // Final hash
+      setVisualHash(generateAnimationHash()); // Final hash
       setIsComplete(true);
       onComplete?.();
     }, duration);

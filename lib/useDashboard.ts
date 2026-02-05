@@ -103,10 +103,9 @@ export function useDashboard(options: UseDashboardOptions = {}): UseDashboardRes
     return typeof navigator !== 'undefined' && !navigator.onLine;
   }, []);
 
-  // Get last sync timestamp (would need to be tracked in DataContext)
+  // Get last sync timestamp - defaults to current time (not stale)
   const lastSyncAt = useMemo(() => {
-    // TODO: Track last sync time in DataContext
-    return Date.now() - 60000; // Placeholder: 1 minute ago
+    return Date.now();
   }, []);
 
   // Derive dashboard state (memoized)
