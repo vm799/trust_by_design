@@ -9,6 +9,16 @@ import { getDatabase } from '../offline/db';
 import { Photo } from '../../types';
 
 /**
+ * Escape HTML special characters to prevent XSS attacks.
+ * All user-facing text in innerHTML MUST be escaped.
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
  * Wait for photo sync to complete
  *
  * Polls IndexedDB to check if photos have been synced to cloud storage.
@@ -105,14 +115,14 @@ export function showPersistentNotification(options: {
     <div class="flex items-start gap-4">
       <span class="material-symbols-outlined text-2xl font-black">${icons[type]}</span>
       <div class="flex-1 space-y-2">
-        <p class="text-sm font-black uppercase tracking-tight">${title}</p>
-        <p class="text-xs text-slate-300 leading-relaxed">${message}</p>
+        <p class="text-sm font-black uppercase tracking-tight">${escapeHtml(title)}</p>
+        <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(message)}</p>
         ${actionLabel ? `
           <button
             id="notification-action-${Date.now()}"
             class="mt-3 w-full py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest border transition-all hover:opacity-80"
           >
-            ${actionLabel}
+            ${escapeHtml(actionLabel)}
           </button>
         ` : ''}
       </div>

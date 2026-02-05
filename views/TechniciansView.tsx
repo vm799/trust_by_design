@@ -54,8 +54,8 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
-            <input required placeholder="Technician Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
-            <input required type="email" placeholder="Technician Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
+            <input required placeholder="Technician Name" aria-label="Technician Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
+            <input required type="email" placeholder="Technician Email" aria-label="Technician Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
             <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Add Technician</button>
           </form>
         )}

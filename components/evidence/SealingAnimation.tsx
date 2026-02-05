@@ -118,6 +118,8 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
               <img
                 src={photoUrl}
                 alt=""
+                role="presentation"
+                aria-hidden="true"
                 className="w-full h-full object-cover opacity-20 blur-sm"
               />
             </div>
