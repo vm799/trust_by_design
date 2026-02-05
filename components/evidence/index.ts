@@ -11,3 +11,4 @@ export { default as MetadataHUD } from './MetadataHUD';
 export { default as SealingAnimation } from './SealingAnimation';
 export { default as ForensicPhotoCard } from './ForensicPhotoCard';
 export { default as BunkerStatusBadge, BunkerModeBanner } from './BunkerStatusBadge';
+export { default as ProofPairCard } from './ProofPairCard';

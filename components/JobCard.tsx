@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Job } from '../types';
 
 interface JobCardProps {
@@ -14,6 +15,12 @@ interface JobCardProps {
  */
 type LifecycleStage = 'dispatched' | 'capture' | 'awaiting_seal' | 'sealed' | 'verified';
 
+/**
+ * Pulse color configurations for status indicators
+ * Based on UX research: forensic-grade visual feedback
+ */
+type PulseColor = 'green' | 'blue' | 'amber' | 'red' | 'none';
+
 interface LifecycleInfo {
   stage: LifecycleStage;
   label: string;
@@ -21,6 +28,8 @@ interface LifecycleInfo {
   color: string;
   bgColor: string;
   borderColor: string;
+  pulseColor: PulseColor;
+  glowClass: string;
 }
 
 const getJobLifecycle = (job: Job): LifecycleInfo => {
@@ -33,6 +42,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
       color: 'text-success',
       bgColor: 'bg-success/10',
       borderColor: 'border-success/20',
+      pulseColor: 'green',
+      glowClass: 'shadow-[0_0_15px_rgba(34,197,94,0.4)]',
     };
   }
 
@@ -45,6 +56,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/20',
+      pulseColor: 'blue',
+      glowClass: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
     };
   }
 
@@ -57,6 +70,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
       color: 'text-warning',
       bgColor: 'bg-warning/10',
       borderColor: 'border-warning/20',
+      pulseColor: 'amber',
+      glowClass: 'shadow-[0_0_15px_rgba(245,158,11,0.4)]',
     };
   }
 
@@ -69,6 +84,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/20',
+      pulseColor: 'blue',
+      glowClass: 'shadow-[0_0_12px_rgba(59,130,246,0.3)]',
     };
   }
 
@@ -80,6 +97,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
     color: 'text-slate-400',
     bgColor: 'bg-slate-800',
     borderColor: 'border-slate-700',
+    pulseColor: 'none',
+    glowClass: '',
   };
 };
 
@@ -95,17 +114,63 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
  * - Retry action for failed syncs
  * - Memoized to prevent unnecessary re-renders
  */
+/**
+ * Pulse animation variants for status indicator
+ */
+const pulseVariants = {
+  green: {
+    boxShadow: [
+      '0 0 0 0 rgba(34, 197, 94, 0)',
+      '0 0 0 8px rgba(34, 197, 94, 0.3)',
+      '0 0 0 0 rgba(34, 197, 94, 0)',
+    ],
+  },
+  blue: {
+    boxShadow: [
+      '0 0 0 0 rgba(59, 130, 246, 0)',
+      '0 0 0 8px rgba(59, 130, 246, 0.3)',
+      '0 0 0 0 rgba(59, 130, 246, 0)',
+    ],
+  },
+  amber: {
+    boxShadow: [
+      '0 0 0 0 rgba(245, 158, 11, 0)',
+      '0 0 0 8px rgba(245, 158, 11, 0.3)',
+      '0 0 0 0 rgba(245, 158, 11, 0)',
+    ],
+  },
+  red: {
+    boxShadow: [
+      '0 0 0 0 rgba(239, 68, 68, 0)',
+      '0 0 0 8px rgba(239, 68, 68, 0.4)',
+      '0 0 0 0 rgba(239, 68, 68, 0)',
+    ],
+  },
+  none: {},
+};
+
 const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, photoDataUrls }) => {
   const lifecycle = getJobLifecycle(job);
   const isUrgent = job.priority === 'urgent';
+  const hasSyncIssue = job.syncStatus === 'failed';
+
+  // Determine effective pulse color (urgent/failed overrides lifecycle)
+  const effectivePulseColor: PulseColor = hasSyncIssue ? 'red' : isUrgent ? 'red' : lifecycle.pulseColor;
+  const shouldPulse = effectivePulseColor !== 'none';
 
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className={`w-full rounded-2xl p-4 transition-all text-left group hover-lift ${
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      animate={shouldPulse ? pulseVariants[effectivePulseColor] : {}}
+      transition={shouldPulse ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : {}}
+      className={`w-full rounded-2xl p-4 transition-all text-left group ${
         isUrgent
           ? 'bg-danger/5 border-2 border-danger/30 hover:border-danger/50'
-          : 'bg-slate-900 border border-white/5 hover:border-primary/30'
+          : hasSyncIssue
+          ? 'bg-danger/5 border-2 border-danger/20'
+          : `bg-slate-900 border border-white/5 hover:border-primary/30 ${lifecycle.glowClass}`
       }`}
     >
       {/* Urgent Priority Banner */}
@@ -133,6 +198,19 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
           inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-tight flex-shrink-0
           ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}
         `}>
+          {/* Pulsing status indicator dot */}
+          {shouldPulse && (
+            <motion.span
+              animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className={`size-2 rounded-full ${
+                effectivePulseColor === 'green' ? 'bg-success' :
+                effectivePulseColor === 'blue' ? 'bg-primary' :
+                effectivePulseColor === 'amber' ? 'bg-warning' :
+                'bg-danger'
+              }`}
+            />
+          )}
           <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
           {lifecycle.label}
         </div>
@@ -225,14 +303,14 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
         {job.syncStatus === 'failed' && onRetry && (
           <button
             onClick={(e) => onRetry(job, e)}
-            className="px-3 py-2 bg-danger/10 hover:bg-danger/20 border border-danger/20 text-danger rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5"
+            className="px-3 py-2 bg-danger/10 hover:bg-danger/20 border border-danger/20 text-danger rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 min-h-[44px]"
           >
             <span className="material-symbols-outlined text-xs">refresh</span>
             Retry
           </button>
         )}
       </div>
-    </button>
+    </motion.button>
   );
 }, (prevProps, nextProps) => {
   // Custom comparison function for optimal memoization
