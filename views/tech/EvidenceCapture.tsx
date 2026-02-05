@@ -80,10 +80,12 @@ const EvidenceCapture: React.FC = () => {
         const result = await convertToW3W(location.lat, location.lng);
         if (result) {
           setW3w(result.words);
-          setW3wVerified(result.verified ?? false);
+          // W3W is considered verified if we got a result from the API
+          setW3wVerified(true);
         }
       } catch {
         // W3W fetch failed - continue without it
+        setW3wVerified(false);
       }
     };
     fetchW3W();
