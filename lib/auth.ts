@@ -239,8 +239,13 @@ const MAGIC_LINK_COOLDOWN_MS = 5000; // 5 second minimum between requests for sa
  * Feature flag: Use Edge Function for magic link sending
  * When true, uses the send-magic-link Edge Function with Postgres-backed rate limiting
  * When false, falls back to direct Supabase Auth API call
+ *
+ * DISABLED (Feb 2026): Edge Function rate limiter was causing false positives
+ * where users were blocked even on first login attempts. The global rate limit
+ * counter accumulated stale data blocking all requests. Falling back to
+ * Supabase's built-in rate limiting (4 emails/hour per address).
  */
-const USE_EDGE_FUNCTION_RATE_LIMITER = true;
+const USE_EDGE_FUNCTION_RATE_LIMITER = false;
 
 export const signInWithMagicLink = async (
   email: string,
