@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
@@ -15,6 +16,7 @@ import { sealEvidence } from '../../../lib/sealing';
 import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
+import { SealingAnimation, ForensicPhotoCard } from '../../../components/evidence';
 
 interface Photo {
   id?: string;  // REMEDIATION ITEM 9: Added for stable React keys
@@ -22,7 +24,11 @@ interface Photo {
   localPath?: string;
   type?: 'before' | 'during' | 'after';
   timestamp?: string;
-  location?: { lat: number; lng: number };
+  location?: { lat: number; lng: number; accuracy?: number };
+  w3w?: string;
+  w3w_verified?: boolean;
+  hash?: string;
+  syncStatus?: 'pending' | 'synced' | 'failed';
 }
 
 const EvidenceReview: React.FC = () => {
@@ -38,11 +44,15 @@ const EvidenceReview: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [showSealDialog, setShowSealDialog] = useState(false);
   const [sealing, setSealing] = useState(false);
+  const [showSealingAnimation, setShowSealingAnimation] = useState(false);
 
   const handleSeal = async () => {
     if (!job) return;
 
     setSealing(true);
+    setShowSealDialog(false);
+    setShowSealingAnimation(true);
+
     try {
       const result = await sealEvidence(job.id);
 
@@ -56,16 +66,21 @@ const EvidenceReview: React.FC = () => {
         contextUpdateJob(sealedJob);
         // Also refresh from server to ensure consistency
         await refresh();
-        setShowSealDialog(false);
       } else {
+        setShowSealingAnimation(false);
         throw new Error(result.error || 'Failed to seal evidence');
       }
     } catch (error) {
       console.error('Failed to seal job:', error);
+      setShowSealingAnimation(false);
       alert(error instanceof Error ? error.message : 'Failed to seal evidence. Please try again.');
     } finally {
       setSealing(false);
     }
+  };
+
+  const handleSealingComplete = () => {
+    setShowSealingAnimation(false);
   };
 
   // Group photos by type
@@ -111,6 +126,13 @@ const EvidenceReview: React.FC = () => {
 
   return (
     <div>
+      {/* Sealing Animation - Bunker-Proof UI */}
+      <SealingAnimation
+        isActive={showSealingAnimation}
+        duration={3000}
+        onComplete={handleSealingComplete}
+      />
+
       <PageHeader
         title="Evidence Review"
         subtitle={job.title || `Job #${job.id.slice(0, 6)}`}
@@ -288,7 +310,7 @@ const EvidenceReview: React.FC = () => {
   );
 };
 
-// Photo Card Component
+// Forensic Photo Card Component - Enhanced with integrity badges
 interface PhotoCardProps {
   photo: Photo;
   locked: boolean;
@@ -296,10 +318,23 @@ interface PhotoCardProps {
 }
 
 const PhotoCard: React.FC<PhotoCardProps> = ({ photo, locked, onClick }) => {
+  // Calculate integrity checks
+  const hasGPS = Boolean(photo.location);
+  const hasW3W = Boolean(photo.w3w);
+
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className="relative aspect-square rounded-xl overflow-hidden bg-slate-800 border border-white/10 hover:border-white/20 transition-all group"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className={`
+        relative aspect-square rounded-xl overflow-hidden
+        bg-[#121212] border-2 transition-all duration-300 group
+        ${locked
+          ? 'border-[#00FFCC]/50 shadow-[0_0_15px_rgba(0,255,204,0.3)]'
+          : 'border-white/10 hover:border-white/20'
+        }
+      `}
     >
       <img
         src={photo.url || photo.localPath}
@@ -307,30 +342,96 @@ const PhotoCard: React.FC<PhotoCardProps> = ({ photo, locked, onClick }) => {
         className="w-full h-full object-cover"
       />
 
-      {/* Locked indicator */}
-      {locked && (
-        <div className="absolute top-2 right-2 size-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-sm text-emerald-400">lock</span>
-        </div>
-      )}
+      {/* Scan lines overlay for forensic feel */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-10"
+        style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.3) 3px, rgba(0,0,0,0.3) 4px)',
+        }}
+      />
+
+      {/* Top badges row */}
+      <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
+        {/* Type badge */}
+        {photo.type && (
+          <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+            photo.type === 'before' ? 'bg-blue-500/20 text-blue-400' :
+            photo.type === 'during' ? 'bg-amber-500/20 text-amber-400' :
+            photo.type === 'after' ? 'bg-emerald-500/20 text-emerald-400' :
+            'bg-slate-500/20 text-slate-400'
+          }`}>
+            {photo.type}
+          </span>
+        )}
+
+        {/* Sealed/Sync indicator */}
+        {locked ? (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="size-7 rounded-full bg-[#00FFCC]/20 flex items-center justify-center shadow-[0_0_10px_rgba(0,255,204,0.5)]"
+          >
+            <span className="material-symbols-outlined text-sm text-[#00FFCC]">verified_user</span>
+          </motion.div>
+        ) : photo.syncStatus === 'pending' ? (
+          <div className="size-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <span className="material-symbols-outlined text-xs text-amber-400">cloud_upload</span>
+          </div>
+        ) : photo.syncStatus === 'failed' ? (
+          <div className="size-6 rounded-full bg-red-500/20 flex items-center justify-center">
+            <span className="material-symbols-outlined text-xs text-red-400">cloud_off</span>
+          </div>
+        ) : null}
+      </div>
 
       {/* Hover overlay */}
       <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
         <span className="material-symbols-outlined text-white text-3xl">zoom_in</span>
       </div>
 
-      {/* Metadata */}
-      {photo.timestamp && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/80 to-transparent p-2">
-          <p className="text-[10px] text-slate-300">
-            {new Date(photo.timestamp).toLocaleTimeString('en-AU', {
+      {/* Bottom metadata with integrity indicators */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2 pt-6">
+        {/* Timestamp */}
+        {photo.timestamp && (
+          <p className="font-mono text-[10px] text-slate-300 mb-1">
+            {new Date(photo.timestamp).toLocaleString('en-GB', {
+              day: '2-digit',
+              month: 'short',
               hour: '2-digit',
               minute: '2-digit',
             })}
           </p>
+        )}
+
+        {/* Integrity indicators */}
+        <div className="flex items-center gap-2">
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${
+            hasGPS ? 'text-[#00FFCC]' : 'text-slate-500'
+          }`}>
+            <span className="material-symbols-outlined text-[10px]">
+              {hasGPS ? 'check_circle' : 'radio_button_unchecked'}
+            </span>
+            GPS
+          </span>
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${
+            hasW3W && photo.w3w_verified ? 'text-[#00FFCC]' : 'text-slate-500'
+          }`}>
+            <span className="material-symbols-outlined text-[10px]">
+              {hasW3W && photo.w3w_verified ? 'check_circle' : 'radio_button_unchecked'}
+            </span>
+            W3W
+          </span>
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${
+            locked ? 'text-[#00FFCC]' : 'text-slate-500'
+          }`}>
+            <span className="material-symbols-outlined text-[10px]">
+              {locked ? 'check_circle' : 'radio_button_unchecked'}
+            </span>
+            Sealed
+          </span>
         </div>
-      )}
-    </button>
+      </div>
+    </motion.button>
   );
 };
 

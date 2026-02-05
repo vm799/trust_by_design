@@ -14,6 +14,8 @@ import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast } from '../../lib/microInteractions';
+import { MetadataHUD, SealingAnimation, BunkerStatusBadge } from '../../components/evidence';
+import { convertToW3W } from '../../lib/services/what3words';
 
 type PhotoType = 'before' | 'during' | 'after';
 
@@ -21,7 +23,9 @@ interface CapturedPhoto {
   dataUrl: string;
   type: PhotoType;
   timestamp: string;
-  location?: { lat: number; lng: number };
+  location?: { lat: number; lng: number; accuracy?: number };
+  w3w?: string;
+  w3wVerified?: boolean;
 }
 
 const EvidenceCapture: React.FC = () => {
@@ -42,11 +46,49 @@ const EvidenceCapture: React.FC = () => {
   const [capturedPhoto, setCapturedPhoto] = useState<CapturedPhoto | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
   const [saveConfirmation, setSaveConfirmation] = useState(false);
   const [draftSaveWarning, setDraftSaveWarning] = useState(false);
   const [storageFullWarning, setStorageFullWarning] = useState(false);
   const [cameraRetryCount, setCameraRetryCount] = useState(0);
+
+  // Bunker-proof UI state
+  const [w3w, setW3w] = useState<string | null>(null);
+  const [w3wVerified, setW3wVerified] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showSealingAnimation, setShowSealingAnimation] = useState(false);
+  const [isAcquiringGPS, setIsAcquiringGPS] = useState(true);
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Fetch W3W when location changes
+  useEffect(() => {
+    if (!location) return;
+    setIsAcquiringGPS(false);
+
+    const fetchW3W = async () => {
+      try {
+        const result = await convertToW3W(location.lat, location.lng);
+        if (result) {
+          setW3w(result.words);
+          setW3wVerified(result.verified ?? false);
+        }
+      } catch {
+        // W3W fetch failed - continue without it
+      }
+    };
+    fetchW3W();
+  }, [location]);
 
   // Draft key for photo persistence (survives app crash)
   const draftKey = `photo_draft_${jobId}`;
@@ -121,20 +163,27 @@ const EvidenceCapture: React.FC = () => {
     };
   }, []);
 
-  // Get location
+  // Get location with accuracy
   useEffect(() => {
     if ('geolocation' in navigator) {
+      setIsAcquiringGPS(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
           });
+          setIsAcquiringGPS(false);
         },
         (err) => {
           console.warn('Geolocation failed:', err);
-        }
+          setIsAcquiringGPS(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
+    } else {
+      setIsAcquiringGPS(false);
     }
   }, []);
 
@@ -162,6 +211,8 @@ const EvidenceCapture: React.FC = () => {
       type: photoType,
       timestamp: new Date().toISOString(),
       location: location || undefined,
+      w3w: w3w || undefined,
+      w3wVerified: w3wVerified,
     };
 
     // Persist to IndexedDB immediately (survives app crash)
@@ -193,6 +244,9 @@ const EvidenceCapture: React.FC = () => {
         timestamp: capturedPhoto.timestamp,
         lat: capturedPhoto.location?.lat,
         lng: capturedPhoto.location?.lng,
+        accuracy: capturedPhoto.location?.accuracy,
+        w3w: capturedPhoto.w3w,
+        w3w_verified: capturedPhoto.w3wVerified,
         verified: false,
         syncStatus: SYNC_STATUS.PENDING,
       };
@@ -222,17 +276,12 @@ const EvidenceCapture: React.FC = () => {
       // 3. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
-      // Show "Saved to device" confirmation (Sprint 1 Task 1.2)
-      // CRITICAL: Technician needs certainty that photo is safe
-      setSaveConfirmation(true);
+      // Show sealing animation (bunker-proof UI)
+      // CRITICAL: Technician needs certainty that photo is cryptographically sealed
+      setShowSealingAnimation(true);
 
       // FIELD UX: Show confirmation toast before navigating
-      showToast('Photo captured - saved locally, will sync when online', 'success');
-
-      // Wait 1.5s so user sees confirmation, then navigate
-      setTimeout(() => {
-        navigate(`/tech/job/${job.id}`);
-      }, 1500);
+      showToast('Evidence sealed - stored in local vault, will sync when online', 'success');
     } catch (error) {
       setError('Failed to save photo. Please try again.');
     } finally {
@@ -361,17 +410,17 @@ const EvidenceCapture: React.FC = () => {
       {/* Offline status indicator */}
       <OfflineIndicator />
 
-      {/* Save Confirmation Toast (Sprint 1 Task 1.2) */}
-      {/* CRITICAL: Technician needs visual certainty that photo is safe */}
-      {saveConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-emerald-500 text-white px-8 py-6 rounded-2xl flex flex-col items-center gap-3 shadow-2xl shadow-emerald-500/30 animate-scale-in">
-            <span className="material-symbols-outlined text-5xl">check_circle</span>
-            <span className="font-black text-lg uppercase tracking-wider">Saved to Device</span>
-            <span className="text-sm text-emerald-100">Photo stored safely</span>
-          </div>
-        </div>
-      )}
+      {/* Sealing Animation (Bunker-Proof UI) */}
+      {/* CRITICAL: Technician sees cryptographic sealing process */}
+      <SealingAnimation
+        isActive={showSealingAnimation}
+        photoUrl={capturedPhoto?.dataUrl}
+        duration={2500}
+        onComplete={() => {
+          setShowSealingAnimation(false);
+          navigate(`/tech/job/${job?.id}`);
+        }}
+      />
 
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
@@ -407,17 +456,15 @@ const EvidenceCapture: React.FC = () => {
               className="w-full h-full object-contain"
             />
 
-            {/* Metadata Overlay - British English with UTC */}
-            <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur px-3 py-2 rounded-lg">
-              <p className="text-xs text-white">
-                {new Date(capturedPhoto.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC
-              </p>
-              {capturedPhoto.location && (
-                <p className="text-[10px] text-slate-400">
-                  {capturedPhoto.location.lat.toFixed(6)}, {capturedPhoto.location.lng.toFixed(6)}
-                </p>
-              )}
-            </div>
+            {/* Forensic Metadata HUD */}
+            <MetadataHUD
+              location={capturedPhoto.location}
+              w3w={capturedPhoto.w3w}
+              w3wVerified={capturedPhoto.w3wVerified}
+              timestamp={new Date(capturedPhoto.timestamp).getTime()}
+              isOffline={isOffline}
+              className="absolute bottom-4 left-4 right-4 max-w-sm"
+            />
           </div>
 
           {/* Photo Type Selector */}
@@ -480,11 +527,6 @@ const EvidenceCapture: React.FC = () => {
             <span className="material-symbols-outlined">close</span>
           </button>
 
-          {/* FIELD UX: Offline safety indicator */}
-          <div className="absolute top-4 right-4 z-10">
-            <OfflineIndicator />
-          </div>
-
           {/* Video Feed */}
           <div className="flex-1 relative overflow-hidden">
             <video
@@ -495,13 +537,27 @@ const EvidenceCapture: React.FC = () => {
               className="w-full h-full object-cover"
             />
 
-            {/* Location Overlay */}
-            {location && (
-              <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-emerald-400">location_on</span>
-                <span className="text-xs text-white">GPS Active</span>
-              </div>
-            )}
+            {/* Forensic Metadata HUD - Camera View */}
+            <MetadataHUD
+              location={location}
+              w3w={w3w}
+              w3wVerified={w3wVerified}
+              isAcquiringGPS={isAcquiringGPS}
+              timestamp={Date.now()}
+              isOffline={isOffline}
+              compact={true}
+              className="absolute bottom-4 left-4"
+            />
+
+            {/* Bunker Status Badge - Top Right */}
+            <div className="absolute top-4 right-4 z-10">
+              <BunkerStatusBadge
+                state={isOffline ? 'local' : 'synced'}
+                isOffline={isOffline}
+                showLabel={false}
+                size="md"
+              />
+            </div>
           </div>
 
           {/* Photo Type Selector */}
