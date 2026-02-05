@@ -51,12 +51,16 @@ const EvidenceReview: React.FC = () => {
 
     setSealing(true);
     setShowSealDialog(false);
-    setShowSealingAnimation(true);
+    // NOTE: Animation starts ONLY after cryptographic sealing succeeds
+    // Never show "Sealed" status until real sealing is confirmed
 
     try {
       const result = await sealEvidence(job.id);
 
       if (result.success) {
+        // ONLY NOW show the sealing animation - after real cryptographic seal
+        setShowSealingAnimation(true);
+
         // Update job in DataContext with sealed state
         const sealedJob: Job = {
           ...job,
@@ -67,12 +71,10 @@ const EvidenceReview: React.FC = () => {
         // Also refresh from server to ensure consistency
         await refresh();
       } else {
-        setShowSealingAnimation(false);
         throw new Error(result.error || 'Failed to seal evidence');
       }
     } catch (error) {
       console.error('Failed to seal job:', error);
-      setShowSealingAnimation(false);
       alert(error instanceof Error ? error.message : 'Failed to seal evidence. Please try again.');
     } finally {
       setSealing(false);
