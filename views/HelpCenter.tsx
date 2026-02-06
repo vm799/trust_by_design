@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '../hooks/useNavigation';

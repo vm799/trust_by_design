@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
 import { getMedia } from '../db';

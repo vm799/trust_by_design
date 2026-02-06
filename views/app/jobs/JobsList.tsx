@@ -14,7 +14,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Layout from '../../../components/Layout';
+import Layout from '../../../components/AppLayout';
 import EmptyState from '../../../components/EmptyState';
 import { Job, UserProfile } from '../../../types';
 import { ROUTES } from '../../../lib/routes';
