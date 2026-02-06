@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';

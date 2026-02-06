@@ -38,7 +38,7 @@
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { UnifiedDashboard } from '../components/dashboard';
 import { Job, UserProfile, Invoice } from '../types';
 

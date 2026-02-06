@@ -16,7 +16,7 @@
  */
 
 import React, { useMemo } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import OnboardingTour from '../components/OnboardingTour';
 import { UnifiedDashboard } from '../components/dashboard';
 import { OfflineIndicator } from '../components/OfflineIndicator';

@@ -174,6 +174,8 @@ export default defineConfig(({ mode }) => {
       // Optimize dependencies
       optimizeDeps: {
         include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js', 'dexie'],
+        // Only scan the main entry point - exclude email templates and other non-app HTML
+        entries: ['index.html'],
         exclude: []
       }
     };

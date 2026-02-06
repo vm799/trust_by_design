@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../types';
 import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';

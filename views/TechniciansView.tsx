@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import Layout from '../components/AppLayout';
 import { Technician, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
 import { secureRandomString } from '../lib/secureId';
