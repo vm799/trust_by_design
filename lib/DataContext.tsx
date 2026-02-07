@@ -457,11 +457,29 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     const invoicesKey = getWorkspaceStorageKey(STORAGE_KEYS.invoices, workspaceId);
     const templatesKey = getWorkspaceStorageKey(STORAGE_KEYS.templates, workspaceId);
 
-    localStorage.setItem(jobsKey, JSON.stringify(jobs));
-    localStorage.setItem(clientsKey, JSON.stringify(clients));
-    localStorage.setItem(techsKey, JSON.stringify(technicians));
-    localStorage.setItem(invoicesKey, JSON.stringify(invoices));
-    localStorage.setItem(templatesKey, JSON.stringify(templates));
+    try {
+      localStorage.setItem(jobsKey, JSON.stringify(jobs));
+      localStorage.setItem(clientsKey, JSON.stringify(clients));
+      localStorage.setItem(techsKey, JSON.stringify(technicians));
+      localStorage.setItem(invoicesKey, JSON.stringify(invoices));
+      localStorage.setItem(templatesKey, JSON.stringify(templates));
+    } catch (err) {
+      // QuotaExceededError: localStorage is full (~5MB limit).
+      // This is non-fatal — data is still in memory and Supabase.
+      // Attempt to free space by removing the largest key (jobs) and retrying smaller items.
+      console.warn('[DataContext] localStorage save failed (quota exceeded):', err);
+      try {
+        localStorage.removeItem(jobsKey);
+        localStorage.setItem(clientsKey, JSON.stringify(clients));
+        localStorage.setItem(techsKey, JSON.stringify(technicians));
+        localStorage.setItem(invoicesKey, JSON.stringify(invoices));
+        localStorage.setItem(templatesKey, JSON.stringify(templates));
+      } catch {
+        // Still failing — localStorage is critically full. Silently degrade.
+        // Dexie/IndexedDB and Supabase are the primary persistence layers anyway.
+        console.warn('[DataContext] localStorage critically full, skipping persistence');
+      }
+    }
   }, [jobs, clients, technicians, invoices, templates, workspaceId]);
 
   const debouncedSave = useRef(debounce(saveToLocalStorage, 1000));
