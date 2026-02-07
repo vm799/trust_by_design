@@ -143,14 +143,15 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="space-y-3 mb-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ staggerChildren: 0.1 }}
-      >
+    <div role="alert" aria-live="polite" aria-atomic="true">
+      <AnimatePresence>
+        <motion.div
+          className="space-y-3 mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ staggerChildren: 0.1 }}
+        >
         {alerts.map((alert, index) => {
           const colors = colorConfig[alert.color];
 
@@ -207,8 +208,9 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
             </motion.button>
           );
         })}
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 });
 
