@@ -48,7 +48,6 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
           <NavLink to="/admin" icon="dashboard" label="Dashboard" active={location.pathname === '/admin'} id="nav-dashboard" />
           <NavLink to="/admin/clients" icon="group" label="Clients" active={location.pathname === '/admin/clients'} id="nav-clients" />
           <NavLink to="/admin/technicians" icon="engineering" label="Technicians" active={location.pathname === '/admin/technicians'} id="nav-techs" />
-          <NavLink to="/admin/templates" icon="assignment" label="Protocols" active={location.pathname === '/admin/templates'} />
 
           <div className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Financials</div>
           <NavLink to="/admin/invoices" icon="receipt_long" label="Invoices" active={location.pathname === '/admin/invoices'} />
