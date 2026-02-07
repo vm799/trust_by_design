@@ -22,6 +22,7 @@ import SealingProgressModal, { SealingStatus } from '../../components/ui/Sealing
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
+import { celebrateSuccess, hapticFeedback } from '../../lib/microInteractions';
 
 interface Photo {
   id?: string;
@@ -69,7 +70,7 @@ const TechEvidenceReview: React.FC = () => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // Initialize canvas
+  // Initialize canvas with gradient background
   React.useEffect(() => {
     if (!showSignaturePad) return;
 
@@ -91,22 +92,27 @@ const TechEvidenceReview: React.FC = () => {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.lineWidth = 3;
-      ctx.strokeStyle = '#1e293b'; // slate-800
+      ctx.strokeStyle = '#10b981'; // emerald for signature ink
 
-      // Light background
-      ctx.fillStyle = '#f8fafc'; // slate-50
+      // Dark gradient background (slate-900 to slate-800)
+      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+      gradient.addColorStop(0, '#0f172a'); // slate-900
+      gradient.addColorStop(1, '#1e293b'); // slate-800
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Draw signature line guide
-      ctx.strokeStyle = '#cbd5e1'; // slate-300
-      ctx.lineWidth = 1;
+      // Draw animated signature line guide with glow
+      ctx.strokeStyle = '#10b981'; // emerald-500
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.4; // Semi-transparent for subtle effect
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
       // Reset for drawing
-      ctx.strokeStyle = '#1e293b';
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#10b981'; // emerald-500 for clear signature strokes
       ctx.lineWidth = 3;
     }
   }, [showSignaturePad]);
@@ -157,10 +163,14 @@ const TechEvidenceReview: React.FC = () => {
         const { x, y } = getCoordinates(e);
         ctx.lineTo(x, y);
         ctx.stroke();
-        setHasSignature(true);
+        if (!hasSignature) {
+          setHasSignature(true);
+          // Trigger success animation and haptic feedback on first signature stroke
+          hapticFeedback('light');
+        }
       }
     },
-    [isDrawing, getCoordinates]
+    [isDrawing, getCoordinates, hasSignature]
   );
 
   const stopDrawing = useCallback(() => {
@@ -180,18 +190,24 @@ const TechEvidenceReview: React.FC = () => {
     const rect = container.getBoundingClientRect();
 
     if (ctx) {
-      ctx.fillStyle = '#f8fafc';
+      // Dark gradient background (slate-900 to slate-800)
+      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+      gradient.addColorStop(0, '#0f172a'); // slate-900
+      gradient.addColorStop(1, '#1e293b'); // slate-800
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Redraw signature line
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1;
+      // Redraw signature line guide with glow
+      ctx.strokeStyle = '#10b981'; // emerald-500
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.4;
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
-      ctx.strokeStyle = '#1e293b';
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#10b981'; // emerald-500
       ctx.lineWidth = 3;
 
       setHasSignature(false);
@@ -266,6 +282,10 @@ const TechEvidenceReview: React.FC = () => {
     try {
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
       const timestamp = new Date().toISOString();
+
+      // Trigger celebration effects on successful signature capture
+      celebrateSuccess();
+      hapticFeedback('success');
 
       const updatedJob: Job = {
         ...job,
@@ -436,7 +456,7 @@ const TechEvidenceReview: React.FC = () => {
                   <h2 className="font-bold text-white text-lg mb-2">
                     Client Satisfaction Confirmation
                   </h2>
-                  <p className="text-slate-300 leading-relaxed">
+                  <p className="text-base font-bold text-white leading-relaxed">
                     {SATISFACTION_STATEMENT}
                   </p>
                 </div>
@@ -495,17 +515,19 @@ const TechEvidenceReview: React.FC = () => {
             </div>
 
             {/* Satisfaction Statement */}
-            <div className="p-4 bg-slate-800/50 border-b border-slate-800">
-              <p className="text-sm text-slate-300 leading-relaxed">
-                <strong className="text-white">{SATISFACTION_STATEMENT}</strong>
+            <div className="p-4 bg-emerald-500/10 border-b border-emerald-500/20">
+              <p className="text-base font-bold text-white leading-relaxed">
+                {SATISFACTION_STATEMENT}
               </p>
             </div>
 
             {/* Canvas */}
             <div className="p-4">
-              <div
+              <motion.div
                 ref={containerRef}
-                className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-600 bg-slate-50"
+                className="h-[200px] rounded-xl overflow-hidden border-2 border-emerald-500/40 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-lg shadow-emerald-500/20"
+                animate={hasSignature ? { boxShadow: '0 0 24px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 12px rgba(16, 185, 129, 0.15)' }}
+                transition={{ duration: 0.5, repeat: hasSignature ? Infinity : 0, repeatType: 'reverse' }}
               >
                 <canvas
                   ref={canvasRef}
@@ -518,7 +540,7 @@ const TechEvidenceReview: React.FC = () => {
                   onTouchEnd={stopDrawing}
                   className="w-full h-full cursor-crosshair touch-none"
                 />
-              </div>
+              </motion.div>
 
               {!hasSignature && (
                 <p className="text-xs text-slate-500 text-center mt-2">

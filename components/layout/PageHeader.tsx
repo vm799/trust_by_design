@@ -52,9 +52,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-2 text-sm mb-2">
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && (
+          {breadcrumbs.map((crumb) => (
+            <React.Fragment key={`breadcrumb-${crumb.label}`}>
+              {breadcrumbs.indexOf(crumb) > 0 && (
                 <span className="text-slate-600">/</span>
               )}
               {crumb.to ? (
@@ -92,7 +92,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         {/* Actions */}
         {actions && actions.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
-            {actions.map((action, index) => {
+            {actions.map((action) => {
               const baseClasses = `
                 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
                 text-sm font-medium transition-all
@@ -106,10 +106,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               };
 
               const classes = `${baseClasses} ${variantClasses[action.variant || 'secondary']}`;
+              const actionKey = action.label || action.icon || Math.random().toString();
 
               if (action.to) {
                 return (
-                  <Link key={index} to={action.to} className={classes}>
+                  <Link key={`action-${actionKey}`} to={action.to} className={classes}>
                     {action.icon && <span className="material-symbols-outlined text-lg">{action.icon}</span>}
                     {action.label}
                   </Link>
@@ -118,7 +119,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
               return (
                 <button
-                  key={index}
+                  key={`action-${actionKey}`}
                   onClick={action.onClick}
                   disabled={action.disabled}
                   className={classes}
