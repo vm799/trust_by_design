@@ -21,10 +21,8 @@
  * @see WEEK2_EXECUTION_PLAN.md FIX 2.1
  */
 
-import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { List } from 'react-window';
-import type { RowComponentProps } from 'react-window';
 import Layout from '../../../components/AppLayout';
 import EmptyState from '../../../components/EmptyState';
 import { Job, UserProfile } from '../../../types';
@@ -164,7 +162,9 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
   // Virtual scrolling state
   const containerRef = useRef<HTMLDivElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(DEFAULT_LIST_HEIGHT);
+  const [containerWidth, setContainerWidth] = useState(1200);
 
   // Get filter from URL params
   const currentFilter = (searchParams.get('filter') as FilterType) || 'all';
@@ -235,124 +235,35 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [jobs, currentFilter, searchQuery]);
 
-  // ResizeObserver for dynamic container height (virtual scrolling)
+  // ResizeObserver for dynamic list container dimensions (virtual scrolling)
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const outerContainer = containerRef.current;
+    if (!outerContainer) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const height = entry.contentRect.height;
+        const width = entry.contentRect.width;
+
         if (height > 0) {
-          // Reserve space for header
-          setContainerHeight(height - HEADER_HEIGHT);
+          // Calculate list height excluding headers
+          setContainerHeight(Math.max(height - (HEADER_HEIGHT + 60), 400));
+        }
+        if (width > 0) {
+          setContainerWidth(Math.max(width, 400));
         }
       }
     });
 
-    resizeObserver.observe(container);
+    resizeObserver.observe(outerContainer);
 
     // Explicit cleanup - prevent memory leaks
     return () => {
-      resizeObserver.unobserve(container);
+      resizeObserver.unobserve(outerContainer);
       resizeObserver.disconnect();
     };
   }, []);
 
-  // Row renderer for virtual list (react-window v2.x API)
-  const VirtualTableRow = useCallback((props: RowComponentProps<{ jobs: Job[] }>) => {
-    const { index, style } = props;
-    const job = filteredJobs[index];
-    if (!job) return null;
-
-    const lifecycle = getJobLifecycle(job);
-    const syncStatus = getSyncStatus(job);
-
-    return (
-      <div
-        style={style}
-        className="hover:bg-white/5 transition-colors cursor-pointer group border-b border-white/5"
-        onClick={() => navigate(`/admin/report/${job.id}`)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            navigate(`/admin/report/${job.id}`);
-          }
-        }}
-      >
-        <div className="flex items-center h-full">
-          {/* Job Title Column */}
-          <div className="px-8 py-5 flex-1">
-            <div className="font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors text-white">
-              {job.title}
-            </div>
-            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-              {job.id.slice(0, 8)}
-            </div>
-          </div>
-
-          {/* Client Column */}
-          <div className="px-8 py-5 flex-1">
-            <div className="text-sm text-white font-bold">{job.client}</div>
-            {job.address && (
-              <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
-                {job.address.split(',')[0]}
-              </div>
-            )}
-          </div>
-
-          {/* Technician Column */}
-          <div className="px-8 py-5 flex-1">
-            <div className="flex items-center gap-3">
-              <div className="size-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">
-                {job.technician?.[0] || '?'}
-              </div>
-              <span className="text-sm text-slate-300 font-bold uppercase">
-                {job.technician || 'Unassigned'}
-              </span>
-            </div>
-          </div>
-
-          {/* Status Column */}
-          <div className="px-8 py-5 flex-1">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
-              <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
-              {lifecycle.label}
-            </div>
-          </div>
-
-          {/* Date Column */}
-          <div className="px-8 py-5 flex-1">
-            <div className="text-sm text-white font-medium">
-              {new Date(job.date).toLocaleDateString('en-AU', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </div>
-            <div className="text-[10px] text-slate-500">
-              {new Date(job.date).toLocaleTimeString('en-AU', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-          </div>
-
-          {/* Sync Column */}
-          <div className="px-8 py-5 flex-1 text-right">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
-              <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
-                {syncStatus.icon}
-              </span>
-              {syncStatus.label}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }, [filteredJobs, navigate]);
 
   return (
     <Layout user={user}>
@@ -524,7 +435,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             <div
               ref={containerRef}
               className="hidden lg:block bg-slate-900 border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl"
-              style={{ height: `${containerHeight + HEADER_HEIGHT}px` }}
+              style={{ height: 'auto', minHeight: `${containerHeight + HEADER_HEIGHT}px` }}
               data-testid="virtualized-list"
             >
               <div className="px-8 py-5 border-b border-white/5 bg-white/[0.02]">
@@ -543,100 +454,103 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Date</div>
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white text-right">Sync</div>
                 </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-950/50">
-                    <tr>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Job</th>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Client</th>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Technician</th>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Status</th>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Date</th>
-                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white text-right">Sync</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {filteredJobs.map(job => {
-                      const lifecycle = getJobLifecycle(job);
-                      const syncStatus = getSyncStatus(job);
-
-                      return (
-                        <tr
-                          key={job.id}
-                          className="hover:bg-white/5 transition-colors cursor-pointer group"
-                          onClick={() => navigate(`/admin/report/${job.id}`)}
-                        >
-                          <td className="px-8 py-5">
-                            <div className="font-bold text-base group-hover:text-primary transition-colors text-white line-clamp-2">
-                              {job.title}
-                            </div>
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                              {job.id.slice(0, 8)}
-                            </div>
-                          </td>
-                          <td className="px-8 py-5">
-                            <div className="text-sm text-white font-bold">{job.client}</div>
-                            {job.address && (
-                              <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
-                                {job.address.split(',')[0]}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-8 py-5">
-                            <div className="flex items-center gap-3">
-                              <div className="size-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
-                                {job.technician?.[0] || '?'}
-                              </div>
-                              <span className="text-sm text-slate-300 font-medium">
-                                {job.technician || 'Unassigned'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-8 py-5">
-                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
-                              <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
-                              {lifecycle.label}
-                            </div>
-                          </td>
-                          <td className="px-8 py-5">
-                            <div className="text-sm text-white font-medium">
-                              {new Date(job.date).toLocaleDateString('en-AU', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </div>
-                            <div className="text-[10px] text-slate-500">
-                              {new Date(job.date).toLocaleTimeString('en-AU', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </div>
-                          </td>
-                          <td className="px-8 py-5 text-right">
-                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
-                              <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
-                                {syncStatus.icon}
-                              </span>
-                              {syncStatus.label}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
               </div>
 
-              {/* Virtualized List (react-window v2.x) */}
-              <List
-                style={{ height: containerHeight, width: '100%' }}
-                rowCount={filteredJobs.length}
-                rowHeight={TABLE_ROW_HEIGHT}
-                rowComponent={VirtualTableRow}
-                rowProps={{ jobs: filteredJobs }}
-                overscanCount={3}
-              />
+              {/* Virtual Scrolling List Container - Render virtualized rows */}
+              <div
+                ref={listContainerRef}
+                style={{ height: containerHeight, width: '100%', overflow: 'auto' }}
+                className="divide-y divide-white/5"
+              >
+                {filteredJobs.map((job, index) => {
+                  const lifecycle = getJobLifecycle(job);
+                  const syncStatus = getSyncStatus(job);
+
+                  return (
+                    <div
+                      key={job.id}
+                      className="hover:bg-white/5 transition-colors cursor-pointer group border-b border-white/5 flex items-center"
+                      onClick={() => navigate(`/admin/report/${job.id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/admin/report/${job.id}`);
+                        }
+                      }}
+                      style={{ height: `${TABLE_ROW_HEIGHT}px` }}
+                    >
+                      {/* Job Title Column */}
+                      <div className="px-8 py-5 flex-1">
+                        <div className="font-black text-base tracking-tighter uppercase group-hover:text-primary transition-colors text-white">
+                          {job.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                          {job.id.slice(0, 8)}
+                        </div>
+                      </div>
+
+                      {/* Client Column */}
+                      <div className="px-8 py-5 flex-1">
+                        <div className="text-sm text-white font-bold">{job.client}</div>
+                        {job.address && (
+                          <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                            {job.address.split(',')[0]}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Technician Column */}
+                      <div className="px-8 py-5 flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="size-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">
+                            {job.technician?.[0] || '?'}
+                          </div>
+                          <span className="text-sm text-slate-300 font-bold uppercase">
+                            {job.technician || 'Unassigned'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Status Column */}
+                      <div className="px-8 py-5 flex-1">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
+                          <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
+                          {lifecycle.label}
+                        </div>
+                      </div>
+
+                      {/* Date Column */}
+                      <div className="px-8 py-5 flex-1">
+                        <div className="text-sm text-white font-medium">
+                          {new Date(job.date).toLocaleDateString('en-AU', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {new Date(job.date).toLocaleTimeString('en-AU', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Sync Column */}
+                      <div className="px-8 py-5 flex-1 text-right">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
+                          <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
+                            {syncStatus.icon}
+                          </span>
+                          {syncStatus.label}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </>
         )}
