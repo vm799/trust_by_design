@@ -15,7 +15,7 @@ import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDi
 import { useData } from '../../../lib/DataContext';
 import { generateMagicLink } from '../../../lib/db';
 import { useAuth } from '../../../lib/AuthContext';
-import { Job, Client, Technician } from '../../../types';
+import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
 import SyncConflictResolver from '../../../components/SyncConflictResolver';
@@ -57,7 +57,6 @@ const JobDetail: React.FC = () => {
 
   // Sync conflict state (Fix 3.3)
   const [unresolvedConflict, setUnresolvedConflict] = useState(false);
-  const [dismissConflict, setDismissConflict] = useState(false);
 
   // Derive job, client, technician from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
@@ -124,8 +123,6 @@ const JobDetail: React.FC = () => {
     // 2. Apply the resolution (merge local/remote/manual)
     // 3. Sync the result back to server
     setUnresolvedConflict(false);
-    setDismissConflict(true);
-    setTimeout(() => setDismissConflict(false), 2000);
   };
 
   const handleAssignTech = async (techId: string) => {
