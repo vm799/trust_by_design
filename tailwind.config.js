@@ -97,6 +97,30 @@ export default {
           DEFAULT: "hsl(0, 84%, 60%)", // High-contrast Red
           foreground: "hsl(0, 0%, 100%)",
         },
+        // Role-Specific Accent Colors
+        "tech-accent": {
+          DEFAULT: "#10B981", // Emerald-500 - Technician accent
+          hover: "#059669",   // Emerald-600
+          light: "#D1FAE5",   // Emerald-100
+        },
+        "manager-accent": {
+          DEFAULT: "#8B5CF6", // Violet-500 - Manager accent
+          hover: "#7C3AED",   // Violet-600
+          light: "#EDE9FE",   // Violet-100
+        },
+        "solo-accent": {
+          DEFAULT: "#F59E0B", // Amber-500 - Solo contractor accent
+          hover: "#D97706",   // Amber-600
+          light: "#FEF3C7",   // Amber-100
+        },
+        "sealed-glow": {
+          DEFAULT: "#00FFCC", // Forensic teal - Sealed evidence glow
+          dim: "rgba(0, 255, 204, 0.3)",
+          faint: "rgba(0, 255, 204, 0.1)",
+        },
+        "forensic-dark": {
+          DEFAULT: "#121212", // Forensic card dark background
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

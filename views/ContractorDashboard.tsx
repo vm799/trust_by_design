@@ -57,8 +57,8 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
   const dashboardHeader = useMemo(() => (
     <header className="flex items-center justify-between py-4 mb-2">
       <div className="flex items-center gap-3">
-        <div className="size-10 rounded-2xl bg-primary/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary text-lg font-black">work</span>
+        <div className="size-10 rounded-2xl bg-solo-accent/20 flex items-center justify-center">
+          <span className="material-symbols-outlined text-solo-accent text-lg font-black">work</span>
         </div>
         <div>
           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">

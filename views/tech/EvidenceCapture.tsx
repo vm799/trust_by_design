@@ -13,7 +13,7 @@ import { Job } from '../../types';
 import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
-import { showToast } from '../../lib/microInteractions';
+import { showToast, playCameraShutter } from '../../lib/microInteractions';
 import { MetadataHUD, BunkerStatusBadge } from '../../components/evidence';
 import { convertToW3W } from '../../lib/services/what3words';
 
@@ -47,7 +47,6 @@ const EvidenceCapture: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
-  const [saveConfirmation, setSaveConfirmation] = useState(false);
   const [draftSaveWarning, setDraftSaveWarning] = useState(false);
   const [storageFullWarning, setStorageFullWarning] = useState(false);
   const [cameraRetryCount, setCameraRetryCount] = useState(0);
@@ -203,6 +202,9 @@ const EvidenceCapture: React.FC = () => {
 
     // Draw video frame to canvas
     context.drawImage(video, 0, 0);
+
+    // Play camera shutter sound for tactile feedback
+    playCameraShutter();
 
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);

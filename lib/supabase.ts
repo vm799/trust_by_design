@@ -214,4 +214,60 @@ export const uploadSignature = async (
   }
 };
 
+/**
+ * Invoke seal-evidence edge function to cryptographically seal a job
+ * P1-3: Auto-seal integration for technician job submission
+ * @param jobId - Job identifier to seal
+ * @returns Seal result with evidence hash and signature
+ */
+export const invokeSealing = async (jobId: string): Promise<{
+  success: boolean;
+  evidenceHash?: string;
+  signature?: string;
+  sealedAt?: string;
+  error?: string;
+}> => {
+  const client = getSupabase();
+  if (!client) {
+    return {
+      success: false,
+      error: 'Supabase not configured - cannot seal evidence'
+    };
+  }
+
+  try {
+    const { data, error } = await client.functions.invoke('seal-evidence', {
+      body: { jobId }
+    });
+
+    if (error) {
+      console.error('Seal-evidence edge function error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to invoke seal-evidence function'
+      };
+    }
+
+    if (!data || !data.success) {
+      return {
+        success: false,
+        error: data?.error || 'Sealing failed'
+      };
+    }
+
+    return {
+      success: true,
+      evidenceHash: data.evidenceHash,
+      signature: data.signature,
+      sealedAt: data.sealedAt
+    };
+  } catch (error) {
+    console.error('Sealing invocation error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during sealing'
+    };
+  }
+};
+
 export default getSupabase;

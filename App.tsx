@@ -75,6 +75,7 @@ const BunkerSuccess = lazy(() => import('./views/BunkerSuccess'));
 const TechPortal = lazy(() => import('./views/tech/TechPortal'));
 const TechJobDetail = lazy(() => import('./views/tech/TechJobDetail'));
 const EvidenceCapture = lazy(() => import('./views/tech/EvidenceCapture'));
+const TechEvidenceReview = lazy(() => import('./views/tech/TechEvidenceReview'));
 // Stripe Trial: Plan selection after signup
 const SelectPlan = lazy(() => import('./views/SelectPlan'));
 // Developer Tools: Reset utility for clearing all persistence layers
@@ -736,6 +737,11 @@ const AppContent: React.FC = () => {
         <Route path="/tech/job/:jobId/capture" element={
           <RouteErrorBoundary sectionName="Evidence Capture" fallbackRoute="/tech">
             <EvidenceCapture />
+          </RouteErrorBoundary>
+        } />
+        <Route path="/tech/job/:jobId/review" element={
+          <RouteErrorBoundary sectionName="Evidence Review" fallbackRoute="/tech">
+            <TechEvidenceReview />
           </RouteErrorBoundary>
         } />
 

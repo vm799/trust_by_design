@@ -155,11 +155,11 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
         onClick={onClick}
         className={`
           relative w-full aspect-square rounded-xl overflow-hidden
-          bg-[#121212] border-2 transition-all duration-300
+          bg-forensic-dark border-2 transition-all duration-300
           ${isFullyVerified
-            ? 'border-[#00FFCC]/50 shadow-[0_0_15px_rgba(0,255,204,0.3)]'
+            ? 'border-sealed-glow/50 shadow-[0_0_15px_rgba(0,255,204,0.3)]'
             : isSealed
-            ? 'border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+            ? 'border-sealed-glow/40 shadow-lg shadow-sealed-glow/20'
             : 'border-white/10 hover:border-white/20'
           }
         `}
@@ -170,6 +170,11 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
           alt={`${type} evidence`}
           className="w-full h-full object-cover"
         />
+
+        {/* Sealed evidence gradient overlay */}
+        {isSealed && (
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-cyan-500/20 pointer-events-none" />
+        )}
 
         {/* Scan lines overlay for forensic feel */}
         <div
@@ -192,9 +197,9 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="size-7 rounded-full bg-[#00FFCC]/20 flex items-center justify-center shadow-[0_0_10px_rgba(0,255,204,0.5)]"
+                className="size-7 rounded-full bg-sealed-glow/20 flex items-center justify-center shadow-[0_0_10px_rgba(0,255,204,0.5)]"
               >
-                <span className="material-symbols-outlined text-sm text-[#00FFCC]">verified_user</span>
+                <span className="material-symbols-outlined text-sm text-sealed-glow">verified_user</span>
               </motion.div>
             )}
             {syncStatus !== 'synced' && (
@@ -228,7 +233,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
               <span
                 key={check.key}
                 className={`flex items-center gap-0.5 text-[9px] font-mono ${
-                  check.verified ? 'text-[#00FFCC]' : 'text-slate-500'
+                  check.verified ? 'text-sealed-glow' : 'text-slate-500'
                 }`}
               >
                 <span className="material-symbols-outlined text-[10px]">
@@ -248,7 +253,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 right-0 mt-2 z-20 rounded-xl bg-[#121212] border border-white/10 p-3 shadow-xl"
+            className="absolute top-full left-0 right-0 mt-2 z-20 rounded-xl bg-forensic-dark border border-white/10 p-3 shadow-xl"
           >
             <div className="space-y-2 font-mono text-xs">
               {/* GPS */}

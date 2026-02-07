@@ -14,16 +14,24 @@
  * - When offline, technicians CAN create jobs, clients, and capture evidence
  * - All actions sync when connectivity returns
  * - Never block field work due to "insufficient permissions"
+ *
+ * HERO CARD LAYOUT (2026-02-07):
+ * - Started job: 50vh hero card with glassmorphism
+ * - Assigned jobs: Horizontal swimlane with priority visual cues
+ * - Finished jobs: Collapsed by default with shadow-inner style
+ * - Urgent priority: Red pulse border animation
  */
 
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
 import { Job } from '../../types';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
+import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/animations';
 
 const TechPortal: React.FC = () => {
   const { userId, session } = useAuth();
@@ -91,7 +99,7 @@ const TechPortal: React.FC = () => {
               </div>
             )}
             <OfflineIndicator />
-{/* Profile link disabled - no profile view yet (Sprint 2 Task 2.8) */}
+            {/* Profile link disabled - no profile view yet (Sprint 2 Task 2.8) */}
             <div
               className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center opacity-50 cursor-not-allowed"
               title="Profile settings coming soon"
@@ -103,12 +111,14 @@ const TechPortal: React.FC = () => {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
+      <main className="flex-1 pb-20">
         {isLoading ? (
-          <LoadingSkeleton variant="card" count={3} />
+          <div className="px-4 py-6 max-w-2xl mx-auto">
+            <LoadingSkeleton variant="card" count={3} />
+          </div>
         ) : myJobs.length === 0 ? (
           /* Empty state - no assigned jobs */
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
             <div className="size-20 rounded-[2rem] bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-6">
               <span className="material-symbols-outlined text-4xl text-slate-400">inbox</span>
             </div>
@@ -118,89 +128,32 @@ const TechPortal: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-6"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Greeting */}
-            <div className="mb-6">
+            <motion.div variants={fadeInUp} className="px-4 pt-6 max-w-2xl mx-auto">
               <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back,</p>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{techName}</h1>
-            </div>
+            </motion.div>
 
-            {/* STARTED JOB - The one job currently in progress (if any) */}
+            {/* HERO CARD - Started job (50vh) */}
             {startedJob && (
-              <section>
-                <Link to={`/tech/job/${startedJob.id}`} className="block">
-                  <div className="bg-primary/5 dark:bg-primary/10 border-2 border-primary rounded-2xl p-5 transition-all active:scale-[0.98]">
-                    <div className="flex items-center gap-4">
-                      {/* Pulsing indicator */}
-                      <div className="size-14 rounded-2xl bg-primary/20 flex items-center justify-center relative flex-shrink-0">
-                        <span className="material-symbols-outlined text-2xl text-primary">play_arrow</span>
-                        <span className="absolute -top-1 -right-1 size-3 bg-primary rounded-full animate-pulse" />
-                      </div>
-
-                      {/* Job info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded">
-                            Started
-                          </span>
-                          {isDoneEnough(startedJob) && (
-                            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1">
-                              <span className="material-symbols-outlined text-xs">check</span>
-                              Ready
-                            </span>
-                          )}
-                          {/* P0-6 FIX: Show sync status on started job */}
-                          {startedJob.syncStatus && startedJob.syncStatus !== 'synced' && (
-                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 ${
-                              startedJob.syncStatus === 'failed'
-                                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                                : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                            }`}>
-                              <span className={`material-symbols-outlined text-xs ${startedJob.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
-                                {startedJob.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
-                              </span>
-                              {startedJob.syncStatus === 'failed' ? 'Sync Failed' : 'Syncing'}
-                            </span>
-                          )}
-                        </div>
-                        <p className="font-bold text-slate-900 dark:text-white text-lg truncate">
-                          {startedJob.title || `Job #${startedJob.id.slice(0, 6)}`}
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                          {clientsData.find(c => c.id === startedJob.clientId)?.name || startedJob.client || 'Client'}
-                        </p>
-                      </div>
-
-                      <span className="material-symbols-outlined text-2xl text-primary">chevron_right</span>
-                    </div>
-
-                    {/* Progress indicators */}
-                    <div className="flex items-center gap-4 mt-4 pt-4 border-t border-primary/10">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`material-symbols-outlined text-sm ${startedJob.photos.length > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                          {startedJob.photos.length > 0 ? 'check_circle' : 'radio_button_unchecked'}
-                        </span>
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {startedJob.photos.length} photo{startedJob.photos.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`material-symbols-outlined text-sm ${startedJob.signature ? 'text-emerald-500' : 'text-slate-400'}`}>
-                          {startedJob.signature ? 'check_circle' : 'radio_button_unchecked'}
-                        </span>
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {startedJob.signature ? 'Signed' : 'Signature needed'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </section>
+              <motion.section variants={fadeInUp}>
+                <HeroJobCard
+                  job={startedJob}
+                  client={clientsData.find(c => c.id === startedJob.clientId)}
+                  isDoneEnough={isDoneEnough(startedJob)}
+                />
+              </motion.section>
             )}
 
-            {/* ASSIGNED JOBS - Jobs waiting to be started */}
+            {/* ASSIGNED JOBS - Horizontal swimlane */}
             {assignedJobs.length > 0 && (
-              <section>
+              <motion.section variants={fadeInUp} className="px-4 max-w-2xl mx-auto">
                 <h2 className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
                   <span className="material-symbols-outlined text-sm">assignment</span>
                   Assigned
@@ -208,19 +161,23 @@ const TechPortal: React.FC = () => {
                     {assignedJobs.length}
                   </span>
                 </h2>
-                <div className="space-y-2">
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
                   {assignedJobs.map(job => (
-                    <TechJobCard key={job.id} job={job} clients={clientsData} status="assigned" />
+                    <AssignedJobCard
+                      key={job.id}
+                      job={job}
+                      client={clientsData.find(c => c.id === job.clientId)}
+                    />
                   ))}
                 </div>
-              </section>
+              </motion.section>
             )}
 
-            {/* FINISHED - Completed jobs (collapsed if many) */}
+            {/* FINISHED - Collapsed by default */}
             {finishedJobs.length > 0 && (
-              <section className="pt-4 border-t border-slate-200 dark:border-white/5">
-                <details className="group" open={finishedJobs.length <= 3}>
-                  <summary className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 cursor-pointer list-none">
+              <motion.section variants={fadeInUp} className="px-4 pt-4 border-t border-slate-200 dark:border-white/5 max-w-2xl mx-auto">
+                <details className="group">
+                  <summary className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 cursor-pointer list-none min-h-[44px]">
                     <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
                     <span className="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
                     Finished
@@ -228,15 +185,25 @@ const TechPortal: React.FC = () => {
                       {finishedJobs.length}
                     </span>
                   </summary>
-                  <div className="space-y-2">
+                  <motion.div
+                    className="space-y-2"
+                    variants={staggerContainerFast}
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {finishedJobs.map(job => (
-                      <TechJobCard key={job.id} job={job} clients={clientsData} status="finished" />
+                      <motion.div key={job.id} variants={fadeInUp}>
+                        <FinishedJobCard
+                          job={job}
+                          client={clientsData.find(c => c.id === job.clientId)}
+                        />
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 </details>
-              </section>
+              </motion.section>
             )}
-          </div>
+          </motion.div>
         )}
       </main>
     </div>
@@ -244,62 +211,256 @@ const TechPortal: React.FC = () => {
 };
 
 /**
- * TechJobCard - Simple job card for technician view
- * Clear status labels, no management actions
+ * HeroJobCard - 50vh hero card for started job
+ * Dominant visual treatment with glassmorphism
  */
-const TechJobCard = React.memo(({
+const HeroJobCard = React.memo(({
   job,
-  clients,
-  status
+  client,
+  isDoneEnough
 }: {
   job: Job;
-  clients: { id: string; name: string }[];
-  status: 'assigned' | 'finished';
+  client?: { id: string; name: string };
+  isDoneEnough: boolean;
 }) => {
-  const client = clients.find(c => c.id === job.clientId);
+  // Get first photo for preview
+  const previewPhoto = job.photos[0];
+
+  return (
+    <Link to={`/tech/job/${job.id}`} className="block">
+      <div className="relative min-h-[50vh] bg-gradient-to-br from-tech-accent/10 to-tech-accent/5 dark:from-tech-accent/20 dark:to-tech-accent/15 rounded-3xl overflow-hidden backdrop-blur-xl border border-tech-accent/30 dark:border-tech-accent/20 transition-all active:scale-[0.98]">
+        {/* Background image if photo exists */}
+        {previewPhoto && (
+          <div className="absolute inset-0 opacity-20">
+            <img
+              src={previewPhoto.url}
+              alt="Job preview"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="relative z-10 p-6 flex flex-col justify-between h-full min-h-[50vh]">
+          {/* Top section - badges */}
+          <div className="flex items-start justify-between">
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1.5 bg-tech-accent/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">play_arrow</span>
+                Started
+              </span>
+              {isDoneEnough && (
+                <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">check_circle</span>
+                  Ready to Submit
+                </span>
+              )}
+              {job.syncStatus && job.syncStatus !== 'synced' && (
+                <span className={`px-3 py-1.5 backdrop-blur-sm text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 ${
+                  job.syncStatus === 'failed'
+                    ? 'bg-red-500/90 text-white'
+                    : 'bg-amber-500/90 text-white'
+                }`}>
+                  <span className={`material-symbols-outlined text-sm ${job.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
+                    {job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+                  </span>
+                  {job.syncStatus === 'failed' ? 'Sync Failed' : 'Syncing'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Middle section - job details */}
+          <div className="flex-1 flex flex-col justify-center py-8">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">
+              {job.title || `Job #${job.id.slice(0, 6)}`}
+            </h2>
+            <p className="text-lg text-slate-700 dark:text-slate-300 mb-4">
+              {client?.name || job.client || 'Client'}
+            </p>
+            {job.address && (
+              <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">location_on</span>
+                {job.address}
+              </p>
+            )}
+          </div>
+
+          {/* Bottom section - progress indicators & CTA */}
+          <div className="space-y-4">
+            {/* Progress indicators */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className={`size-10 rounded-xl flex items-center justify-center ${
+                  job.photos.length > 0 ? 'bg-emerald-500/20' : 'bg-slate-500/20'
+                }`}>
+                  <span className={`material-symbols-outlined ${
+                    job.photos.length > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'
+                  }`}>
+                    {job.photos.length > 0 ? 'check_circle' : 'photo_camera'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Photos</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {job.photos.length}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`size-10 rounded-xl flex items-center justify-center ${
+                  job.signature ? 'bg-emerald-500/20' : 'bg-slate-500/20'
+                }`}>
+                  <span className={`material-symbols-outlined ${
+                    job.signature ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'
+                  }`}>
+                    {job.signature ? 'check_circle' : 'signature'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Signature</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {job.signature ? 'Complete' : 'Required'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Primary CTA */}
+            <div className="flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 min-h-[56px]">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Continue working on this job
+              </span>
+              <span className="material-symbols-outlined text-2xl text-primary">chevron_right</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+});
+
+HeroJobCard.displayName = 'HeroJobCard';
+
+/**
+ * AssignedJobCard - Horizontal swimlane card with priority visual cues
+ * Includes urgent priority pulse border
+ */
+const AssignedJobCard = React.memo(({
+  job,
+  client
+}: {
+  job: Job;
+  client?: { id: string; name: string };
+}) => {
+  const isUrgent = job.priority === 'urgent';
 
   const formattedTime = useMemo(() => {
     const date = new Date(job.date);
     const today = new Date();
 
-    // British English locale (en-GB) with UTC timezone
     if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
+      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
     }
     return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   }, [job.date]);
 
   return (
-    <Link to={`/tech/job/${job.id}`}>
-      <div className={`rounded-xl p-4 transition-all active:scale-[0.98] min-h-[56px] ${
-        status === 'finished'
-          ? 'bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5'
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary/30 shadow-sm'
+    <Link to={`/tech/job/${job.id}`} className="block shrink-0 snap-start">
+      <div className={`w-[280px] bg-white dark:bg-slate-900 rounded-2xl p-4 transition-all active:scale-[0.98] min-h-[140px] ${
+        isUrgent
+          ? 'border-2 border-red-500 animate-pulse shadow-lg shadow-red-500/20'
+          : 'border border-slate-200 dark:border-white/10 shadow-sm'
       }`}>
+        {/* Header - priority badge */}
+        {isUrgent && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <span className="material-symbols-outlined text-sm text-red-500">priority_high</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">Urgent</span>
+          </div>
+        )}
+
+        {/* Job info */}
+        <div className="space-y-2">
+          <h3 className="font-bold text-slate-900 dark:text-white text-base line-clamp-2">
+            {job.title || `Job #${job.id.slice(0, 6)}`}
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+            {client?.name || job.client || 'Client'}
+          </p>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="material-symbols-outlined text-xs">schedule</span>
+            {formattedTime}
+          </div>
+        </div>
+
+        {/* Sync status */}
+        {job.syncStatus && job.syncStatus !== 'synced' && (
+          <div className={`mt-3 flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+            job.syncStatus === 'failed'
+              ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+          }`}>
+            <span className={`material-symbols-outlined text-xs ${job.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
+              {job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
+            </span>
+            {job.syncStatus === 'failed' ? 'Failed' : 'Syncing'}
+          </div>
+        )}
+
+        {/* Action indicator */}
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-500">Tap to start</span>
+          <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+        </div>
+      </div>
+    </Link>
+  );
+});
+
+AssignedJobCard.displayName = 'AssignedJobCard';
+
+/**
+ * FinishedJobCard - Collapsed style with inset shadow
+ * Visual treatment for completed work
+ */
+const FinishedJobCard = React.memo(({
+  job,
+  client
+}: {
+  job: Job;
+  client?: { id: string; name: string };
+}) => {
+  const formattedTime = useMemo(() => {
+    const date = new Date(job.date);
+    return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  }, [job.date]);
+
+  return (
+    <Link to={`/tech/job/${job.id}`}>
+      <div className="bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-4 transition-all active:scale-[0.98] min-h-[56px] shadow-inner border border-slate-200 dark:border-white/5">
         <div className="flex items-center gap-4">
           {/* Time */}
           <div className="min-w-[55px] text-right">
-            <p className={`text-sm font-medium ${status === 'finished' ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+            <p className="text-sm font-medium text-slate-400">
               {formattedTime}
             </p>
           </div>
 
           {/* Status indicator line */}
-          <div className={`w-0.5 h-10 rounded-full ${
-            status === 'finished' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-          }`} />
+          <div className="w-0.5 h-10 rounded-full bg-emerald-500" />
 
           {/* Job info */}
           <div className="flex-1 min-w-0">
-            <p className={`font-medium truncate ${status === 'finished' ? 'text-slate-500' : 'text-slate-900 dark:text-white'}`}>
+            <p className="font-medium truncate text-slate-500">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </p>
-            <p className="text-xs text-slate-500 truncate">
+            <p className="text-xs text-slate-400 truncate">
               {client?.name || job.client || 'Client'}
             </p>
           </div>
 
-          {/* P0-6 FIX: Per-job sync status indicator */}
+          {/* Sync status */}
           {job.syncStatus && job.syncStatus !== 'synced' && (
             <span className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
               job.syncStatus === 'failed'
@@ -314,20 +475,16 @@ const TechJobCard = React.memo(({
           )}
 
           {/* Status badge */}
-          {status === 'finished' ? (
-            <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded">
-              <span className="material-symbols-outlined text-xs">check</span>
-              Done
-            </span>
-          ) : (
-            <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-          )}
+          <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded">
+            <span className="material-symbols-outlined text-xs">check</span>
+            Done
+          </span>
         </div>
       </div>
     </Link>
   );
 });
 
-TechJobCard.displayName = 'TechJobCard';
+FinishedJobCard.displayName = 'FinishedJobCard';
 
 export default TechPortal;

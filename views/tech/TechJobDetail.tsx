@@ -6,13 +6,12 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
-import { Job, Client } from '../../types';
+import { Job } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
-import ClientConfirmationCanvas from '../../components/ClientConfirmationCanvas';
 
 /**
  * Format date in British English with UTC timezone indicator
@@ -53,9 +52,8 @@ const TechJobDetail: React.FC = () => {
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
 
   const [submitting, setSubmitting] = useState(false);
-  const [showClientConfirmation, setShowClientConfirmation] = useState(false);
   // Task 3.4: Error state for retry functionality
-  const [actionError, setActionError] = useState<{ type: 'start' | 'complete'; message: string } | null>(null);
+  const [actionError, setActionError] = useState<{ type: 'start' | 'complete' | 'review'; message: string } | null>(null);
 
   // Derive job and client from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
@@ -65,23 +63,6 @@ const TechJobDetail: React.FC = () => {
   );
 
   const loading = isLoading;
-
-  // Handle client confirmation signature
-  const handleClientConfirmation = useCallback((signature: string, timestamp: string) => {
-    if (!job) return;
-
-    const updatedJob: Job = {
-      ...job,
-      clientConfirmation: {
-        signature,
-        timestamp,
-        confirmed: true,
-      },
-      status: 'Submitted', // Auto-advance to Submitted on client sign-off
-    };
-    contextUpdateJob(updatedJob);
-    setShowClientConfirmation(false);
-  }, [job, contextUpdateJob]);
 
   const handleStartJob = async () => {
     if (!job) return;
@@ -97,19 +78,17 @@ const TechJobDetail: React.FC = () => {
     }
   };
 
-  const handleCompleteJob = async () => {
+  const handleReviewEvidence = async () => {
     if (!job) return;
     setActionError(null);
 
     setSubmitting(true);
     try {
-      const updatedJob: Job = { ...job, status: 'Complete' };
-      contextUpdateJob(updatedJob);
-      navigate('/tech');
+      // Navigate to evidence review screen where signature is captured
+      navigate(`/tech/job/${job.id}/review`);
     } catch (error) {
-      console.error('Failed to complete job:', error);
-      // Task 3.4: Set error state instead of alert() - allows retry
-      setActionError({ type: 'complete', message: 'Failed to complete job. Tap to retry.' });
+      console.error('Failed to navigate to evidence review:', error);
+      setActionError({ type: 'review', message: 'Failed to open evidence review. Tap to retry.' });
     } finally {
       setSubmitting(false);
     }
@@ -119,8 +98,8 @@ const TechJobDetail: React.FC = () => {
   const handleRetry = () => {
     if (actionError?.type === 'start') {
       handleStartJob();
-    } else if (actionError?.type === 'complete') {
-      handleCompleteJob();
+    } else if (actionError?.type === 'complete' || actionError?.type === 'review') {
+      handleReviewEvidence();
     }
   };
 
@@ -325,44 +304,6 @@ const TechJobDetail: React.FC = () => {
           </Card>
         </section>
 
-        {/* Client Confirmation Section - Shows when job is Complete but not yet confirmed */}
-        {job.status === 'Complete' && !job.clientConfirmation && (
-          <section className="mt-6">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
-              Client Sign-off
-            </h3>
-            {showClientConfirmation ? (
-              <ClientConfirmationCanvas
-                jobId={job.id}
-                clientName={client?.name || 'Client'}
-                onConfirmed={handleClientConfirmation}
-                onCancel={() => setShowClientConfirmation(false)}
-              />
-            ) : (
-              <Card>
-                <div className="flex items-center gap-4 p-2">
-                  <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="material-symbols-outlined text-emerald-400 text-xl">verified</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-white">Ready for Client Confirmation</p>
-                    <p className="text-sm text-slate-400">Get client signature to complete</p>
-                  </div>
-                </div>
-                <ActionButton
-                  variant="primary"
-                  icon="draw"
-                  onClick={() => setShowClientConfirmation(true)}
-                  fullWidth
-                  className="mt-4"
-                >
-                  Get Client Sign-off
-                </ActionButton>
-              </Card>
-            )}
-          </section>
-        )}
-
         {/* Confirmed Badge - Shows when client has signed */}
         {job.clientConfirmation && (
           <section className="mt-6">
@@ -410,13 +351,13 @@ const TechJobDetail: React.FC = () => {
               </Link>
               <ActionButton
                 variant={canComplete ? 'secondary' : 'ghost'}
-                icon="check"
-                onClick={handleCompleteJob}
+                icon="rate_review"
+                onClick={handleReviewEvidence}
                 disabled={!canComplete}
                 loading={submitting}
                 size="lg"
               >
-                Complete
+                Review
               </ActionButton>
             </>
           )}
