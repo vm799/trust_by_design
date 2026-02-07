@@ -1,0 +1,133 @@
+-- ============================================================================
+-- SEED TEST USERS FOR DEV/STAGING
+-- ============================================================================
+-- Creates 3 test users with email+password auth for rapid role testing.
+--
+-- PREREQUISITES:
+--   1. Enable "Email" provider in Supabase Dashboard → Auth → Providers
+--   2. Ensure "Confirm email" is DISABLED for test convenience
+--      (or manually confirm users after creation)
+--
+-- USAGE:
+--   1. Open Supabase Dashboard → SQL Editor
+--   2. Paste this script and update passwords below
+--   3. Run the script
+--   4. Copy emails/passwords to your .env.local file
+--
+-- IMPORTANT:
+--   - Change passwords before running! These are placeholders.
+--   - These users share your Supabase project. When you have real users,
+--     consider deleting test accounts or moving to a separate project.
+--   - First app login for each user will go through OAuthSetup (persona selection).
+--     After that, dev quick-login is instant.
+--
+-- SESSION PERSISTENCE (30-day):
+--   Go to Supabase Dashboard → Auth → Settings → JWT Expiry
+--   Set "Refresh token reuse interval" to keep the current value
+--   Set "Refresh token rotation" to enabled
+--   Set the refresh token lifetime to: 2592000 (30 days in seconds)
+--   This affects ALL users (test and production).
+-- ============================================================================
+
+-- ==========================================
+-- STEP 1: Create auth users via Supabase Admin API
+-- ==========================================
+-- NOTE: You cannot INSERT directly into auth.users in Supabase hosted.
+-- Instead, create these users via ONE of these methods:
+--
+-- OPTION A: Supabase Dashboard (recommended for first time)
+--   1. Go to Authentication → Users → "Add user"
+--   2. Create 3 users with these emails and your chosen passwords:
+--      - test-manager@jobproof.pro
+--      - test-tech@jobproof.pro
+--      - test-solo@jobproof.pro
+--   3. Make sure "Auto Confirm User" is checked
+--
+-- OPTION B: Supabase Management API (if you have service_role key)
+--   Run these curl commands from your terminal (NOT in the browser):
+--
+--   # Replace YOUR_PROJECT_REF and YOUR_SERVICE_ROLE_KEY
+--   export SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+--   export SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
+--
+--   # Create Manager test user
+--   curl -X POST "$SUPABASE_URL/auth/v1/admin/users" \
+--     -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+--     -H "apikey: $SERVICE_ROLE_KEY" \
+--     -H "Content-Type: application/json" \
+--     -d '{
+--       "email": "test-manager@jobproof.pro",
+--       "password": "CHANGE_ME_Manager2026!",
+--       "email_confirm": true,
+--       "user_metadata": {"full_name": "Test Manager"}
+--     }'
+--
+--   # Create Technician test user
+--   curl -X POST "$SUPABASE_URL/auth/v1/admin/users" \
+--     -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+--     -H "apikey: $SERVICE_ROLE_KEY" \
+--     -H "Content-Type: application/json" \
+--     -d '{
+--       "email": "test-tech@jobproof.pro",
+--       "password": "CHANGE_ME_Tech2026!",
+--       "email_confirm": true,
+--       "user_metadata": {"full_name": "Test Technician"}
+--     }'
+--
+--   # Create Solo Contractor test user
+--   curl -X POST "$SUPABASE_URL/auth/v1/admin/users" \
+--     -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+--     -H "apikey: $SERVICE_ROLE_KEY" \
+--     -H "Content-Type: application/json" \
+--     -d '{
+--       "email": "test-solo@jobproof.pro",
+--       "password": "CHANGE_ME_Solo2026!",
+--       "email_confirm": true,
+--       "user_metadata": {"full_name": "Test Solo"}
+--     }'
+
+-- ==========================================
+-- STEP 2: After creating auth users, verify they exist
+-- ==========================================
+-- Run this query to confirm all 3 test users were created:
+SELECT id, email, email_confirmed_at, created_at
+FROM auth.users
+WHERE email IN (
+  'test-manager@jobproof.pro',
+  'test-tech@jobproof.pro',
+  'test-solo@jobproof.pro'
+);
+
+-- ==========================================
+-- STEP 3: Update .env.local
+-- ==========================================
+-- After creating users, add their credentials to .env.local:
+--
+-- VITE_TEST_MANAGER_EMAIL=test-manager@jobproof.pro
+-- VITE_TEST_MANAGER_PASSWORD=CHANGE_ME_Manager2026!
+--
+-- VITE_TEST_TECH_EMAIL=test-tech@jobproof.pro
+-- VITE_TEST_TECH_PASSWORD=CHANGE_ME_Tech2026!
+--
+-- VITE_TEST_SOLO_EMAIL=test-solo@jobproof.pro
+-- VITE_TEST_SOLO_PASSWORD=CHANGE_ME_Solo2026!
+
+-- ==========================================
+-- STEP 4: Configure 30-day session persistence
+-- ==========================================
+-- Go to Supabase Dashboard → Auth → Settings:
+--
+-- JWT Expiry:                    3600    (1 hour - leave default)
+-- Refresh Token Rotation:       Enabled (security best practice)
+-- Refresh Token Reuse Interval: 10      (seconds - leave default)
+--
+-- Then look for "Session" settings or run this SQL:
+-- NOTE: On Supabase hosted, refresh token lifetime is configured
+-- via the Dashboard UI, not SQL. Look under Auth → Settings.
+--
+-- The combination of:
+--   - 1-hour JWT (short-lived access tokens)
+--   - 30-day refresh token (long-lived session)
+--   - Auto-refresh enabled in client (supabase.ts: autoRefreshToken: true)
+-- means users stay signed in for 30 days of inactivity.
+-- Each active session resets the 30-day clock automatically.
