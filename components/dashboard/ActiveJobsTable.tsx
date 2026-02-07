@@ -17,6 +17,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
 import type { Job } from '../../types';
@@ -194,19 +195,31 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {displayJobs.map((job) => {
-            const statusColor = getStatusColor(job);
-            const clientName = clients.find(c => c.id === job.clientId)?.name || 'Unknown Client';
-            const techName = technicians.find(t => t.id === job.technicianId)?.name || 'Unassigned';
+        <AnimatePresence>
+          <motion.div
+            className="space-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ staggerChildren: 0.05 }}
+          >
+            {displayJobs.map((job, index) => {
+              const statusColor = getStatusColor(job);
+              const clientName = clients.find(c => c.id === job.clientId)?.name || 'Unknown Client';
+              const techName = technicians.find(t => t.id === job.technicianId)?.name || 'Unassigned';
 
-            return (
-              <button
-                key={job.id}
-                onClick={() => {
-                  onJobSelect?.(job);
-                  navigate(`/admin/jobs/${job.id}`);
-                }}
+              return (
+                <motion.button
+                  key={job.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                  whileHover={{ scale: 1.01, x: 4 }}
+                  onClick={() => {
+                    onJobSelect?.(job);
+                    navigate(`/admin/jobs/${job.id}`);
+                  }}
                 className={`
                   w-full p-4 rounded-lg border-2 text-left
                   ${statusColor.bg} ${statusColor.border}
@@ -244,15 +257,16 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                     )}
                   </div>
 
-                  {/* Arrow */}
-                  <span className="material-symbols-outlined flex-shrink-0 text-slate-400 group-hover:translate-x-1 transition-transform">
-                    chevron_right
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                    {/* Arrow */}
+                    <span className="material-symbols-outlined flex-shrink-0 text-slate-400 group-hover:translate-x-1 transition-transform">
+                      chevron_right
+                    </span>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
       )}
 
       {/* View All Button */}

@@ -19,6 +19,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -109,8 +110,8 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
     return alertList;
   }, [jobs, onAlertClick, navigate]);
 
-  // Don't render if no alerts
-  if (alerts.length === 0 || isLoading) {
+  // Don't render if no alerts (empty state is silent)
+  if (alerts.length === 0) {
     return null;
   }
 
@@ -142,14 +143,26 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
   };
 
   return (
-    <div className="space-y-3 mb-6">
-      {alerts.map((alert) => {
-        const colors = colorConfig[alert.color];
+    <AnimatePresence>
+      <motion.div
+        className="space-y-3 mb-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ staggerChildren: 0.1 }}
+      >
+        {alerts.map((alert, index) => {
+          const colors = colorConfig[alert.color];
 
-        return (
-          <button
-            key={alert.type}
-            onClick={alert.onAction}
+          return (
+            <motion.button
+              key={alert.type}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              whileHover={{ scale: 1.02, x: 5 }}
+              onClick={alert.onAction}
             className={`
               w-full p-4 rounded-lg border-2
               ${colors.bg} ${colors.border} ${colors.hover}
@@ -183,18 +196,19 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
               {alert.count}
             </span>
 
-            {/* Arrow indicator */}
-            <span className={`
-              material-symbols-outlined text-lg flex-shrink-0 ml-2
-              ${colors.icon}
-              group-hover:translate-x-1 transition-transform
-            `}>
-              chevron_right
-            </span>
-          </button>
-        );
-      })}
-    </div>
+              {/* Arrow indicator */}
+              <span className={`
+                material-symbols-outlined text-lg flex-shrink-0 ml-2
+                ${colors.icon}
+                group-hover:translate-x-1 transition-transform
+              `}>
+                chevron_right
+              </span>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+    </AnimatePresence>
   );
 });
 

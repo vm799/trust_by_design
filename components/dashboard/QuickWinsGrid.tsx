@@ -18,6 +18,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -150,13 +151,22 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      {cards.map((card) => {
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
+    >
+      {cards.map((card, index) => {
         const colors = colorConfig[card.color];
 
         return (
-          <button
+          <motion.button
             key={card.title}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
             onClick={card.onAction}
             className={`
               ${colors.bg} ${colors.border} ${colors.hover}
@@ -199,14 +209,14 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
               </p>
             )}
 
-            {/* CTA */}
-            <p className={`text-xs font-bold uppercase tracking-wide mt-4 ${colors.accent}`}>
-              {card.cta}
-            </p>
-          </button>
-        );
-      })}
-    </div>
+              {/* CTA */}
+              <p className={`text-xs font-bold uppercase tracking-wide mt-4 ${colors.accent}`}>
+                {card.cta}
+              </p>
+            </motion.button>
+          );
+        })}
+    </motion.div>
   );
 });
 
