@@ -358,13 +358,19 @@ export const sealEvidence = async (jobId: string, providedSession?: Session | nu
       isValid: true
     });
 
-    // Update job to Archived
-    await updateJob(jobId, {
-      status: 'Archived',
+    // Update job to Archived (use full Job object, not partial)
+    const job = jobsResult.data.find(j => j.id === jobId);
+    if (!job) {
+      throw new Error(`Job ${jobId} not found after sealing`);
+    }
+    const updatedJob: Job = {
+      ...job,
+      status: 'Archived' as JobStatus,
       sealedAt,
       sealedBy: bundle.metadata.sealedBy,
       evidenceHash
-    });
+    };
+    await updateJob(updatedJob);
 
     // Invalidate magic link tokens (for testing)
     mockInvalidatedTokens.add('mock-token-123');

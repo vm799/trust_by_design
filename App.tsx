@@ -90,7 +90,6 @@ const OnboardingStepLoader: React.FC = () => {
 
   useEffect(() => {
     // Redirect to the main onboarding page (persona-specific steps handled by OnboardingFactory)
-    console.warn(`Onboarding route requested: ${persona}/${step} - Redirecting to main onboarding page`);
     navigate('/onboarding');
   }, [persona, step, navigate]);
 
@@ -156,22 +155,6 @@ const AppContent: React.FC = () => {
   // User state is only set AFTER session validation in the loadProfile effect.
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // Keep localStorage value in ref for potential use during profile loading
-  // This allows fast hydration AFTER session is confirmed valid
-  // Note: We read this once at mount but DO NOT use it to set initial state
-  const cachedUserRef = useRef<UserProfile | null>(
-    (() => {
-      const saved = localStorage.getItem('jobproof_user_v2');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          return null;
-        }
-      }
-      return null;
-    })()
-  );
 
   // Offline Sync Engine - Optimized with throttling
   // PERFORMANCE FIX: Reduced from 60s/90s to 5 minutes to minimize Supabase API calls
