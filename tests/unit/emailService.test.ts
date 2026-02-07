@@ -55,7 +55,7 @@ describe('Notification Service - Email and Queue Operations', () => {
     });
 
     // Mock crypto.randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-uuid-123');
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-uuid-0000-0000-0000-000000000123' as `${string}-${string}-${string}-${string}-${string}`);
 
     // Suppress console logs during tests
     vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -170,7 +170,7 @@ describe('Notification Service - Email and Queue Operations', () => {
         }
       );
 
-      expect(notification.id).toBe('test-uuid-123');
+      expect(notification.id).toBe('test-uuid-0000-0000-0000-000000000123');
       expect(notification.type).toBe('job_completed');
       expect(notification.title).toBe('Job Completed');
       expect(notification.message).toBe('The job has been completed successfully');
@@ -189,7 +189,7 @@ describe('Notification Service - Email and Queue Operations', () => {
     it('maintains queue in localStorage for offline processing', () => {
       // Queue multiple notifications
       for (let i = 0; i < 5; i++) {
-        vi.spyOn(crypto, 'randomUUID').mockReturnValueOnce(`uuid-${i}`);
+        vi.spyOn(crypto, 'randomUUID').mockReturnValueOnce(`uuid-0000-0000-0000-00000000000${i}` as `${string}-${string}-${string}-${string}-${string}`);
         queueNotification(
           `test_${i}`,
           `Test ${i}`,

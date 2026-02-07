@@ -483,7 +483,7 @@ const DevReset: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 text-sm">
               {Object.entries(resetResult.layers).map(([key, layerResult]) => {
                 const isSuccess = typeof layerResult === 'object'
-                  ? layerResult.cleared || layerResult.deleted || layerResult.signedOut
+                  ? ('cleared' in layerResult && layerResult.cleared) || ('deleted' in layerResult && layerResult.deleted) || ('signedOut' in layerResult && layerResult.signedOut)
                   : layerResult;
                 return (
                   <div key={key} className="flex items-center gap-2">

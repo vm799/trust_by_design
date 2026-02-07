@@ -43,12 +43,13 @@ vi.mock('../../lib/offline/db', () => {
 
 describe('ClientForm - Offline Draft Persistence (CLAUDE.md Compliant)', () => {
   it('CLAUDE.md mandate: should use Dexie/IndexedDB for draft storage', async () => {
-    const { db } = await import('../../lib/offline/db');
+    const offlineDb = await import('../../lib/offline/db') as Record<string, unknown>;
+    const db = offlineDb.db as { name: string; tables: { name: string }[] };
 
     expect(db).toBeDefined();
     expect(db.name).toBe('JobProofOfflineDB');
 
-    const tables = db.tables.map(t => t.name);
+    const tables = db.tables.map((t: { name: string }) => t.name);
     expect(tables).toContain('formDrafts');
   });
 

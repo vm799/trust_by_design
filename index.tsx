@@ -11,17 +11,17 @@ import './src/styles/theme.css';
 // Validate environment configuration at startup
 validateAndLog(false); // Don't throw on errors, just log warnings
 
+// TypeScript declaration for window augmentation (must be at file scope)
+declare global {
+  interface Window {
+    __JOBPROOF_TEST__: TestingControlPlaneType;
+    __resetApp__: () => Promise<void>;
+  }
+}
+
 // Expose Testing Control Plane in dev mode for Playwright/console access
 // SECURITY: Only exposed when import.meta.env.DEV is true
 if (import.meta.env.DEV) {
-  // TypeScript declaration for window augmentation
-  declare global {
-    interface Window {
-      __JOBPROOF_TEST__: TestingControlPlaneType;
-      __resetApp__: () => Promise<void>;
-    }
-  }
-
   window.__JOBPROOF_TEST__ = TestingControlPlane;
   window.__resetApp__ = async () => {
     const result = await TestingControlPlane.resetAll();
