@@ -268,13 +268,13 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
               </span>
               <button
                 onClick={handleBulkPause}
-                className="px-3 py-1.5 bg-warning/20 hover:bg-warning/30 text-warning border border-warning/30 rounded-lg text-xs font-bold uppercase transition-all"
+                className="px-3 py-1.5 bg-warning/20 hover:bg-warning/30 text-warning border border-warning/30 rounded-lg text-xs font-medium transition-all"
               >
                 Pause All
               </button>
               <button
                 onClick={handleBulkCancel}
-                className="px-3 py-1.5 bg-danger/20 hover:bg-danger/30 text-danger border border-danger/30 rounded-lg text-xs font-bold uppercase transition-all"
+                className="px-3 py-1.5 bg-danger/20 hover:bg-danger/30 text-danger border border-danger/30 rounded-lg text-xs font-medium transition-all"
               >
                 Cancel All
               </button>

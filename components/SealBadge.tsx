@@ -105,7 +105,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
         {/* Content */}
         <div className="flex-1 space-y-4">
           <div>
-            <h3 className={`text-2xl font-black uppercase tracking-tighter ${
+            <h3 className={`text-2xl font-bold tracking-tighter ${
               verification?.isValid ? 'text-success' : isVerifying ? 'text-slate-300' : 'text-danger'
             }`}>
               {isVerifying

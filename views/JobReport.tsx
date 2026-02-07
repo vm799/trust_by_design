@@ -326,7 +326,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    if (!job) return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-black uppercase tracking-tighter">Report Unavailable</h1>
+            <h1 className="text-4xl font-bold tracking-tighter">Report Unavailable</h1>
             <p className="text-slate-300 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
             <button onClick={() => navigate('/admin')} className="px-8 py-3 bg-primary text-white font-black rounded-xl uppercase tracking-widest">Return to Hub</button>
          </div>
@@ -422,7 +422,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-100 pb-6 sm:pb-10 relative z-10">
                   <div className="space-y-3 sm:space-y-4">
                      <div className="bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black px-3 py-1 rounded-full inline-block tracking-widest uppercase border border-primary/20">Official Proof of Service</div>
-                     <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase leading-none">{job.title}</h2>
+                     <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-none">{job.title}</h2>
                      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                         <p className="text-slate-300 font-bold uppercase text-[9px] sm:text-[10px]">Reference: <span className="font-mono text-slate-900">{job.id.substring(0, 8)}</span></p>
                         {isSealed && job.evidenceHash && (
@@ -444,7 +444,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
                   <div className="text-left sm:text-right mt-2 sm:mt-0 flex-shrink-0">
                      <p className="text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Final Authorisation</p>
-                     <p className="text-lg sm:text-xl font-black uppercase leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
+                     <p className="text-lg sm:text-xl font-bold leading-none">{job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pending'}</p>
                      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mt-1">{job.completedAt ? new Date(job.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                   </div>
                </div>
@@ -541,9 +541,9 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 relative z-10">
                   <div className="space-y-3">
                      <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Identity</h3>
-                     <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.client}</p>
+                     <p className="text-lg sm:text-xl font-bold tracking-tight">{job.client}</p>
                      <div className="p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 space-y-2 shadow-inner">
-                        <p className="text-slate-700 text-[10px] sm:text-[11px] font-bold leading-relaxed uppercase tracking-tight">{job.address}</p>
+                        <p className="text-slate-700 text-[10px] sm:text-[11px] font-medium leading-relaxed tracking-tight">{job.address}</p>
                         {job.lat && (
                            <div className="border-t border-slate-200 pt-2 space-y-1">
                               <div className="flex items-center gap-1.5">
@@ -557,7 +557,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
                   <div className="space-y-3">
                      <h3 className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician</h3>
-                     <p className="text-lg sm:text-xl font-black uppercase tracking-tight">{job.technician}</p>
+                     <p className="text-lg sm:text-xl font-bold tracking-tight">{job.technician}</p>
                      {/* SPRINT 4 FIX: Only show verification badges when data actually exists */}
                      <div className="flex flex-col gap-2">
                         {/* Geo-metadata - only show if job has coordinates OR photos have GPS */}
@@ -745,19 +745,19 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                            <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">verified</span>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Cryptographically Sealed</p>
-                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Evidence Verified</p>
+                           <p className="text-xl font-bold whitespace-nowrap tracking-tighter relative z-10">Evidence Verified</p>
                         </div>
                      ) : hasSignature ? (
                         <div className="bg-success/10 text-success p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-success/30 relative group overflow-hidden">
                            <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">task_alt</span>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">Complete</p>
-                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Ready to Seal</p>
+                           <p className="text-xl font-bold whitespace-nowrap tracking-tighter relative z-10">Ready to Seal</p>
                         </div>
                      ) : (
                         <div className="bg-amber-900/20 text-amber-100 p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-amber-500/20 relative group overflow-hidden">
                            <span className="material-symbols-outlined text-6xl mb-3 text-amber-500 font-black relative z-10">edit_document</span>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1 relative z-10">In Progress</p>
-                           <p className="text-xl font-black uppercase whitespace-nowrap tracking-tighter relative z-10">Collecting Evidence</p>
+                           <p className="text-xl font-bold whitespace-nowrap tracking-tighter relative z-10">Collecting Evidence</p>
                         </div>
                      )}
                   </div>
@@ -811,7 +811,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                  {jobState.noWorkStarted ? 'error' : jobState.readyForSeal ? 'task_alt' : 'pending'}
                               </span>
                               <div className="flex-1">
-                                 <p className={`text-sm font-black uppercase tracking-tight ${
+                                 <p className={`text-sm font-semibold tracking-tight ${
                                     jobState.noWorkStarted ? 'text-danger' : jobState.readyForSeal ? 'text-success' : 'text-warning'
                                  }`}>
                                     {jobState.noWorkStarted ? 'No Work Recorded'

@@ -32,7 +32,7 @@ const SelectPlan: React.FC = () => {
             <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
               check_circle
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider">Account Created</span>
+            <span className="text-xs font-medium tracking-wider">Account Created</span>
           </div>
 
           <h1 className={`text-3xl md:text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>

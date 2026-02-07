@@ -54,14 +54,15 @@ const Breadcrumbs = memo<BreadcrumbsProps>(({
       className={`flex items-center gap-1 text-sm ${className}`}
     >
       <ol className="flex items-center gap-1 flex-wrap">
-        {fullItems.map((item, index) => {
-          const isLast = index === fullItems.length - 1;
+        {fullItems.map((item) => {
+          const itemIndex = fullItems.indexOf(item);
+          const isLast = itemIndex === fullItems.length - 1;
           const isClickable = !!item.href && !isLast;
 
           return (
-            <li key={index} className="flex items-center gap-1">
+            <li key={`breadcrumb-${item.label}`} className="flex items-center gap-1">
               {/* Separator (not before first item) */}
-              {index > 0 && (
+              {itemIndex > 0 && (
                 <span
                   className={`
                     ${isDark ? 'text-slate-600' : 'text-slate-400'}

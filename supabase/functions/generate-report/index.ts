@@ -948,8 +948,11 @@ serve(async (req) => {
 
     let emailSent = false;
     let emailError = null;
+    let clientEmailSent = false;
+    let clientEmailError = null;
 
     const managerEmail = job.manager_email;
+    const clientEmail = job.client_email;
 
     if (!resendApiKey) {
       console.error('[GenerateReport] RESEND_API_KEY not configured!');
@@ -995,6 +998,53 @@ serve(async (req) => {
         emailError = e.message;
         console.error('[GenerateReport] Email error:', e);
       }
+    }
+
+    // =========================================================================
+    // SEND EMAIL TO CLIENT (if available)
+    // =========================================================================
+
+    if (clientEmail && resendApiKey) {
+      try {
+        console.log(`[GenerateReport] Sending email to client: ${clientEmail}`);
+
+        const emailHtml = generateEmailHtml(job, pdfUrl, { beforePhotoIncluded, afterPhotoIncluded, signatureIncluded });
+
+        const clientEmailPayload = {
+          from: 'JobProof <reports@jobproof.pro>',
+          to: [clientEmail],
+          subject: `Work Complete: ${job.title || `Job ${job.id}`}`,
+          html: emailHtml,
+        };
+
+        console.log('[GenerateReport] Client email payload:', JSON.stringify({ ...clientEmailPayload, html: '[HTML CONTENT]' }));
+
+        const clientEmailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(clientEmailPayload),
+        });
+
+        const clientResponseText = await clientEmailResponse.text();
+        console.log(`[GenerateReport] Client email Resend response (${clientEmailResponse.status}):`, clientResponseText);
+
+        if (clientEmailResponse.ok) {
+          clientEmailSent = true;
+          console.log(`[GenerateReport] Email sent successfully to client: ${clientEmail}`);
+        } else {
+          clientEmailError = clientResponseText;
+          console.error('[GenerateReport] Client email failed:', clientResponseText);
+        }
+      } catch (e) {
+        clientEmailError = e.message;
+        console.error('[GenerateReport] Client email error:', e);
+      }
+    } else if (clientEmail && !resendApiKey) {
+      console.warn('[GenerateReport] Client email configured but RESEND_API_KEY not available');
+      clientEmailError = 'RESEND_API_KEY not configured';
     }
 
     // =========================================================================
@@ -1062,6 +1112,7 @@ serve(async (req) => {
       report_url: pdfUrl,
       report_generated_at: new Date().toISOString(),
       report_emailed: emailSent,
+      client_notified_at: clientEmailSent ? new Date().toISOString() : null,
     };
 
     // Include seal data if we sealed this job
@@ -1082,11 +1133,13 @@ serve(async (req) => {
         pdfUrl,
         emailSent,
         emailError,
+        clientEmailSent,
+        clientEmailError,
         evidenceIncluded: { beforePhotoIncluded, afterPhotoIncluded, signatureIncluded },
         sealed: !!sealedAt,
         sealedAt,
         evidenceHash,
-        message: `Report generated${sealedAt ? ' and sealed' : ''} for job ${job.id}`,
+        message: `Report generated${sealedAt ? ' and sealed' : ''} for job ${job.id}${clientEmailSent ? ' - client notified' : ''}`,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -167,7 +167,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
         </div>
 
         {/* Status badge */}
-        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${config.bg} ${config.color}`}>
+        <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${config.bg} ${config.color}`}>
           {config.label}
         </span>
       </div>

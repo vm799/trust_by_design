@@ -62,7 +62,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       try {
         const storedSession = await getSession();
         if (storedSession) {
-          console.log('[AuthContext] Session restored on mount:', storedSession.user?.id);
           currentUserIdRef.current = storedSession.user?.id || null;
           sessionRef.current = storedSession;
           setSession(storedSession);
@@ -86,7 +85,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       // CRITICAL: Only update session state if USER changed (login/logout)
       // Token refresh creates new session object but same user - skip state update
       if (newUserId !== currentUserId) {
-        console.log('[AuthContext] User changed:', currentUserId, '->', newUserId);
         currentUserIdRef.current = newUserId;
         sessionRef.current = newSession;
         setSession(newSession);
@@ -95,7 +93,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         // Same user, but update the ref with fresh token for API calls
         // This does NOT trigger re-renders (ref update, not state update)
         sessionRef.current = newSession;
-        console.log('[AuthContext] Token refreshed for user:', newUserId, '(no re-render)');
       }
     });
 

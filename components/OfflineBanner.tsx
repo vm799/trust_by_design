@@ -24,7 +24,7 @@ export const OfflineBanner: React.FC = React.memo(() => {
         <div className="fixed top-0 left-0 right-0 z-50 bg-warning text-slate-950 py-2 px-4 text-center">
             <div className="flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-sm">cloud_off</span>
-                <span className="text-xs font-bold uppercase">
+                <span className="text-xs font-medium">
                     Offline - Using Cached Data
                 </span>
             </div>

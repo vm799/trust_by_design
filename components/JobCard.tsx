@@ -184,7 +184,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       {/* Header: Title + Lifecycle Status */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className={`font-black tracking-tighter uppercase transition-colors truncate ${
+          <h3 className={`font-semibold tracking-tight transition-colors truncate ${
             isUrgent ? 'text-danger group-hover:text-danger' : 'text-white group-hover:text-primary'
           }`}>
             {job.title}

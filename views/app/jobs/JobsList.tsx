@@ -392,7 +392,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
                 className={`
-                  flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all
+                  flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all
                   ${currentFilter === tab.value
                     ? 'bg-slate-800 text-white border border-white/10'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}
@@ -476,11 +476,11 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
                       {/* Job Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-black text-white text-sm uppercase tracking-tight truncate group-hover:text-primary transition-colors">
+                        <div className="flex items-center gap-2 mb-1 min-w-0">
+                          <h4 className="font-bold text-white text-sm line-clamp-2 min-w-0 flex-1 group-hover:text-primary transition-colors">
                             {job.title}
                           </h4>
-                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
+                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
                             {lifecycle.label}
                           </span>
                         </div>
@@ -543,6 +543,89 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Date</div>
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white text-right">Sync</div>
                 </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-950/50">
+                    <tr>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Job</th>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Client</th>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Technician</th>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Status</th>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white">Date</th>
+                      <th className="px-8 py-5 text-[11px] font-normal tracking-widest text-white text-right">Sync</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredJobs.map(job => {
+                      const lifecycle = getJobLifecycle(job);
+                      const syncStatus = getSyncStatus(job);
+
+                      return (
+                        <tr
+                          key={job.id}
+                          className="hover:bg-white/5 transition-colors cursor-pointer group"
+                          onClick={() => navigate(`/admin/report/${job.id}`)}
+                        >
+                          <td className="px-8 py-5">
+                            <div className="font-bold text-base group-hover:text-primary transition-colors text-white line-clamp-2">
+                              {job.title}
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                              {job.id.slice(0, 8)}
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="text-sm text-white font-bold">{job.client}</div>
+                            {job.address && (
+                              <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                                {job.address.split(',')[0]}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="size-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                {job.technician?.[0] || '?'}
+                              </div>
+                              <span className="text-sm text-slate-300 font-medium">
+                                {job.technician || 'Unassigned'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor}`}>
+                              <span className="material-symbols-outlined text-xs font-black">{lifecycle.icon}</span>
+                              {lifecycle.label}
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="text-sm text-white font-medium">
+                              {new Date(job.date).toLocaleDateString('en-AU', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {new Date(job.date).toLocaleTimeString('en-AU', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
+                              <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
+                                {syncStatus.icon}
+                              </span>
+                              {syncStatus.label}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {/* Virtualized List (react-window v2.x) */}

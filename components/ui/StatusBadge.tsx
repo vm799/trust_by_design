@@ -124,7 +124,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
     return (
       <span className={`
         inline-flex items-center gap-1 px-3 py-2
-        text-[10px] font-bold uppercase tracking-wide
+        text-xs font-medium tracking-wide
         rounded-md border min-h-[44px]
         ${config.color}
         ${className}

@@ -151,7 +151,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
             </p>
             <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full mt-2 ${status.bgColor} border ${status.borderColor}`}>
               <span className={`material-symbols-outlined text-sm ${status.color}`}>{status.icon}</span>
-              <span className={`text-xs font-black uppercase tracking-wider ${status.color}`}>{status.label}</span>
+              <span className={`text-xs font-semibold tracking-wider ${status.color}`}>{status.label}</span>
             </div>
           </div>
         </div>
@@ -290,7 +290,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
         <div className="flex gap-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl text-sm font-black uppercase tracking-wider transition-all"
+            className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl text-sm font-semibold tracking-wider transition-all"
           >
             Close
           </button>
@@ -299,7 +299,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
               onClose();
               onViewFullReport(job.id);
             }}
-            className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold tracking-wider transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">open_in_new</span>
             {jobState.sealed ? 'View Report' : 'Manage Job'}

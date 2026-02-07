@@ -186,9 +186,9 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
             <SyncStatusBadge status={syncStatus} compact />
           )}
 
-          {/* Desktop: Hidden action buttons appear on hover */}
+          {/* Desktop: Action buttons always visible */}
           {actions.length > 0 && (
-            <div className="hidden sm:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="hidden sm:flex gap-1">
               {actions.slice(0, 2).map((action) => (
                 <motion.button
                   key={action.label}

@@ -154,7 +154,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         const db = await getDbModule();
         const supabase = db.getSupabase?.();
         if (!supabase) {
-          console.log('[DataContext] Supabase not available, using localStorage');
           return;
         }
 
@@ -172,12 +171,10 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
         // No profile found - new user, workspace_id will be set after OAuthSetup
         if (!profile) {
-          console.log('[DataContext] No profile found for user, awaiting setup');
           return;
         }
 
         if (profile?.workspace_id) {
-          console.log('[DataContext] Workspace ID fetched from profile:', profile.workspace_id);
           setFetchedWorkspaceId(profile.workspace_id);
         }
       } catch (err) {
@@ -221,12 +218,10 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           if (dexieClients.length > 0) {
             setClients(dexieClients);
             clientsLoaded = true;
-            console.log('[DataContext] Loaded', dexieClients.length, 'clients from Dexie');
           }
           if (dexieTechs.length > 0) {
             setTechnicians(dexieTechs);
             techniciansLoaded = true;
-            console.log('[DataContext] Loaded', dexieTechs.length, 'technicians from Dexie');
           }
         } catch (dexieErr) {
           console.warn('[DataContext] Dexie read failed, falling back to localStorage:', dexieErr);
@@ -277,8 +272,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
               .order('last_updated', { ascending: false });
 
             if (!bunkerError && bunkerJobs && bunkerJobs.length > 0) {
-              console.log(`[DataContext] Found ${bunkerJobs.length} jobs from bunker_jobs table`);
-
               // Map bunker_jobs to Job type and merge with existing jobs
               const bunkerJobsMapped: Job[] = bunkerJobs.map((row: any) => ({
                 id: row.id,
@@ -332,7 +325,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
               });
 
               allJobs = [...mergedJobs, ...newBunkerJobs];
-              console.log(`[DataContext] Merged jobs: ${allJobs.length} total (${newBunkerJobs.length} new from bunker)`);
             }
           }
         } catch (bunkerErr) {
@@ -363,7 +355,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
             lastUpdated: Date.now()
           }));
           await offlineDb.saveClientsBatch(localClients);
-          console.log('[DataContext] Persisted', localClients.length, 'clients to Dexie');
         } catch (dexieErr) {
           console.warn('[DataContext] Failed to persist clients to Dexie:', dexieErr);
         }
@@ -377,7 +368,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           const dexieClients = await offlineDb.getClientsLocal(wsId);
           if (dexieClients.length > 0) {
             setClients(dexieClients);
-            console.log('[DataContext] Loaded', dexieClients.length, 'clients from Dexie fallback');
           } else {
             const saved = localStorage.getItem(clientsKey);
             if (saved) setClients(JSON.parse(saved));
@@ -400,7 +390,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
             lastUpdated: Date.now()
           }));
           await offlineDb.saveTechniciansBatch(localTechs);
-          console.log('[DataContext] Persisted', localTechs.length, 'technicians to Dexie');
         } catch (dexieErr) {
           console.warn('[DataContext] Failed to persist technicians to Dexie:', dexieErr);
         }
@@ -412,7 +401,6 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           const dexieTechs = await offlineDb.getTechniciansLocal(wsId);
           if (dexieTechs.length > 0) {
             setTechnicians(dexieTechs);
-            console.log('[DataContext] Loaded', dexieTechs.length, 'technicians from Dexie fallback');
           } else {
             const saved = localStorage.getItem('jobproof_technicians_v2');
             if (saved) setTechnicians(JSON.parse(saved));

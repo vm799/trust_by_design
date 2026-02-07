@@ -666,7 +666,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10" />
                     <span className="material-symbols-outlined text-slate-400 text-5xl group-hover:text-primary transition-colors z-20">map</span>
                     <div className="absolute bottom-3 left-3 right-3 z-20">
-                      <p className="text-[10px] text-white font-bold uppercase tracking-tight truncate">{formData.address}</p>
+                      <p className="text-[10px] text-white font-medium tracking-tight truncate">{formData.address}</p>
                       <p className="text-[8px] text-slate-300 uppercase tracking-wide mt-1 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[10px]">touch_app</span>
                         Tap to view in Google Maps

@@ -204,7 +204,7 @@ const ManagerOnboarding: React.FC = () => {
               </div>
             ))}
           </div>
-          <p className="text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+          <p className="text-center text-slate-500 text-xs font-medium tracking-widest">
             Step {step} of 3
           </p>
         </div>
