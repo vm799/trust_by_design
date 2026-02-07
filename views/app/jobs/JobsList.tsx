@@ -32,7 +32,6 @@ import { ROUTES } from '../../../lib/routes';
 import {
   JOB_STATUS,
   SYNC_STATUS,
-  isSealedJobStatus,
 } from '../../../lib/constants';
 
 type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'sync_issues';
