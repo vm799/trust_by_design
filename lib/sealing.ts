@@ -9,7 +9,7 @@
 
 import { getSupabase } from './supabase';
 import { updateJob } from './db';
-import type { Job } from '../types';
+import type { Job, JobStatus } from '../types';
 import { JOB_STATUS } from './constants';
 import { isFeatureEnabled } from './featureFlags';
 
@@ -358,9 +358,9 @@ export const sealEvidence = async (jobId: string, providedSession?: Session | nu
       isValid: true
     });
 
-    // Update job to Archived
+    // Update job to Archived with evidence sealing data
     await updateJob(jobId, {
-      status: 'Archived',
+      status: 'Archived' as JobStatus,
       sealedAt,
       sealedBy: bundle.metadata.sealedBy,
       evidenceHash

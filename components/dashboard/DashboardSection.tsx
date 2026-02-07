@@ -119,7 +119,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold ${colorConfig.headerText} hover:bg-white/50 dark:hover:bg-black/20 transition-colors min-h-[36px]`}
+          className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold ${colorConfig.headerText} hover:bg-white/50 dark:hover:bg-black/20 transition-colors min-h-[44px]`}
         >
           <span className="material-symbols-outlined text-sm">{action.icon}</span>
           {action.label}
