@@ -334,7 +334,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleShareLink}
-                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wide transition-all press-spring"
+                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-medium tracking-wide transition-all press-spring"
                   title="Share via your phone's native share menu"
                 >
                   <span className="material-symbols-outlined text-sm">share</span>
@@ -342,7 +342,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
                 </button>
                 <button
                   onClick={handleEmailLink}
-                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wide transition-all press-spring"
+                  className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-medium tracking-wide transition-all press-spring"
                 >
                   <span className="material-symbols-outlined text-sm">email</span>
                   Email
@@ -398,7 +398,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
           <div className="flex gap-2">
             <button
               onClick={() => handleWorkModeChange('employed')}
-              className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wide transition-all ${
+              className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                 workMode === 'employed'
                   ? 'bg-primary text-white'
                   : 'bg-white/5 text-slate-400 hover:text-white'
@@ -409,7 +409,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
             </button>
             <button
               onClick={() => handleWorkModeChange('self_employed')}
-              className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wide transition-all ${
+              className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                 workMode === 'self_employed'
                   ? 'bg-success text-white'
                   : 'bg-white/5 text-slate-400 hover:text-white'

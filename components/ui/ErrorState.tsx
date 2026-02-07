@@ -74,7 +74,7 @@ const ErrorState = memo<ErrorStateProps>(({
           <button
             onClick={handleRetry}
             disabled={isRetrying}
-            className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-bold uppercase rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
             {isRetrying ? (
               <>

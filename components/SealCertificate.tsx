@@ -301,13 +301,13 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         <div className="flex gap-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl text-sm font-black uppercase tracking-wider transition-all"
+            className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white border border-white/10 rounded-xl text-sm font-semibold tracking-wider transition-all"
           >
             Close
           </button>
           <button
             onClick={downloadCertificate}
-            className="flex-1 px-4 py-3 bg-success hover:bg-success/90 text-white rounded-xl text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-success hover:bg-success/90 text-white rounded-xl text-sm font-semibold tracking-wider transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">download</span>
             Download

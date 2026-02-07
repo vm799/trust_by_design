@@ -24,7 +24,6 @@ const navItems: NavItem[] = [
   { to: '/app', icon: 'dashboard', label: 'Home' },
   { to: '/app/clients', icon: 'group', label: 'Clients' },
   { to: '/app/jobs', icon: 'work', label: 'Jobs' },
-  { to: '/app/invoices', icon: 'receipt_long', label: 'Invoices' },
   { to: '/app/settings', icon: 'more_horiz', label: 'More' },
 ];
 
@@ -45,7 +44,7 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
     <span className={`material-symbols-outlined text-2xl ${active ? 'font-bold' : ''}`}>
       {item.icon}
     </span>
-    <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>
+    <span className={`text-xs ${active ? 'font-bold' : 'font-medium'}`}>
       {item.label}
     </span>
   </Link>

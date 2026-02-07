@@ -215,7 +215,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
         {/* Metadata toggle button */}
         <button
           onClick={handleMetadataToggle}
-          className="absolute top-2 right-12 size-7 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px]"
+          className="absolute top-2 right-12 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px]"
         >
           <span className="material-symbols-outlined text-sm text-white">info</span>
         </button>

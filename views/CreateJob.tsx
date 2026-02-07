@@ -834,14 +834,14 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 {formData.isUrgent && (
                   <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-danger text-sm">priority_high</span>
-                    <span className="text-danger text-xs font-black uppercase tracking-widest">Urgent Job</span>
+                    <span className="text-danger text-xs font-semibold tracking-widest">Urgent Job</span>
                   </div>
                 )}
                 <div className="bg-slate-800/50 rounded-3xl p-6 text-left space-y-4 border border-white/5">
                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Service</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white uppercase">{formData.title}</span>
+                      <span className="text-xs font-medium text-white">{formData.title}</span>
                       <button
                         type="button"
                         onClick={() => { setShowConfirmModal(false); titleInputRef.current?.focus(); }}

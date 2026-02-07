@@ -191,7 +191,7 @@ const NavLink: React.FC<{ to: string, icon: string, label: string, active?: bool
     aria-current={active ? 'page' : undefined}
   >
     <span className="material-symbols-outlined font-black">{icon}</span>
-    <span className="text-sm font-bold uppercase tracking-widest">{label}</span>
+    <span className="text-sm font-medium tracking-widest">{label}</span>
   </Link>
 ));
 

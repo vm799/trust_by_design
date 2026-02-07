@@ -125,7 +125,7 @@ const PricingView: React.FC = () => {
 
         {/* Trust Indicators */}
         <div className="text-center space-y-6 pt-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-500 text-xs font-bold uppercase tracking-widest">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-500 text-xs font-medium tracking-widest">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-emerald-500">verified</span>
               14-Day Free Trial
@@ -301,7 +301,7 @@ const PriceCard = ({
     >
       {active && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white px-4 py-1.5 rounded-full shadow-lg">
-          <span className="text-primary text-xs font-black uppercase tracking-wide">
+          <span className="text-primary text-xs font-semibold tracking-wide">
             Most Popular
           </span>
         </div>
@@ -310,7 +310,7 @@ const PriceCard = ({
       <div className="flex-1 space-y-6 lg:space-y-8">
         <div>
           <h3
-            className={`text-lg lg:text-xl font-black uppercase tracking-tighter mb-2 ${
+            className={`text-lg lg:text-xl font-bold tracking-tighter mb-2 ${
               active ? 'text-white' : 'text-slate-500'
             }`}
           >

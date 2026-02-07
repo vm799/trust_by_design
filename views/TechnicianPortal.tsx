@@ -1237,7 +1237,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
           <div className="size-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading Job...</p>
+          <p className="text-slate-400 text-sm font-semibold tracking-widest">Loading Job...</p>
         </div>
       </Layout>
     );
@@ -1529,8 +1529,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
               JOB REF: {job.id}
             </h2>
-            <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{job.title}</h3>
-            <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">{job.client} • {job.address}</p>
+            <h3 className="text-3xl font-bold text-white tracking-tight leading-none">{job.title}</h3>
+            <p className="text-xs text-slate-300 font-medium tracking-tight">{job.client} • {job.address}</p>
           </div>
           <div className="text-right flex items-center gap-3">
             <button
@@ -1598,8 +1598,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
               </div>
-              <h2 className="text-4xl font-black tracking-tighter uppercase leading-none text-white">Job Assignment</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
+              <h2 className="text-4xl font-semibold tracking-tight leading-none text-white">Job Assignment</h2>
+              <p className="text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
             </header>
 
             <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
@@ -1609,13 +1609,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Service Description</p>
-                  <p className="text-2xl font-black text-white uppercase tracking-tight">{job.title}</p>
+                  <p className="text-2xl font-bold text-white tracking-tight">{job.title}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
-                    <p className="text-sm font-bold text-white uppercase">{job.client}</p>
+                    <p className="text-sm font-medium text-white">{job.client}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Reference</p>
@@ -1626,7 +1626,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 <div className="space-y-2">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
                   <div className="bg-slate-800 p-4 rounded-2xl border border-white/5">
-                    <p className="text-sm font-bold text-white uppercase tracking-tight leading-relaxed">{job.address}</p>
+                    <p className="text-sm font-medium text-white tracking-tight leading-relaxed">{job.address}</p>
                   </div>
                 </div>
 
@@ -1634,7 +1634,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                   <div className="space-y-2">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Special Instructions</p>
                     <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
-                      <p className="text-sm text-white uppercase tracking-tight leading-relaxed">{job.notes}</p>
+                      <p className="text-sm text-white tracking-tight leading-relaxed">{job.notes}</p>
                     </div>
                   </div>
                 )}
@@ -1679,8 +1679,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Safety Check</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Verify your location and complete the safety checklist.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Safety Check</h2>
+              <p className="text-slate-400 text-sm font-normal tracking-tight">Verify your location and complete the safety checklist.</p>
             </header>
 
             <div className="space-y-4">
@@ -1824,7 +1824,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}
                     </span>
-                    <span className="text-xs font-bold uppercase tracking-tight">{item.label}</span>
+                    <span className="text-xs font-medium tracking-tight">{item.label}</span>
                     {item.required && !item.checked && <span className="ml-auto text-[8px] font-black text-warning uppercase border border-warning/20 px-2 py-0.5 rounded-full">Required</span>}
                   </button>
                 ))}
@@ -1845,8 +1845,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 2 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Photos</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Take photos before, during, and after the work.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Photos</h2>
+              <p className="text-slate-400 text-sm font-normal tracking-tight">Take photos before, during, and after the work.</p>
             </header>
 
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
@@ -1885,7 +1885,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <div className="absolute bottom-4 left-4 right-4">
                       <button
                         onClick={() => confirmDeletePhoto(p)}
-                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md hover:bg-black/90 text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 transition-colors"
                         aria-label="Delete photo capture"
                       >
                         Delete Capture
@@ -1917,8 +1917,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 3 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Job Summary</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Review operational notes and evidence before sign-off.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Job Summary</h2>
+              <p className="text-slate-400 text-sm font-normal tracking-tight">Review operational notes and evidence before sign-off.</p>
             </header>
 
             <div className="space-y-6">
@@ -1979,8 +1979,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 4 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-white">Sign Off</h2>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-tight">Get the client to sign and confirm the work is complete.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Sign Off</h2>
+              <p className="text-slate-400 text-sm font-normal tracking-tight">Get the client to sign and confirm the work is complete.</p>
             </header>
 
             <div className="space-y-4">

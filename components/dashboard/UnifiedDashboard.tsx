@@ -447,7 +447,7 @@ const OfflineBanner: React.FC<{
       <button
         onClick={onRetry}
         className={`
-          px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide
+          px-4 py-2 rounded-lg text-xs font-medium tracking-wide
           ${isStale
             ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30'
             : 'bg-slate-500/20 text-slate-600 dark:text-slate-400 hover:bg-slate-500/30'
@@ -507,7 +507,7 @@ const SyncSummaryBanner: React.FC<{
         <button
           onClick={onRetry}
           className="
-            px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide
+            px-4 py-2 rounded-lg text-xs font-medium tracking-wide
             bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30
             transition-colors min-h-[44px]
           "

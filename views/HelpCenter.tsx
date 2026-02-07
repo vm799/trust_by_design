@@ -71,13 +71,13 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/admin/clients')}
-              className="flex-1 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+              className="flex-1 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-xs font-semibold tracking-widest transition-all"
             >
               Add Clients
             </button>
             <button
               onClick={() => navigate('/admin/technicians')}
-              className="flex-1 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+              className="flex-1 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-xl text-xs font-semibold tracking-widest transition-all"
             >
               Add Technicians
             </button>
@@ -384,7 +384,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group"
             >
               <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-              <span className="text-xs font-black uppercase tracking-widest">Back to Topics</span>
+              <span className="text-xs font-semibold tracking-widest">Back to Topics</span>
             </button>
             {helpSections.find(s => s.id === selectedSection)?.content}
           </div>

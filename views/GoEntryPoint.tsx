@@ -139,7 +139,7 @@ const GoEntryPoint: React.FC = () => {
       <div className={`min-h-screen ${bgClass} flex items-center justify-center p-4`}>
         <div className="text-center space-y-4">
           <div className={`size-16 border-4 ${isDark ? 'border-primary/30 border-t-primary' : 'border-orange-500/30 border-t-orange-500'} rounded-full animate-spin mx-auto`} />
-          <p className={`text-sm font-medium uppercase tracking-widest ${subtextClass}`}>
+          <p className={`text-sm font-normal tracking-widest ${subtextClass}`}>
             Validating Access...
           </p>
         </div>
@@ -191,7 +191,7 @@ const GoEntryPoint: React.FC = () => {
 
         {/* Error Title */}
         <div className="text-center space-y-2">
-          <h1 className={`text-2xl font-black uppercase tracking-tight ${textClass}`}>
+          <h1 className={`text-2xl font-bold tracking-tight ${textClass}`}>
             {state.error.type === 'EXPIRED_LINK' ? 'Link Expired' :
              state.error.type === 'LOCKED' ? 'Job In Progress' :
              state.error.type === 'CHECKSUM_MISMATCH' ? 'Invalid Link' :
@@ -206,7 +206,7 @@ const GoEntryPoint: React.FC = () => {
         {/* Error Details for MISSING_PARAMS */}
         {state.error.type === 'MISSING_PARAMS' && (
           <div className={`${isDark ? 'bg-slate-800/50' : 'bg-slate-100'} rounded-xl p-4`}>
-            <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${subtextClass}`}>
+            <p className={`text-xs font-medium tracking-widest mb-2 ${subtextClass}`}>
               Missing Information:
             </p>
             <ul className={`text-sm space-y-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>

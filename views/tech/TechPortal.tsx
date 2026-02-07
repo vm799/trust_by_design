@@ -245,18 +245,18 @@ const HeroJobCard = React.memo(({
           {/* Top section - badges */}
           <div className="flex items-start justify-between">
             <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1.5 bg-tech-accent/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+              <span className="px-3 py-1.5 bg-tech-accent/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
                 <span className="material-symbols-outlined text-sm">play_arrow</span>
                 Started
               </span>
               {isDoneEnough && (
-                <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
                   <span className="material-symbols-outlined text-sm">check_circle</span>
                   Ready to Submit
                 </span>
               )}
               {job.syncStatus && job.syncStatus !== 'synced' && (
-                <span className={`px-3 py-1.5 backdrop-blur-sm text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 ${
+                <span className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0 ${
                   job.syncStatus === 'failed'
                     ? 'bg-red-500/90 text-white'
                     : 'bg-amber-500/90 text-white'
@@ -275,13 +275,13 @@ const HeroJobCard = React.memo(({
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </h2>
-            <p className="text-lg text-slate-700 dark:text-slate-300 mb-4">
+            <p className="text-lg text-slate-700 dark:text-slate-300 mb-4 truncate">
               {client?.name || job.client || 'Client'}
             </p>
             {job.address && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm">location_on</span>
-                {job.address}
+              <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                <span className="material-symbols-outlined text-sm shrink-0">location_on</span>
+                <span className="truncate">{job.address}</span>
               </p>
             )}
           </div>

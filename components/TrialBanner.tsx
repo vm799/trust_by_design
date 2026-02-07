@@ -190,7 +190,7 @@ export const TrialBadge: React.FC<{ className?: string }> = ({ className = '' })
         className={`
           inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
           bg-amber-500/20 text-amber-600 dark:text-amber-400
-          text-xs font-bold uppercase tracking-wider
+          text-xs font-medium tracking-wider
           hover:bg-amber-500/30 transition-all
           ${className}
         `}
@@ -209,7 +209,7 @@ export const TrialBadge: React.FC<{ className?: string }> = ({ className = '' })
         to="/pricing"
         className={`
           inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
-          text-xs font-bold uppercase tracking-wider
+          text-xs font-medium tracking-wider
           transition-all
           ${isUrgent
             ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 hover:bg-orange-500/30'

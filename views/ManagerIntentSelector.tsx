@@ -223,7 +223,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h2 className={`
-                        text-lg font-bold uppercase tracking-tight
+                        text-lg font-medium tracking-tight
                         ${option.primary ? 'text-white' : 'text-slate-200 group-hover:text-white'}
                       `}>
                         {option.title}
