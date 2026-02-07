@@ -39,7 +39,7 @@ const sizeClasses = {
  *   title="Assign Technician"
  *   description="Select a technician to assign this job"
  * >
- *   {/* Modal content */}
+ *   Modal content goes here
  * </ModalBase>
  */
 export const ModalBase: React.FC<ModalBaseProps> = React.memo(({
