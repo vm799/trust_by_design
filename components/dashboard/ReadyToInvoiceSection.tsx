@@ -50,7 +50,7 @@ const JobItem: React.FC<JobItemProps> = ({ job, onClick }) => {
           {job.title || job.id}
         </p>
         <p className="text-sm text-slate-500 truncate">
-          {job.clientName || 'No client'} • {evidenceStatus.photoCount} photo{evidenceStatus.photoCount !== 1 ? 's' : ''}
+          {job.client || 'No client'} • {evidenceStatus.photoCount} photo{evidenceStatus.photoCount !== 1 ? 's' : ''}
         </p>
       </div>
 

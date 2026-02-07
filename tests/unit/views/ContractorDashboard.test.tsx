@@ -39,6 +39,8 @@ describe('ContractorDashboard', () => {
       id: userId,
       name: 'John Contractor',
       email: 'john@example.com',
+      role: 'solo_contractor',
+      workspaceName: 'Test Workspace',
       persona: 'solo_contractor',
     };
 
@@ -89,7 +91,7 @@ describe('ContractorDashboard', () => {
           techId: undefined,
           technicianId: userId,
           status: 'In Progress',
-        } as Job,
+        } as unknown as Job,
       ];
 
       const { result } = renderHook(() => useActiveJobCount(jobs, mockUser));
@@ -211,8 +213,8 @@ describe('ContractorDashboard', () => {
     it('should handle mixed assignment patterns correctly', () => {
       const jobs: Job[] = [
         // My jobs via different fields
-        { id: 'job-1', techId: userId, technicianId: undefined, status: 'In Progress' } as Job,
-        { id: 'job-2', techId: undefined, technicianId: userId, status: 'Pending' } as Job,
+        { id: 'job-1', techId: userId, technicianId: undefined, status: 'In Progress' } as unknown as Job,
+        { id: 'job-2', techId: undefined, technicianId: userId, status: 'Pending' } as unknown as Job,
         { id: 'job-3', techId: userId, technicianId: userId, status: 'Draft' } as Job,
         // Other tech's jobs
         { id: 'job-4', techId: otherUserId, status: 'In Progress' } as Job,
@@ -241,6 +243,8 @@ describe('ContractorDashboard', () => {
         id: userId,
         name: 'Stable User',
         email: 'stable@test.com',
+        role: 'solo_contractor',
+        workspaceName: 'Test Workspace',
         persona: 'solo_contractor',
       };
 
@@ -265,6 +269,8 @@ describe('ContractorDashboard', () => {
         id: userId,
         name: 'Test User',
         email: 'test@test.com',
+        role: 'solo_contractor',
+        workspaceName: 'Test Workspace',
         persona: 'solo_contractor',
       };
 

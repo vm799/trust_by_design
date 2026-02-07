@@ -84,7 +84,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
     const pendingJobs = jobs.filter(j => j.status === 'Pending').length;
     const completedJobs = jobs.filter(j => j.status === 'Complete' || j.status === 'Submitted').length;
     const activeClients = clients.length;
-    const activeTechnicians = technicians.filter(t => t.status === 'Active').length;
+    const activeTechnicians = technicians.filter(t => t.status === 'Available' || t.status === 'On Site').length;
 
     return {
       totalJobs: jobs.length,

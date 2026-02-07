@@ -321,6 +321,8 @@ export interface TechWorkStatusCounts {
   idle: number;
   /** Number of stuck technicians */
   stuck: number;
+  /** Number of technicians who completed a job today */
+  completed_today: number;
   /** Total number of jobs */
   totalJobs: number;
   /** Breakdown by technician ID */
@@ -348,6 +350,7 @@ export function deriveTechWorkStatusCounts(
     active: 0,
     idle: 0,
     stuck: 0,
+    completed_today: 0,
     totalJobs: jobs.length,
     byTechnician: new Map(),
   };
@@ -363,11 +366,13 @@ export function deriveTechWorkStatusCounts(
 
     result.byTechnician.set(tech.id, status);
 
-    // Count by status (completed_today counts as active for dashboard purposes)
+    // Count by status
     switch (status) {
       case 'active':
-      case 'completed_today':
         result.active++;
+        break;
+      case 'completed_today':
+        result.completed_today++;
         break;
       case 'idle':
         result.idle++;
