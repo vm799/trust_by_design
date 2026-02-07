@@ -18,6 +18,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
+import SyncConflictResolver from '../../../components/SyncConflictResolver';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
 import { sealEvidence } from '../../../lib/sealing';
 import { isFeatureEnabled } from '../../../lib/featureFlags';
@@ -53,6 +54,10 @@ const JobDetail: React.FC = () => {
   // Seal-on-dispatch state (Phase C.3)
   const [sealingOnDispatch, setSealingOnDispatch] = useState(false);
   const [sealError, setSealError] = useState<string | null>(null);
+
+  // Sync conflict state (Fix 3.3)
+  const [unresolvedConflict, setUnresolvedConflict] = useState(false);
+  const [dismissConflict, setDismissConflict] = useState(false);
 
   // Derive job, client, technician from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
@@ -107,6 +112,21 @@ const JobDetail: React.FC = () => {
 
   // Check if job can be deleted
   const canDelete = job && !job.sealedAt && !job.invoiceId;
+
+  // Handle conflict resolution (Fix 3.3)
+  const handleResolveConflict = (resolution: 'local' | 'remote' | 'manual') => {
+    console.log(`[JobDetail] Resolving sync conflict with strategy: ${resolution}`, {
+      jobId: job?.id,
+      strategy: resolution,
+    });
+    // In a full implementation, this would:
+    // 1. Save the resolution to IndexedDB syncConflicts table
+    // 2. Apply the resolution (merge local/remote/manual)
+    // 3. Sync the result back to server
+    setUnresolvedConflict(false);
+    setDismissConflict(true);
+    setTimeout(() => setDismissConflict(false), 2000);
+  };
 
   const handleAssignTech = async (techId: string) => {
     if (!job) return;
@@ -327,6 +347,30 @@ const JobDetail: React.FC = () => {
 
   const status = getJobStatus();
   const canSend = (status === 'dispatched' || technician) && !job.sealedAt && status !== 'archived';
+
+  // Show conflict resolver if conflict is unresolved (Fix 3.3)
+  if (unresolvedConflict && job) {
+    return (
+      <div>
+        <PageHeader title={job.title || `Job #${job.id.slice(0, 6)}`} backTo={ROUTES.JOBS} backLabel="Jobs" />
+        <PageContent>
+          <SyncConflictResolver
+            conflict={{
+              jobId: job.id,
+              local: job,
+              remote: job, // In real scenario, would fetch from conflict history
+              conflictFields: ['status'],
+              detectedAt: new Date().toISOString(),
+              resolved: false,
+              resolution: null,
+            }}
+            onResolve={handleResolveConflict}
+            onDismiss={() => setUnresolvedConflict(false)}
+          />
+        </PageContent>
+      </div>
+    );
+  }
 
   return (
     <div>
