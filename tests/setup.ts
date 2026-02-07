@@ -77,29 +77,9 @@ Object.defineProperty(global.navigator, 'geolocation', {
   writable: true,
 });
 
-// Mock IndexedDB
-const indexedDBMock = {
-  open: vi.fn(() => ({
-    result: {
-      transaction: vi.fn(() => ({
-        objectStore: vi.fn(() => ({
-          get: vi.fn(),
-          put: vi.fn(),
-          delete: vi.fn(),
-          clear: vi.fn(),
-        })),
-      })),
-      createObjectStore: vi.fn(),
-    },
-    onsuccess: null,
-    onerror: null,
-  })),
-  deleteDatabase: vi.fn(),
-};
-Object.defineProperty(window, 'indexedDB', {
-  value: indexedDBMock,
-  writable: true,
-});
+// Use fake-indexeddb for proper IndexedDB support in tests (FIX 2.2)
+// This provides a full IndexedDB implementation that works with Dexie
+import 'fake-indexeddb/auto';
 
 // Mock Canvas (for signature capture)
 HTMLCanvasElement.prototype.getContext = vi.fn(() => ({

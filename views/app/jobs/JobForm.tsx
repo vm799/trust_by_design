@@ -14,12 +14,11 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, LoadingSkeleton, Modal } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
+import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
-import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offline/db';
-import { JOB_STATUS, SYNC_STATUS, TECHNICIAN_STATUS } from '../../../lib/constants';
-
-const DRAFT_FORM_TYPE = 'job_form';
+import { safeSaveDraft, loadDraft, clearDraft, migrateDraftFromLocalStorage } from '../../../lib/utils/storageUtils';
+import { JOB_STATUS, SYNC_STATUS } from '../../../lib/constants';
 
 interface FormData {
   title: string;
@@ -52,6 +51,10 @@ const JobForm: React.FC = () => {
     addTechnician: contextAddTechnician,
     isLoading: dataLoading
   } = useData();
+
+  // Get workspace ID for draft isolation (FIX 2.2)
+  const { session } = useAuth();
+  const workspaceId = session?.user?.user_metadata?.workspace_id || 'default';
 
   // Memoized job derivation for edit mode
   const existingJob = useMemo(() =>
@@ -91,34 +94,38 @@ const JobForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>(getDefaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
-  // Load saved draft from IndexedDB on mount (CLAUDE.md: Dexie/IndexedDB draft saving)
+  // FIX 2.2: Load saved draft from IndexedDB with workspace isolation and migration
   useEffect(() => {
     if (isEdit || draftLoaded) return; // Don't load drafts when editing
 
     const loadDraftFromDB = async () => {
       try {
-        const draft = await getFormDraft(DRAFT_FORM_TYPE);
-        if (draft?.data) {
+        // FIX 2.2: Migrate old localStorage drafts to IndexedDB
+        await migrateDraftFromLocalStorage('job', workspaceId);
+
+        // FIX 2.2: Load draft with workspace isolation
+        const draftData = await loadDraft('job', workspaceId);
+        if (draftData) {
           // Validate draft has expected fields before using
-          const draftData = draft.data as Partial<FormData>;
           if (draftData.title !== undefined) {
             setFormData(prev => ({
               ...prev,
-              ...draftData,
+              ...(draftData as Partial<FormData>),
               // Preserve clientId from URL if present
-              clientId: searchParams.get('clientId') || draftData.clientId || '',
+              clientId: searchParams.get('clientId') || (draftData.clientId as string) || '',
             }));
           }
         }
       } catch (e) {
         // IndexedDB read failed - continue with defaults (non-critical)
+        console.error('[JobForm] Draft load failed:', e);
       } finally {
         setDraftLoaded(true);
       }
     };
 
     loadDraftFromDB();
-  }, [isEdit, draftLoaded, searchParams]);
+  }, [isEdit, draftLoaded, searchParams, workspaceId]);
 
   // Auto-focus refs
   const titleRef = useRef<HTMLInputElement>(null);
@@ -127,30 +134,29 @@ const JobForm: React.FC = () => {
   const dateRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
 
-  // Save draft to IndexedDB on form changes (debounced)
-  // CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
+  // FIX 2.2: Save draft to IndexedDB with quota checking and workspace isolation
   useEffect(() => {
     if (isEdit || !draftLoaded) return; // Don't save until draft is loaded
 
     const timer = setTimeout(() => {
-      // Save form data to IndexedDB (async, non-blocking)
-      // Cast through unknown for IndexedDB storage compatibility
-      saveFormDraft(DRAFT_FORM_TYPE, formData as unknown as Record<string, unknown>).catch(() => {
-        // IndexedDB write failed - non-critical, will retry on next change
+      // FIX 2.2: Safe save with quota checking and workspace isolation
+      safeSaveDraft('job', formData as unknown as Record<string, unknown>, workspaceId).catch((error) => {
+        // IndexedDB write failed - log but don't crash
+        console.error('[JobForm] Draft save failed:', error);
       });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [formData, isEdit, draftLoaded]);
+  }, [formData, isEdit, draftLoaded, workspaceId]);
 
-  // Clear draft on successful save
+  // FIX 2.2: Clear draft on successful save
   const handleClearDraft = useCallback(async () => {
     try {
-      await clearFormDraft(DRAFT_FORM_TYPE);
+      await clearDraft('job', workspaceId);
     } catch {
       // Non-critical - draft will be orphaned but expire after 8h
     }
-  }, []);
+  }, [workspaceId]);
 
   // Auto-focus title field on mount
   useEffect(() => {
@@ -238,7 +244,6 @@ const JobForm: React.FC = () => {
 
       // Get client and tech names for display fields
       const selectedClient = clients.find(c => c.id === formData.clientId);
-      const selectedTech = technicians.find(t => t.id === formData.technicianId);
 
       if (isEdit && id && existingJob) {
         // Update existing job - use full Job object

@@ -27,6 +27,15 @@ let lastCheckTime = 0;
 const CHECK_CACHE_TTL = 30000; // 30 seconds
 
 /**
+ * Clear quota cache (for testing)
+ * @internal
+ */
+export function _clearQuotaCache(): void {
+  lastQuotaCheck = null;
+  lastCheckTime = 0;
+}
+
+/**
  * Get current storage quota information
  */
 export async function getStorageQuota(): Promise<StorageQuotaInfo | null> {
