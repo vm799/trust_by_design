@@ -121,9 +121,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!hasCapuredIntent.current) {
       const intent = captureNavigationIntentFromUrl();
-      if (intent) {
-        console.log('[App] Captured navigation intent:', intent.path, intent.type);
-      }
+      // intent captured (intentionally silent)
       hasCapuredIntent.current = true;
     }
   }, []);
@@ -257,12 +255,9 @@ const AppContent: React.FC = () => {
 
       // Skip if we already loaded this user's profile (prevents duplicate loads)
       if (profileLoadedRef.current === sessionUserId) {
-        console.log('[App] Profile already loaded for user, skipping:', sessionUserId);
         setProfileLoading(false); // Ensure loading state is cleared
         return;
       }
-
-      console.log('[App] Loading profile for user:', sessionUserId);
 
       // DEFENSIVE FIX: Wrap entire profile load in try-catch to prevent:
       // 1. Unhandled promise rejections from dynamic imports (getAuth)
@@ -441,13 +436,11 @@ const AppContent: React.FC = () => {
   const PersonaRedirect: React.FC<{ user: UserProfile | null; hasSeenOnboarding: boolean }> = ({ user, hasSeenOnboarding }) => {
     // Profile truly missing (not loading) - redirect to setup
     if (!user) {
-      console.log('[PersonaRedirect] Profile missing (load complete), redirecting to setup');
       return <Navigate to="/auth/setup" replace />;
     }
 
     // If user has no persona, redirect to onboarding
     if (!user.persona) {
-      console.log('[PersonaRedirect] No persona set, redirecting to onboarding');
       return <Navigate to="/onboarding" replace />;
     }
 
@@ -468,7 +461,6 @@ const AppContent: React.FC = () => {
     const hasCompleteProfile = !!(user.workspace?.id && user.persona);
 
     if (hasCompleteProfile) {
-      console.log('[PersonaRedirect] Manager with complete profile, going to dashboard');
       // Auto-set onboarding flag to prevent future confusion
       if (!hasSeenOnboarding) {
         localStorage.setItem('jobproof_onboarding_v4', 'true');
@@ -478,7 +470,6 @@ const AppContent: React.FC = () => {
 
     // Only show Intent Selector for users who just created persona but workspace setup incomplete
     // This should be rare - most users complete both in OAuthSetup
-    console.log('[PersonaRedirect] Manager missing workspace, showing intent selector');
     return <Navigate to="/manager/intent" replace />;
   };
 

@@ -25,14 +25,10 @@ if (import.meta.env.DEV) {
   window.__JOBPROOF_TEST__ = TestingControlPlane;
   window.__resetApp__ = async () => {
     const result = await TestingControlPlane.resetAll();
-    console.log('[DEV] Reset result:', result);
     if (result.success) {
       window.location.reload();
     }
   };
-
-  console.log('[DEV] Testing Control Plane available at window.__JOBPROOF_TEST__');
-  console.log('[DEV] Quick reset: await window.__resetApp__()');
 }
 
 const rootElement = document.getElementById('root');
