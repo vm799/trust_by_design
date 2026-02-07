@@ -47,7 +47,7 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
 
     // Check for overdue jobs
     const overdueJobs = jobs.filter(
-      j => new Date(j.dueDate) < new Date() &&
+      j => new Date(j.date) < new Date() &&
            !['Complete', 'Submitted', 'Archived'].includes(j.status)
     ).length;
 

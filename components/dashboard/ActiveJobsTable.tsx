@@ -47,7 +47,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
     // Apply status filter
     if (filter === 'overdue') {
       filtered = filtered.filter(j =>
-        new Date(j.dueDate) < new Date() &&
+        new Date(j.date) < new Date() &&
         !['Complete', 'Submitted', 'Archived'].includes(j.status)
       );
     } else if (filter === 'in-progress') {
@@ -65,25 +65,25 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(j =>
         j.id.toLowerCase().includes(term) ||
-        j.jobId?.toLowerCase().includes(term) ||
+        j.id?.toLowerCase().includes(term) ||
         clients.find(c => c.id === j.clientId)?.name.toLowerCase().includes(term)
       );
     }
 
-    // Sort: overdue first, then by due date
+    // Sort: overdue first, then by date
     filtered.sort((a, b) => {
-      const aOverdue = new Date(a.dueDate) < new Date();
-      const bOverdue = new Date(b.dueDate) < new Date();
+      const aOverdue = new Date(a.date) < new Date();
+      const bOverdue = new Date(b.date) < new Date();
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
     return filtered;
   }, [jobs, clients, filter, searchTerm]);
 
   const getJobStatus = (job: Job) => {
-    const dueDate = new Date(job.dueDate);
+    const dueDate = new Date(job.date);
     const now = new Date();
     if (dueDate < now && !['Complete', 'Submitted', 'Archived'].includes(job.status)) {
       return 'overdue';
@@ -234,7 +234,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{statusColor.icon}</span>
                       <p className={`font-mono text-sm font-bold ${statusColor.text}`}>
-                        {job.jobId || job.id}
+                        {job.id}
                       </p>
                       <span className={`px-2 py-1 rounded text-xs font-bold ${statusColor.badge}`}>
                         {job.status}
@@ -252,7 +252,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                     {/* Due Date */}
                     {getJobStatus(job) === 'overdue' && (
                       <p className="text-xs text-red-600 dark:text-red-400 font-bold mt-1">
-                        Due: {new Date(job.dueDate).toLocaleDateString()} (OVERDUE)
+                        Due: {new Date(job.date).toLocaleDateString()} (OVERDUE)
                       </p>
                     )}
                   </div>

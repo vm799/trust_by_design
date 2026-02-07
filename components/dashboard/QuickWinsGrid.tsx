@@ -46,7 +46,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
     // Ready to Invoice
     const readyToInvoice = jobs.filter(j => j.status === 'Complete' && !j.invoiceId).length;
     const completedThisWeek = jobs.filter(j => {
-      const jobDate = new Date(j.updatedAt);
+      const jobDate = new Date(j.date);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       return j.status === 'Complete' && jobDate > weekAgo;
@@ -55,7 +55,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
     // Active Jobs
     const activeJobs = jobs.filter(j => ['In Progress', 'Dispatched'].includes(j.status)).length;
     const progressThisWeek = jobs.filter(j => {
-      const jobDate = new Date(j.updatedAt);
+      const jobDate = new Date(j.date);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       return ['In Progress', 'Dispatched'].includes(j.status) && jobDate > weekAgo;
