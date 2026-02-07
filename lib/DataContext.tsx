@@ -23,6 +23,7 @@ import { Job, Client, Technician, Invoice, JobTemplate } from '../types';
 import { useAuth } from './AuthContext';
 import { normalizeJobs, normalizeJobTechnicianId } from './utils/technicianIdNormalization';
 import { getWorkspaceStorageKey } from './testingControlPlane';
+import { safeSetItem, safeRemoveItem } from './utils/safeLocalStorage';
 
 // REMEDIATION ITEM 5: Lazy load heavy db module (2,445 lines)
 // Dynamic import defers parsing until actually needed
@@ -30,6 +31,9 @@ const getDbModule = () => import('./db');
 
 // CLAUDE.md mandate: Dexie for offline-first persistence
 const getOfflineDbModule = () => import('./offline/db');
+
+// FIX 1.3: IndexedDB cleanup for synced photos and expired drafts
+const getCleanupModule = () => import('./offline/cleanup');
 
 // Base localStorage keys (may be suffixed with :workspaceId when isolation is enabled)
 const STORAGE_KEYS = {
@@ -435,9 +439,25 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     }
   }, [workspaceId, loadFromSupabase, loadFromLocalStorage]);
 
+  // FIX 1.3: Schedule IndexedDB cleanup on app startup
+  // Removes orphaned photos from synced jobs and expired form drafts
+  useEffect(() => {
+    const scheduleCleanupAsync = async () => {
+      try {
+        const cleanupModule = await getCleanupModule();
+        await cleanupModule.scheduleCleanup();
+      } catch (error) {
+        console.error('[DataContext] Failed to schedule cleanup:', error);
+        // Non-fatal - app continues even if cleanup fails
+      }
+    };
+
+    scheduleCleanupAsync();
+  }, []); // Run once on mount
+
   // Debounced localStorage persistence
   // WORKSPACE_ISOLATED_STORAGE: When feature flag is enabled, uses workspace-scoped keys
-  const saveToLocalStorage = useCallback(() => {
+  const saveToLocalStorage = useCallback(async () => {
     // Get workspace-scoped keys (falls back to base keys when isolation disabled)
     const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, workspaceId);
     const clientsKey = getWorkspaceStorageKey(STORAGE_KEYS.clients, workspaceId);
@@ -446,27 +466,31 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     const templatesKey = getWorkspaceStorageKey(STORAGE_KEYS.templates, workspaceId);
 
     try {
-      localStorage.setItem(jobsKey, JSON.stringify(jobs));
-      localStorage.setItem(clientsKey, JSON.stringify(clients));
-      localStorage.setItem(techsKey, JSON.stringify(technicians));
-      localStorage.setItem(invoicesKey, JSON.stringify(invoices));
-      localStorage.setItem(templatesKey, JSON.stringify(templates));
-    } catch (err) {
-      // QuotaExceededError: localStorage is full (~5MB limit).
-      // This is non-fatal — data is still in memory and Supabase.
-      // Attempt to free space by removing the largest key (jobs) and retrying smaller items.
-      console.warn('[DataContext] localStorage save failed (quota exceeded):', err);
-      try {
-        localStorage.removeItem(jobsKey);
-        localStorage.setItem(clientsKey, JSON.stringify(clients));
-        localStorage.setItem(techsKey, JSON.stringify(technicians));
-        localStorage.setItem(invoicesKey, JSON.stringify(invoices));
-        localStorage.setItem(templatesKey, JSON.stringify(templates));
-      } catch {
-        // Still failing — localStorage is critically full. Silently degrade.
-        // Dexie/IndexedDB and Supabase are the primary persistence layers anyway.
-        console.warn('[DataContext] localStorage critically full, skipping persistence');
+      // Try to save all items, using safeSetItem which detects QuotaExceededError
+      // and notifies subscribers via onQuotaExceeded callback
+      const jobsSaved = await safeSetItem(jobsKey, JSON.stringify(jobs));
+      const clientsSaved = await safeSetItem(clientsKey, JSON.stringify(clients));
+      const techsSaved = await safeSetItem(techsKey, JSON.stringify(technicians));
+      const invoicesSaved = await safeSetItem(invoicesKey, JSON.stringify(invoices));
+      const templatesSaved = await safeSetItem(templatesKey, JSON.stringify(templates));
+
+      // If quota exceeded on jobs (largest), try removing it and saving others
+      if (!jobsSaved) {
+        console.warn('[DataContext] localStorage quota exceeded for jobs, freeing space');
+        safeRemoveItem(jobsKey);
+        // Try smaller items again
+        await safeSetItem(clientsKey, JSON.stringify(clients));
+        await safeSetItem(techsKey, JSON.stringify(technicians));
+        await safeSetItem(invoicesKey, JSON.stringify(invoices));
+        await safeSetItem(templatesKey, JSON.stringify(templates));
+      } else if (!clientsSaved || !techsSaved || !invoicesSaved || !templatesSaved) {
+        // Quota exceeded on smaller items - this is critical
+        console.error('[DataContext] localStorage quota exceeded even after removing jobs');
       }
+    } catch (err) {
+      // safeSetItem already handles QuotaExceededError and notifies subscribers
+      // This catch is for unexpected errors
+      console.error('[DataContext] Unexpected error during localStorage save:', err);
     }
   }, [jobs, clients, technicians, invoices, templates, workspaceId]);
 

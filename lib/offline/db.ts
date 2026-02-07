@@ -397,7 +397,7 @@ export async function queueAction(type: OfflineAction['type'], payload: any) {
 // FORM DRAFT PERSISTENCE (CLAUDE.md Mandate: Dexie/IndexedDB draft saving)
 // ============================================================================
 
-const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
+export const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 /**
  * Save form draft to IndexedDB

@@ -143,6 +143,31 @@ async function _pullJobsImpl(workspaceId: string) {
                 jobsToUpdate.push(serverJob);
             }
 
+            // ORPHANED RECORDS DETECTION: Remove jobs deleted on server
+            // Compare local vs server job IDs and delete orphaned records
+            const allLocalJobs = await database.jobs.where('workspaceId').equals(workspaceId).toArray();
+            const serverJobIds = new Set(serverJobs.map(j => j.id));
+            const orphanedJobs = allLocalJobs.filter(job => !serverJobIds.has(job.id));
+
+            // Delete orphaned jobs (except sealed ones - they're immutable)
+            const deletedOrphanIds: string[] = [];
+            for (const orphanedJob of orphanedJobs) {
+                // CRITICAL: Preserve sealed jobs - they represent immutable evidence
+                if (orphanedJob.sealedAt || orphanedJob.isSealed) {
+                    console.log(`[Sync] PRESERVED sealed job ${orphanedJob.id} (immutable evidence)`);
+                    continue;
+                }
+
+                // Safe to delete: not sealed
+                await database.jobs.delete(orphanedJob.id);
+                deletedOrphanIds.push(orphanedJob.id);
+                console.log(`[Sync] Deleted orphaned job ${orphanedJob.id} (${orphanedJob.title})`);
+            }
+
+            if (deletedOrphanIds.length > 0) {
+                console.log(`[Sync] Deleted ${deletedOrphanIds.length} orphaned jobs from IndexedDB:`, deletedOrphanIds);
+            }
+
             // Apply updates
             if (jobsToUpdate.length > 0) {
                 await database.jobs.bulkPut(jobsToUpdate);
@@ -193,7 +218,8 @@ async function _pullJobsImpl(workspaceId: string) {
                 });
             }
 
-            console.log(`[Sync] Pulled ${serverJobs.length} jobs, updated ${jobsToUpdate.length}, conflicts: ${conflicts.length}`);
+            const deletedCount = deletedOrphanIds?.length || 0;
+            console.log(`[Sync] Pulled ${serverJobs.length} jobs, updated ${jobsToUpdate.length}, deleted ${deletedCount} orphaned, conflicts: ${conflicts.length}`);
         }
     } catch (error) {
         console.error('[Sync] Pull failed:', error);

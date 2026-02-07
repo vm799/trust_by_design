@@ -9,6 +9,7 @@ import RouteErrorBoundary from './components/RouteErrorBoundary';
 import BuildFingerprint from './components/ui/BuildFingerprint';
 import UpdateNotification from './components/UpdateNotification';
 import { captureNavigationIntentFromUrl } from './lib/navigationIntent';
+import { StorageWarningBanner } from './components/StorageWarningBanner';
 
 // REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
 // These are loaded on-demand when first needed
@@ -475,6 +476,7 @@ const AppContent: React.FC = () => {
 
   return (
     <HashRouter>
+      <StorageWarningBanner />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Redirect root to Landing or Dashboard based on Auth */}
