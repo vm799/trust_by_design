@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-describe('IndexedDB Cleanup Module (FIX 1.3)', { testTimeout: 15000 }, () => {
+describe('IndexedDB Cleanup Module (FIX 1.3)', () => {
   it('cleanup module exports cleanupIndexedDB function', async () => {
     // Verify the cleanup module can be imported
     const cleanup = await import('../../lib/offline/cleanup');
@@ -49,7 +49,7 @@ describe('IndexedDB Cleanup Module (FIX 1.3)', { testTimeout: 15000 }, () => {
         setTimeout(() => reject(new Error('Cleanup timeout')), 4000)
       );
 
-      const stats = await Promise.race([statsPromise, timeoutPromise]);
+      const stats = await Promise.race([statsPromise, timeoutPromise]) as any;
 
       // Verify all expected properties exist
       expect(stats).toBeDefined();
