@@ -14,6 +14,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { designSystem } from '../../lib/designTokens';
 
@@ -30,7 +31,7 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
   onJobsClick,
   onOverdueClick,
 }) => {
-  const { jobs, technicians, isLoading, error } = useData();
+  const { jobs, technicians, isLoading, error, refresh } = useData();
 
   // Calculate metrics from real data
   const metrics = useMemo(() => {
@@ -47,11 +48,46 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
     return { assignedTechs, totalJobs, activeJobs, overdueJobs, status };
   }, [jobs, technicians]);
 
+  // Error state with retry
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-900">
-        <p className="font-semibold">Failed to load team status</p>
-        <p className="text-sm text-red-700 mt-1">{error}</p>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-red-50 dark:bg-red-950 border-2 border-red-200 dark:border-red-800 rounded-xl p-6"
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="font-semibold text-red-900 dark:text-red-100">Failed to load team status</p>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+          </div>
+          <button
+            onClick={refresh}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors min-h-[44px]"
+            aria-label="Retry loading team status"
+          >
+            Retry
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Loading skeleton (no mock data)
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 p-8 bg-slate-50 dark:bg-slate-800">
+        <div className="animate-pulse">
+          <div className="h-6 w-48 bg-slate-300 dark:bg-slate-600 rounded mb-6" />
+          <div className="grid grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 rounded-lg bg-white dark:bg-slate-700">
+                <div className="h-10 w-16 bg-slate-300 dark:bg-slate-600 rounded mb-2" />
+                <div className="h-4 w-24 bg-slate-300 dark:bg-slate-600 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -89,26 +125,42 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
   };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
       className={`
         rounded-xl border-2 p-8
         ${colors.bg} ${colors.border}
         transition-all duration-300
-        ${isLoading ? 'opacity-50' : 'opacity-100'}
       `}
     >
       {/* Status Indicator */}
-      <div className="flex items-center gap-3 mb-6">
+      <motion.div
+        className="flex items-center gap-3 mb-6"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <div className={`w-3 h-3 rounded-full animate-pulse ${colors.dot}`} />
         <h2 className={`text-lg font-bold ${colors.text}`}>
           {statusLabels[metrics.status]}
         </h2>
-      </div>
+      </motion.div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Metrics Grid - Staggered animation */}
+      <motion.div
+        className="grid grid-cols-3 gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
+      >
         {/* Technicians */}
-        <button
+        <motion.button
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ y: -4, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
+          transition={{ duration: 0.2 }}
           onClick={onTechnicianClick}
           className={`
             p-4 rounded-lg text-left
@@ -125,11 +177,15 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
           <p className={`text-xs font-semibold uppercase tracking-wide mt-2 ${colors.label}`}>
             Technicians
           </p>
-        </button>
+        </motion.button>
 
         {/* Total Jobs */}
-        <button
+        <motion.button
           onClick={onJobsClick}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ y: -4, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
+          transition={{ duration: 0.2 }}
           className={`
             p-4 rounded-lg text-left
             bg-white dark:bg-slate-800 bg-opacity-50 dark:bg-opacity-50
@@ -145,48 +201,50 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
           <p className={`text-xs font-semibold uppercase tracking-wide mt-2 ${colors.label}`}>
             Total Jobs
           </p>
-        </button>
+        </motion.button>
 
         {/* Active Jobs */}
-        <div className={`
-          p-4 rounded-lg text-left
-          bg-white dark:bg-slate-800 bg-opacity-50 dark:bg-opacity-50
-        `}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`
+            p-4 rounded-lg text-left
+            bg-white dark:bg-slate-800 bg-opacity-50 dark:bg-opacity-50
+          `}
+        >
           <p className={`text-3xl font-black ${colors.text}`}>
             {metrics.activeJobs}
           </p>
           <p className={`text-xs font-semibold uppercase tracking-wide mt-2 ${colors.label}`}>
             In Progress
           </p>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Overdue Warning (only show if critical) */}
+      </motion.div>
+
+      {/* Overdue Warning (only show if critical) - Animated entrance */}
       {metrics.status === 'critical' && (
-        <button
+        <motion.button
           onClick={onOverdueClick}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          whileHover={{ scale: 1.02 }}
           className={`
             mt-6 w-full p-4 rounded-lg
             bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800
             border border-red-300 dark:border-red-700
             text-red-900 dark:text-red-100 font-semibold
             transition-all duration-200 cursor-pointer
-            hover:shadow-md
+            hover:shadow-md min-h-[44px]
           `}
         >
           ⚠️ {metrics.overdueJobs} Overdue Job{metrics.overdueJobs !== 1 ? 's' : ''} - View →
-        </button>
+        </motion.button>
       )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-950/50 rounded-xl">
-          <div className="animate-spin">
-            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full" />
-          </div>
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 });
 
