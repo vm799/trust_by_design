@@ -28,11 +28,12 @@ import type { Job, Technician } from '../../types';
 interface QuickAssignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  jobId: string;
+  jobId?: string | null;
   onSuccess?: (job: Job) => void;
 }
 
 interface AssignmentState {
+  selectedJobId: string | null;
   selectedTechId: string | null;
   isAssigning: boolean;
   error: string | null;
@@ -49,16 +50,23 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
 }) => {
   const { jobs, technicians, updateJob } = useData();
   const [state, setState] = useState<AssignmentState>({
+    selectedJobId: jobId || null,
     selectedTechId: null,
     isAssigning: false,
     error: null,
     success: false,
   });
 
+  // Get unassigned jobs (when jobId is not provided)
+  const unassignedJobs = useMemo(
+    () => jobs.filter(j => !j.technicianId && !j.techId && j.status !== 'Complete' && j.status !== 'Cancelled'),
+    [jobs]
+  );
+
   // Get the job being assigned
   const job = useMemo(
-    () => jobs.find(j => j.id === jobId),
-    [jobs, jobId]
+    () => jobs.find(j => j.id === (jobId || state.selectedJobId)),
+    [jobs, jobId, state.selectedJobId]
   );
 
   // Get available technicians with workload
@@ -94,6 +102,15 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
     () => technicians.find(t => t.id === state.selectedTechId),
     [technicians, state.selectedTechId]
   );
+
+  const handleSelectJob = (jobId: string) => {
+    setState(prev => ({
+      ...prev,
+      selectedJobId: jobId,
+      selectedTechId: null,
+      error: null,
+    }));
+  };
 
   const handleSelectTechnician = (techId: string) => {
     setState(prev => ({
@@ -163,9 +180,19 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
     handleAssign();
   };
 
+  const handleGoBack = () => {
+    setState(prev => ({
+      ...prev,
+      selectedJobId: null,
+      selectedTechId: null,
+      error: null,
+    }));
+  };
+
   const handleClose = () => {
     // Reset state on close
     setState({
+      selectedJobId: jobId || null,
       selectedTechId: null,
       isAssigning: false,
       error: null,
@@ -174,16 +201,20 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
     onClose();
   };
 
-  if (!job) {
-    return null;
-  }
+  // When jobId is not provided, show job selection first
+  const showJobSelection = !jobId && !state.selectedJobId && !state.success;
+  const showTechnicianSelection = (jobId || state.selectedJobId) && !state.success;
 
   return (
     <ModalBase
       isOpen={isOpen}
       onClose={handleClose}
-      title="Assign Technician"
-      description={`Assign job ${job.id} to a technician`}
+      title={showJobSelection ? "Select Job" : "Assign Technician"}
+      description={
+        showJobSelection
+          ? "Choose an unassigned job to assign to a technician"
+          : `Assign job ${job?.id} to a technician`
+      }
       size="md"
     >
       <div className="space-y-6">
@@ -201,7 +232,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
               Assigned to {selectedTech?.name}
             </p>
             <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-              Job {job.id} is now assigned
+              Job {job?.id} is now assigned
             </p>
           </motion.div>
         )}
@@ -231,8 +262,83 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
           </motion.div>
         )}
 
+        {/* Job Selector */}
+        {showJobSelection && (
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+              Unassigned Jobs
+            </label>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {unassignedJobs.length === 0 ? (
+                <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">
+                  No unassigned jobs available
+                </p>
+              ) : (
+                unassignedJobs.map((job, idx) => (
+                  <motion.button
+                    key={job.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={() => handleSelectJob(job.id)}
+                    className={`
+                      w-full p-3 rounded-lg border-2 text-left
+                      transition-all duration-200
+                      ${state.selectedJobId === job.id
+                        ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }
+                      cursor-pointer
+                    `}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-slate-900 dark:text-white">
+                          {job.title || `Job #${job.id.slice(0, 6)}`}
+                        </p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {job.client || 'Unassigned Client'} • {job.status}
+                        </p>
+                      </div>
+
+                      <div className={`
+                        w-5 h-5 rounded-full border-2 flex-shrink-0
+                        ${state.selectedJobId === job.id
+                          ? 'border-primary bg-primary'
+                          : 'border-slate-300 dark:border-slate-600'
+                        }
+                      `}>
+                        {state.selectedJobId === job.id && (
+                          <span className="text-white text-xs flex items-center justify-center w-full h-full">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.button>
+                ))
+              )}
+            </div>
+            <button
+              onClick={() => handleSelectJob(state.selectedJobId || unassignedJobs[0]?.id || '')}
+              disabled={!state.selectedJobId}
+              className={`
+                w-full mt-6 px-4 py-3 rounded-lg font-semibold
+                transition-all duration-200
+                min-h-[44px]
+                ${state.selectedJobId
+                  ? 'bg-primary text-white hover:bg-primary-dark'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                }
+              `}
+            >
+              Continue to Assign Technician
+            </button>
+          </div>
+        )}
+
         {/* Technician Selector */}
-        {!state.success && (
+        {showTechnicianSelection && (
           <>
             <div>
               <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
@@ -301,21 +407,37 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
             </div>
 
             {/* Assign Button */}
-            <button
-              onClick={handleAssign}
-              disabled={!state.selectedTechId || state.isAssigning}
-              className={`
-                w-full px-4 py-3 rounded-lg font-semibold
-                transition-all duration-200
-                min-h-[44px]
-                ${state.selectedTechId && !state.isAssigning
-                  ? 'bg-primary text-white hover:bg-primary-dark'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                }
-              `}
-            >
-              {state.isAssigning ? 'Assigning...' : 'Assign Technician'}
-            </button>
+            <div className="flex gap-3">
+              {!jobId && (
+                <button
+                  onClick={handleGoBack}
+                  className={`
+                    flex-1 px-4 py-3 rounded-lg font-semibold
+                    transition-all duration-200
+                    min-h-[44px]
+                    bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white
+                    hover:bg-slate-300 dark:hover:bg-slate-600
+                  `}
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={handleAssign}
+                disabled={!state.selectedTechId || state.isAssigning}
+                className={`
+                  flex-1 px-4 py-3 rounded-lg font-semibold
+                  transition-all duration-200
+                  min-h-[44px]
+                  ${state.selectedTechId && !state.isAssigning
+                    ? 'bg-primary text-white hover:bg-primary-dark'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  }
+                `}
+              >
+                {state.isAssigning ? 'Assigning...' : 'Assign Technician'}
+              </button>
+            </div>
           </>
         )}
       </div>
