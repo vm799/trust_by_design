@@ -52,6 +52,18 @@ export interface OrphanPhoto {
     recoveryAttempts: number; // How many times we tried to recover
 }
 
+// Fix 3.3: Sync conflict record for conflict history and resolution UI
+export interface SyncConflictRecord {
+    id?: number;
+    jobId: string;
+    local: any;           // Local job version (stored as JSON)
+    remote: any;          // Remote job version (stored as JSON)
+    conflictFields: string[]; // Fields that differ
+    detectedAt: string;   // ISO timestamp when detected
+    resolvedAt?: string;  // ISO timestamp when resolved
+    resolution: 'local' | 'remote' | 'manual' | null; // How conflict was resolved
+}
+
 // CLAUDE.md mandate: Clients must persist offline
 export interface LocalClient {
     id: string;
@@ -90,6 +102,7 @@ export class JobProofDatabase extends Dexie {
     clients!: Table<LocalClient, string>;       // v3: CLAUDE.md offline mandate
     technicians!: Table<LocalTechnician, string>; // v3: CLAUDE.md offline mandate
     orphanPhotos!: Table<OrphanPhoto, string>;    // v4: Failed sync recovery
+    syncConflicts!: Table<SyncConflictRecord, number>; // v6: Fix 3.3 conflict history
 
     constructor() {
         super(DB_NAME);
@@ -133,6 +146,17 @@ export class JobProofDatabase extends Dexie {
             clients: 'id, workspaceId, name',
             technicians: 'id, workspaceId, name',
             orphanPhotos: 'id, jobId, orphanedAt'
+        });
+        // Version 6: Add syncConflicts table for Fix 3.3 (sync conflict detection & UI)
+        this.version(6).stores({
+            jobs: 'id, syncStatus, workspaceId, status, archivedAt, isArchived',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt',
+            syncConflicts: '++id, jobId, detectedAt'
         });
 
         // Handle version change from other tabs
