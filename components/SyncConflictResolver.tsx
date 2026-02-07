@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { SyncConflict } from '../lib/offline/sync';
+import type { SyncConflict } from '../lib/offline/sync';
 
 export interface SyncConflictResolverProps {
   conflict: SyncConflict;
@@ -16,7 +16,7 @@ export interface SyncConflictResolverProps {
 /**
  * Format field value for display
  */
-function formatFieldValue(value: any): string {
+function formatFieldValue(value: unknown): string {
   if (value === null || value === undefined) {
     return '(empty)';
   }
@@ -88,7 +88,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   This Device
                 </div>
                 <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
-                  {formatFieldValue((conflict.local as any)[field])}
+                  {formatFieldValue((conflict.local as Record<string, unknown>)[field])}
                 </div>
               </div>
 
@@ -99,7 +99,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   Server
                 </div>
                 <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
-                  {formatFieldValue((conflict.remote as any)[field])}
+                  {formatFieldValue((conflict.remote as Record<string, unknown>)[field])}
                 </div>
               </div>
             </div>
@@ -163,8 +163,8 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
             info
           </span>
           <span>
-            Choosing "Use Mine" keeps your local changes. "Use Server" will overload your changes
-            with the server version. Select "Manual Merge" to carefully combine both versions.
+            Choosing &quot;Use Mine&quot; keeps your local changes. &quot;Use Server&quot; will overload your changes
+            with the server version. Select &quot;Manual Merge&quot; to carefully combine both versions.
           </span>
         </p>
       </div>
