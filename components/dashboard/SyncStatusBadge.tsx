@@ -84,7 +84,7 @@ const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
     <span
       className={`
         inline-flex items-center gap-1 px-2 py-0.5 rounded
-        text-[10px] font-bold uppercase tracking-wider
+        text-xs font-medium tracking-wider
         ${config.className}
         ${className}
       `}

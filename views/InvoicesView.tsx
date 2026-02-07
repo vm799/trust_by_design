@@ -56,7 +56,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
               </p>
               <a
                 href="mailto:support@jobproof.app?subject=V2 Early Access - Invoicing"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl text-xs font-semibold tracking-widest transition-all"
               >
                 <span className="material-symbols-outlined text-sm">mail</span>
                 Request Early Access
@@ -160,7 +160,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                     <td className="px-8 py-6 text-right">
                       <button
                         onClick={() => updateStatus(inv.id, 'Paid')}
-                        className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="min-h-[44px] px-3 py-2 text-[10px] font-black text-primary uppercase tracking-widest hover:bg-primary/10 rounded-lg transition-colors"
                       >
                         Mark Paid
                       </button>

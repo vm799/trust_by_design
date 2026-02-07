@@ -156,7 +156,7 @@ const LandingPage: React.FC = () => {
             <Link
               to="/pricing"
               className={`
-                hidden sm:block text-sm font-bold uppercase tracking-widest transition-colors
+                hidden sm:block text-sm font-medium tracking-widest transition-colors
                 ${isDark
                   ? 'text-slate-400 hover:text-white'
                   : 'text-slate-600 hover:text-slate-900'
@@ -167,7 +167,7 @@ const LandingPage: React.FC = () => {
             </Link>
             <Link
               to="/auth"
-              className="text-white bg-primary hover:bg-primary-hover px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest transition-all active:scale-95 press-spring shadow-lg shadow-primary/30"
+              className="text-white bg-primary hover:bg-primary-hover px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-medium tracking-widest transition-all active:scale-95 press-spring shadow-lg shadow-primary/30"
             >
               Sign In
             </Link>
@@ -184,7 +184,7 @@ const LandingPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <span className="inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-xs font-medium tracking-widest">
               Stop Losing £2,400/Year to Disputes
             </span>
           </motion.div>
@@ -278,12 +278,12 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center space-y-4"
           >
-            <span className="inline-block px-4 py-1 bg-red-500/20 rounded-full text-red-400 text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block px-4 py-1 bg-red-500/20 rounded-full text-red-400 text-xs font-medium tracking-widest">
               The Contractor Tax
             </span>
             <h2
               className={`
-                text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight
+                text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight
                 ${isDark ? 'text-white' : 'text-slate-900'}
               `}
             >
@@ -380,12 +380,12 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center space-y-4"
           >
-            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-medium tracking-widest">
               Your Unbreakable Shield
             </span>
             <h2
               className={`
-                text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight
+                text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight
                 ${isDark ? 'text-white' : 'text-slate-900'}
               `}
             >
@@ -442,7 +442,7 @@ const LandingPage: React.FC = () => {
           >
             <h2
               className={`
-                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                text-2xl sm:text-3xl font-bold tracking-tight
                 ${isDark ? 'text-white' : 'text-slate-900'}
               `}
             >
@@ -484,12 +484,12 @@ const LandingPage: React.FC = () => {
               }
             `}
           >
-            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-medium tracking-widest">
               Return on Admin (ROA)
             </span>
             <h2
               className={`
-                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                text-2xl sm:text-3xl font-bold tracking-tight
                 ${isDark ? 'text-white' : 'text-slate-900'}
               `}
             >
@@ -584,12 +584,12 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center space-y-3"
           >
-            <span className="inline-block px-4 py-1 bg-primary/20 rounded-full text-primary text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block px-4 py-1 bg-primary/20 rounded-full text-primary text-xs font-medium tracking-widest">
               Coming Soon
             </span>
             <h2
               className={`
-                text-2xl sm:text-3xl font-black uppercase tracking-tight
+                text-2xl sm:text-3xl font-bold tracking-tight
                 ${isDark ? 'text-white' : 'text-slate-900'}
               `}
             >
@@ -780,7 +780,7 @@ const FeatureCard = ({
     </div>
     <h3
       className={`
-        text-base sm:text-lg font-black uppercase tracking-tight
+        text-base sm:text-lg font-bold tracking-tight
         ${isDark ? 'text-white' : 'text-slate-900'}
       `}
     >
@@ -892,12 +892,12 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
           viewport={{ once: true }}
           className="text-center space-y-3"
         >
-          <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
+          <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-medium tracking-widest">
             Trust & Security
           </span>
           <h2
             className={`
-              text-2xl sm:text-3xl font-black uppercase tracking-tight
+              text-2xl sm:text-3xl font-bold tracking-tight
               ${isDark ? 'text-white' : 'text-slate-900'}
             `}
           >
@@ -1071,7 +1071,7 @@ const PriceCard = ({
       <div>
         <h3
           className={`
-            text-xs sm:text-sm font-black uppercase tracking-widest
+            text-xs sm:text-sm font-semibold tracking-widest
             ${active ? 'text-white/80' : isDark ? 'text-slate-500' : 'text-slate-500'}
           `}
         >

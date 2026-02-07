@@ -212,7 +212,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
             <span className="material-symbols-outlined text-primary">play_arrow</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-primary uppercase">Active</p>
+            <p className="text-xs font-medium text-primary">Active</p>
             <p className="font-medium text-slate-900 dark:text-white truncate">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </p>
@@ -427,8 +427,8 @@ const ManagerFocusDashboard: React.FC = () => {
                       }
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`size-10 rounded-xl flex items-center justify-center ${
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
                         item.severity === 'critical'
                           ? 'bg-red-500/20 text-red-400'
                           : 'bg-amber-500/20 text-amber-400'
@@ -446,7 +446,7 @@ const ManagerFocusDashboard: React.FC = () => {
                         </p>
                         <p className="text-sm text-slate-400 truncate">{item.message}</p>
                       </div>
-                      <span className="material-symbols-outlined text-slate-500">chevron_right</span>
+                      <span className="material-symbols-outlined text-slate-500 shrink-0">chevron_right</span>
                     </div>
                   </Card>
                 ))}
@@ -492,9 +492,9 @@ const ManagerFocusDashboard: React.FC = () => {
                         if (tech) setSelectedTechnician(tech);
                       }}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
                         {/* Status indicator */}
-                        <div className={`size-12 rounded-xl flex items-center justify-center ${
+                        <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${
                           summary.status === 'working'
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : summary.status === 'idle'
@@ -520,12 +520,12 @@ const ManagerFocusDashboard: React.FC = () => {
                         </div>
 
                         {/* Jobs remaining count */}
-                        <div className="text-center">
+                        <div className="text-center shrink-0">
                           <p className="text-lg font-bold text-white">{summary.jobsRemaining}</p>
                           <p className="text-xs text-slate-500">remaining</p>
                         </div>
 
-                        <span className="material-symbols-outlined text-slate-500">chevron_right</span>
+                        <span className="material-symbols-outlined text-slate-500 shrink-0">chevron_right</span>
                       </div>
                     </Card>
                   </motion.div>

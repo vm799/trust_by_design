@@ -30,7 +30,6 @@ const mainNavItems: NavItem[] = [
   { to: '/app/clients', icon: 'group', label: 'Clients' },
   { to: '/app/jobs', icon: 'work', label: 'Jobs' },
   { to: '/app/technicians', icon: 'engineering', label: 'Technicians' },
-  { to: '/app/invoices', icon: 'receipt_long', label: 'Invoices' },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -69,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 py-2">
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
             Management
           </span>
         </div>
@@ -84,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
 
         <div className="px-3 py-2 mt-6">
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
             Settings
           </span>
         </div>

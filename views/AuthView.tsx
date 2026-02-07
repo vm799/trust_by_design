@@ -270,7 +270,7 @@ const AuthView: React.FC = () => {
             <div className="flex items-start gap-2">
               <span className="material-symbols-outlined text-danger text-sm mt-0.5">error</span>
               <div>
-                <p className="text-danger text-xs font-bold uppercase">Error</p>
+                <p className="text-danger text-xs font-medium">Error</p>
                 <p className="text-danger text-xs font-medium mt-1">{error}</p>
               </div>
             </div>
@@ -287,7 +287,7 @@ const AuthView: React.FC = () => {
                 <span className="material-symbols-outlined text-amber-400 text-lg font-black">developer_mode</span>
               </div>
               <div>
-                <p className="text-amber-400 text-xs font-black uppercase tracking-widest">Dev Quick Login</p>
+                <p className="text-amber-400 text-xs font-semibold tracking-widest">Dev Quick Login</p>
                 <p className="text-slate-400 text-[10px] font-medium">One-click sign in as any role</p>
               </div>
             </div>
@@ -326,7 +326,7 @@ const AuthView: React.FC = () => {
           <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-[2.5rem] shadow-2xl space-y-3">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-amber-400 text-lg">developer_mode</span>
-              <p className="text-amber-400 text-xs font-black uppercase tracking-widest">Dev Mode Active</p>
+              <p className="text-amber-400 text-xs font-semibold tracking-widest">Dev Mode Active</p>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed">
               Quick login not configured. Add test user credentials to <code className="text-amber-400 bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.local</code> — see <code className="text-amber-400 bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.example</code> for details.

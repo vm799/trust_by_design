@@ -204,7 +204,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         {/* Skip button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white text-xs font-medium tracking-wider transition-colors"
         >
           Skip
         </button>
@@ -229,7 +229,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         {step.isCompleted && (
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
             <span className="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
-            <span className="text-emerald-400 text-xs font-bold uppercase">Completed</span>
+            <span className="text-emerald-400 text-xs font-medium">Completed</span>
           </div>
         )}
 

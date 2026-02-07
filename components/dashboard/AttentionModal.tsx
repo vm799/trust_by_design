@@ -200,7 +200,7 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold uppercase tracking-widest ${styles.icon} mb-1`}>
+                <p className={`text-xs font-medium tracking-widest ${styles.icon} mb-1`}>
                   {entity.reason}
                 </p>
                 <h2 className="text-xl font-bold text-white truncate">

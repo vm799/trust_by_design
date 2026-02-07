@@ -143,7 +143,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             <section id="nav-settings" className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
                <div className="p-6 sm:p-8 border-b border-slate-800 flex justify-between items-center bg-white/[0.02]">
                   <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Organisation Profile</h3>
-                  <button onClick={saveWorkspace} className="text-primary text-xs font-black uppercase tracking-widest hover:underline transition-all">Save</button>
+                  <button onClick={saveWorkspace} className="text-primary text-xs font-semibold tracking-widest hover:underline transition-all">Save</button>
                </div>
                <div className="p-6 sm:p-10 space-y-8">
                   <div className="space-y-2">
@@ -268,7 +268,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                       <button
                         onClick={openBillingPortal}
                         disabled={billingLoading}
-                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {billingLoading ? (
                           <>
@@ -285,7 +285,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     ) : (
                       <button
                         onClick={() => navigate('/select-plan')}
-                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-base">upgrade</span>
                         Upgrade Plan
@@ -293,7 +293,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     )}
                     <button
                       onClick={() => navigate('/pricing')}
-                      className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-base">compare</span>
                       Compare Plans
@@ -374,7 +374,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     localStorage.removeItem('jobproof_checklist_dismissed');
                     alert('Onboarding tour reset! Refresh the page to start over.');
                   }}
-                  className="w-full py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/30 rounded-2xl text-primary text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/30 rounded-2xl text-primary text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2"
                >
                   <span className="material-symbols-outlined text-base">refresh</span>
                   Restart Onboarding Tour
@@ -397,7 +397,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                </p>
                <button
                   onClick={() => navigate('/help')}
-                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-semibold tracking-widest transition-all"
                >
                   View Help Center
                </button>

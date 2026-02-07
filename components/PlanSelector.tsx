@@ -285,7 +285,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
                 {/* Plan Name & Description */}
                 <div>
                   <h3 className={`
-                    text-lg font-black uppercase tracking-tight
+                    text-lg font-bold tracking-tight
                     ${isPopular ? 'text-white/80' : isDark ? 'text-slate-400' : 'text-slate-500'}
                   `}>
                     {plan.name}
@@ -382,7 +382,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
       )}
 
       {/* Trust Indicators */}
-      <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-bold uppercase tracking-wider opacity-60">
+      <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-medium tracking-wider opacity-60">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-emerald-500 text-sm">verified</span>
           No Credit Card Required

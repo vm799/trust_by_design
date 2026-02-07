@@ -136,7 +136,7 @@ const FocusCard: React.FC<FocusCardProps> = ({
           <div className="flex-1 min-w-0">
             {/* Reason badge + sync status */}
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className={`text-xs font-bold uppercase tracking-wide ${config.textColor}`}>
+              <span className={`text-xs font-medium tracking-wide ${config.textColor}`}>
                 {entity.reason}
               </span>
               {entity.syncStatus && entity.syncStatus !== 'synced' && (

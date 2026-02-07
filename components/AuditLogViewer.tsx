@@ -251,7 +251,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors whitespace-nowrap ${
                 filter === f.id
                   ? 'bg-primary text-white'
                   : 'bg-slate-800 text-slate-400 hover:text-white'

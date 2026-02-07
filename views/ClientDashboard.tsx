@@ -88,7 +88,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
         </div>
         <div>
           <h2 className="text-2xl font-black text-white uppercase tracking-tighter">My Account</h2>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+          <p className="text-slate-400 text-xs font-medium tracking-widest">
             {myJobsCount} Jobs • {pendingInvoices.length} Pending Invoices
           </p>
         </div>
@@ -128,7 +128,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
                     <h4 className="text-lg font-black text-white uppercase">
                       {job?.title || 'Unknown Job'}
                     </h4>
-                    <p className="text-warning text-xs font-bold uppercase tracking-wider">
+                    <p className="text-warning text-xs font-medium tracking-wider">
                       Due: {new Date(inv.dueDate).toLocaleDateString()}
                     </p>
                     <p className="text-slate-400 text-sm mt-1">

@@ -208,8 +208,6 @@ const JobDetail: React.FC = () => {
           evidenceHash: sealResult.evidenceHash,
         };
         contextUpdateJob(updatedJob);
-
-        console.log('[JobDetail] Evidence sealed on dispatch:', sealResult.evidenceHash?.substring(0, 16));
       } catch (error) {
         console.error('[JobDetail] Seal-on-dispatch error:', error);
         setSealError(error instanceof Error ? error.message : 'Sealing failed');
@@ -254,7 +252,6 @@ const JobDetail: React.FC = () => {
       });
     } catch (error) {
       // User cancelled or share failed
-      console.log('Share cancelled or failed');
     }
   };
 
@@ -424,7 +421,7 @@ const JobDetail: React.FC = () => {
         {job.priority === 'urgent' && (
           <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mb-6">
             <span className="material-symbols-outlined text-red-400">priority_high</span>
-            <span className="text-red-400 text-sm font-bold uppercase">Urgent Priority</span>
+            <span className="text-red-400 text-sm font-medium">Urgent Priority</span>
           </div>
         )}
 
