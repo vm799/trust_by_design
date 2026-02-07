@@ -32,6 +32,77 @@ export interface ConflictResult {
 }
 
 /**
+ * Detailed sync conflict for UI presentation and resolution
+ */
+export interface SyncConflict {
+    jobId: string;
+    local: LocalJob;
+    remote: LocalJob;
+    conflictFields: string[]; // e.g., ['status', 'technician', 'photos']
+    detectedAt: string; // ISO timestamp
+    resolved: boolean;
+    resolution: 'local' | 'remote' | 'manual' | null;
+}
+
+/**
+ * Fix 3.3: Detect conflicts between local and remote job versions
+ * Compares all relevant fields and returns conflict info if differences found
+ */
+export function detectConflicts(localJob: LocalJob, remoteJob: LocalJob): SyncConflict | null {
+    const conflicts: string[] = [];
+
+    // Compare status
+    if (localJob.status !== remoteJob.status) {
+        conflicts.push('status');
+    }
+
+    // Compare technician assignment (check both techId and technicianId)
+    const localTechId = localJob.technicianId || localJob.techId;
+    const remoteTechId = remoteJob.technicianId || remoteJob.techId;
+    if (localTechId !== remoteTechId) {
+        conflicts.push('technician');
+    }
+
+    // Compare signature
+    if (localJob.signature !== remoteJob.signature) {
+        conflicts.push('signature');
+    }
+
+    // Compare photo count (different counts indicate conflict)
+    const localPhotoCount = localJob.photos?.length || 0;
+    const remotePhotoCount = remoteJob.photos?.length || 0;
+    if (localPhotoCount !== remotePhotoCount) {
+        conflicts.push('photos');
+    }
+
+    // Compare notes/description
+    if ((localJob.notes || '') !== (remoteJob.notes || '')) {
+        conflicts.push('notes');
+    }
+
+    // Compare sealed status
+    if ((localJob.sealedAt || null) !== (remoteJob.sealedAt || null)) {
+        conflicts.push('sealed');
+    }
+
+    // No conflicts if all fields match
+    if (conflicts.length === 0) {
+        return null;
+    }
+
+    // Return detailed conflict info
+    return {
+        jobId: localJob.id,
+        local: localJob,
+        remote: remoteJob,
+        conflictFields: conflicts,
+        detectedAt: new Date().toISOString(),
+        resolved: false,
+        resolution: null,
+    };
+}
+
+/**
  * Internal implementation of pullJobs with conflict resolution
  */
 async function _pullJobsImpl(workspaceId: string) {

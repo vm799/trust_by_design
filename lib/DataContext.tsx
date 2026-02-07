@@ -35,6 +35,9 @@ const getOfflineDbModule = () => import('./offline/db');
 // FIX 1.3: IndexedDB cleanup for synced photos and expired drafts
 const getCleanupModule = () => import('./offline/cleanup');
 
+// FIX 3.1: Auto-archive sealed jobs >180 days
+const getArchiveModule = () => import('./offline/archive');
+
 // Base localStorage keys (may be suffixed with :workspaceId when isolation is enabled)
 const STORAGE_KEYS = {
   jobs: 'jobproof_jobs_v2',
@@ -453,6 +456,29 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     };
 
     scheduleCleanupAsync();
+  }, []); // Run once on mount
+
+  // FIX 3.1: Schedule auto-archive of sealed jobs >180 days on app startup
+  // Prevents IndexedDB storage bloat (10K jobs @ 50KB = 500MB+)
+  useEffect(() => {
+    const scheduleArchiveAsync = async () => {
+      try {
+        const archiveModule = await getArchiveModule();
+        const offlineDb = await getOfflineDbModule();
+        const db = await offlineDb.getDatabase();
+
+        // Run archive immediately on startup
+        await archiveModule.scheduleArchive(db);
+
+        // Schedule daily at 2 AM
+        await archiveModule.scheduleArchiveDaily(db, 2);
+      } catch (error) {
+        console.error('[DataContext] Failed to schedule archive:', error);
+        // Non-fatal - app continues even if archive fails
+      }
+    };
+
+    scheduleArchiveAsync();
   }, []); // Run once on mount
 
   // Debounced localStorage persistence

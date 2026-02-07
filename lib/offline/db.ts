@@ -4,7 +4,9 @@ import { Job, SyncStatus } from '../../types';
 // Database schema version - increment when schema changes
 // v3: Added clients and technicians tables for offline persistence
 // v4: Added orphanPhotos table for failed sync recovery (Sprint 1 Task 1.3)
-const DB_SCHEMA_VERSION = 4;
+// v5: Added archivedAt index for Fix 3.1 (auto-archive sealed jobs >180 days)
+// v6: Added syncConflicts table for Fix 3.3 (sync conflict detection & UI)
+const DB_SCHEMA_VERSION = 6;
 const DB_NAME = 'JobProofOfflineDB';
 
 export interface LocalJob extends Job {
@@ -115,6 +117,16 @@ export class JobProofDatabase extends Dexie {
         // Version 4: Add orphanPhotos for failed sync recovery (Sprint 1 Task 1.3)
         this.version(4).stores({
             jobs: 'id, syncStatus, workspaceId, status',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt'
+        });
+        // Version 5: Add archivedAt index for Fix 3.1 (auto-archive sealed jobs >180 days)
+        this.version(5).stores({
+            jobs: 'id, syncStatus, workspaceId, status, archivedAt, isArchived',
             queue: '++id, type, synced, createdAt',
             media: 'id, jobId',
             formDrafts: 'formType, savedAt',

@@ -287,8 +287,9 @@ const JobDetail: React.FC = () => {
   const expiryInfo = getExpiryInfo();
 
   // Get computed status
-  const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' => {
+  const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' => {
     if (!job) return 'draft';
+    if (job.status === 'Archived') return 'archived';
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
     if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
@@ -325,7 +326,7 @@ const JobDetail: React.FC = () => {
   }
 
   const status = getJobStatus();
-  const canSend = (status === 'dispatched' || technician) && !job.sealedAt;
+  const canSend = (status === 'dispatched' || technician) && !job.sealedAt && status !== 'archived';
 
   return (
     <div>
@@ -372,6 +373,7 @@ const JobDetail: React.FC = () => {
       <PageContent>
         {/* Status Banner */}
         <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
+          status === 'archived' ? 'bg-slate-700/50 border border-slate-600/50' :
           status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
           status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
           status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
@@ -380,6 +382,7 @@ const JobDetail: React.FC = () => {
           'bg-slate-800 border border-white/10'
         }`}>
           <div className={`size-12 rounded-xl flex items-center justify-center ${
+            status === 'archived' ? 'bg-slate-600 text-slate-300' :
             status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
             status === 'review' ? 'bg-purple-500/20 text-purple-400' :
             status === 'active' ? 'bg-amber-500/20 text-amber-400' :
@@ -388,7 +391,8 @@ const JobDetail: React.FC = () => {
             'bg-slate-700 text-slate-400'
           }`}>
             <span className="material-symbols-outlined text-2xl">
-              {status === 'sealed' ? 'verified' :
+              {status === 'archived' ? 'archive' :
+               status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
                status === 'active' ? 'pending' :
                status === 'dispatched' ? 'send' :
@@ -398,7 +402,8 @@ const JobDetail: React.FC = () => {
           </div>
           <div className="flex-1">
             <p className="font-medium text-white">
-              {status === 'sealed' ? 'Cryptographically Sealed' :
+              {status === 'archived' ? 'Archived' :
+               status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
                status === 'active' ? 'Work In Progress' :
                status === 'dispatched' ? 'Dispatched to Technician' :
@@ -406,7 +411,8 @@ const JobDetail: React.FC = () => {
                'Draft - Needs Technician'}
             </p>
             <p className="text-sm text-slate-400">
-              {status === 'sealed' ? 'Evidence has been sealed and verified' :
+              {status === 'archived' ? job?.archivedAt ? `Archived on ${new Date(job.archivedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}` : 'Job archived' :
+               status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
                status === 'dispatched' ? 'Send link to technician to start' :
