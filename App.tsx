@@ -263,93 +263,106 @@ const AppContent: React.FC = () => {
 
       console.log('[App] Loading profile for user:', sessionUserId);
 
-      // REMEDIATION ITEM 5: Lazy load auth module for profile operations
-      const auth = await getAuth();
+      // DEFENSIVE FIX: Wrap entire profile load in try-catch to prevent:
+      // 1. Unhandled promise rejections from dynamic imports (getAuth)
+      // 2. Network errors from getUserProfile
+      // 3. profileLoading getting stuck at true on any error
+      try {
+        // REMEDIATION ITEM 5: Lazy load auth module for profile operations
+        const auth = await getAuth();
 
-      // Load user profile from database
-      let profile = await auth.getUserProfile(sessionUserId);
+        // Load user profile from database
+        let profile = await auth.getUserProfile(sessionUserId);
 
-      // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
-      if (!profile && sessionUserMetadata?.workspace_name) {
-        const meta = sessionUserMetadata;
+        // PhD Level UX: If profile is missing but we have metadata, auto-heal in background
+        if (!profile && sessionUserMetadata?.workspace_name) {
+          const meta = sessionUserMetadata;
 
-        // GUARD: Check if user already exists in users table (prevents 409 conflicts)
-        const supabase = auth.getSupabaseClient();
-        if (supabase) {
-          const { data: existingUser } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', sessionUserId)
-            .maybeSingle();
+          // GUARD: Check if user already exists in users table (prevents 409 conflicts)
+          const supabase = auth.getSupabaseClient();
+          if (supabase) {
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id')
+              .eq('id', sessionUserId)
+              .maybeSingle();
 
-          // Only create workspace if user doesn't exist
-          if (!existingUser) {
-            const workspaceSlug = (meta.workspace_name as string)
-              .toLowerCase()
-              .trim()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-|-$/g, '');
-            const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
+            // Only create workspace if user doesn't exist
+            if (!existingUser) {
+              const workspaceSlug = (meta.workspace_name as string)
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+              const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
-            try {
-              const { error } = await supabase.rpc('create_workspace_with_owner', {
-                p_user_id: sessionUserId,
-                p_email: sessionUserEmail,
-                p_workspace_name: meta.workspace_name,
-                p_workspace_slug: finalSlug,
-                p_full_name: meta.full_name || null
-              });
-              if (error) {
-                // 409 = conflict, user/workspace already exists - not a real error
-                if (error.code !== '409' && error.code !== '23505') {
-                  console.error('[App] Auto-heal workspace creation failed:', error);
+              try {
+                const { error } = await supabase.rpc('create_workspace_with_owner', {
+                  p_user_id: sessionUserId,
+                  p_email: sessionUserEmail,
+                  p_workspace_name: meta.workspace_name,
+                  p_workspace_slug: finalSlug,
+                  p_full_name: meta.full_name || null
+                });
+                if (error) {
+                  // 409 = conflict, user/workspace already exists - not a real error
+                  if (error.code !== '409' && error.code !== '23505') {
+                    console.error('[App] Auto-heal workspace creation failed:', error);
+                  }
                 }
+                // Try fetching again after creation attempt
+                profile = await auth.getUserProfile(sessionUserId);
+              } catch (err) {
+                console.error('[App] Auto-heal exception:', err);
               }
-              // Try fetching again after creation attempt
+            } else {
+              // User exists but profile fetch failed - try again
               profile = await auth.getUserProfile(sessionUserId);
-            } catch (err) {
-              console.error('[App] Auto-heal exception:', err);
             }
-          } else {
-            // User exists but profile fetch failed - try again
-            profile = await auth.getUserProfile(sessionUserId);
           }
         }
-      }
 
-      if (profile) {
-        // Map database profile to UserProfile type
-        const userProfile: UserProfile = {
-          name: profile.full_name || profile.email,
-          email: profile.email,
-          avatar: profile.avatar_url,
-          role: profile.role,
-          workspaceName: profile.workspace?.name || 'My Workspace',
-          persona: profile.personas?.[0]?.persona_type,
-          workspace: profile.workspace ? {
-            id: profile.workspace_id,
-            name: profile.workspace.name,
-            slug: profile.workspace.slug || profile.workspace_id
-          } : undefined
-        };
-        setUser(userProfile);
-        profileLoadedRef.current = sessionUserId;
-        setProfileLoading(false); // CRITICAL: Profile loaded successfully
-        // DataContext automatically loads workspace data based on workspaceId
-      } else {
-        // CRITICAL FIX: Profile load failed - handle gracefully
-        console.warn('[App] Session exists but profile missing. Redirecting to setup.');
+        if (profile) {
+          // Map database profile to UserProfile type
+          const userProfile: UserProfile = {
+            name: profile.full_name || profile.email,
+            email: profile.email,
+            avatar: profile.avatar_url,
+            role: profile.role,
+            workspaceName: profile.workspace?.name || 'My Workspace',
+            persona: profile.personas?.[0]?.persona_type,
+            workspace: profile.workspace ? {
+              id: profile.workspace_id,
+              name: profile.workspace.name,
+              slug: profile.workspace.slug || profile.workspace_id
+            } : undefined
+          };
+          setUser(userProfile);
+          profileLoadedRef.current = sessionUserId;
+          setProfileLoading(false); // CRITICAL: Profile loaded successfully
+          // DataContext automatically loads workspace data based on workspaceId
+        } else {
+          // CRITICAL FIX: Profile load failed - handle gracefully
+          console.warn('[App] Session exists but profile missing. Redirecting to setup.');
 
-        // SPRINT 2 FIX: Clear stale localStorage cache when Supabase confirms profile doesn't exist
-        // This prevents the "flicker to dashboard" bug when a deleted user signs in again
-        localStorage.removeItem('jobproof_user_v2');
-        localStorage.removeItem('jobproof_onboarding_v4');
+          // SPRINT 2 FIX: Clear stale localStorage cache when Supabase confirms profile doesn't exist
+          // This prevents the "flicker to dashboard" bug when a deleted user signs in again
+          localStorage.removeItem('jobproof_user_v2');
+          localStorage.removeItem('jobproof_onboarding_v4');
 
-        // Create minimal user profile from session data for routing
-        // Setting user to null indicates setup is needed (not just loading)
+          // Create minimal user profile from session data for routing
+          // Setting user to null indicates setup is needed (not just loading)
+          setUser(null);
+          profileLoadedRef.current = sessionUserId;
+          setProfileLoading(false); // CRITICAL: Done loading, profile truly missing
+        }
+      } catch (err) {
+        // DEFENSIVE: Ensure profileLoading is ALWAYS resolved, even on catastrophic errors
+        // Without this, a failed dynamic import or network error leaves the app stuck on spinner
+        console.error('[App] Profile load failed catastrophically:', err);
         setUser(null);
         profileLoadedRef.current = sessionUserId;
-        setProfileLoading(false); // CRITICAL: Done loading, profile truly missing
+        setProfileLoading(false);
       }
     };
 
@@ -403,7 +416,14 @@ const AppContent: React.FC = () => {
 
   // CRITICAL FIX: Show loading spinner while checking auth state OR loading profile
   // This prevents the redirect loop where routes fire before profile is loaded
-  if (authLoading || (isAuthenticated && profileLoading)) {
+  //
+  // RACE CONDITION FIX: Also check if profile hasn't been loaded for the current user.
+  // When session changes (sign-in), isAuthenticated becomes true in the SAME render,
+  // but profileLoading is still false from the previous no-session cycle. The loadProfile
+  // effect only fires AFTER the render. Without this check, routes briefly render with
+  // user=null, which can crash components that expect a profile.
+  const profileNotReadyForUser = isAuthenticated && !!sessionUserId && profileLoadedRef.current !== sessionUserId;
+  if (authLoading || profileLoading || profileNotReadyForUser) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
