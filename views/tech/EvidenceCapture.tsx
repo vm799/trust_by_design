@@ -16,6 +16,7 @@ import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast, playCameraShutter } from '../../lib/microInteractions';
 import { MetadataHUD, BunkerStatusBadge } from '../../components/evidence';
 import { convertToW3W } from '../../lib/services/what3words';
+import { PhotoSavedConfirmation } from '../../components/PhotoSavedConfirmation';
 
 type PhotoType = 'before' | 'during' | 'after';
 
@@ -44,12 +45,14 @@ const EvidenceCapture: React.FC = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoType, setPhotoType] = useState<PhotoType>('before');
   const [capturedPhoto, setCapturedPhoto] = useState<CapturedPhoto | null>(null);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
   const [draftSaveWarning, setDraftSaveWarning] = useState(false);
   const [storageFullWarning, setStorageFullWarning] = useState(false);
   const [cameraRetryCount, setCameraRetryCount] = useState(0);
+  const [photoSaveStatus, setPhotoSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
+  const [photoSaveError, setPhotoSaveError] = useState<string | null>(null);
+  const [lastPhotoFile, setLastPhotoFile] = useState<CapturedPhoto | null>(null);
 
   // Bunker-proof UI state
   const [w3w, setW3w] = useState<string | null>(null);
@@ -134,9 +137,11 @@ const EvidenceCapture: React.FC = () => {
 
   // Start camera
   useEffect(() => {
+    let mediaStream: MediaStream | null = null;
+
     const startCamera = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
             width: { ideal: 1920 },
@@ -157,8 +162,8 @@ const EvidenceCapture: React.FC = () => {
     startCamera();
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -234,22 +239,26 @@ const EvidenceCapture: React.FC = () => {
     }
   };
 
-  const savePhoto = async () => {
-    if (!capturedPhoto || !job) return;
+  const savePhoto = async (photoToSave?: CapturedPhoto) => {
+    const photo = photoToSave || capturedPhoto;
+    if (!photo || !job) return;
 
-    setSaving(true);
+    setPhotoSaveStatus('saving');
+    setPhotoSaveError(null);
+    setLastPhotoFile(photo);
+
     try {
       const newPhoto = {
         id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-        url: capturedPhoto.dataUrl, // In production, this would be uploaded to storage
-        localPath: capturedPhoto.dataUrl,
-        type: capturedPhoto.type,
-        timestamp: capturedPhoto.timestamp,
-        lat: capturedPhoto.location?.lat,
-        lng: capturedPhoto.location?.lng,
-        accuracy: capturedPhoto.location?.accuracy,
-        w3w: capturedPhoto.w3w,
-        w3w_verified: capturedPhoto.w3wVerified,
+        url: photo.dataUrl, // In production, this would be uploaded to storage
+        localPath: photo.dataUrl,
+        type: photo.type,
+        timestamp: photo.timestamp,
+        lat: photo.location?.lat,
+        lng: photo.location?.lng,
+        accuracy: photo.location?.accuracy,
+        w3w: photo.w3w,
+        w3w_verified: photo.w3wVerified,
         verified: false,
         syncStatus: SYNC_STATUS.PENDING,
       };
@@ -279,15 +288,24 @@ const EvidenceCapture: React.FC = () => {
       // 3. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
+      // FIX 2.3: Show photo saved confirmation (green checkmark, auto-dismiss after 2s)
+      setPhotoSaveStatus('saved');
+
+      // Auto-dismiss after 2 seconds
+      setTimeout(() => {
+        setPhotoSaveStatus(null);
+      }, 2000);
+
       // FIELD UX: Show confirmation toast and navigate back
       // NOTE: Photo is saved to local vault but NOT yet cryptographically sealed
       // Sealing happens later via manager review in EvidenceReview.tsx
       showToast('Photo saved to local vault - will sync when online', 'success');
       navigate(`/tech/job/${job?.id}`);
     } catch (error) {
-      setError('Failed to save photo. Please try again.');
-    } finally {
-      setSaving(false);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to save photo. Please try again.';
+      setPhotoSaveStatus('error');
+      setPhotoSaveError(errorMsg);
+      setError(null); // Don't show full-screen error, just confirmation error
     }
   };
 
@@ -412,6 +430,18 @@ const EvidenceCapture: React.FC = () => {
       {/* Offline status indicator */}
       <OfflineIndicator />
 
+      {/* FIX 2.3: Photo saved confirmation UI */}
+      <PhotoSavedConfirmation
+        show={photoSaveStatus !== null}
+        status={photoSaveStatus || 'saving'}
+        errorMessage={photoSaveError || undefined}
+        onRetry={
+          photoSaveStatus === 'error' && lastPhotoFile
+            ? () => savePhoto(lastPhotoFile)
+            : undefined
+        }
+      />
+
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
 
@@ -486,18 +516,18 @@ const EvidenceCapture: React.FC = () => {
           <div className="bg-slate-950 px-4 py-4 pb-safe flex gap-3">
             <button
               onClick={retakePhoto}
-              disabled={saving}
+              disabled={photoSaveStatus === 'saving'}
               className="flex-1 py-4 bg-slate-800 text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <span className="material-symbols-outlined">refresh</span>
               Retake
             </button>
             <button
-              onClick={savePhoto}
-              disabled={saving}
+              onClick={() => savePhoto()}
+              disabled={photoSaveStatus === 'saving'}
               className="flex-1 py-4 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {saving ? (
+              {photoSaveStatus === 'saving' ? (
                 <span className="material-symbols-outlined animate-spin">progress_activity</span>
               ) : (
                 <span className="material-symbols-outlined">check</span>
