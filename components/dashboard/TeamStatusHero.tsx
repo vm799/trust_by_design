@@ -35,10 +35,10 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
 
   // Calculate metrics from real data
   const metrics = useMemo(() => {
-    const assignedTechs = technicians.filter(t => t.status === 'active' || t.status === 'available').length;
+    const assignedTechs = technicians.filter(t => t.status !== 'Off Duty').length;
     const totalJobs = jobs.length;
     const activeJobs = jobs.filter(j => ['In Progress', 'Dispatched'].includes(j.status)).length;
-    const overdueJobs = jobs.filter(j => new Date(j.dueDate) < new Date() && !['Complete', 'Submitted', 'Archived'].includes(j.status)).length;
+    const overdueJobs = jobs.filter(j => new Date(j.date) < new Date() && !['Complete', 'Submitted', 'Archived'].includes(j.status)).length;
 
     // Determine status
     let status: TeamStatus = 'operational';
@@ -219,8 +219,6 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
             In Progress
           </p>
         </motion.div>
-      </div>
-
       </motion.div>
 
       {/* Overdue Warning (only show if critical) - Animated entrance */}
