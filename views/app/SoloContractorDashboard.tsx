@@ -10,7 +10,7 @@
  * so they need overview without planning overhead.
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContent } from '../../components/layout';
@@ -20,6 +20,10 @@ import { useAuth } from '../../lib/AuthContext';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client } from '../../types';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
+import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
+import QuickSearchModal from '../../components/modals/QuickSearchModal';
+import QuickAssignModal from '../../components/modals/QuickAssignModal';
+import QuickInvoiceModal from '../../components/modals/QuickInvoiceModal';
 
 // ============================================================================
 // HELPERS
@@ -68,6 +72,22 @@ const SoloContractorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { jobs, clients, isLoading, error, refresh } = useData();
+
+  // Modal state management
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [selectedJobForAssign, setSelectedJobForAssign] = useState<Job | null>(null);
+
+  // Keyboard shortcuts for quick actions
+  useGlobalKeyboardShortcuts({
+    onSearch: () => setIsSearchModalOpen(true),
+    onAssign: () => {
+      setSelectedJobForAssign(null);
+      setIsAssignModalOpen(true);
+    },
+    disabled: false,
+  });
 
   // Filter to jobs owned/created by this user
   const myJobs = useMemo(() => {
@@ -352,33 +372,122 @@ const SoloContractorDashboard: React.FC = () => {
 
           {/* Quick Actions */}
           <motion.section variants={fadeInUp}>
-            <details className="group">
-              <summary className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer hover:text-slate-300 py-2">
-                <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
-                Quick Actions
-              </summary>
-              <div className="grid grid-cols-2 gap-3 pt-3">
-                <Link to={ROUTES.CLIENTS}>
-                  <Card variant="interactive" padding="sm">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-slate-400">people</span>
-                      <span className="text-sm text-white">Clients</span>
-                    </div>
-                  </Card>
-                </Link>
-                <Link to={ROUTES.INVOICES}>
-                  <Card variant="interactive" padding="sm">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-slate-400">receipt</span>
-                      <span className="text-sm text-white">Invoices</span>
-                    </div>
-                  </Card>
-                </Link>
-              </div>
-            </details>
+            <div
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+              data-testid="quick-actions-grid"
+            >
+              {/* Search */}
+              <button
+                onClick={() => setIsSearchModalOpen(true)}
+                className="
+                  min-h-[56px] sm:min-h-[44px]
+                  px-3 py-2
+                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  text-white text-sm font-semibold
+                  rounded-lg
+                  transition-colors duration-200
+                  flex flex-col items-center justify-center gap-1
+                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                "
+                aria-label="Search jobs (Ctrl+K)"
+                title="Search jobs - Press Ctrl+K"
+              >
+                <span className="material-symbols-outlined text-lg">search</span>
+                <span className="text-xs">Search</span>
+              </button>
+
+              {/* Assign Technician */}
+              <button
+                onClick={() => {
+                  setSelectedJobForAssign(null);
+                  setIsAssignModalOpen(true);
+                }}
+                className="
+                  min-h-[56px] sm:min-h-[44px]
+                  px-3 py-2
+                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  text-white text-sm font-semibold
+                  rounded-lg
+                  transition-colors duration-200
+                  flex flex-col items-center justify-center gap-1
+                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                "
+                aria-label="Assign technician (Ctrl+A)"
+                title="Assign technician - Press Ctrl+A"
+              >
+                <span className="material-symbols-outlined text-lg">person_add</span>
+                <span className="text-xs">Assign</span>
+              </button>
+
+              {/* Create Invoice */}
+              <button
+                onClick={() => setIsInvoiceModalOpen(true)}
+                className="
+                  min-h-[56px] sm:min-h-[44px]
+                  px-3 py-2
+                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  text-white text-sm font-semibold
+                  rounded-lg
+                  transition-colors duration-200
+                  flex flex-col items-center justify-center gap-1
+                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                "
+                aria-label="Create invoice"
+                title="Create invoice for completed job"
+              >
+                <span className="material-symbols-outlined text-lg">receipt</span>
+                <span className="text-xs">Invoice</span>
+              </button>
+
+              {/* Clients Link */}
+              <Link
+                to={ROUTES.CLIENTS}
+                className="
+                  min-h-[56px] sm:min-h-[44px]
+                  px-3 py-2
+                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  text-white text-sm font-semibold
+                  rounded-lg
+                  transition-colors duration-200
+                  flex flex-col items-center justify-center gap-1
+                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                "
+                aria-label="View clients"
+                title="View all clients"
+              >
+                <span className="material-symbols-outlined text-lg">people</span>
+                <span className="text-xs">Clients</span>
+              </Link>
+            </div>
           </motion.section>
         </motion.div>
       </PageContent>
+
+      {/* Quick Action Modals */}
+      <QuickSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+      />
+
+      <QuickAssignModal
+        isOpen={isAssignModalOpen}
+        jobId={selectedJobForAssign?.id}
+        onClose={() => {
+          setIsAssignModalOpen(false);
+          setSelectedJobForAssign(null);
+        }}
+        onSuccess={(job) => {
+          refresh(); // Refresh dashboard data after successful assignment
+        }}
+      />
+
+      <QuickInvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        onSuccess={() => {
+          refresh(); // Refresh dashboard data after successful invoice creation
+        }}
+      />
     </div>
   );
 };
