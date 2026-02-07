@@ -102,7 +102,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* New Job button */}
         <button
           onClick={() => navigate('/admin/create')}
-          className="px-6 py-3 bg-primary text-white font-bold rounded-xl text-sm shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2 min-h-[44px]"
+          className="px-6 py-3 bg-manager-accent text-white font-bold rounded-xl text-sm shadow-lg shadow-manager-accent/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2 min-h-[44px]"
         >
           <span className="material-symbols-outlined text-lg">add</span>
           New Job

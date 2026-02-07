@@ -15,9 +15,9 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { fadeInUp } from '../lib/animations';
+import { showSuccessCheckmark } from '../lib/microInteractions';
 
 interface ClientConfirmationCanvasProps {
-  jobId: string;
   clientName?: string;
   onConfirmed?: (signature: string, timestamp: string) => void;
   onCancel?: () => void;
@@ -25,7 +25,6 @@ interface ClientConfirmationCanvasProps {
 }
 
 const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
-  jobId,
   clientName = 'Client',
   onConfirmed,
   onCancel,
@@ -170,15 +169,24 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
   }, []);
 
   const handleConfirm = useCallback(async () => {
-    if (!hasSignature || !isConfirmed || !canvasRef.current) return;
+    if (!hasSignature || !isConfirmed || !canvasRef.current || !containerRef.current) return;
 
     setIsSaving(true);
     try {
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
       const timestamp = new Date().toISOString();
-      onConfirmed?.(signatureDataUrl, timestamp);
-    } finally {
+
+      // Show success checkmark animation (Notion-style)
+      const cleanup = showSuccessCheckmark(containerRef.current);
+
+      // Wait for animation to complete before calling onConfirmed
+      setTimeout(() => {
+        cleanup();
+        onConfirmed?.(signatureDataUrl, timestamp);
+      }, 1200);
+    } catch (error) {
       setIsSaving(false);
+      console.error('Failed to confirm signature:', error);
     }
   }, [hasSignature, isConfirmed, onConfirmed]);
 

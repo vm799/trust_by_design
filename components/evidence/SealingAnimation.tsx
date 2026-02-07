@@ -61,6 +61,9 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
   const [visualHash, setVisualHash] = useState('');
   const [isComplete, setIsComplete] = useState(false);
 
+  // Check if user prefers reduced motion
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // Calculate stage durations based on total duration
   const stageDuration = duration / SEALING_STAGES.length;
 
@@ -135,8 +138,8 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
               }}
             />
 
-            {/* Moving laser scan line */}
-            {!isComplete && (
+            {/* Moving laser scan line - skip if reduced motion */}
+            {!isComplete && !reducedMotion && (
               <motion.div
                 initial={{ top: '0%' }}
                 animate={{ top: '100%' }}
@@ -155,30 +158,70 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
 
           {/* Central content */}
           <div className="relative z-10 w-full max-w-md px-6 text-center">
-            {/* Lock icon with glow */}
+            {/* Lock icon with glow and morph animation */}
             <motion.div
-              animate={isComplete ? { scale: [1, 1.2, 1] } : { rotate: [0, 5, -5, 0] }}
-              transition={isComplete ? { duration: 0.5 } : { duration: 0.5, repeat: Infinity }}
+              animate={
+                reducedMotion
+                  ? {} // No animation if reduced motion
+                  : isComplete
+                  ? { scale: [1, 1.2, 1], rotate: [0, -10, 0] }
+                  : { rotate: [0, 5, -5, 0] }
+              }
+              transition={
+                reducedMotion
+                  ? {}
+                  : isComplete
+                  ? { duration: 0.6, ease: 'easeInOut' }
+                  : { duration: 0.5, repeat: Infinity }
+              }
               className="mx-auto mb-6"
             >
-              <div className={`
-                size-24 rounded-full flex items-center justify-center
-                ${isComplete
-                  ? 'bg-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.5)]'
-                  : 'bg-cyan-500/20 shadow-[0_0_40px_rgba(0,255,204,0.3)]'
+              <motion.div
+                animate={
+                  reducedMotion
+                    ? {} // No animation if reduced motion
+                    : {
+                        background: isComplete
+                          ? ['rgba(6, 182, 212, 0.2)', 'rgba(16, 185, 129, 0.2)']
+                          : undefined,
+                        boxShadow: isComplete
+                          ? [
+                              '0 0 40px rgba(0, 255, 204, 0.3)',
+                              '0 0 60px rgba(16, 185, 129, 0.5)',
+                              '0 0 40px rgba(16, 185, 129, 0.5)',
+                            ]
+                          : undefined,
+                      }
                 }
-              `}>
+                transition={{ duration: 0.6 }}
+                className={`
+                  size-24 rounded-full flex items-center justify-center
+                  ${isComplete
+                    ? 'bg-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.5)]'
+                    : 'bg-cyan-500/20 shadow-[0_0_40px_rgba(0,255,204,0.3)]'
+                  }
+                `}
+              >
                 <motion.span
                   key={stage.icon}
-                  initial={{ scale: 0, rotate: -180 }}
+                  initial={reducedMotion ? {} : { scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
+                  transition={
+                    reducedMotion
+                      ? {}
+                      : {
+                          type: 'spring',
+                          stiffness: 260,
+                          damping: 20,
+                        }
+                  }
                   className={`material-symbols-outlined text-5xl ${
                     isComplete ? 'text-emerald-400' : 'text-cyan-400'
                   }`}
                 >
                   {stage.icon}
                 </motion.span>
-              </div>
+              </motion.div>
             </motion.div>
 
             {/* Status message */}

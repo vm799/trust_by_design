@@ -1,22 +1,20 @@
 /**
- * EvidenceReview - Evidence Gallery and Sealing
+ * EvidenceReview - Evidence Gallery
  *
- * Displays job evidence and allows managers to seal the job.
+ * Displays job evidence for manager review.
+ * Evidence sealing happens automatically when technician submits job.
  *
  * Phase E: Job Lifecycle / Phase H: Seal & Verify
  */
 
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog } from '../../../components/ui';
+import { EmptyState, LoadingSkeleton } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
-import { sealEvidence } from '../../../lib/sealing';
-import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
-import { SealingAnimation, ForensicPhotoCard } from '../../../components/evidence';
 
 interface Photo {
   id?: string;  // REMEDIATION ITEM 9: Added for stable React keys
@@ -36,54 +34,12 @@ const EvidenceReview: React.FC = () => {
   useNavigate();
 
   // Use DataContext for state management
-  const { jobs, updateJob: contextUpdateJob, isLoading: loading, refresh } = useData();
+  const { jobs, isLoading: loading } = useData();
 
   // Memoized job derivation from DataContext
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
 
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-  const [showSealDialog, setShowSealDialog] = useState(false);
-  const [sealing, setSealing] = useState(false);
-  const [showSealingAnimation, setShowSealingAnimation] = useState(false);
-
-  const handleSeal = async () => {
-    if (!job) return;
-
-    setSealing(true);
-    setShowSealDialog(false);
-    // NOTE: Animation starts ONLY after cryptographic sealing succeeds
-    // Never show "Sealed" status until real sealing is confirmed
-
-    try {
-      const result = await sealEvidence(job.id);
-
-      if (result.success) {
-        // ONLY NOW show the sealing animation - after real cryptographic seal
-        setShowSealingAnimation(true);
-
-        // Update job in DataContext with sealed state
-        const sealedJob: Job = {
-          ...job,
-          sealedAt: new Date().toISOString(),
-          evidenceHash: result.evidenceHash,
-        };
-        contextUpdateJob(sealedJob);
-        // Also refresh from server to ensure consistency
-        await refresh();
-      } else {
-        throw new Error(result.error || 'Failed to seal evidence');
-      }
-    } catch (error) {
-      console.error('Failed to seal job:', error);
-      alert(error instanceof Error ? error.message : 'Failed to seal evidence. Please try again.');
-    } finally {
-      setSealing(false);
-    }
-  };
-
-  const handleSealingComplete = () => {
-    setShowSealingAnimation(false);
-  };
 
   // Group photos by type
   const getPhotosByType = (photos: Photo[]) => {
@@ -128,27 +84,11 @@ const EvidenceReview: React.FC = () => {
 
   return (
     <div>
-      {/* Sealing Animation - Bunker-Proof UI */}
-      <SealingAnimation
-        isActive={showSealingAnimation}
-        duration={3000}
-        onComplete={handleSealingComplete}
-      />
-
       <PageHeader
         title="Evidence Review"
         subtitle={job.title || `Job #${job.id.slice(0, 6)}`}
         backTo={route(ROUTES.JOB_DETAIL, { id: job.id })}
         backLabel="Job Details"
-        actions={!isSealed ? [
-          {
-            label: 'Seal Evidence',
-            icon: 'verified',
-            onClick: () => setShowSealDialog(true),
-            variant: 'primary',
-            disabled: photos.length === 0,
-          },
-        ] : []}
       />
 
       <PageContent>
@@ -159,25 +99,18 @@ const EvidenceReview: React.FC = () => {
           </div>
         )}
 
-        {/* Unsealed Warning */}
-        {!isSealed && photos.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6 flex items-center gap-4">
-            <div className="size-12 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-2xl text-amber-400">warning</span>
+        {/* Auto-Seal Information */}
+        {!isSealed && job.status === 'Submitted' && photos.length > 0 && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl text-emerald-400">lock_clock</span>
             </div>
             <div className="flex-1">
-              <p className="font-medium text-white">Evidence Not Sealed</p>
+              <p className="font-medium text-white">Auto-Seal in Progress</p>
               <p className="text-sm text-slate-400">
-                Review the evidence below and seal to create a cryptographic proof of integrity.
+                Evidence is being cryptographically sealed automatically after technician submission.
               </p>
             </div>
-            <ActionButton
-              variant="primary"
-              icon="verified"
-              onClick={() => setShowSealDialog(true)}
-            >
-              Seal Now
-            </ActionButton>
           </div>
         )}
 
@@ -295,19 +228,6 @@ const EvidenceReview: React.FC = () => {
           )}
         </div>
       )}
-
-      {/* Seal Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showSealDialog}
-        onClose={() => setShowSealDialog(false)}
-        onConfirm={handleSeal}
-        title="Seal Evidence"
-        message="This will create a cryptographic hash of all evidence and lock it from further modification. This action cannot be undone."
-        confirmLabel="Seal Evidence"
-        variant="warning"
-        icon="verified"
-        loading={sealing}
-      />
     </div>
   );
 };

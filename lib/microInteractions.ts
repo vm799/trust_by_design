@@ -13,6 +13,15 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
+/**
+ * Check if user prefers reduced motion (accessibility)
+ * Returns true if animations should be disabled or simplified
+ */
+export const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+};
+
 // Haptic feedback for mobile (if supported)
 export const hapticFeedback = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') => {
   if (!navigator.vibrate) return;
@@ -34,6 +43,13 @@ export const hapticFeedback = (type: 'light' | 'medium' | 'heavy' | 'success' | 
 
 // Confetti celebration effect
 export const celebrateSuccess = () => {
+  // Skip animation if user prefers reduced motion
+  if (prefersReducedMotion()) {
+    // Just show haptic feedback instead
+    hapticFeedback('success');
+    return;
+  }
+
   const colors = ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899'];
   const confettiCount = 50;
 
@@ -147,25 +163,33 @@ export const showSuccessCheckmark = (container: HTMLElement) => {
     transform: translate(-50%, -50%);
   `;
 
-  svg.innerHTML = `
-    <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" stroke-width="2"
-      style="stroke-dasharray: 166; stroke-dashoffset: 166; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;" />
-    <path fill="none" stroke="#10b981" stroke-width="3" d="M14.1 27.2l7.1 7.2 16.7-16.8"
-      style="stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;" />
-  `;
-
-  // Add stroke animation keyframes
-  if (!document.getElementById('stroke-keyframes')) {
-    const style = document.createElement('style');
-    style.id = 'stroke-keyframes';
-    style.textContent = `
-      @keyframes stroke {
-        100% {
-          stroke-dashoffset: 0;
-        }
-      }
+  // Simplified checkmark for reduced motion users
+  if (prefersReducedMotion()) {
+    svg.innerHTML = `
+      <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" stroke-width="2" />
+      <path fill="none" stroke="#10b981" stroke-width="3" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
     `;
-    document.head.appendChild(style);
+  } else {
+    svg.innerHTML = `
+      <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" stroke-width="2"
+        style="stroke-dasharray: 166; stroke-dashoffset: 166; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;" />
+      <path fill="none" stroke="#10b981" stroke-width="3" d="M14.1 27.2l7.1 7.2 16.7-16.8"
+        style="stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;" />
+    `;
+
+    // Add stroke animation keyframes
+    if (!document.getElementById('stroke-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'stroke-keyframes';
+      style.textContent = `
+        @keyframes stroke {
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   container.appendChild(svg);
@@ -240,11 +264,17 @@ export const animateNumber = (
   requestAnimationFrame(animate);
 };
 
-// Toast notification with auto-dismiss
+// Toast notification with auto-dismiss and optional undo action
 export const showToast = (
   message: string,
   type: 'success' | 'error' | 'info' | 'warning' = 'info',
-  duration = 4000
+  duration = 4000,
+  options?: {
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+  }
 ) => {
   const toast = document.createElement('div');
 
@@ -263,17 +293,45 @@ export const showToast = (
   };
 
   toast.className = `fixed bottom-6 right-6 z-[200] max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300`;
+
+  const actionButton = options?.action
+    ? `<button
+        data-toast-action
+        class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium text-white transition-colors min-h-[44px]"
+      >
+        ${escapeHtml(options.action.label)}
+      </button>`
+    : '';
+
   toast.innerHTML = `
     <div class="bg-slate-900 border-2 ${colors[type]} rounded-2xl p-4 shadow-2xl backdrop-blur-sm flex items-center gap-3">
       <span class="material-symbols-outlined text-xl">${icons[type]}</span>
       <p class="text-sm font-medium text-white flex-1">${escapeHtml(message)}</p>
-      <button onclick="this.parentElement.parentElement.remove()" class="text-slate-500 hover:text-white transition-colors">
+      ${actionButton}
+      <button data-toast-close class="text-slate-500 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
         <span class="material-symbols-outlined text-sm">close</span>
       </button>
     </div>
   `;
 
   document.body.appendChild(toast);
+
+  // Handle action button click
+  if (options?.action) {
+    const actionBtn = toast.querySelector('[data-toast-action]');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', () => {
+        options.action?.onClick();
+        toast.remove();
+      });
+    }
+  }
+
+  // Handle close button click
+  const closeBtn = toast.querySelector('[data-toast-close]');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => toast.remove());
+  }
 
   // Haptic feedback for errors
   if (type === 'error') {
@@ -283,12 +341,16 @@ export const showToast = (
   }
 
   // Auto-dismiss
-  setTimeout(() => {
+  const dismissTimer = setTimeout(() => {
     toast.style.animation = 'slide-out-to-right-5 0.3s ease-out forwards, fade-out 0.3s ease-out forwards';
     setTimeout(() => toast.remove(), 300);
   }, duration);
 
-  return () => toast.remove();
+  // Return cleanup function
+  return () => {
+    clearTimeout(dismissTimer);
+    toast.remove();
+  };
 };
 
 // Keyboard shortcut hint
@@ -308,4 +370,35 @@ export const showKeyboardHint = (key: string, action: string) => {
     hint.style.animation = 'fade-out 0.2s ease-out forwards';
     setTimeout(() => hint.remove(), 200);
   }, 2000);
+};
+
+// Camera shutter sound using Web Audio API
+export const playCameraShutter = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    // Create a sharp click sound that mimics a camera shutter
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Very short burst of high frequency for mechanical click
+    oscillator.frequency.setValueAtTime(2000, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.05);
+
+    // Quick attack and decay for sharp click
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.05);
+
+    // Haptic feedback for tactile feel
+    hapticFeedback('light');
+  } catch (err) {
+    // Silently fail if Web Audio API not supported
+    console.debug('Camera shutter sound failed:', err);
+  }
 };
