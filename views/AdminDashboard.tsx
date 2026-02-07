@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/AppLayout';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import UnopenedLinksActionCenter from '../components/UnopenedLinksActionCenter';
+import AuditExportModal from '../components/AuditExportModal';
 import { UnifiedDashboard } from '../components/dashboard';
 import { Job, UserProfile, Technician } from '../types';
 import { useAuth } from '../lib/AuthContext';
@@ -58,6 +59,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Links needing attention (manager-specific feature)
   const [linksNeedingAttention, setLinksNeedingAttention] = useState<MagicLinkInfo[]>([]);
   const [showActionCenter, setShowActionCenter] = useState(false);
+
+  // Audit trail export
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const refreshLinksNeedingAttention = useCallback(() => {
     const flaggedLinks = getLinksNeedingAttention();
@@ -99,6 +103,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {linksNeedingAttention.length}
           </button>
         )}
+        {/* Export Audit Trail button */}
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="px-4 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 min-h-[44px]"
+          title="Export audit trail as CSV or JSON"
+        >
+          <span className="material-symbols-outlined text-lg">download</span>
+          Export
+        </button>
         {/* New Job button */}
         <button
           onClick={() => navigate('/admin/create')}
@@ -155,6 +168,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             setLinksNeedingAttention(prev => prev.filter(l => l.token !== token));
           }}
           onRefreshLinks={refreshLinksNeedingAttention}
+        />
+
+        {/* Audit Export Modal (Fix 3.2) */}
+        <AuditExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          jobs={jobs}
         />
       </div>
     </Layout>

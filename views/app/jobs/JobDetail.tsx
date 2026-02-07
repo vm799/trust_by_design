@@ -18,6 +18,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { Job, Client, Technician } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import SealBadge from '../../../components/SealBadge';
+import SyncConflictResolver from '../../../components/SyncConflictResolver';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
 import { sealEvidence } from '../../../lib/sealing';
 import { isFeatureEnabled } from '../../../lib/featureFlags';
@@ -53,6 +54,10 @@ const JobDetail: React.FC = () => {
   // Seal-on-dispatch state (Phase C.3)
   const [sealingOnDispatch, setSealingOnDispatch] = useState(false);
   const [sealError, setSealError] = useState<string | null>(null);
+
+  // Sync conflict state (Fix 3.3)
+  const [unresolvedConflict, setUnresolvedConflict] = useState(false);
+  const [dismissConflict, setDismissConflict] = useState(false);
 
   // Derive job, client, technician from DataContext (memoized for performance)
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
@@ -107,6 +112,21 @@ const JobDetail: React.FC = () => {
 
   // Check if job can be deleted
   const canDelete = job && !job.sealedAt && !job.invoiceId;
+
+  // Handle conflict resolution (Fix 3.3)
+  const handleResolveConflict = (resolution: 'local' | 'remote' | 'manual') => {
+    console.log(`[JobDetail] Resolving sync conflict with strategy: ${resolution}`, {
+      jobId: job?.id,
+      strategy: resolution,
+    });
+    // In a full implementation, this would:
+    // 1. Save the resolution to IndexedDB syncConflicts table
+    // 2. Apply the resolution (merge local/remote/manual)
+    // 3. Sync the result back to server
+    setUnresolvedConflict(false);
+    setDismissConflict(true);
+    setTimeout(() => setDismissConflict(false), 2000);
+  };
 
   const handleAssignTech = async (techId: string) => {
     if (!job) return;
@@ -287,8 +307,9 @@ const JobDetail: React.FC = () => {
   const expiryInfo = getExpiryInfo();
 
   // Get computed status
-  const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' => {
+  const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' => {
     if (!job) return 'draft';
+    if (job.status === 'Archived') return 'archived';
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
     if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
@@ -325,7 +346,31 @@ const JobDetail: React.FC = () => {
   }
 
   const status = getJobStatus();
-  const canSend = (status === 'dispatched' || technician) && !job.sealedAt;
+  const canSend = (status === 'dispatched' || technician) && !job.sealedAt && status !== 'archived';
+
+  // Show conflict resolver if conflict is unresolved (Fix 3.3)
+  if (unresolvedConflict && job) {
+    return (
+      <div>
+        <PageHeader title={job.title || `Job #${job.id.slice(0, 6)}`} backTo={ROUTES.JOBS} backLabel="Jobs" />
+        <PageContent>
+          <SyncConflictResolver
+            conflict={{
+              jobId: job.id,
+              local: job,
+              remote: job, // In real scenario, would fetch from conflict history
+              conflictFields: ['status'],
+              detectedAt: new Date().toISOString(),
+              resolved: false,
+              resolution: null,
+            }}
+            onResolve={handleResolveConflict}
+            onDismiss={() => setUnresolvedConflict(false)}
+          />
+        </PageContent>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -372,6 +417,7 @@ const JobDetail: React.FC = () => {
       <PageContent>
         {/* Status Banner */}
         <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
+          status === 'archived' ? 'bg-slate-700/50 border border-slate-600/50' :
           status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
           status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
           status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
@@ -380,6 +426,7 @@ const JobDetail: React.FC = () => {
           'bg-slate-800 border border-white/10'
         }`}>
           <div className={`size-12 rounded-xl flex items-center justify-center ${
+            status === 'archived' ? 'bg-slate-600 text-slate-300' :
             status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
             status === 'review' ? 'bg-purple-500/20 text-purple-400' :
             status === 'active' ? 'bg-amber-500/20 text-amber-400' :
@@ -388,7 +435,8 @@ const JobDetail: React.FC = () => {
             'bg-slate-700 text-slate-400'
           }`}>
             <span className="material-symbols-outlined text-2xl">
-              {status === 'sealed' ? 'verified' :
+              {status === 'archived' ? 'archive' :
+               status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
                status === 'active' ? 'pending' :
                status === 'dispatched' ? 'send' :
@@ -398,7 +446,8 @@ const JobDetail: React.FC = () => {
           </div>
           <div className="flex-1">
             <p className="font-medium text-white">
-              {status === 'sealed' ? 'Cryptographically Sealed' :
+              {status === 'archived' ? 'Archived' :
+               status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
                status === 'active' ? 'Work In Progress' :
                status === 'dispatched' ? 'Dispatched to Technician' :
@@ -406,7 +455,8 @@ const JobDetail: React.FC = () => {
                'Draft - Needs Technician'}
             </p>
             <p className="text-sm text-slate-400">
-              {status === 'sealed' ? 'Evidence has been sealed and verified' :
+              {status === 'archived' ? job?.archivedAt ? `Archived on ${new Date(job.archivedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}` : 'Job archived' :
+               status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
                status === 'dispatched' ? 'Send link to technician to start' :

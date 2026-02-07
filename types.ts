@@ -100,6 +100,10 @@ export interface Job {
   evidenceHash?: string; // SHA-256 hash of evidence bundle
   isSealed?: boolean; // Computed: !!sealedAt
 
+  // Fix 3.1: Auto-archive sealed jobs >180 days
+  archivedAt?: string; // ISO timestamp when job was archived (auto or manual)
+  isArchived?: boolean; // Flag indicating job is archived (status='Archived')
+
   // Client confirmation (satisfaction sign-off)
   clientConfirmation?: {
     signature: string; // Data URL of signature image

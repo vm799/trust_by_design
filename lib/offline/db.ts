@@ -4,7 +4,9 @@ import { Job, SyncStatus } from '../../types';
 // Database schema version - increment when schema changes
 // v3: Added clients and technicians tables for offline persistence
 // v4: Added orphanPhotos table for failed sync recovery (Sprint 1 Task 1.3)
-const DB_SCHEMA_VERSION = 4;
+// v5: Added archivedAt index for Fix 3.1 (auto-archive sealed jobs >180 days)
+// v6: Added syncConflicts table for Fix 3.3 (sync conflict detection & UI)
+const DB_SCHEMA_VERSION = 6;
 const DB_NAME = 'JobProofOfflineDB';
 
 export interface LocalJob extends Job {
@@ -50,6 +52,18 @@ export interface OrphanPhoto {
     recoveryAttempts: number; // How many times we tried to recover
 }
 
+// Fix 3.3: Sync conflict record for conflict history and resolution UI
+export interface SyncConflictRecord {
+    id?: number;
+    jobId: string;
+    local: any;           // Local job version (stored as JSON)
+    remote: any;          // Remote job version (stored as JSON)
+    conflictFields: string[]; // Fields that differ
+    detectedAt: string;   // ISO timestamp when detected
+    resolvedAt?: string;  // ISO timestamp when resolved
+    resolution: 'local' | 'remote' | 'manual' | null; // How conflict was resolved
+}
+
 // CLAUDE.md mandate: Clients must persist offline
 export interface LocalClient {
     id: string;
@@ -88,6 +102,7 @@ export class JobProofDatabase extends Dexie {
     clients!: Table<LocalClient, string>;       // v3: CLAUDE.md offline mandate
     technicians!: Table<LocalTechnician, string>; // v3: CLAUDE.md offline mandate
     orphanPhotos!: Table<OrphanPhoto, string>;    // v4: Failed sync recovery
+    syncConflicts!: Table<SyncConflictRecord, number>; // v6: Fix 3.3 conflict history
 
     constructor() {
         super(DB_NAME);
@@ -121,6 +136,27 @@ export class JobProofDatabase extends Dexie {
             clients: 'id, workspaceId, name',
             technicians: 'id, workspaceId, name',
             orphanPhotos: 'id, jobId, orphanedAt'
+        });
+        // Version 5: Add archivedAt index for Fix 3.1 (auto-archive sealed jobs >180 days)
+        this.version(5).stores({
+            jobs: 'id, syncStatus, workspaceId, status, archivedAt, isArchived',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt'
+        });
+        // Version 6: Add syncConflicts table for Fix 3.3 (sync conflict detection & UI)
+        this.version(6).stores({
+            jobs: 'id, syncStatus, workspaceId, status, archivedAt, isArchived',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt',
+            syncConflicts: '++id, jobId, detectedAt'
         });
 
         // Handle version change from other tabs

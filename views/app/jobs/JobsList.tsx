@@ -32,7 +32,7 @@ import {
   SYNC_STATUS,
 } from '../../../lib/constants';
 
-type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'sync_issues';
+type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'archived' | 'sync_issues';
 
 interface FilterTab {
   value: FilterType;
@@ -46,6 +46,7 @@ const filterTabs: FilterTab[] = [
   { value: 'active', label: 'Active', icon: 'send', color: 'text-primary' },
   { value: 'awaiting_seal', label: 'Awaiting Seal', icon: 'signature', color: 'text-warning' },
   { value: 'sealed', label: 'Sealed', icon: 'verified', color: 'text-success' },
+  { value: 'archived', label: 'Archived', icon: 'archive', color: 'text-slate-400' },
   { value: 'sync_issues', label: 'Sync Issues', icon: 'sync_problem', color: 'text-danger' },
 ];
 
@@ -180,10 +181,11 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   };
 
   // Computed job lists for counting
-  const activeJobs = useMemo(() => jobs.filter(j => j.status !== JOB_STATUS.SUBMITTED), [jobs]);
+  const activeJobs = useMemo(() => jobs.filter(j => j.status !== JOB_STATUS.SUBMITTED && j.status !== 'Archived'), [jobs]);
   const sealedJobs = useMemo(() => jobs.filter(j => j.status === JOB_STATUS.SUBMITTED || j.sealedAt || j.isSealed), [jobs]);
   // FIXED: Awaiting seal = has evidence AND signature, ready to be sealed (not missing signature)
   const awaitingSealJobs = useMemo(() => activeJobs.filter(j => j.photos.length > 0 && j.signature && !j.sealedAt && !j.isSealed), [activeJobs]);
+  const archivedJobs = useMemo(() => jobs.filter(j => j.status === 'Archived'), [jobs]);
   const syncIssuesJobs = useMemo(() => jobs.filter(j => j.syncStatus === SYNC_STATUS.FAILED), [jobs]);
 
   // Get counts for each filter
@@ -192,8 +194,9 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     active: activeJobs.length,
     awaiting_seal: awaitingSealJobs.length,
     sealed: sealedJobs.length,
+    archived: archivedJobs.length,
     sync_issues: syncIssuesJobs.length,
-  }), [jobs, activeJobs, awaitingSealJobs, sealedJobs, syncIssuesJobs]);
+  }), [jobs, activeJobs, awaitingSealJobs, sealedJobs, archivedJobs, syncIssuesJobs]);
 
   // Filter jobs based on current filter and search
   const filteredJobs = useMemo(() => {
@@ -202,7 +205,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     // Apply filter
     switch (currentFilter) {
       case 'active':
-        result = result.filter(j => j.status !== JOB_STATUS.SUBMITTED);
+        result = result.filter(j => j.status !== JOB_STATUS.SUBMITTED && j.status !== 'Archived');
         break;
       case 'awaiting_seal':
         // FIXED: Awaiting seal = has evidence AND signature, ready to be sealed
@@ -210,6 +213,10 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
         break;
       case 'sealed':
         result = result.filter(j => j.status === JOB_STATUS.SUBMITTED || j.sealedAt || j.isSealed);
+        break;
+      case 'archived':
+        // FIX 3.1: Show archived jobs
+        result = result.filter(j => j.status === 'Archived');
         break;
       case 'sync_issues':
         result = result.filter(j => j.syncStatus === SYNC_STATUS.FAILED);
