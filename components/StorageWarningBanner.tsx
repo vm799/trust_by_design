@@ -38,12 +38,12 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
     return unsubscribe;
   }, []);
 
-  // Hide banner if no warning
-  if (!warning || isDismissed) return null;
-
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
   }, []);
+
+  // Hide banner if no warning
+  if (!warning || isDismissed) return null;
 
   const isCritical = warning.percent >= 90;
   const isLow = warning.percent >= 75;
