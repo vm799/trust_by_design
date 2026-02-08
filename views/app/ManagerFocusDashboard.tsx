@@ -578,12 +578,13 @@ const ManagerFocusDashboard: React.FC = () => {
                 className="
                   min-h-[56px] sm:min-h-[44px]
                   px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
                   text-white text-sm font-semibold
                   rounded-lg
                   transition-colors duration-200
                   flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  shadow-lg shadow-blue-500/20
                 "
                 aria-label="Search jobs (Ctrl+K)"
                 title="Search jobs - Press Ctrl+K"
@@ -601,12 +602,13 @@ const ManagerFocusDashboard: React.FC = () => {
                 className="
                   min-h-[56px] sm:min-h-[44px]
                   px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  bg-gradient-to-br from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600
                   text-white text-sm font-semibold
                   rounded-lg
                   transition-colors duration-200
                   flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  shadow-lg shadow-purple-500/20
                 "
                 aria-label="Assign technician (Ctrl+A)"
                 title="Assign technician - Press Ctrl+A"
@@ -621,12 +623,13 @@ const ManagerFocusDashboard: React.FC = () => {
                 className="
                   min-h-[56px] sm:min-h-[44px]
                   px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                  bg-gradient-to-br from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600
                   text-white text-sm font-semibold
                   rounded-lg
                   transition-colors duration-200
                   flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                  shadow-lg shadow-green-500/20
                 "
                 aria-label="Create invoice"
                 title="Create invoice for completed job"
@@ -641,12 +644,13 @@ const ManagerFocusDashboard: React.FC = () => {
                   className="
                     w-full min-h-[56px] sm:min-h-[44px]
                     px-3 py-2
-                    bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                    bg-gradient-to-br from-orange-600 to-amber-700 hover:from-orange-500 hover:to-amber-600
                     text-white text-sm font-semibold
                     rounded-lg
                     transition-colors duration-200
                     flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    shadow-lg shadow-orange-500/20
                   "
                   aria-label="View all jobs"
                   title="View all jobs"
@@ -662,12 +666,13 @@ const ManagerFocusDashboard: React.FC = () => {
                   className="
                     w-full min-h-[56px] sm:min-h-[44px]
                     px-3 py-2
-                    bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                    bg-gradient-to-br from-amber-600 to-yellow-700 hover:from-amber-500 hover:to-yellow-600
                     text-white text-sm font-semibold
                     rounded-lg
                     transition-colors duration-200
                     flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    shadow-lg shadow-amber-500/20
                   "
                   aria-label="View clients"
                   title="View clients"
@@ -683,12 +688,13 @@ const ManagerFocusDashboard: React.FC = () => {
                   className="
                     w-full min-h-[56px] sm:min-h-[44px]
                     px-3 py-2
-                    bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
+                    bg-gradient-to-br from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600
                     text-white text-sm font-semibold
                     rounded-lg
                     transition-colors duration-200
                     flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
+                    shadow-lg shadow-cyan-500/20
                   "
                   aria-label="View technicians"
                   title="View technicians"

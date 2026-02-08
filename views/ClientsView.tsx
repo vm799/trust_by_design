@@ -140,6 +140,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                     <span className="hidden sm:inline">{deletingId === client.id ? 'Deleting...' : 'Remove'}</span>
                   </button>
                   <button
+                    onClick={() => navigate(`/admin/jobs?client=${client.id}`)}
                     className="flex-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:border-orange-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
                     title="View client's jobs"
                   >
