@@ -24,6 +24,28 @@ import QuickAssignModal from '../../components/modals/QuickAssignModal';
 import QuickInvoiceModal from '../../components/modals/QuickInvoiceModal';
 
 // ============================================================================
+// UTILITIES
+// ============================================================================
+
+/**
+ * Format time difference for display
+ * @param timestampMs Timestamp in milliseconds
+ * @returns Human-readable time difference (e.g., "2h ago", "30m ago")
+ */
+function formatTimeSince(timestampMs: number): string {
+  const now = Date.now();
+  const diffMs = now - timestampMs;
+  const diffMins = Math.round(diffMs / (60 * 1000));
+  const diffHours = Math.round(diffMs / (60 * 60 * 1000));
+  const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
+// ============================================================================
 // ATTENTION DETECTION
 // ============================================================================
 
@@ -530,6 +552,10 @@ const ManagerFocusDashboard: React.FC = () => {
                           {summary.activeJobTitle ? (
                             <p className="text-sm text-emerald-400 truncate">
                               Working: {summary.activeJobTitle}
+                            </p>
+                          ) : summary.status === 'offline' ? (
+                            <p className="text-sm text-slate-500">
+                              Last seen: {formatTimeSince(summary.lastActivityAt)}
                             </p>
                           ) : (
                             <p className="text-sm text-slate-400">No active job</p>
