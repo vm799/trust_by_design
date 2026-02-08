@@ -38,11 +38,13 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const signatureImageRef = useRef<ImageData | null>(null); // Store signature data across redraws
+  const undoStackRef = useRef<ImageData[]>([]); // Undo history stack
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [canUndo, setCanUndo] = useState(false); // Track if undo is available
 
   // Use canvas theme hook for dynamic colours
   const { bg, stroke, line, isDark } = useCanvasTheme();
@@ -178,6 +180,53 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) {
       ctx.closePath();
+
+      // Save state to undo stack
+      const canvas = canvasRef.current;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (canvas && rect && hasSignature) {
+        try {
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            rect.width * (window.devicePixelRatio || 1),
+            rect.height * (window.devicePixelRatio || 1)
+          );
+          undoStackRef.current.push(imageData);
+          setCanUndo(undoStackRef.current.length > 0);
+        } catch (error) {
+          console.warn('Failed to save undo state:', error);
+        }
+      }
+    }
+  }, [hasSignature]);
+
+  /**
+   * Undo the last stroke
+   */
+  const undo = useCallback(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container || undoStackRef.current.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Pop the last state
+    const previousState = undoStackRef.current.pop();
+    if (previousState) {
+      try {
+        ctx.putImageData(previousState, 0, 0);
+        signatureImageRef.current = previousState;
+
+        // Update UI state
+        const rect = container.getBoundingClientRect();
+        const hasAnySignature = previousState.data.some((byte) => byte !== 0);
+        setHasSignature(hasAnySignature);
+        setCanUndo(undoStackRef.current.length > 0);
+      } catch (error) {
+        console.warn('Failed to undo:', error);
+      }
     }
   }, []);
 
@@ -206,11 +255,13 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
       ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
 
-      // Clear stored signature data
+      // Clear stored signature data and undo stack
       signatureImageRef.current = null;
+      undoStackRef.current = [];
 
       setHasSignature(false);
       setIsConfirmed(false);
+      setCanUndo(false);
     }
   }, [bg, line, stroke]);
 
@@ -342,15 +393,30 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
           </p>
         )}
 
-        {/* Clear button */}
+        {/* Action buttons */}
         {hasSignature && (
-          <button
-            onClick={clearSignature}
-            disabled={disabled}
-            className="mt-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          >
-            Clear signature
-          </button>
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <button
+              onClick={undo}
+              disabled={disabled || !canUndo}
+              className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 ${
+                canUndo && !disabled
+                  ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">undo</span>
+              <span>Undo</span>
+            </button>
+
+            <button
+              onClick={clearSignature}
+              disabled={disabled}
+              className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Clear signature
+            </button>
+          </div>
         )}
       </div>
 
