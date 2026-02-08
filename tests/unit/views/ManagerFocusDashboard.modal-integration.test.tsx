@@ -452,7 +452,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
       expect(searchBtn).toHaveClass('focus:ring-2');
-      expect(searchBtn).toHaveClass('focus:ring-primary');
+      expect(searchBtn).toHaveClass('focus:ring-blue-500');
     });
 
     it('buttons have hover effects', () => {
@@ -466,7 +466,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
       );
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
-      expect(searchBtn).toHaveClass('hover:bg-slate-600');
+      expect(searchBtn).toHaveClass('hover:from-blue-500');
     });
 
     it('keyboard shortcut hints provided in titles', () => {

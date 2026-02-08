@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/AppLayout';
 import { Client, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
-import { secureRandomString } from '../lib/secureId';
+import { generateUUID } from '../lib/secureId';
 
 interface ClientsViewProps {
   user: UserProfile | null;
@@ -23,7 +23,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd({
-      id: secureRandomString(9),
+      id: generateUUID(),
       ...newClient,
       totalJobs: 0
     });
