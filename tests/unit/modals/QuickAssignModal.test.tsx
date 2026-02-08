@@ -509,4 +509,146 @@ describe('QuickAssignModal', () => {
       expect(heading).toBeInTheDocument();
     });
   });
+
+  // ========== OPTIONAL JOBID TESTS (6) ==========
+
+  describe('Optional JobId (Job Selection Flow)', () => {
+    it('shows job selection when jobId is not provided', () => {
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[job]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/Select Job/i)).toBeInTheDocument();
+      expect(screen.getByText(/Unassigned Jobs/i)).toBeInTheDocument();
+    });
+
+    it('displays unassigned jobs in job selector', () => {
+      const unassignedJob1 = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: null });
+      const unassignedJob2 = createTestJob({ id: 'job-2', title: 'Paint Fence', client: 'XYZ Inc', status: 'Pending', technicianId: null });
+      const assignedJob = createTestJob({ id: 'job-3', title: 'Fix Door', client: 'DEF Ltd', status: 'Pending', technicianId: 'tech-1' });
+      const completedJob = createTestJob({ id: 'job-4', title: 'Fix Window', client: 'GHI Corp', status: 'Complete', technicianId: null });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[unassignedJob1, unassignedJob2, assignedJob, completedJob]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      // Unassigned jobs should be visible
+      expect(screen.getByText('Fix Roof')).toBeInTheDocument();
+      expect(screen.getByText('Paint Fence')).toBeInTheDocument();
+
+      // Assigned and completed jobs should not appear
+      expect(screen.queryByText('Fix Door')).not.toBeInTheDocument();
+      expect(screen.queryByText('Fix Window')).not.toBeInTheDocument();
+    });
+
+    it('allows selecting job from job list', async () => {
+      const user = userEvent.setup();
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: null });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[job]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      const jobButton = screen.getByText('Fix Roof').closest('button');
+      await user.click(jobButton!);
+
+      // Should show technician selection or continue button exists
+      const buttons = screen.getAllByRole('button');
+      expect(buttons.length).toBeGreaterThan(1);
+    });
+
+    it('shows back button when no jobId provided', async () => {
+      const user = userEvent.setup();
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: null });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[job]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      // Select a job first
+      const jobButton = screen.getByText('Fix Roof').closest('button');
+      await user.click(jobButton!);
+
+      // Find and click the continue button (look for button that contains text)
+      const buttons = screen.getAllByRole('button');
+      const continueBtn = buttons.find(btn => btn.textContent?.includes('Continue'));
+      await user.click(continueBtn!);
+
+      // Back button should appear
+      expect(screen.getByText(/^Back$/)).toBeInTheDocument();
+    });
+
+    it('back button returns to job selection', async () => {
+      const user = userEvent.setup();
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: null });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[job]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      // Navigate to technician selection
+      const jobButton = screen.getByText('Fix Roof').closest('button');
+      await user.click(jobButton!);
+
+      // Find and click the continue button
+      const buttons = screen.getAllByRole('button');
+      const continueBtn = buttons.find(btn => btn.textContent?.includes('Continue'));
+      await user.click(continueBtn!);
+
+      // Click back button
+      const backBtn = screen.getByText(/^Back$/);
+      await user.click(backBtn);
+
+      // Should return to job selection
+      expect(screen.getByText(/Unassigned Jobs/i)).toBeInTheDocument();
+    });
+
+    it('shows empty state when no unassigned jobs', () => {
+      const assignedJob = createTestJob({ id: 'job-1', title: 'Fix Door', technicianId: 'tech-1' });
+      const technician = createTestTechnician({ id: 'tech-1' });
+
+      render(
+        <TestWrapper jobs={[assignedJob]} technicians={[technician]}>
+          <QuickAssignModal
+            isOpen={true}
+            onClose={mockOnClose}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/No unassigned jobs available/i)).toBeInTheDocument();
+    });
+  });
 });
