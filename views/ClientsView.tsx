@@ -17,6 +17,8 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
   const navigate = useNavigate();
   const [showAdd, setShowAdd] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '', address: '' });
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +34,38 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
     navigateToNextStep('CREATE_CLIENT', user?.persona, navigate);
   };
 
+  const handleDelete = async (clientId: string) => {
+    setDeletingId(clientId);
+    setDeleteError(null);
+
+    try {
+      await onDelete(clientId);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete client');
+      setDeletingId(null);
+    }
+  };
+
   return (
     <Layout user={user}>
       <div className="space-y-6">
+        {deleteError && (
+          <div className="bg-danger/10 border border-danger/20 rounded-xl p-4 flex items-start gap-3 animate-in">
+            <span className="material-symbols-outlined text-danger flex-shrink-0">error</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-danger">Failed to delete client</p>
+              <p className="text-xs text-slate-300 mt-1">{deleteError}</p>
+            </div>
+            <button
+              onClick={() => setDeleteError(null)}
+              className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
+              aria-label="Dismiss error"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex justify-between items-end">
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Client Registry</h2>
@@ -96,14 +127,20 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => onDelete(client.id)}
-                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
+                    onClick={() => handleDelete(client.id)}
+                    disabled={deletingId === client.id}
+                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Remove client"
                   >
-                    <span className="material-symbols-outlined text-xs">delete</span>
-                    <span className="hidden sm:inline">Remove</span>
+                    {deletingId === client.id ? (
+                      <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                    ) : (
+                      <span className="material-symbols-outlined text-xs">delete</span>
+                    )}
+                    <span className="hidden sm:inline">{deletingId === client.id ? 'Deleting...' : 'Remove'}</span>
                   </button>
                   <button
+                    onClick={() => navigate(`/admin/jobs?client=${client.id}`)}
                     className="flex-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:border-orange-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
                     title="View client's jobs"
                   >

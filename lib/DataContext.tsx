@@ -579,6 +579,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, []);
 
   const deleteClient = useCallback(async (id: string) => {
+    // Store original client in case we need to restore
+    const originalClient = clients.find(c => c.id === id);
+
     // Optimistic update: Remove from local state immediately
     setClients(prev => prev.filter(c => c.id !== id));
 
@@ -589,13 +592,19 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
       if (!result.success) {
         // Restore to state if delete failed
-        setClients(prev => [...prev, clients.find(c => c.id === id)!].filter(Boolean) as Client[]);
-        console.error('[DataContext] Client delete failed:', result.error);
+        if (originalClient) {
+          setClients(prev => [...prev, originalClient]);
+        }
+        // Throw error so UI can catch and display it
+        throw new Error(result.error || 'Failed to delete client');
       }
     } catch (err) {
       // Restore to state if error occurred
-      setClients(prev => [...prev, clients.find(c => c.id === id)!].filter(Boolean) as Client[]);
-      console.error('[DataContext] Client delete error:', err);
+      if (originalClient) {
+        setClients(prev => [...prev, originalClient]);
+      }
+      // Re-throw so calling component can handle
+      throw err instanceof Error ? err : new Error('Failed to delete client');
     }
   }, [clients]);
 
@@ -609,6 +618,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, []);
 
   const deleteTechnician = useCallback(async (id: string) => {
+    // Store original technician in case we need to restore
+    const originalTechnician = technicians.find(t => t.id === id);
+
     // Optimistic update: Remove from local state immediately
     setTechnicians(prev => prev.filter(t => t.id !== id));
 
@@ -619,13 +631,19 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
       if (!result.success) {
         // Restore to state if delete failed
-        setTechnicians(prev => [...prev, technicians.find(t => t.id === id)!].filter(Boolean) as Technician[]);
-        console.error('[DataContext] Technician delete failed:', result.error);
+        if (originalTechnician) {
+          setTechnicians(prev => [...prev, originalTechnician]);
+        }
+        // Throw error so UI can catch and display it
+        throw new Error(result.error || 'Failed to delete technician');
       }
     } catch (err) {
       // Restore to state if error occurred
-      setTechnicians(prev => [...prev, technicians.find(t => t.id === id)!].filter(Boolean) as Technician[]);
-      console.error('[DataContext] Technician delete error:', err);
+      if (originalTechnician) {
+        setTechnicians(prev => [...prev, originalTechnician]);
+      }
+      // Re-throw so calling component can handle
+      throw err instanceof Error ? err : new Error('Failed to delete technician');
     }
   }, [technicians]);
 

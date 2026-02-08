@@ -2065,17 +2065,32 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
   }
 
   try {
-    // Delete client first
-    const { error } = await supabase
+    // Delete client
+    const { error, count } = await supabase
       .from('clients')
       .delete()
-      .eq('id', clientId);
+      .eq('id', clientId)
+      .select('id', { count: 'exact' });
 
     if (error) {
+      // RLS policy likely blocking - provide helpful error message
+      if (error.message?.includes('row-level security') || error.code === 'PGRST201') {
+        return {
+          success: false,
+          error: 'Permission denied. Verify workspace configuration and that the client exists in your workspace.'
+        };
+      }
       return { success: false, error: error.message };
     }
 
-    // Try to invalidate cache (workspace_id may not exist in all deployments)
+    if (!count || count === 0) {
+      return {
+        success: false,
+        error: 'Client not found or already deleted'
+      };
+    }
+
+    // Try to invalidate cache (optional)
     try {
       const { data: clientData } = await supabase
         .from('clients')
@@ -2087,7 +2102,7 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
         requestCache.clearKey(generateCacheKey('getClients', clientData.workspace_id));
       }
     } catch {
-      // Cache invalidation is optional, continue if workspace_id doesn't exist
+      // Cache invalidation is optional
     }
 
     return { success: true };
@@ -2330,17 +2345,32 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
   }
 
   try {
-    // Delete technician first
-    const { error } = await supabase
+    // Delete technician
+    const { error, count } = await supabase
       .from('technicians')
       .delete()
-      .eq('id', techId);
+      .eq('id', techId)
+      .select('id', { count: 'exact' });
 
     if (error) {
+      // RLS policy likely blocking - provide helpful error message
+      if (error.message?.includes('row-level security') || error.code === 'PGRST201') {
+        return {
+          success: false,
+          error: 'Permission denied. Verify workspace configuration and that the technician exists in your workspace.'
+        };
+      }
       return { success: false, error: error.message };
     }
 
-    // Try to invalidate cache (workspace_id may not exist in all deployments)
+    if (!count || count === 0) {
+      return {
+        success: false,
+        error: 'Technician not found or already deleted'
+      };
+    }
+
+    // Try to invalidate cache (optional)
     try {
       const { data: technicianData } = await supabase
         .from('technicians')
@@ -2352,7 +2382,7 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
         requestCache.clearKey(generateCacheKey('getTechnicians', technicianData.workspace_id));
       }
     } catch {
-      // Cache invalidation is optional, continue if workspace_id doesn't exist
+      // Cache invalidation is optional
     }
 
     return { success: true };
