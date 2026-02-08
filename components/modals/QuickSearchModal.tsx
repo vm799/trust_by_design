@@ -77,7 +77,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
 
   // Search results
   const results = useMemo(() => {
-    let filtered = jobs;
+    let filtered = [...jobs];
 
     // Filter by status
     if (filters.status) {
@@ -96,7 +96,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
       );
     }
 
-    // Sort
+    // Sort (safe - filtered is already a copy)
     filtered.sort((a, b) => {
       if (filters.sortBy === 'date') {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
