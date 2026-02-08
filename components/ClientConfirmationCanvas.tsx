@@ -16,6 +16,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { fadeInUp } from '../lib/animations';
 import { showSuccessCheckmark } from '../lib/microInteractions';
+import { useCanvasTheme } from '../hooks/useCanvasTheme';
 
 interface ClientConfirmationCanvasProps {
   clientName?: string;
@@ -36,14 +37,21 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const signatureImageRef = useRef<ImageData | null>(null); // Store signature data across redraws
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize canvas
-  useEffect(() => {
+  // Use canvas theme hook for dynamic colours
+  const { bg, stroke, line, isDark } = useCanvasTheme();
+
+  /**
+   * Initialize and redraw canvas with current theme colours
+   * Called on mount and when theme changes
+   */
+  const initializeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -62,25 +70,38 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.lineWidth = 3;
-      ctx.strokeStyle = '#1e293b'; // slate-800
 
-      // Light background
-      ctx.fillStyle = '#f8fafc'; // slate-50
+      // Fill background with theme colour
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
       // Draw signature line guide
-      ctx.strokeStyle = '#cbd5e1'; // slate-300
+      ctx.strokeStyle = line;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
-      // Reset for drawing
-      ctx.strokeStyle = '#1e293b';
+      // Reset for drawing with theme stroke colour
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
+
+      // Restore signature if it exists (after theme change)
+      if (signatureImageRef.current && hasSignature) {
+        try {
+          ctx.putImageData(signatureImageRef.current, 0, 0);
+        } catch (error) {
+          console.warn('Failed to restore signature after theme change:', error);
+        }
+      }
     }
-  }, []);
+  }, [bg, stroke, line, hasSignature]);
+
+  // Initialize canvas on mount and when theme changes
+  useEffect(() => {
+    initializeCanvas();
+  }, [initializeCanvas]);
 
   const getCoordinates = useCallback(
     (e: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
@@ -131,6 +152,22 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         ctx.lineTo(x, y);
         ctx.stroke();
         setHasSignature(true);
+
+        // Store signature data for restoration on theme change
+        try {
+          const canvas = canvasRef.current;
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (canvas && rect) {
+            signatureImageRef.current = ctx.getImageData(
+              0,
+              0,
+              rect.width * (window.devicePixelRatio || 1),
+              rect.height * (window.devicePixelRatio || 1)
+            );
+          }
+        } catch (error) {
+          console.warn('Failed to store signature image data:', error);
+        }
       }
     },
     [isDrawing, disabled, getCoordinates]
@@ -153,24 +190,29 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
     const rect = container.getBoundingClientRect();
 
     if (ctx) {
-      ctx.fillStyle = '#f8fafc';
+      // Clear with theme background colour
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Redraw signature line
-      ctx.strokeStyle = '#cbd5e1';
+      // Redraw signature line with theme colour
+      ctx.strokeStyle = line;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
-      ctx.strokeStyle = '#1e293b';
+      // Reset for drawing with theme stroke colour
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
+
+      // Clear stored signature data
+      signatureImageRef.current = null;
 
       setHasSignature(false);
       setIsConfirmed(false);
     }
-  }, []);
+  }, [bg, line, stroke]);
 
   const handleConfirm = useCallback(async () => {
     if (!hasSignature || !isConfirmed || !canvasRef.current || !containerRef.current) return;
@@ -264,6 +306,19 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 
       {/* Signature Canvas */}
       <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Signature Pad
+          </p>
+          <span className={`text-xs font-bold px-2 py-1 rounded-md ${
+            isDark
+              ? 'bg-slate-700 text-slate-200'
+              : 'bg-amber-100 text-amber-900'
+          }`}>
+            {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+          </span>
+        </div>
+
         <div
           ref={containerRef}
           className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50"
