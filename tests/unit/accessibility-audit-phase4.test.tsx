@@ -58,7 +58,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     clientId: 'client-1',
     client: 'Test Client',
     techId: null,
-    technicianId: null,
+    technicianId: undefined,
     technician: null,
     status: 'Pending',
     syncStatus: 'synced',
@@ -125,7 +125,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
   describe('Keyboard Navigation (Level A)', () => {
     it('all buttons are keyboard accessible (tab/enter)', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -144,7 +144,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('modal can be opened and closed with keyboard', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -169,7 +169,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('Escape key closes modals', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const onCloseMock = vi.fn();
 
       const { container } = render(
@@ -193,7 +193,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Focus Management (Level AA)', () => {
     it('buttons have visible focus indicators', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -212,7 +212,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('focus is returned to trigger button after modal closes', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -240,7 +240,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('modal focus trap prevents tabbing outside', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -266,7 +266,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('ARIA Labels & Attributes (Level A)', () => {
     it('all buttons have aria-labels', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -282,7 +282,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('modals have aria-modal and aria-labelledby', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
 
       const { container } = render(
         <TestWrapper jobs={[job]}>
@@ -296,7 +296,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('form inputs have associated labels', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -318,7 +318,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Touch Target Size (Level AAA - 44x44px minimum)', () => {
     it('all quick action buttons meet 44px minimum height', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -338,7 +338,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('mobile quick action buttons are 56px for gloved use', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -352,7 +352,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('technician selection buttons in modal are accessible size', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ name: 'Alice' });
 
       render(
@@ -377,7 +377,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Color Contrast & Distinguishability (Level AA)', () => {
     it('text on button backgrounds has sufficient contrast', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -395,7 +395,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('error states use color + text to convey meaning', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ status: 'Off Duty' });
 
       render(
@@ -418,7 +418,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('success states use checkmark + green color', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 
       const mockUpdateJob = vi.fn().mockResolvedValue(undefined);
@@ -459,7 +459,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Semantic HTML (Level A)', () => {
     it('uses semantic button elements, not divs', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -474,7 +474,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('uses semantic link elements for navigation', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -488,7 +488,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('dialog uses semantic dialog role', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
 
       render(
         <TestWrapper jobs={[job]}>
@@ -504,7 +504,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Screen Reader Support (Level A)', () => {
     it('provides text alternative for icon-only buttons', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -519,7 +519,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('modal title is properly announced', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
 
       const { container } = render(
         <TestWrapper jobs={[job]}>
@@ -538,7 +538,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('status messages are announced with appropriate roles', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 
       const mockUpdateJob = vi.fn().mockImplementation(() => {
@@ -596,7 +596,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
     it('error messages remain visible until dismissed', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 
       const mockUpdateJob = vi.fn().mockRejectedValue(new Error('Test error'));
@@ -648,7 +648,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Responsive Design (Mobile-First)', () => {
     it('dashboard adapts to small screens', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       const { container } = render(
@@ -664,7 +664,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('modal is readable on small screens', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
 
       render(
         <TestWrapper jobs={[job]}>
@@ -685,7 +685,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
 
   describe('Keyboard Shortcut Discoverability', () => {
     it('keyboard shortcuts are revealed in button titles', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(
@@ -703,7 +703,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('manager dashboard buttons have keyboard shortcut hints', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
       render(

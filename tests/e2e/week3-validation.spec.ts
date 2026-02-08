@@ -138,7 +138,7 @@ class JobListPage {
       `[data-testid="job-card"]:has-text("${jobTitle}")`
     );
     const badge = jobCard.locator('[data-testid="archived-date"]');
-    return badge.isVisible() ? await badge.textContent() : null;
+    return (await badge.isVisible()) ? await badge.textContent() : null;
   }
 
   async verifyJobIsReadOnly(jobTitle: string): Promise<boolean> {

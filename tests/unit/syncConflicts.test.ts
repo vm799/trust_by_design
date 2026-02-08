@@ -18,7 +18,7 @@ describe('Fix 3.3: Sync Conflict Detection & Resolution', () => {
     it('should detect status change conflicts', () => {
       const local = createMockJob({
         id: 'job-conflict-1',
-        status: 'Sealed',
+        status: 'Complete',
         workspaceId: 'test-workspace',
       });
 
@@ -33,7 +33,7 @@ describe('Fix 3.3: Sync Conflict Detection & Resolution', () => {
       expect(conflict).toBeTruthy();
       expect(conflict?.conflictFields).toContain('status');
       expect(conflict?.jobId).toBe('job-conflict-1');
-      expect(conflict?.local.status).toBe('Sealed');
+      expect(conflict?.local.status).toBe('Complete');
       expect(conflict?.remote.status).toBe('In Progress');
     });
 

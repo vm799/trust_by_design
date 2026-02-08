@@ -289,7 +289,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
           <ActionButton
             onClick={handleExport}
             disabled={auditRecords.length === 0 || isExporting}
-            isLoading={isExporting}
+            loading={isExporting}
             icon={isExporting ? 'hourglass_bottom' : 'download'}
             variant="primary"
           >

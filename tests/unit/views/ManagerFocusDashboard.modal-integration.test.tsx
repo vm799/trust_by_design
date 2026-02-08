@@ -38,7 +38,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     clientId: 'client-1',
     client: 'Test Client',
     techId: 'user-123',
-    technicianId: null,
+    technicianId: undefined,
     technician: null,
     status: 'Pending',
     syncStatus: 'synced',

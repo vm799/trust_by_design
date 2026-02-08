@@ -5,7 +5,7 @@
  * Tests: rendering, job selection, cost calculation, invoice creation, errors, accessibility.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
@@ -24,7 +24,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     clientId: 'client-1',
     client: 'Test Client',
     techId: null,
-    technicianId: null,
+    technicianId: undefined,
     technician: null,
     status: 'Pending',
     syncStatus: 'synced',

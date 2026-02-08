@@ -14,6 +14,7 @@ type StatusType =
   | 'active'
   | 'review'
   | 'sealed'
+  | 'archived'
   | 'invoiced'
   | 'paid'
   | 'overdue'
@@ -52,6 +53,11 @@ const statusConfig: Record<StatusType, { label: string; icon: string; color: str
     label: 'Sealed',
     icon: 'verified',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  },
+  archived: {
+    label: 'Archived',
+    icon: 'archive',
+    color: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
   },
   invoiced: {
     label: 'Invoiced',
@@ -103,6 +109,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
       active: 'bg-amber-400',
       review: 'bg-purple-400',
       sealed: 'bg-emerald-400',
+      archived: 'bg-gray-400',
       invoiced: 'bg-cyan-400',
       paid: 'bg-green-400',
       overdue: 'bg-red-400',

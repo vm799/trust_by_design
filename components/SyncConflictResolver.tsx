@@ -88,7 +88,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   This Device
                 </div>
                 <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
-                  {formatFieldValue((conflict.local as Record<string, unknown>)[field])}
+                  {formatFieldValue((conflict.local as unknown as Record<string, unknown>)[field])}
                 </div>
               </div>
 
@@ -99,7 +99,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   Server
                 </div>
                 <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
-                  {formatFieldValue((conflict.remote as Record<string, unknown>)[field])}
+                  {formatFieldValue((conflict.remote as unknown as Record<string, unknown>)[field])}
                 </div>
               </div>
             </div>

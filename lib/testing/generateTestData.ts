@@ -545,7 +545,7 @@ async function deleteTestData(
       .from('jobs')
       .delete()
       .eq('workspace_id', workspaceId)
-      .select('id', { count: 'exact', head: true });
+      .select();
 
     if (error) {
       return { deleted: 0, error: error.message };
