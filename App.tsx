@@ -10,6 +10,7 @@ import BuildFingerprint from './components/ui/BuildFingerprint';
 import UpdateNotification from './components/UpdateNotification';
 import { captureNavigationIntentFromUrl } from './lib/navigationIntent';
 import { StorageWarningBanner } from './components/StorageWarningBanner';
+import Layout from './components/AppLayout';
 
 // REMEDIATION ITEM 5: Lazy load heavy modules to reduce initial bundle
 // These are loaded on-demand when first needed
@@ -27,8 +28,10 @@ const getDbModule = () => import('./lib/db');
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
 const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
+const ManagerFocusDashboard = lazy(() => import('./views/app/ManagerFocusDashboard'));
 const CreateJob = lazy(() => import('./views/CreateJob'));
 const ContractorDashboard = lazy(() => import('./views/ContractorDashboard'));
+const SoloContractorDashboard = lazy(() => import('./views/app/SoloContractorDashboard'));
 const TechnicianPortal = lazy(() => import('./views/TechnicianPortal'));
 const TechProofScreen = lazy(() => import('./views/TechProofScreen'));
 const JobReport = lazy(() => import('./views/JobReport'));
@@ -522,21 +525,9 @@ const AppContent: React.FC = () => {
           isAuthenticated ? (
             user ? (
               <RouteErrorBoundary sectionName="Contractor Dashboard" fallbackRoute="/home">
-                {hasSeenOnboarding ? (
-                  <ContractorDashboard
-                    jobs={jobs}
-                    user={user}
-                    showOnboarding={false}
-                    onCloseOnboarding={completeOnboarding}
-                  />
-                ) : (
-                  <ContractorDashboard
-                    jobs={jobs}
-                    user={user}
-                    showOnboarding={true}
-                    onCloseOnboarding={completeOnboarding}
-                  />
-                )}
+                <Layout user={user} isAdmin={false}>
+                  <SoloContractorDashboard />
+                </Layout>
               </RouteErrorBoundary>
             ) : (
               <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -570,25 +561,9 @@ const AppContent: React.FC = () => {
           isAuthenticated ? (
             user ? (
               <RouteErrorBoundary sectionName="Dashboard" fallbackRoute="/home">
-                {hasSeenOnboarding ? (
-                  <AdminDashboard
-                    jobs={jobs}
-                    clients={clients}
-                    technicians={technicians}
-                    user={user}
-                    showOnboarding={false}
-                    onCloseOnboarding={completeOnboarding}
-                  />
-                ) : (
-                  <AdminDashboard
-                    jobs={jobs}
-                    clients={clients}
-                    technicians={technicians}
-                    user={user}
-                    showOnboarding={true}
-                    onCloseOnboarding={completeOnboarding}
-                  />
-                )}
+                <Layout user={user}>
+                  <ManagerFocusDashboard />
+                </Layout>
               </RouteErrorBoundary>
             ) : (
               <Navigate to="/auth/setup" replace />
