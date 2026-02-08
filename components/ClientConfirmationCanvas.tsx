@@ -22,6 +22,8 @@ interface ClientConfirmationCanvasProps {
   onConfirmed?: (signature: string, timestamp: string) => void;
   onCancel?: () => void;
   disabled?: boolean;
+  locationW3W?: string;
+  photosSealed?: number;
 }
 
 const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
@@ -29,6 +31,8 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
   onConfirmed,
   onCancel,
   disabled = false,
+  locationW3W,
+  photosSealed = 0,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -227,6 +231,37 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         )}
       </div>
 
+      {/* Attestation Details */}
+      {(locationW3W || photosSealed > 0) && (
+        <div className="px-4 pt-4">
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 space-y-2">
+            <p className="text-xs font-bold text-blue-900 dark:text-blue-200 uppercase tracking-widest mb-3">Evidence Details</p>
+            {locationW3W && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="material-symbols-outlined text-xs text-blue-600 dark:text-blue-400">location_on</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  <span className="font-bold">Location:</span> {locationW3W}
+                </span>
+              </div>
+            )}
+            {photosSealed > 0 && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="material-symbols-outlined text-xs text-green-600 dark:text-green-400">verified</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  <span className="font-bold">{photosSealed} sealed photo{photosSealed !== 1 ? 's' : ''}</span> cryptographically signed
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="material-symbols-outlined text-xs text-slate-600 dark:text-slate-400">schedule</span>
+              <span className="text-slate-700 dark:text-slate-300">
+                <span className="font-bold">Timestamp:</span> {new Date().toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Signature Canvas */}
       <div className="p-4">
         <div
@@ -264,9 +299,9 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         )}
       </div>
 
-      {/* Confirmation Checkbox */}
+      {/* Formal Attestation Checkbox */}
       <div className="px-4 pb-4">
-        <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
+        <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors">
           <input
             type="checkbox"
             checked={isConfirmed}
@@ -274,11 +309,13 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
             disabled={disabled}
             className="mt-1 w-6 h-6 rounded accent-emerald-500"
           />
-          <span className="text-slate-700 dark:text-slate-300 leading-relaxed">
-            <strong className="text-slate-900 dark:text-white">
-              I confirm I am satisfied with the completed work
-            </strong>{' '}
-            and authorize invoicing for this job.
+          <span className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+            <strong className="text-slate-900 dark:text-white block mb-1">
+              ✓ Formal Attestation & Authorization
+            </strong>
+            I certify that I have inspected the completed work and am fully satisfied with the quality and results.
+            I confirm that all photographic evidence has been sealed and authenticated.
+            I authorize invoicing for this job and accept the documented evidence as official proof of completion.
           </span>
         </label>
       </div>
