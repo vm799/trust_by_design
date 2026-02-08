@@ -16,6 +16,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { fadeInUp } from '../lib/animations';
 import { showSuccessCheckmark } from '../lib/microInteractions';
+import { useCanvasTheme } from '../hooks/useCanvasTheme';
 
 interface ClientConfirmationCanvasProps {
   clientName?: string;
@@ -36,14 +37,23 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const signatureImageRef = useRef<ImageData | null>(null); // Store signature data across redraws
+  const undoStackRef = useRef<ImageData[]>([]); // Undo history stack
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [canUndo, setCanUndo] = useState(false); // Track if undo is available
 
-  // Initialize canvas
-  useEffect(() => {
+  // Use canvas theme hook for dynamic colours
+  const { bg, stroke, line, isDark } = useCanvasTheme();
+
+  /**
+   * Initialize and redraw canvas with current theme colours
+   * Called on mount and when theme changes
+   */
+  const initializeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -62,25 +72,38 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.lineWidth = 3;
-      ctx.strokeStyle = '#1e293b'; // slate-800
 
-      // Light background
-      ctx.fillStyle = '#f8fafc'; // slate-50
+      // Fill background with theme colour
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
       // Draw signature line guide
-      ctx.strokeStyle = '#cbd5e1'; // slate-300
+      ctx.strokeStyle = line;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
-      // Reset for drawing
-      ctx.strokeStyle = '#1e293b';
+      // Reset for drawing with theme stroke colour
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
+
+      // Restore signature if it exists (after theme change)
+      if (signatureImageRef.current && hasSignature) {
+        try {
+          ctx.putImageData(signatureImageRef.current, 0, 0);
+        } catch (error) {
+          console.warn('Failed to restore signature after theme change:', error);
+        }
+      }
     }
-  }, []);
+  }, [bg, stroke, line, hasSignature]);
+
+  // Initialize canvas on mount and when theme changes
+  useEffect(() => {
+    initializeCanvas();
+  }, [initializeCanvas]);
 
   const getCoordinates = useCallback(
     (e: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
@@ -131,6 +154,22 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         ctx.lineTo(x, y);
         ctx.stroke();
         setHasSignature(true);
+
+        // Store signature data for restoration on theme change
+        try {
+          const canvas = canvasRef.current;
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (canvas && rect) {
+            signatureImageRef.current = ctx.getImageData(
+              0,
+              0,
+              rect.width * (window.devicePixelRatio || 1),
+              rect.height * (window.devicePixelRatio || 1)
+            );
+          }
+        } catch (error) {
+          console.warn('Failed to store signature image data:', error);
+        }
       }
     },
     [isDrawing, disabled, getCoordinates]
@@ -141,6 +180,53 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) {
       ctx.closePath();
+
+      // Save state to undo stack
+      const canvas = canvasRef.current;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (canvas && rect && hasSignature) {
+        try {
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            rect.width * (window.devicePixelRatio || 1),
+            rect.height * (window.devicePixelRatio || 1)
+          );
+          undoStackRef.current.push(imageData);
+          setCanUndo(undoStackRef.current.length > 0);
+        } catch (error) {
+          console.warn('Failed to save undo state:', error);
+        }
+      }
+    }
+  }, [hasSignature]);
+
+  /**
+   * Undo the last stroke
+   */
+  const undo = useCallback(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container || undoStackRef.current.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Pop the last state
+    const previousState = undoStackRef.current.pop();
+    if (previousState) {
+      try {
+        ctx.putImageData(previousState, 0, 0);
+        signatureImageRef.current = previousState;
+
+        // Update UI state
+        const rect = container.getBoundingClientRect();
+        const hasAnySignature = previousState.data.some((byte) => byte !== 0);
+        setHasSignature(hasAnySignature);
+        setCanUndo(undoStackRef.current.length > 0);
+      } catch (error) {
+        console.warn('Failed to undo:', error);
+      }
     }
   }, []);
 
@@ -153,24 +239,31 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
     const rect = container.getBoundingClientRect();
 
     if (ctx) {
-      ctx.fillStyle = '#f8fafc';
+      // Clear with theme background colour
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Redraw signature line
-      ctx.strokeStyle = '#cbd5e1';
+      // Redraw signature line with theme colour
+      ctx.strokeStyle = line;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(20, rect.height - 40);
       ctx.lineTo(rect.width - 20, rect.height - 40);
       ctx.stroke();
 
-      ctx.strokeStyle = '#1e293b';
+      // Reset for drawing with theme stroke colour
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
+
+      // Clear stored signature data and undo stack
+      signatureImageRef.current = null;
+      undoStackRef.current = [];
 
       setHasSignature(false);
       setIsConfirmed(false);
+      setCanUndo(false);
     }
-  }, []);
+  }, [bg, line, stroke]);
 
   const handleConfirm = useCallback(async () => {
     if (!hasSignature || !isConfirmed || !canvasRef.current || !containerRef.current) return;
@@ -264,6 +357,19 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 
       {/* Signature Canvas */}
       <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            Signature Pad
+          </p>
+          <span className={`text-xs font-bold px-2 py-1 rounded-md ${
+            isDark
+              ? 'bg-slate-700 text-slate-200'
+              : 'bg-amber-100 text-amber-900'
+          }`}>
+            {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+          </span>
+        </div>
+
         <div
           ref={containerRef}
           className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50"
@@ -287,15 +393,30 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
           </p>
         )}
 
-        {/* Clear button */}
+        {/* Action buttons */}
         {hasSignature && (
-          <button
-            onClick={clearSignature}
-            disabled={disabled}
-            className="mt-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          >
-            Clear signature
-          </button>
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <button
+              onClick={undo}
+              disabled={disabled || !canUndo}
+              className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 ${
+                canUndo && !disabled
+                  ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">undo</span>
+              <span>Undo</span>
+            </button>
+
+            <button
+              onClick={clearSignature}
+              disabled={disabled}
+              className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Clear signature
+            </button>
+          </div>
         )}
       </div>
 

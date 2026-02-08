@@ -122,10 +122,14 @@ Total Users in Test Workspaces: 24
 
 **Only run this AFTER you've verified Phase 1 results!**
 
+⚠️ **Updated:** If Phase 1 showed 0 test workspaces, no deletion is needed. The SQL below is for reference if needed.
+
 ```sql
 -- ============================================================================
 -- PHASE 2: DELETE TEST DATA (TRANSACTIONS - CAN BE ROLLED BACK)
 -- ============================================================================
+-- UPDATED: Handles actual schema - only deletes tables that exist
+-- If no test workspaces found in Phase 1, you can skip this step
 
 BEGIN TRANSACTION;
 
@@ -137,23 +141,41 @@ WHERE slug ILIKE 'test-%'
    OR slug ILIKE 'sandbox-%'
    OR slug ILIKE 'qa-%';
 
--- Delete dependent records in order (respects foreign keys)
-DELETE FROM job_access_tokens
-WHERE job_id IN (SELECT id FROM jobs WHERE workspace_id IN (SELECT id FROM test_workspaces));
+-- Delete dependent records in order (only if tables exist in your schema)
 
-DELETE FROM invoices
-WHERE workspace_id IN (SELECT id FROM test_workspaces);
+-- Conditionally delete invoices (only if this table exists in your schema)
+DO $$ BEGIN
+  DELETE FROM invoices
+  WHERE workspace_id IN (SELECT id FROM test_workspaces);
+EXCEPTION WHEN undefined_table THEN
+  NULL; -- Table doesn't exist, skip
+END $$;
 
-DELETE FROM job_status_history
-WHERE workspace_id IN (SELECT id FROM test_workspaces);
+-- Conditionally delete job_status_history (only if exists)
+DO $$ BEGIN
+  DELETE FROM job_status_history
+  WHERE workspace_id IN (SELECT id FROM test_workspaces);
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
 
-DELETE FROM job_dispatches
-WHERE workspace_id IN (SELECT id FROM test_workspaces);
+-- Conditionally delete job_dispatches (only if exists)
+DO $$ BEGIN
+  DELETE FROM job_dispatches
+  WHERE workspace_id IN (SELECT id FROM test_workspaces);
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
 
-DELETE FROM client_signoffs
-WHERE workspace_id IN (SELECT id FROM test_workspaces);
+-- Conditionally delete client_signoffs (only if exists)
+DO $$ BEGIN
+  DELETE FROM client_signoffs
+  WHERE workspace_id IN (SELECT id FROM test_workspaces);
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
 
--- Delete main data
+-- Delete main data tables (these should exist)
 DELETE FROM jobs
 WHERE workspace_id IN (SELECT id FROM test_workspaces);
 
@@ -173,6 +195,81 @@ WHERE slug ILIKE 'test-%' OR slug ILIKE 'demo-%' OR slug ILIKE 'sandbox-%' OR sl
 
 COMMIT TRANSACTION;
 ```
+
+**If Phase 1 showed 0 test workspaces:** Your test data uses different naming patterns. Use the section below to clean up by slug pattern instead.
+
+---
+
+## PHASE 2B️⃣: DELETE BY SLUG PATTERN (Alternative if Phase 1 found 0)
+
+If your workspaces have slugs like `-y-orkspace-*` (test workspaces without test- prefix):
+
+```sql
+-- ============================================================================
+-- PHASE 2B: DELETE WORKSPACES BY SLUG PATTERN
+-- ============================================================================
+-- Use this if your workspaces have slugs matching "-y-orkspace-%" pattern
+
+BEGIN TRANSACTION;
+
+-- Identify workspaces to delete (workspaces matching pattern)
+CREATE TEMP TABLE workspaces_to_delete AS
+SELECT id, slug, name FROM workspaces
+WHERE slug LIKE '-y-orkspace-%'
+  AND name = 'My Workspace';  -- Optional: also filter by name
+
+-- Show what will be deleted (verify before proceeding!)
+SELECT * FROM workspaces_to_delete;
+
+-- Delete dependent records in order
+
+-- Delete jobs and related records
+DELETE FROM jobs
+WHERE workspace_id IN (SELECT id FROM workspaces_to_delete);
+
+-- Delete clients
+DELETE FROM clients
+WHERE workspace_id IN (SELECT id FROM workspaces_to_delete);
+
+-- Delete users
+DELETE FROM users
+WHERE workspace_id IN (SELECT id FROM workspaces_to_delete);
+
+-- Delete workspaces themselves
+DELETE FROM workspaces
+WHERE id IN (SELECT id FROM workspaces_to_delete);
+
+-- Verify deletion
+SELECT COUNT(*) as remaining_test_workspaces FROM workspaces
+WHERE slug LIKE '-y-orkspace-%' AND name = 'My Workspace';
+
+COMMIT TRANSACTION;
+```
+
+**Or delete by specific UUID (safest option):**
+
+```sql
+-- ============================================================================
+-- PHASE 2C: DELETE SPECIFIC WORKSPACE BY UUID (SAFEST)
+-- ============================================================================
+-- Replace UUID with the actual workspace ID you want to delete
+
+BEGIN TRANSACTION;
+
+-- Delete one workspace and all its data
+DELETE FROM jobs WHERE workspace_id = 'c9824135-a578-4556-adef-5d42e6534827'::uuid;
+DELETE FROM clients WHERE workspace_id = 'c9824135-a578-4556-adef-5d42e6534827'::uuid;
+DELETE FROM users WHERE workspace_id = 'c9824135-a578-4556-adef-5d42e6534827'::uuid;
+DELETE FROM workspaces WHERE id = 'c9824135-a578-4556-adef-5d42e6534827'::uuid;
+
+-- Verify
+SELECT COUNT(*) as workspaces_remaining FROM workspaces
+WHERE id = 'c9824135-a578-4556-adef-5d42e6534827'::uuid;
+
+COMMIT TRANSACTION;
+```
+
+**Repeat the UUID-based delete for each workspace you want to remove.**
 
 **⚠️ CRITICAL STEPS:**
 
