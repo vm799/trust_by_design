@@ -303,9 +303,12 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </section>
 
             {/* Job Configuration */}
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
-               <div className="p-6 sm:p-8 border-b border-slate-800 bg-white/[0.02]">
-                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Job Configuration</h3>
+            <section className="bg-gradient-to-br from-slate-900 to-slate-950 border border-orange-500/20 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl shadow-orange-500/10">
+               <div className="p-6 sm:p-8 border-b border-orange-500/20 bg-orange-500/5">
+                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                    <span className="material-symbols-outlined text-orange-400">settings</span>
+                    Job Configuration
+                  </h3>
                </div>
                <div className="p-6 sm:p-10 space-y-6">
                   <ToggleSetting
@@ -335,15 +338,18 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
           {/* Sidebar */}
           <aside className="space-y-8">
             {/* Device Policies */}
-            <div className="bg-slate-900 border border-white/5 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl space-y-8">
-               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Device Policies</h3>
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-blue-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl shadow-blue-500/10 space-y-8">
+               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                 <span className="material-symbols-outlined text-blue-400">smartphone</span>
+                 Device Policies
+               </h3>
                <div className="space-y-4">
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Local Retention</p>
+                     <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Local Retention</p>
                      <select
                        value={deviceSettings.localRetention}
                        onChange={(e) => updateDeviceSetting('localRetention', e.target.value)}
-                       className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+                       className="w-full bg-slate-800 border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                      >
                         <option value="14">14 Days</option>
                         <option value="30">30 Days</option>
@@ -351,11 +357,11 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                      </select>
                   </div>
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Photo Quality</p>
+                     <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Photo Quality</p>
                      <select
                        value={deviceSettings.photoQuality}
                        onChange={(e) => updateDeviceSetting('photoQuality', e.target.value)}
-                       className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+                       className="w-full bg-slate-800 border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                      >
                         <option value="high">High (Detailed Proof)</option>
                         <option value="standard">Standard (Balanced)</option>
@@ -466,10 +472,10 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 const ToggleSetting = ({ label, active, onToggle }: { label: string, active: boolean, onToggle: () => void }) => (
   <button
     onClick={onToggle}
-    className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-primary/20 rounded-xl transition-all group"
+    className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 border border-orange-500/20 hover:border-orange-500/40 rounded-xl transition-all group"
   >
     <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{label}</span>
-    <div className={`w-11 h-6 rounded-full p-1 transition-all ${active ? 'bg-primary' : 'bg-slate-700'}`}>
+    <div className={`w-11 h-6 rounded-full p-1 transition-all ${active ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-slate-700'}`}>
        <div className={`size-4 bg-white rounded-full shadow-sm transition-all ${active ? 'translate-x-5' : 'translate-x-0'}`} />
     </div>
   </button>

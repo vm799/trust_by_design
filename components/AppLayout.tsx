@@ -99,7 +99,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             <nav className="flex-1 space-y-4">
               <MobileNavLink to="/admin" icon="dashboard" label="Dashboard" onClick={toggleMobileMenu} />
               <MobileNavLink to="/admin/clients" icon="group" label="Clients" onClick={toggleMobileMenu} />
-              <MobileNavLink to="/admin/technicians" icon="engineering" label="Operators" onClick={toggleMobileMenu} />
+              <MobileNavLink to="/admin/technicians" icon="engineering" label="Technicians" onClick={toggleMobileMenu} />
               <MobileNavLink to="/admin/invoices" icon="receipt_long" label="Invoices" onClick={toggleMobileMenu} />
               <MobileNavLink to="/admin/settings" icon="settings" label="Settings" onClick={toggleMobileMenu} />
             </nav>

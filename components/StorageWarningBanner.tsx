@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { onQuotaExceeded } from '../lib/utils/safeLocalStorage';
 
 interface StorageWarning {
@@ -72,20 +73,31 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
             {isCritical ? 'Storage Nearly Full' : 'Storage Getting Full'}
           </h3>
           <p className="text-xs text-slate-300 font-medium leading-relaxed">
-            You&apos;re using <span className="font-black text-white">{warning.percent}%</span> of available storage.
-            Clear old jobs or archive completed work to continue.
+            Using <span className="font-black text-white">{(warning.usage / (1024 * 1024)).toFixed(1)}MB</span> of <span className="font-black text-white">{(warning.quota / (1024 * 1024)).toFixed(0)}MB</span> <span className="text-white">({warning.percent}%)</span>.
+            <br />
+            Archive completed jobs or delete old evidence photos to free space.
           </p>
         </div>
 
-        {/* Dismiss Button */}
-        <button
-          onClick={handleDismiss}
-          className="p-2.5 text-slate-400 hover:text-white transition-colors flex-shrink-0"
-          title="Dismiss banner (will reappear if quota critical)"
-          aria-label="Dismiss storage warning"
-        >
-          <span className="material-symbols-outlined text-lg">close</span>
-        </button>
+        {/* Action and Dismiss Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            to="/admin/jobs"
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${isCritical ? 'bg-danger/20 hover:bg-danger/30 text-danger' : 'bg-warning/20 hover:bg-warning/30 text-warning'}`}
+            title="Review and delete old jobs"
+          >
+            <span className="material-symbols-outlined text-sm">delete_outline</span>
+            <span className="hidden sm:inline">Manage Jobs</span>
+          </Link>
+          <button
+            onClick={handleDismiss}
+            className="p-2.5 text-slate-400 hover:text-white transition-colors"
+            title="Dismiss banner (will reappear if quota critical)"
+            aria-label="Dismiss storage warning"
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
       </div>
 
       {/* Progress bar */}

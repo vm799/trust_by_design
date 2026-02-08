@@ -2065,13 +2065,7 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
   }
 
   try {
-    // Fetch client first to get workspace_id for cache invalidation
-    const { data: clientData } = await supabase
-      .from('clients')
-      .select('workspace_id')
-      .eq('id', clientId)
-      .single();
-
+    // Delete client first
     const { error } = await supabase
       .from('clients')
       .delete()
@@ -2081,9 +2075,19 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
       return { success: false, error: error.message };
     }
 
-    // Invalidate cache if we have workspace_id
-    if (clientData?.workspace_id) {
-      requestCache.clearKey(generateCacheKey('getClients', clientData.workspace_id));
+    // Try to invalidate cache (workspace_id may not exist in all deployments)
+    try {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('workspace_id')
+        .eq('id', clientId)
+        .single();
+
+      if (clientData?.workspace_id) {
+        requestCache.clearKey(generateCacheKey('getClients', clientData.workspace_id));
+      }
+    } catch {
+      // Cache invalidation is optional, continue if workspace_id doesn't exist
     }
 
     return { success: true };
@@ -2326,13 +2330,7 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
   }
 
   try {
-    // Fetch technician first to get workspace_id for cache invalidation
-    const { data: technicianData } = await supabase
-      .from('technicians')
-      .select('workspace_id')
-      .eq('id', techId)
-      .single();
-
+    // Delete technician first
     const { error } = await supabase
       .from('technicians')
       .delete()
@@ -2342,9 +2340,19 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
       return { success: false, error: error.message };
     }
 
-    // Invalidate cache if we have workspace_id
-    if (technicianData?.workspace_id) {
-      requestCache.clearKey(generateCacheKey('getTechnicians', technicianData.workspace_id));
+    // Try to invalidate cache (workspace_id may not exist in all deployments)
+    try {
+      const { data: technicianData } = await supabase
+        .from('technicians')
+        .select('workspace_id')
+        .eq('id', techId)
+        .single();
+
+      if (technicianData?.workspace_id) {
+        requestCache.clearKey(generateCacheKey('getTechnicians', technicianData.workspace_id));
+      }
+    } catch {
+      // Cache invalidation is optional, continue if workspace_id doesn't exist
     }
 
     return { success: true };
