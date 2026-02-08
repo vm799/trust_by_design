@@ -58,41 +58,61 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
           </form>
         )}
 
-        <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {clients.length === 0 ? (
-            <div className="py-20 text-center flex flex-col items-center justify-center space-y-4 opacity-40">
-              <span className="material-symbols-outlined text-6xl font-black">person_add</span>
+            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/5 rounded-3xl text-center opacity-40">
+              <span className="material-symbols-outlined text-5xl mb-2 font-black">person_add</span>
               <p className="font-black uppercase tracking-widest text-[10px]">Registry is empty.</p>
             </div>
           ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Organisation</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300">Service Asset</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-300 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {clients.map(client => (
-                  <tr key={client.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{client.name}</p>
-                      <p className="text-xs text-slate-300 font-mono">{client.email}</p>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-400 font-medium">{client.address}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => onDelete(client.id)}
-                        className="material-symbols-outlined text-slate-400 hover:text-red-500 transition-colors font-black"
-                      >
-                        delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            clients.map(client => (
+              <div key={client.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border border-orange-500/20 p-6 rounded-3xl space-y-4 hover:border-orange-500/50 transition-all group shadow-lg shadow-orange-500/10">
+                {/* ID Badge and Job Count */}
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1 flex-1">
+                    <p className="text-[8px] font-black text-orange-400 uppercase tracking-[0.15em] font-mono">Client ID</p>
+                    <p className="text-xs font-black text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Jobs</p>
+                    <p className="text-xl font-black text-orange-400">{client.totalJobs || 0}</p>
+                  </div>
+                </div>
+
+                {/* Organization Name */}
+                <div>
+                  <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-orange-400 transition-colors">{client.name}</h3>
+                  <p className="text-[10px] text-orange-300 font-mono">{client.email}</p>
+                </div>
+
+                {/* Location and Details */}
+                <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/5">
+                  <div className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
+                    <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => onDelete(client.id)}
+                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
+                    title="Remove client"
+                  >
+                    <span className="material-symbols-outlined text-xs">delete</span>
+                    <span className="hidden sm:inline">Remove</span>
+                  </button>
+                  <button
+                    className="flex-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:border-orange-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
+                    title="View client's jobs"
+                  >
+                    <span className="material-symbols-outlined text-xs">work</span>
+                    <span className="hidden sm:inline">Jobs</span>
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

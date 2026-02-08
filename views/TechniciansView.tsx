@@ -68,26 +68,63 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             </div>
           ) : (
             techs.map(tech => (
-              <div key={tech.id} className="bg-slate-900 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-primary/20 transition-all group relative">
-                <button
-                  onClick={() => onDelete(tech.id)}
-                  className="absolute top-4 right-4 text-slate-700 hover:text-red-500 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">close</span>
-                </button>
+              <div key={tech.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10">
+                {/* ID Badge and Status */}
                 <div className="flex justify-between items-start">
-                  <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl uppercase">{tech.name[0]}</div>
-                  <span className="text-[8px] font-black px-2 py-0.5 rounded-full border bg-success/10 text-success border-success/20 uppercase tracking-widest">{tech.status}</span>
+                  <div className="space-y-1 flex-1">
+                    <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.15em] font-mono">Tech ID</p>
+                    <p className="text-xs font-black text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
+                  </div>
+                  <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ml-2 ${tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' : 'bg-slate-700/50 text-slate-300 border-slate-600/30'}`}>
+                    {tech.status}
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-black text-white group-hover:text-primary transition-colors uppercase text-sm tracking-tight">{tech.name}</h3>
-                  <p className="text-[10px] text-slate-300 font-mono mb-2 uppercase">{tech.email}</p>
+
+                {/* Avatar and Name */}
+                <div className="flex gap-3">
+                  <div className="size-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-black text-2xl uppercase flex-shrink-0 shadow-lg shadow-blue-500/30">
+                    {tech.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-blue-400 transition-colors">{tech.name}</h3>
+                    <p className="text-[10px] text-blue-300 font-mono truncate">{tech.email}</p>
+                  </div>
+                </div>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
+                  <div className="space-y-0.5">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Jobs Completed</p>
+                    <p className="text-lg font-black text-white">{tech.jobsCompleted || 0}</p>
+                  </div>
                   {tech.rating > 0 && (
-                    <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-300">
-                      <span className="material-symbols-outlined text-xs text-amber-500 fill-amber-500 font-black">star</span>
-                      {tech.rating} Field Rating
+                    <div className="space-y-0.5">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs text-amber-500">star</span>
+                        Rating
+                      </p>
+                      <p className="text-lg font-black text-amber-400">{tech.rating.toFixed(1)}</p>
                     </div>
                   )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => onDelete(tech.id)}
+                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
+                    title="Remove technician"
+                  >
+                    <span className="material-symbols-outlined text-xs">delete</span>
+                    <span className="hidden sm:inline">Remove</span>
+                  </button>
+                  <button
+                    className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:border-blue-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[36px]"
+                    title="View technician's jobs"
+                  >
+                    <span className="material-symbols-outlined text-xs">work</span>
+                    <span className="hidden sm:inline">Jobs</span>
+                  </button>
                 </div>
               </div>
             ))
