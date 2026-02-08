@@ -118,6 +118,7 @@ export default defineConfig(({ mode }) => {
               // Admin routes - split by function
               'admin-dashboard': [
                 './views/AdminDashboard.tsx',
+                './views/app/ManagerFocusDashboard.tsx',
                 './views/ManagerIntentSelector.tsx'
               ],
               'admin-jobs': [
@@ -143,7 +144,8 @@ export default defineConfig(({ mode }) => {
 
               // Contractor routes - kept together (reasonable size)
               'contractor-routes': [
-                './views/ContractorDashboard.tsx'
+                './views/ContractorDashboard.tsx',
+                './views/app/SoloContractorDashboard.tsx'
               ],
 
               // Technician portal - separate chunk (public access)
