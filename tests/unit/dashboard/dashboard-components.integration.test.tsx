@@ -184,7 +184,7 @@ describe('Dashboard Components Integration', () => {
       const jobs = [
         createJob({
           id: 'unassigned-1',
-          technicianId: null as any,
+          technicianId: undefined as any,
           status: 'Pending',
         }),
       ];
@@ -231,7 +231,7 @@ describe('Dashboard Components Integration', () => {
     it('renders with job metrics', () => {
       const jobs = [
         createJob({ id: 'job-1', status: 'In Progress' }),
-        createJob({ id: 'job-2', status: 'Dispatched' }),
+        createJob({ id: 'job-2', status: 'In Progress' }),
         createJob({
           id: 'job-3',
           status: 'Complete',
@@ -273,7 +273,7 @@ describe('Dashboard Components Integration', () => {
         <MetricsCard
           title="Active Jobs"
           value="18"
-          trend={{ direction: 'up', change: 3 }}
+          trend={{ label: 'vs last week', direction: 'up', percentage: 3 }}
         />
       );
 
@@ -301,7 +301,6 @@ describe('Dashboard Components Integration', () => {
           <MetricsCard
             title={`Card ${variant}`}
             value="1"
-            variant={variant}
           />
         );
 
@@ -354,7 +353,7 @@ describe('Dashboard Components Integration', () => {
     it('renders with mixed job statuses', () => {
       const jobs = [
         createJob({ id: 'job-1', status: 'Pending' }),
-        createJob({ id: 'job-2', status: 'Dispatched' }),
+        createJob({ id: 'job-2', status: 'In Progress' }),
         createJob({ id: 'job-3', status: 'In Progress' }),
         createJob({ id: 'job-4', status: 'Complete' }),
       ];
@@ -432,7 +431,7 @@ describe('Dashboard Components Integration', () => {
       const jobs = [
         createJob({
           id: 'job-1',
-          technicianId: null as any,
+          technicianId: undefined as any,
           invoiceId: null as any,
         }),
       ];

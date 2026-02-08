@@ -21,7 +21,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     clientId: 'client-1',
     client: 'Test Client',
     techId: null,
-    technicianId: null,
+    technicianId: undefined,
     technician: null,
     status: 'Pending',
     syncStatus: 'synced',
@@ -192,8 +192,8 @@ describe('QuickSearchModal', () => {
   // Sort test
   it('has sorting options available', () => {
     const jobs = [
-      createTestJob({ id: 'job-1', priority: 'high' }),
-      createTestJob({ id: 'job-2', priority: 'low' }),
+      createTestJob({ id: 'job-1', priority: 'urgent' }),
+      createTestJob({ id: 'job-2', priority: 'normal' }),
     ];
 
     render(

@@ -5,7 +5,7 @@
  * Tests: rendering, selection, assignment logic, errors, keyboard nav, accessibility.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
@@ -24,7 +24,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     clientId: 'client-1',
     client: 'Test Client',
     techId: null,
-    technicianId: null,
+    technicianId: undefined,
     technician: null,
     status: 'Pending',
     syncStatus: 'synced',
@@ -194,7 +194,7 @@ describe('QuickAssignModal', () => {
       const technician = createTestTechnician({ id: 'tech-1' });
       const activeJobs = [
         createTestJob({ id: 'active-1', technicianId: 'tech-1', status: 'In Progress' }),
-        createTestJob({ id: 'active-2', technicianId: 'tech-1', status: 'Dispatched' }),
+        createTestJob({ id: 'active-2', technicianId: 'tech-1', status: 'In Progress' }),
       ];
 
       render(
@@ -241,7 +241,7 @@ describe('QuickAssignModal', () => {
   describe('Assignment Logic', () => {
     it('assigns job to selected technician', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       const mockUpdateJob = vi.fn().mockResolvedValue(undefined);
@@ -282,7 +282,7 @@ describe('QuickAssignModal', () => {
     });
 
     it('prevents assigning to technician with max jobs', () => {
-      const job = createTestJob({ id: 'job-1', technicianId: null });
+      const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
       // Create 5 active jobs for technician
       const maxJobs = Array.from({ length: 5 }, (_, i) =>
@@ -514,7 +514,7 @@ describe('QuickAssignModal', () => {
 
   describe('Optional JobId (Job Selection Flow)', () => {
     it('shows job selection when jobId is not provided', () => {
-      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       render(
@@ -531,10 +531,10 @@ describe('QuickAssignModal', () => {
     });
 
     it('displays unassigned jobs in job selector', () => {
-      const unassignedJob1 = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: null });
-      const unassignedJob2 = createTestJob({ id: 'job-2', title: 'Paint Fence', client: 'XYZ Inc', status: 'Pending', technicianId: null });
+      const unassignedJob1 = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: undefined });
+      const unassignedJob2 = createTestJob({ id: 'job-2', title: 'Paint Fence', client: 'XYZ Inc', status: 'Pending', technicianId: undefined });
       const assignedJob = createTestJob({ id: 'job-3', title: 'Fix Door', client: 'DEF Ltd', status: 'Pending', technicianId: 'tech-1' });
-      const completedJob = createTestJob({ id: 'job-4', title: 'Fix Window', client: 'GHI Corp', status: 'Complete', technicianId: null });
+      const completedJob = createTestJob({ id: 'job-4', title: 'Fix Window', client: 'GHI Corp', status: 'Complete', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       render(
@@ -557,7 +557,7 @@ describe('QuickAssignModal', () => {
 
     it('allows selecting job from job list', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', client: 'ABC Corp', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       render(
@@ -579,7 +579,7 @@ describe('QuickAssignModal', () => {
 
     it('shows back button when no jobId provided', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       render(
@@ -606,7 +606,7 @@ describe('QuickAssignModal', () => {
 
     it('back button returns to job selection', async () => {
       const user = userEvent.setup();
-      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: null });
+      const job = createTestJob({ id: 'job-1', title: 'Fix Roof', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician({ id: 'tech-1' });
 
       render(

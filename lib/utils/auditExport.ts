@@ -10,7 +10,7 @@
  * Phase: 3.2 - Audit Trail Export (CSV/JSON with SHA-256)
  */
 
-import type { Job, JobStatus } from '../types';
+import type { Job, JobStatus } from '../../types';
 
 /**
  * Audit record structure for export
