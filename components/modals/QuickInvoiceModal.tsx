@@ -470,7 +470,7 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
             <button
               onClick={handleCreateInvoice}
               disabled={state.isCreating || !selectedJob}
-              className="
+              className={`
                 w-full px-4 py-3 rounded-lg font-semibold
                 transition-all duration-200
                 min-h-[44px]
@@ -478,7 +478,7 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
                   ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-emerald-600 dark:bg-emerald-600 text-white hover:bg-emerald-700 dark:hover:bg-emerald-700 active:scale-95'
                 }
-              "
+              `}
             >
               {state.isCreating ? 'Creating Invoice...' : 'Create Invoice'}
             </button>
