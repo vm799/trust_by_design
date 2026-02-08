@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { execSync } from 'child_process';
+import type { Plugin } from 'vite';
 
 // Get git commit hash for build fingerprint
 function getGitCommit(): string {
@@ -10,6 +11,25 @@ function getGitCommit(): string {
   } catch {
     return 'unknown';
   }
+}
+
+// Vite plugin: Inject app-version meta tag into HTML for Service Worker update detection
+function injectAppVersionPlugin(): Plugin {
+  const gitCommit = getGitCommit();
+  const buildTime = new Date().toISOString();
+  const appVersion = `${gitCommit}-${Date.now()}`;
+
+  return {
+    name: 'inject-app-version',
+    transformIndexHtml(html: string) {
+      // Inject app-version meta tag after theme-color meta tag
+      const injected = html.replace(
+        /(<meta name="theme-color"[^>]*>)/,
+        `$1\n  <meta name="app-version" content="${appVersion}">\n  <meta name="build-time" content="${buildTime}">`
+      );
+      return injected;
+    }
+  };
 }
 
 // Security headers for production deployment
@@ -45,7 +65,10 @@ export default defineConfig(({ mode }) => {
       preview: {
         headers: securityHeaders,
       },
-      plugins: [react()],
+      plugins: [
+        injectAppVersionPlugin(),
+        react()
+      ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),

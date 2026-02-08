@@ -498,9 +498,26 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     setJobs(prev => prev.map(j => j.id === normalizedJob.id ? normalizedJob : j));
   }, []);
 
-  const deleteJob = useCallback((id: string) => {
+  const deleteJob = useCallback(async (id: string) => {
+    // Optimistic update: Remove from local state immediately
     setJobs(prev => prev.filter(j => j.id !== id));
-  }, []);
+
+    // Persist to backend
+    try {
+      const dbModule = await getDbModule();
+      const result = await dbModule.deleteJob(id);
+
+      if (!result.success) {
+        // Restore to state if delete failed
+        setJobs(prev => [...prev, jobs.find(j => j.id === id)!].filter(Boolean) as Job[]);
+        console.error('[DataContext] Job delete failed:', result.error);
+      }
+    } catch (err) {
+      // Restore to state if error occurred
+      setJobs(prev => [...prev, jobs.find(j => j.id === id)!].filter(Boolean) as Job[]);
+      console.error('[DataContext] Job delete error:', err);
+    }
+  }, [jobs]);
 
   // Client mutations
   const addClient = useCallback((client: Client) => {
@@ -511,9 +528,26 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
   }, []);
 
-  const deleteClient = useCallback((id: string) => {
+  const deleteClient = useCallback(async (id: string) => {
+    // Optimistic update: Remove from local state immediately
     setClients(prev => prev.filter(c => c.id !== id));
-  }, []);
+
+    // Persist to backend
+    try {
+      const dbModule = await getDbModule();
+      const result = await dbModule.deleteClient(id);
+
+      if (!result.success) {
+        // Restore to state if delete failed
+        setClients(prev => [...prev, clients.find(c => c.id === id)!].filter(Boolean) as Client[]);
+        console.error('[DataContext] Client delete failed:', result.error);
+      }
+    } catch (err) {
+      // Restore to state if error occurred
+      setClients(prev => [...prev, clients.find(c => c.id === id)!].filter(Boolean) as Client[]);
+      console.error('[DataContext] Client delete error:', err);
+    }
+  }, [clients]);
 
   // Technician mutations
   const addTechnician = useCallback((tech: Technician) => {
@@ -524,9 +558,26 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     setTechnicians(prev => prev.map(t => t.id === updatedTech.id ? updatedTech : t));
   }, []);
 
-  const deleteTechnician = useCallback((id: string) => {
+  const deleteTechnician = useCallback(async (id: string) => {
+    // Optimistic update: Remove from local state immediately
     setTechnicians(prev => prev.filter(t => t.id !== id));
-  }, []);
+
+    // Persist to backend
+    try {
+      const dbModule = await getDbModule();
+      const result = await dbModule.deleteTechnician(id);
+
+      if (!result.success) {
+        // Restore to state if delete failed
+        setTechnicians(prev => [...prev, technicians.find(t => t.id === id)!].filter(Boolean) as Technician[]);
+        console.error('[DataContext] Technician delete failed:', result.error);
+      }
+    } catch (err) {
+      // Restore to state if error occurred
+      setTechnicians(prev => [...prev, technicians.find(t => t.id === id)!].filter(Boolean) as Technician[]);
+      console.error('[DataContext] Technician delete error:', err);
+    }
+  }, [technicians]);
 
   // Invoice mutations
   const addInvoice = useCallback((invoice: Invoice) => {
@@ -542,7 +593,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, []);
 
   const deleteInvoice = useCallback((id: string) => {
+    // Remove from local state
     setInvoices(prev => prev.filter(i => i.id !== id));
+    // Note: Backend delete for invoices not yet implemented in db.ts
   }, []);
 
   // Template mutations
