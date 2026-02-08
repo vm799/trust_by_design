@@ -10,6 +10,23 @@
  */
 
 /**
+ * Generate a UUID v4 (RFC 4122 compliant)
+ * Used for database IDs to ensure compatibility with Supabase UUID columns
+ * @returns UUID v4 string
+ */
+export function generateUUID(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+
+  // Set version to 4 (random) and variant to RFC 4122
+  array[6] = (array[6] & 0x0f) | 0x40;
+  array[8] = (array[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/**
  * Generate a cryptographically secure random string
  * @param length - Length of the output string (default 9)
  * @returns Random alphanumeric string
@@ -89,6 +106,7 @@ export function secureJitter(baseDelay: number, jitterFactor: number = 0.3): num
 }
 
 export default {
+  generateUUID,
   secureRandomString,
   generateSecureJobId,
   generateSecureEntityId,
