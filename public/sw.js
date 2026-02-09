@@ -613,7 +613,14 @@ async function checkForUpdates(currentVersion) {
     const newVersion = versionMatch[1];
     console.log('[SW] Version check: current=' + currentVersion + ', server=' + newVersion);
 
-    if (currentVersion && newVersion !== currentVersion) {
+    // Normalize versions to commit hash only for comparison.
+    // Meta tag format is "commit-timestamp" (e.g., "a1b2c3d-1707658400000")
+    // Client may send just the commit hash (e.g., "a1b2c3d").
+    // Compare only the commit hash prefix to avoid false positives.
+    const currentCommit = currentVersion ? currentVersion.split('-')[0] : '';
+    const newCommit = newVersion ? newVersion.split('-')[0] : '';
+
+    if (currentCommit && newCommit && newCommit !== currentCommit) {
       // Notify all clients about the update
       const clients = await self.clients.matchAll({ includeUncontrolled: true });
       clients.forEach((client) => {

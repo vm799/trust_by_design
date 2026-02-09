@@ -1,19 +1,22 @@
 /**
- * Storage Warning Banner
+ * Storage Warning Strip
  *
- * Shows warning when localStorage approaches quota limit
- * Guides users to archive/delete old jobs to free space
+ * Slim, actionable progress strip at the top of the app when storage
+ * approaches quota limit. Clickable to expand into a panel where users
+ * can delete jobs directly without navigating away.
  *
  * Features:
- * - Auto-dismisses when user takes action (archives jobs)
- * - Shows storage percentage and available space
- * - Persistent until quota pressure relieved
- * - Mobile-optimized
+ * - Collapsed: thin bar with percentage + progress indicator (1 line)
+ * - Expanded: shows deletable jobs with one-click delete
+ * - Respects sealed/invoiced job deletion rules
+ * - Works from any page (uses DataContext)
+ * - 44px+ touch targets
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useData } from '../lib/DataContext';
 import { onQuotaExceeded } from '../lib/utils/safeLocalStorage';
+import type { Job } from '../types';
 
 interface StorageWarning {
   usage: number;
@@ -24,6 +27,10 @@ interface StorageWarning {
 export const StorageWarningBanner: React.FC = React.memo(() => {
   const [warning, setWarning] = useState<StorageWarning | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { jobs, deleteJob } = useData();
 
   // Subscribe to storage quota warnings
   useEffect(() => {
@@ -33,80 +40,171 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
         quota: info.quota,
         percent: info.percent,
       });
-      setIsDismissed(false); // Re-show if dismissed
+      setIsDismissed(false);
     });
 
     return unsubscribe;
   }, []);
 
+  // Deletable jobs: not sealed, not invoiced, sorted oldest first
+  const deletableJobs = useMemo(() => {
+    return jobs
+      .filter((j: Job) => !j.sealedAt && !j.invoiceId)
+      .sort((a: Job, b: Job) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      })
+      .slice(0, 10);
+  }, [jobs]);
+
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
+    setIsExpanded(false);
   }, []);
 
-  // Hide banner if no warning
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  const handleDeleteJob = useCallback(async (jobId: string) => {
+    setDeletingId(jobId);
+    try {
+      deleteJob(jobId);
+    } finally {
+      setDeletingId(null);
+    }
+  }, [deleteJob]);
+
   if (!warning || isDismissed) return null;
 
   const isCritical = warning.percent >= 90;
-  const isLow = warning.percent >= 75;
-
-  // Determine styling based on severity
-  const bgColor = isCritical ? 'bg-danger/10' : 'bg-warning/10';
-  const borderColor = isCritical ? 'border-danger/20' : 'border-warning/20';
-  const iconColor = isCritical ? 'text-danger' : 'text-warning';
-  const textColor = isCritical ? 'text-danger' : 'text-warning';
+  const barColor = isCritical ? 'bg-red-500' : 'bg-amber-500';
+  const textColor = isCritical ? 'text-red-400' : 'text-amber-400';
+  const bgStrip = isCritical ? 'bg-red-500/10' : 'bg-amber-500/10';
 
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-2xl p-4 sm:p-5 animate-in`}>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        {/* Icon */}
-        <div
-          className={`size-10 ${isCritical ? 'bg-danger/20' : 'bg-warning/20'} rounded-xl flex items-center justify-center flex-shrink-0`}
+    <div className="w-full" role="status" aria-label="Storage usage warning">
+      {/* Collapsed strip — always visible when warning active */}
+      <button
+        type="button"
+        onClick={handleToggleExpand}
+        className={`w-full ${bgStrip} min-h-[44px] px-4 py-2 flex items-center gap-3 transition-colors hover:bg-slate-800/60 cursor-pointer`}
+        aria-expanded={isExpanded}
+        aria-controls="storage-panel"
+      >
+        {/* Progress bar inline */}
+        <div className="w-20 sm:w-32 h-1.5 bg-slate-700 rounded-full overflow-hidden flex-shrink-0">
+          <div
+            className={`h-full ${barColor} transition-all`}
+            style={{ width: `${Math.min(warning.percent, 100)}%` }}
+          />
+        </div>
+
+        <span className={`text-xs font-bold ${textColor} whitespace-nowrap`}>
+          {warning.percent}% storage used
+        </span>
+
+        <span className="text-xs text-slate-500 hidden sm:inline">
+          {(warning.usage / (1024 * 1024)).toFixed(1)}MB / {(warning.quota / (1024 * 1024)).toFixed(0)}MB
+        </span>
+
+        <span className={`text-xs ${textColor} ml-auto flex items-center gap-1`}>
+          {isExpanded ? 'Close' : 'Manage'}
+          <svg
+            className={`size-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+
+        {/* Dismiss button */}
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDismiss();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              handleDismiss();
+            }
+          }}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+          aria-label="Dismiss storage warning"
         >
-          <span className={`material-symbols-outlined ${iconColor} text-xl`}>
-            {isCritical ? 'warning' : 'info'}
-          </span>
-        </div>
+          <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </span>
+      </button>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
-          <h3 className={`text-sm font-black uppercase ${textColor} tracking-tight`}>
-            {isCritical ? 'Storage Nearly Full' : 'Storage Getting Full'}
-          </h3>
-          <p className="text-xs text-slate-300 font-medium leading-relaxed">
-            Using <span className="font-black text-white">{(warning.usage / (1024 * 1024)).toFixed(1)}MB</span> of <span className="font-black text-white">{(warning.quota / (1024 * 1024)).toFixed(0)}MB</span> <span className="text-white">({warning.percent}%)</span>.
-            <br />
-            Archive completed jobs or delete old evidence photos to free space.
-          </p>
-        </div>
-
-        {/* Action and Dismiss Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link
-            to="/admin/jobs"
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${isCritical ? 'bg-danger/20 hover:bg-danger/30 text-danger' : 'bg-warning/20 hover:bg-warning/30 text-warning'}`}
-            title="Review and delete old jobs"
-          >
-            <span className="material-symbols-outlined text-sm">delete_outline</span>
-            <span className="hidden sm:inline">Manage Jobs</span>
-          </Link>
-          <button
-            onClick={handleDismiss}
-            className="p-2.5 text-slate-400 hover:text-white transition-colors"
-            title="Dismiss banner (will reappear if quota critical)"
-            aria-label="Dismiss storage warning"
-          >
-            <span className="material-symbols-outlined text-lg">close</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-3 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      {/* Expanded panel — shows deletable jobs */}
+      {isExpanded && (
         <div
-          className={`h-full transition-all ${isCritical ? 'bg-danger' : 'bg-warning'}`}
-          style={{ width: `${Math.min(warning.percent, 100)}%` }}
-        />
-      </div>
+          id="storage-panel"
+          className="bg-slate-900/95 border-t border-slate-700/50 px-4 py-3 max-h-64 overflow-y-auto"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Free up space — delete old jobs
+            </h3>
+            {deletableJobs.length > 0 && (
+              <span className="text-[10px] text-slate-500">
+                {deletableJobs.length} deletable job{deletableJobs.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+
+          {deletableJobs.length === 0 ? (
+            <p className="text-xs text-slate-500 py-2">
+              No deletable jobs found. Sealed and invoiced jobs cannot be removed.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {deletableJobs.map((job: Job) => (
+                <li
+                  key={job.id}
+                  className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg hover:bg-slate-800/50 group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs text-slate-200 font-medium truncate block">
+                      {job.title || job.id.slice(0, 8)}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      {job.status} · {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'No date'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteJob(job.id)}
+                    disabled={deletingId === job.id}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors disabled:opacity-50"
+                    aria-label={`Delete job ${job.title || job.id.slice(0, 8)}`}
+                  >
+                    {deletingId === job.id ? (
+                      <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 });

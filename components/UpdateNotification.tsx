@@ -93,6 +93,11 @@ function triggerUpdateCheck(): void {
   }
 }
 
+// LocalStorage key for tracking that an update was just applied (grace period)
+const JUST_UPDATED_KEY = 'jobproof_just_updated';
+// Grace period after update to suppress banner (30 seconds)
+const UPDATE_GRACE_MS = 30000;
+
 /**
  * Trigger service worker skip waiting and reload
  */
@@ -104,6 +109,9 @@ async function applyUpdate(): Promise<void> {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
+
+    // Mark that we just applied an update so the banner doesn't flash on reload
+    localStorage.setItem(JUST_UPDATED_KEY, Date.now().toString());
 
     // Reload to get new version
     window.location.reload();
@@ -133,6 +141,19 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
   // Listen for UPDATE_AVAILABLE messages from service worker
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
+
+    // Check if we just applied an update (grace period to prevent banner flash)
+    const justUpdatedAt = localStorage.getItem(JUST_UPDATED_KEY);
+    if (justUpdatedAt) {
+      const elapsed = Date.now() - parseInt(justUpdatedAt, 10);
+      if (elapsed < UPDATE_GRACE_MS) {
+        // Within grace period — suppress banner and clean up
+        localStorage.removeItem(JUST_UPDATED_KEY);
+        return;
+      }
+      // Grace period expired, clean up stale flag
+      localStorage.removeItem(JUST_UPDATED_KEY);
+    }
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'UPDATE_AVAILABLE') {
@@ -227,11 +248,9 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
       >
         <div
           className="
-            bg-slate-800/95 dark:bg-slate-800/95
             bg-white/95 dark:bg-slate-800/95
             backdrop-blur-md
-            border border-slate-700/50 dark:border-slate-700/50
-            border-slate-200 dark:border-slate-700/50
+            border border-slate-200 dark:border-slate-700/50
             rounded-xl shadow-2xl
             overflow-hidden
           "
