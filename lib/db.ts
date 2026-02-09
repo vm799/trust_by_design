@@ -2068,9 +2068,9 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
     // Delete client
     const { error, count } = await supabase
       .from('clients')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('id', clientId)
-      .select('id', { count: 'exact' });
+      .select('id');
 
     if (error) {
       // RLS policy likely blocking - provide helpful error message
@@ -2348,9 +2348,9 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
     // Delete technician
     const { error, count } = await supabase
       .from('technicians')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('id', techId)
-      .select('id', { count: 'exact' });
+      .select('id');
 
     if (error) {
       // RLS policy likely blocking - provide helpful error message

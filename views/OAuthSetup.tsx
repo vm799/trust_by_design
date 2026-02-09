@@ -5,6 +5,7 @@ import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { generateSecureSlugSuffix } from '../lib/secureId';
 import { setTechnicianWorkMode } from '../lib/db';
+import { clearProfileCache } from '../lib/auth';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 
 /**
@@ -182,13 +183,17 @@ const OAuthSetup: React.FC = () => {
         .replace(/^-|-$/g, '');
       const finalSlug = `${workspaceSlug}-${generateSecureSlugSuffix()}`;
 
-      const { error: workspaceError } = await supabase.rpc('create_workspace_with_owner', {
+      // RPC returns workspace UUID on success — capture it to avoid a redundant SELECT
+      const { data: rpcWorkspaceId, error: workspaceError } = await supabase.rpc('create_workspace_with_owner', {
         p_user_id: userId,
         p_email: userEmail,
         p_workspace_name: finalWorkspaceName,
         p_workspace_slug: finalSlug,
         p_full_name: fullName.trim()
       });
+
+      // Track workspace_id across both new-user and returning-user paths
+      let resolvedWorkspaceId: string | null = rpcWorkspaceId || null;
 
       if (workspaceError) {
         // Foreign key error = user doesn't exist in auth.users (stale session)
@@ -217,6 +222,17 @@ const OAuthSetup: React.FC = () => {
             console.error('[OAuthSetup] Failed to update full_name:', updateError);
             // Non-fatal - continue with flow
           }
+          // Returning user: RPC didn't return workspace_id, so query for it
+          const { data: existingUser, error: fetchError } = await supabase
+            .from('users')
+            .select('workspace_id')
+            .eq('id', userId)
+            .maybeSingle();
+
+          if (fetchError) {
+            console.error('[OAuthSetup] Failed to fetch existing user:', fetchError);
+          }
+          resolvedWorkspaceId = existingUser?.workspace_id || null;
         } else {
           throw new Error(workspaceError.message || 'Workspace creation failed');
         }
@@ -224,22 +240,14 @@ const OAuthSetup: React.FC = () => {
 
       // CRITICAL FIX: Save persona to user_personas table
       // This prevents the redirect loop: OAuthSetup → / → PersonaRedirect → /onboarding
-      // Map simplified persona to full PersonaType
       const personaType = selectedPersona === 'solo' ? 'solo_contractor' : 'agency_owner';
 
-      // Get workspace_id for the persona record
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('workspace_id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (userProfile?.workspace_id) {
+      if (resolvedWorkspaceId) {
         const { error: personaError } = await supabase
           .from('user_personas')
           .upsert({
             user_id: userId,
-            workspace_id: userProfile.workspace_id,
+            workspace_id: resolvedWorkspaceId,
             persona_type: personaType,
             is_active: true,
             is_complete: true, // Mark as complete since OAuthSetup handles full setup
@@ -250,6 +258,12 @@ const OAuthSetup: React.FC = () => {
           console.error('[OAuthSetup] Failed to save persona:', personaError);
           // Non-fatal - continue with navigation
         }
+      } else {
+        // workspace_id is required for persona — this shouldn't happen but surface it
+        console.error('[OAuthSetup] No workspace_id resolved — persona not saved');
+        setError('Setup incomplete. Please refresh and try again.');
+        setLoading(false);
+        return;
       }
 
       // Show install prompt if available, otherwise navigate
@@ -267,6 +281,13 @@ const OAuthSetup: React.FC = () => {
   };
 
   const navigateToDestination = (selectedPersona: Persona) => {
+    // CRITICAL FIX: Clear stale profile cache (which cached null when profile didn't exist)
+    // and signal App.tsx to re-fetch the profile BEFORE navigating.
+    // Without this, App.tsx's profileLoadedRef blocks re-fetch and user stays null,
+    // causing PersonaRedirect → /auth/setup redirect loop (visible flicker).
+    clearProfileCache();
+    window.dispatchEvent(new CustomEvent('jobproof:profile-created'));
+
     // Smart routing based on persona
     if (selectedPersona === 'solo') {
       navigate('/tech', { replace: true });
