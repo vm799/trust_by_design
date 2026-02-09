@@ -1,11 +1,13 @@
 /**
- * ManagerFocusDashboard - Modal Integration Tests
+ * ManagerFocusDashboard - Integration Tests
  *
- * Comprehensive tests for quick modal button integration, keyboard shortcuts,
- * responsive layout, focus management, and accessibility.
- *
- * Tests: Button clicks, keyboard shortcuts, modal rendering, responsive design,
- * focus restoration, accessibility attributes.
+ * Tests the redesigned unified manager dashboard:
+ * - UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
+ * - ProofGapBar: evidence compliance at a glance
+ * - 3 contextual actions (Search, Assign, All Jobs)
+ * - Only QuickSearchModal + QuickAssignModal (invoicing deferred)
+ * - Keyboard shortcuts (Ctrl+K for search, Ctrl+A for assign)
+ * - Accessibility: ARIA labels, focus indicators, touch targets
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -49,6 +51,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     notes: '',
     address: 'Test Address',
     lastUpdated: Date.now(),
+    safetyChecklist: [],
     ...overrides,
   } as Job;
 }
@@ -99,11 +102,11 @@ function TestWrapper({
 // TESTS
 // ============================================================================
 
-describe('ManagerFocusDashboard - Modal Integration', () => {
-  // ========== BUTTON RENDERING TESTS ==========
+describe('ManagerFocusDashboard - Integration', () => {
+  // ========== CONTEXTUAL ACTIONS (3 max per UX Contract) ==========
 
-  describe('Quick Actions Grid Rendering', () => {
-    it('renders all eight quick action buttons', () => {
+  describe('Contextual Action Buttons', () => {
+    it('renders exactly 3 action buttons: Search, Assign, All Jobs', () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
 
@@ -115,31 +118,23 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       expect(screen.getByLabelText(/Search jobs/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Assign technician/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Create invoice/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/View all jobs/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View clients/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View technicians/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Workspace settings/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View invoices/i)).toBeInTheDocument();
     });
 
-    it('renders button grid with correct responsive classes', () => {
+    it('does NOT render invoice button (invoicing deferred to next release)', () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
 
-      const { container } = render(
+      render(
         <TestWrapper jobs={jobs} technicians={technicians}>
           <ManagerFocusDashboard />
         </TestWrapper>
       );
 
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('grid');
-      expect(grid).toHaveClass('grid-cols-2');
-      expect(grid).toHaveClass('sm:grid-cols-4');
+      expect(screen.queryByLabelText(/Create invoice/i)).not.toBeInTheDocument();
     });
 
-    it('all buttons have minimum 44px height (56px on mobile)', () => {
+    it('all action buttons meet 56px touch target minimum', () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
 
@@ -151,22 +146,48 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
       const assignBtn = screen.getByLabelText(/Assign technician/i);
-      const invoiceBtn = screen.getByLabelText(/Create invoice/i);
+      const allJobsBtn = screen.getByLabelText(/View all jobs/i);
 
-      // Check classes exist
       expect(searchBtn).toHaveClass('min-h-[56px]');
       expect(assignBtn).toHaveClass('min-h-[56px]');
-      expect(invoiceBtn).toHaveClass('min-h-[56px]');
+      expect(allJobsBtn).toHaveClass('min-h-[56px]');
+    });
 
-      expect(searchBtn).toHaveClass('sm:min-h-[44px]');
-      expect(assignBtn).toHaveClass('sm:min-h-[44px]');
-      expect(invoiceBtn).toHaveClass('sm:min-h-[44px]');
+    it('renders 3-column grid layout', () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+      const technicians = [createTestTechnician({ id: 'tech-1' })];
+
+      const { container } = render(
+        <TestWrapper jobs={jobs} technicians={technicians}>
+          <ManagerFocusDashboard />
+        </TestWrapper>
+      );
+
+      const grids = container.querySelectorAll('.grid-cols-3');
+      expect(grids.length).toBeGreaterThan(0);
     });
   });
 
-  // ========== MODAL OPENING TESTS ==========
+  // ========== PROOF GAP BAR ==========
 
-  describe('Modal Opening via Button Click', () => {
+  describe('Proof Gap Bar', () => {
+    it('renders ProofGapBar for evidence compliance', () => {
+      const jobs = [createTestJob({ id: 'job-1', status: 'In Progress' })];
+      const technicians = [createTestTechnician({ id: 'tech-1' })];
+
+      render(
+        <TestWrapper jobs={jobs} technicians={technicians}>
+          <ManagerFocusDashboard />
+        </TestWrapper>
+      );
+
+      expect(screen.getByLabelText(/Evidence compliance/i)).toBeInTheDocument();
+    });
+  });
+
+  // ========== SEARCH MODAL ==========
+
+  describe('Search Modal', () => {
     it('opens QuickSearchModal when search button clicked', async () => {
       const user = userEvent.setup();
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
@@ -187,7 +208,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
       });
     });
 
-    it('opens QuickInvoiceModal when invoice button clicked', async () => {
+    it('closes modal when close button clicked', async () => {
       const user = userEvent.setup();
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
@@ -198,16 +219,25 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
-      const invoiceBtn = screen.getByLabelText(/Create invoice/i);
-      await user.click(invoiceBtn);
+      const searchBtn = screen.getByLabelText(/Search jobs/i);
+      await user.click(searchBtn);
 
       await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Create Invoice/i }))
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
           .toBeInTheDocument();
+      });
+
+      const closeBtn = screen.getByRole('button', { name: /Close dialog/i });
+      await user.click(closeBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
+          .not.toBeInTheDocument();
       });
     });
 
-    it('navigation buttons have correct href attributes', () => {
+    it('closes modal when Escape key pressed', async () => {
+      const user = userEvent.setup();
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
 
@@ -217,19 +247,59 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
-      const allJobsLink = screen.getByLabelText(/View all jobs/i).closest('a');
-      const clientsLink = screen.getByLabelText(/View clients/i).closest('a');
-      const techniciansLink = screen.getByLabelText(/View technicians/i).closest('a');
-      const invoicesLink = screen.getByLabelText(/View invoices/i).closest('a');
+      const searchBtn = screen.getByLabelText(/Search jobs/i);
+      await user.click(searchBtn);
 
-      expect(allJobsLink).toHaveAttribute('href', '/admin/jobs');
-      expect(clientsLink).toHaveAttribute('href', '/admin/clients');
-      expect(techniciansLink).toHaveAttribute('href', '/admin/technicians');
-      expect(invoicesLink).toHaveAttribute('href', '/admin/invoices');
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
+          .toBeInTheDocument();
+      });
+
+      await user.keyboard('{Escape}');
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
+          .not.toBeInTheDocument();
+      });
+    });
+
+    it('cleans up properly after escape and can reopen', async () => {
+      const user = userEvent.setup();
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+      const technicians = [createTestTechnician({ id: 'tech-1' })];
+
+      render(
+        <TestWrapper jobs={jobs} technicians={technicians}>
+          <ManagerFocusDashboard />
+        </TestWrapper>
+      );
+
+      const searchBtn = screen.getByLabelText(/Search jobs/i);
+      await user.click(searchBtn);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
+          .toBeInTheDocument();
+      });
+
+      await user.keyboard('{Escape}');
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
+          .not.toBeInTheDocument();
+      });
+
+      // Should be able to open it again
+      await user.click(searchBtn);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
+          .toBeInTheDocument();
+      });
     });
   });
 
-  // ========== KEYBOARD SHORTCUT TESTS ==========
+  // ========== KEYBOARD SHORTCUTS ==========
 
   describe('Keyboard Shortcuts', () => {
     it('opens QuickSearchModal with Ctrl+K shortcut', async () => {
@@ -242,7 +312,6 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
-      // Press Ctrl+K
       window.dispatchEvent(
         new KeyboardEvent('keydown', {
           key: 'k',
@@ -267,7 +336,6 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
-      // Press Cmd+K (metaKey for macOS)
       window.dispatchEvent(
         new KeyboardEvent('keydown', {
           key: 'k',
@@ -321,106 +389,10 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
     });
   });
 
-  // ========== MODAL CLOSING TESTS ==========
-
-  describe('Modal Closing', () => {
-    it('closes modal when close button clicked', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-
-      const closeBtn = screen.getByRole('button', { name: /Close dialog/i });
-      await user.click(closeBtn);
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
-          .not.toBeInTheDocument();
-      });
-    });
-
-    it('closes modal when Escape key pressed', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-
-      // Press Escape
-      await user.keyboard('{Escape}');
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
-          .not.toBeInTheDocument();
-      });
-    });
-
-    it('cleans up properly after escape key', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-
-      // Close modal with Escape
-      await user.keyboard('{Escape}');
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
-          .not.toBeInTheDocument();
-      });
-
-      // Should be able to open it again
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-    });
-  });
-
-  // ========== ACCESSIBILITY TESTS ==========
+  // ========== ACCESSIBILITY ==========
 
   describe('Accessibility', () => {
-    it('all buttons have proper aria-labels', () => {
+    it('all action buttons have proper aria-labels', () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
       const technicians = [createTestTechnician({ id: 'tech-1' })];
 
@@ -432,12 +404,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       expect(screen.getByLabelText(/Search jobs/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Assign technician/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Create invoice/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/View all jobs/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View clients/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View technicians/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Workspace settings/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View invoices/i)).toBeInTheDocument();
     });
 
     it('buttons have focus indicators', () => {
@@ -452,38 +419,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
       expect(searchBtn).toHaveClass('focus:ring-2');
-      expect(searchBtn).toHaveClass('focus:ring-blue-500');
-    });
-
-    it('buttons have hover effects', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      expect(searchBtn).toHaveClass('hover:from-blue-500');
-    });
-
-    it('keyboard shortcut hints provided in titles', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      const assignBtn = screen.getByLabelText(/Assign technician/i);
-
-      expect(searchBtn).toHaveAttribute('title', expect.stringContaining('Ctrl+K'));
-      expect(assignBtn).toHaveAttribute('title', expect.stringContaining('Ctrl+A'));
+      expect(searchBtn).toHaveClass('focus:ring-primary');
     });
 
     it('modals have proper ARIA attributes', async () => {
@@ -508,53 +444,7 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
     });
   });
 
-  // ========== RESPONSIVE LAYOUT TESTS ==========
-
-  describe('Responsive Layout', () => {
-    it('displays 2-column grid on mobile', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('grid-cols-2');
-    });
-
-    it('displays 4-column grid on desktop (with sm: responsive class)', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('sm:grid-cols-4');
-    });
-
-    it('buttons maintain proper spacing', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-      const technicians = [createTestTechnician({ id: 'tech-1' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs} technicians={technicians}>
-          <ManagerFocusDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('gap-3');
-    });
-  });
-
-  // ========== EDGE CASE TESTS ==========
+  // ========== EDGE CASES ==========
 
   describe('Edge Cases', () => {
     it('handles rapid button clicks without errors', async () => {
@@ -570,12 +460,10 @@ describe('ManagerFocusDashboard - Modal Integration', () => {
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
 
-      // Click rapidly
       for (let i = 0; i < 3; i++) {
         await user.click(searchBtn);
       }
 
-      // Should have at least one modal open
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).toBeInTheDocument();
       });

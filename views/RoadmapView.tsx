@@ -111,6 +111,45 @@ const RoadmapView: React.FC = () => {
           </div>
         </section>
 
+        {/* Coming Next Release - Invoicing & Payments */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-400 text-3xl font-black">payments</span>
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Coming Next Release</h3>
+            <span className="bg-amber-400/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase">Next</span>
+          </div>
+          <div className="bg-amber-400/5 border border-amber-400/20 rounded-[2.5rem] p-8 space-y-4">
+            <div className="flex items-start gap-4">
+              <span className="material-symbols-outlined text-amber-400 text-2xl">receipt_long</span>
+              <div className="space-y-2">
+                <h4 className="text-white font-black uppercase tracking-tight">Invoicing & Payments</h4>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Full invoicing workflow built on top of sealed evidence. Generate invoices from completed jobs,
+                  track payment status, and export to accounting systems.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                    Invoice creation from jobs
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                    Payment tracking
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                    CSV/PDF export
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                    QuickBooks/Xero integration
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Planned - Phase D */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">

@@ -1,11 +1,13 @@
 /**
- * SoloContractorDashboard - Modal Integration Tests
+ * SoloContractorDashboard - Integration Tests
  *
- * Comprehensive tests for quick modal button integration, keyboard shortcuts,
- * responsive layout, focus management, and accessibility.
- *
- * Tests: Button clicks, keyboard shortcuts, modal rendering, responsive design,
- * focus restoration, accessibility attributes.
+ * Tests the redesigned solo contractor dashboard:
+ * - UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
+ * - 3 contextual actions (New Job, Search, All Jobs)
+ * - Only QuickSearchModal (no assign/invoice - solo doesn't need them)
+ * - Evidence progress bars on job cards
+ * - Keyboard shortcuts (Ctrl+K for search)
+ * - Accessibility: ARIA labels, focus indicators, touch targets
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -49,6 +51,7 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     notes: '',
     address: 'Test Address',
     lastUpdated: Date.now(),
+    safetyChecklist: [],
     ...overrides,
   } as Job;
 }
@@ -85,14 +88,12 @@ function TestWrapper({
 // TESTS
 // ============================================================================
 
-describe('SoloContractorDashboard - Modal Integration', () => {
-  // ========== BUTTON RENDERING TESTS ==========
+describe('SoloContractorDashboard - Integration', () => {
+  // ========== CONTEXTUAL ACTIONS (3 max per UX Contract) ==========
 
-  describe('Quick Action Buttons Rendering', () => {
-    it('renders all four quick action buttons', () => {
-      const jobs = [
-        createTestJob({ id: 'job-1', techId: 'user-123' }),
-      ];
+  describe('Contextual Action Buttons', () => {
+    it('renders exactly 3 action buttons: New Job, Search, All Jobs', () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
 
       render(
         <TestWrapper jobs={jobs}>
@@ -100,13 +101,43 @@ describe('SoloContractorDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
+      expect(screen.getByLabelText(/Create new job/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Search jobs/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Assign technician/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Create invoice/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View clients/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/View all jobs/i)).toBeInTheDocument();
     });
 
-    it('renders button grid with correct responsive classes', () => {
+    it('does NOT render assign or invoice buttons (solo has no team, invoicing deferred)', () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByLabelText(/Assign technician/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Create invoice/i)).not.toBeInTheDocument();
+    });
+
+    it('all action buttons meet 56px touch target minimum', () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      const newJobBtn = screen.getByLabelText(/Create new job/i);
+      const searchBtn = screen.getByLabelText(/Search jobs/i);
+      const allJobsBtn = screen.getByLabelText(/View all jobs/i);
+
+      expect(newJobBtn).toHaveClass('min-h-[56px]');
+      expect(searchBtn).toHaveClass('min-h-[56px]');
+      expect(allJobsBtn).toHaveClass('min-h-[56px]');
+    });
+
+    it('renders 3-column grid layout', () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
 
       const { container } = render(
@@ -115,39 +146,14 @@ describe('SoloContractorDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('grid');
-      expect(grid).toHaveClass('grid-cols-2');
-      expect(grid).toHaveClass('sm:grid-cols-4');
-    });
-
-    it('all buttons have minimum 44px height (56px on mobile)', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      const assignBtn = screen.getByLabelText(/Assign technician/i);
-      const invoiceBtn = screen.getByLabelText(/Create invoice/i);
-
-      // Check classes exist
-      expect(searchBtn).toHaveClass('min-h-[56px]');
-      expect(assignBtn).toHaveClass('min-h-[56px]');
-      expect(invoiceBtn).toHaveClass('min-h-[56px]');
-
-      expect(searchBtn).toHaveClass('sm:min-h-[44px]');
-      expect(assignBtn).toHaveClass('sm:min-h-[44px]');
-      expect(invoiceBtn).toHaveClass('sm:min-h-[44px]');
+      const grids = container.querySelectorAll('.grid-cols-3');
+      expect(grids.length).toBeGreaterThan(0);
     });
   });
 
-  // ========== MODAL OPENING TESTS ==========
+  // ========== SEARCH MODAL ==========
 
-  describe('Modal Opening via Button Click', () => {
+  describe('Search Modal', () => {
     it('opens QuickSearchModal when search button clicked', async () => {
       const user = userEvent.setup();
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
@@ -167,134 +173,6 @@ describe('SoloContractorDashboard - Modal Integration', () => {
       });
     });
 
-
-    it('opens QuickInvoiceModal when invoice button clicked', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const invoiceBtn = screen.getByLabelText(/Create invoice/i);
-      await user.click(invoiceBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Create Invoice/i }))
-          .toBeInTheDocument();
-      });
-    });
-
-    it('clients button navigates to clients route', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const clientsLink = screen.getByLabelText(/View clients/i);
-      expect(clientsLink).toHaveAttribute('href', '/admin/clients');
-    });
-  });
-
-  // ========== KEYBOARD SHORTCUT TESTS ==========
-
-  describe('Keyboard Shortcuts', () => {
-    it('opens QuickSearchModal with Ctrl+K shortcut', async () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      // Press Ctrl+K
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'k',
-          ctrlKey: true,
-          bubbles: true,
-        })
-      );
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-    });
-
-;
-
-    it('opens QuickSearchModal with Cmd+K (macOS)', async () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      // Press Cmd+K (metaKey for macOS)
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'k',
-          metaKey: true,
-          bubbles: true,
-        })
-      );
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-    });
-
-    it('prevents shortcuts from firing while typing in input', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      // Open search modal first
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-
-      // Find the search input in the modal
-      const searchInput = screen.getByPlaceholderText(/Search by ID/i);
-      searchInput.focus();
-
-      // Try to press Ctrl+K while focused on input
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', {
-          key: 'k',
-          ctrlKey: true,
-          bubbles: true,
-        })
-      );
-
-      // Modal should still be visible (shortcut shouldn't close it)
-      expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-        .toBeInTheDocument();
-    });
-  });
-
-  // ========== MODAL CLOSING TESTS ==========
-
-  describe('Modal Closing', () => {
     it('closes modal when close button clicked', async () => {
       const user = userEvent.setup();
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
@@ -340,34 +218,6 @@ describe('SoloContractorDashboard - Modal Integration', () => {
           .toBeInTheDocument();
       });
 
-      // Press Escape
-      await user.keyboard('{Escape}');
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: /Search Jobs/i }))
-          .not.toBeInTheDocument();
-      });
-    });
-
-    it('closes and cleans up properly after escape key', async () => {
-      const user = userEvent.setup();
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      await user.click(searchBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
-          .toBeInTheDocument();
-      });
-
-      // Close modal with Escape
       await user.keyboard('{Escape}');
 
       await waitFor(() => {
@@ -377,10 +227,10 @@ describe('SoloContractorDashboard - Modal Integration', () => {
     });
   });
 
-  // ========== ACCESSIBILITY TESTS ==========
+  // ========== KEYBOARD SHORTCUTS ==========
 
-  describe('Accessibility', () => {
-    it('all buttons have proper aria-labels', () => {
+  describe('Keyboard Shortcuts', () => {
+    it('opens QuickSearchModal with Ctrl+K shortcut', async () => {
       const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
 
       render(
@@ -389,10 +239,105 @@ describe('SoloContractorDashboard - Modal Integration', () => {
         </TestWrapper>
       );
 
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'k',
+          ctrlKey: true,
+          bubbles: true,
+        })
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
+          .toBeInTheDocument();
+      });
+    });
+
+    it('opens QuickSearchModal with Cmd+K (macOS)', async () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'k',
+          metaKey: true,
+          bubbles: true,
+        })
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog', { name: /Search Jobs/i }))
+          .toBeInTheDocument();
+      });
+    });
+  });
+
+  // ========== EVIDENCE PROGRESS ==========
+
+  describe('Evidence Progress', () => {
+    it('renders evidence progress bar in focus job', () => {
+      const jobs = [
+        createTestJob({
+          id: 'job-1',
+          techId: 'user-123',
+          status: 'In Progress',
+          photos: [
+            { id: 'p1', url: 'test', timestamp: '', verified: true, syncStatus: 'synced', type: 'before' },
+          ],
+        }),
+      ];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      // Evidence progress bar should be present
+      expect(screen.getByRole('group', { name: /Evidence progress/i })).toBeInTheDocument();
+    });
+
+    it('shows capture button on focus job card', () => {
+      const jobs = [
+        createTestJob({
+          id: 'job-1',
+          techId: 'user-123',
+          status: 'In Progress',
+        }),
+      ];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      // Capture button should exist on the focus card
+      expect(screen.getByText('Capture')).toBeInTheDocument();
+      expect(screen.getByText('Continue')).toBeInTheDocument();
+    });
+  });
+
+  // ========== ACCESSIBILITY ==========
+
+  describe('Accessibility', () => {
+    it('all action buttons have proper aria-labels', () => {
+      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
+
+      render(
+        <TestWrapper jobs={jobs}>
+          <SoloContractorDashboard />
+        </TestWrapper>
+      );
+
+      expect(screen.getByLabelText(/Create new job/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Search jobs/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Assign technician/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Create invoice/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/View clients/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/View all jobs/i)).toBeInTheDocument();
     });
 
     it('buttons have focus indicators', () => {
@@ -407,35 +352,6 @@ describe('SoloContractorDashboard - Modal Integration', () => {
       const searchBtn = screen.getByLabelText(/Search jobs/i);
       expect(searchBtn).toHaveClass('focus:ring-2');
       expect(searchBtn).toHaveClass('focus:ring-primary');
-    });
-
-    it('buttons have hover effects', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      expect(searchBtn).toHaveClass('hover:bg-slate-600');
-    });
-
-    it('keyboard shortcut hints provided in titles', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const searchBtn = screen.getByLabelText(/Search jobs/i);
-      const assignBtn = screen.getByLabelText(/Assign technician/i);
-
-      expect(searchBtn).toHaveAttribute('title', expect.stringContaining('Ctrl+K'));
-      expect(assignBtn).toHaveAttribute('title', expect.stringContaining('Ctrl+A'));
     });
 
     it('modals have proper ARIA attributes', async () => {
@@ -459,50 +375,7 @@ describe('SoloContractorDashboard - Modal Integration', () => {
     });
   });
 
-  // ========== RESPONSIVE LAYOUT TESTS ==========
-
-  describe('Responsive Layout', () => {
-    it('displays 2-column grid on mobile', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('grid-cols-2');
-    });
-
-    it('displays 4-column grid on desktop (with sm: responsive class)', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('sm:grid-cols-4');
-    });
-
-    it('buttons maintain proper spacing', () => {
-      const jobs = [createTestJob({ id: 'job-1', techId: 'user-123' })];
-
-      const { container } = render(
-        <TestWrapper jobs={jobs}>
-          <SoloContractorDashboard />
-        </TestWrapper>
-      );
-
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('gap-3');
-    });
-  });
-
-  // ========== EDGE CASE TESTS ==========
+  // ========== EDGE CASES ==========
 
   describe('Edge Cases', () => {
     it('handles rapid button clicks without errors', async () => {
@@ -517,12 +390,10 @@ describe('SoloContractorDashboard - Modal Integration', () => {
 
       const searchBtn = screen.getByLabelText(/Search jobs/i);
 
-      // Click rapidly
       for (let i = 0; i < 3; i++) {
         await user.click(searchBtn);
       }
 
-      // Should have at least one modal open
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).toBeInTheDocument();
       });

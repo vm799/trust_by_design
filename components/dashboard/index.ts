@@ -15,6 +15,10 @@ export { default as BackgroundCollapse, BackgroundCollapseSkeleton } from './Bac
 export { default as AttentionModal } from './AttentionModal';
 export { default as GlassActionTile } from './GlassActionTile';
 
+// Evidence & compliance widgets
+export { default as EvidenceProgressBar, isJobDefensible } from './EvidenceProgressBar';
+export { default as ProofGapBar } from './ProofGapBar';
+
 // Utilities
 export { default as SyncStatusBadge, SyncStatusIcon, getSyncStatusConfig } from './SyncStatusBadge';
 
