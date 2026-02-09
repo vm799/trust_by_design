@@ -134,12 +134,12 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
-      // Tab through buttons and verify focus
+      // Tab through interactive elements and verify focus
       await user.keyboard('{Tab}{Tab}{Tab}');
 
-      // Check that focus is on a button
+      // Check that focus is on an interactive element (button or link)
       const focused = document.activeElement;
-      expect(focused?.tagName).toBe('BUTTON');
+      expect(['BUTTON', 'A']).toContain(focused?.tagName);
     });
 
     it('modal can be opened and closed with keyboard', async () => {
@@ -275,10 +275,10 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
-      // Check quick action buttons have aria-labels
+      // Check contextual action buttons have aria-labels (3 max per UX Contract)
+      expect(screen.getByLabelText(/Create new job/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Search jobs/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Assign technician/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Create invoice/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/View all jobs/i)).toBeInTheDocument();
     });
 
     it('modals have aria-modal and aria-labelledby', () => {
@@ -327,14 +327,14 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
-      // Desktop: 44px minimum
+      // All contextual actions meet 56px mobile touch target (field worker gloves)
+      const newJobBtn = screen.getByLabelText(/Create new job/i);
       const searchBtn = screen.getByLabelText(/Search jobs/i);
-      const assignBtn = screen.getByLabelText(/Assign technician/i);
-      const invoiceBtn = screen.getByLabelText(/Create invoice/i);
+      const allJobsBtn = screen.getByLabelText(/View all jobs/i);
 
-      expect(searchBtn).toHaveClass('sm:min-h-[44px]');
-      expect(assignBtn).toHaveClass('sm:min-h-[44px]');
-      expect(invoiceBtn).toHaveClass('sm:min-h-[44px]');
+      expect(newJobBtn).toHaveClass('min-h-[56px]');
+      expect(searchBtn).toHaveClass('min-h-[56px]');
+      expect(allJobsBtn).toHaveClass('min-h-[56px]');
     });
 
     it('mobile quick action buttons are 56px for gloved use', () => {
@@ -468,9 +468,12 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
+      // Should have semantic interactive elements (buttons + links)
       const buttons = container.querySelectorAll('button');
-      // Should have at least the quick action buttons (search, assign, invoice)
-      expect(buttons.length).toBeGreaterThanOrEqual(3);
+      const links = container.querySelectorAll('a');
+      // Search is a button; New Job and All Jobs are links (navigation)
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+      expect(links.length).toBeGreaterThanOrEqual(2);
     });
 
     it('uses semantic link elements for navigation', () => {
@@ -484,7 +487,8 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
       );
 
       const links = container.querySelectorAll('a');
-      expect(links.length).toBeGreaterThan(2);
+      // Manager dashboard has navigation links (New Job, All Jobs)
+      expect(links.length).toBeGreaterThanOrEqual(2);
     });
 
     it('dialog uses semantic dialog role', () => {
@@ -657,10 +661,9 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
-      // Quick actions grid should be responsive
-      const grid = container.querySelector('[data-testid="quick-actions-grid"]');
-      expect(grid).toHaveClass('grid-cols-2'); // Mobile: 2 columns
-      expect(grid).toHaveClass('sm:grid-cols-4'); // Desktop: 4 columns
+      // Contextual actions grid: 3 columns (UX Contract: max 3 actions)
+      const grids = container.querySelectorAll('.grid-cols-3');
+      expect(grids.length).toBeGreaterThan(0);
     });
 
     it('modal is readable on small screens', () => {
@@ -694,12 +697,9 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
+      // Search button has keyboard shortcut hint (Ctrl+K)
       const searchBtn = screen.getByLabelText(/Search jobs/i);
-      const assignBtn = screen.getByLabelText(/Assign technician/i);
-
-      // Title attribute should hint at keyboard shortcut
-      expect(searchBtn).toHaveAttribute('title', expect.stringContaining('Ctrl'));
-      expect(assignBtn).toHaveAttribute('title', expect.stringContaining('Ctrl'));
+      expect(searchBtn.getAttribute('aria-label')).toMatch(/Ctrl/i);
     });
 
     it('manager dashboard buttons have keyboard shortcut hints', () => {
@@ -712,8 +712,9 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
         </TestWrapper>
       );
 
+      // Search button has keyboard shortcut hint (Ctrl+K) in aria-label
       const searchBtn = screen.getByLabelText(/Search jobs/i);
-      expect(searchBtn).toHaveAttribute('title');
+      expect(searchBtn.getAttribute('aria-label')).toMatch(/Ctrl/i);
     });
   });
 });

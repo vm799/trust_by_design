@@ -26,6 +26,7 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LoadingSkeleton } from '../../components/ui';
+import { EvidenceProgressBar } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
 import { Job } from '../../types';
@@ -213,6 +214,7 @@ const TechPortal: React.FC = () => {
 /**
  * HeroJobCard - 50vh hero card for started job
  * Dominant visual treatment with glassmorphism
+ * CTAs: Capture (1-tap to camera) + Continue/Complete
  */
 const HeroJobCard = React.memo(({
   job,
@@ -223,120 +225,107 @@ const HeroJobCard = React.memo(({
   client?: { id: string; name: string };
   isDoneEnough: boolean;
 }) => {
-  // Get first photo for preview
   const previewPhoto = job.photos[0];
 
   return (
-    <Link to={`/tech/job/${job.id}`} className="block">
-      <div className="relative min-h-[50vh] bg-gradient-to-br from-tech-accent/10 to-tech-accent/5 dark:from-tech-accent/20 dark:to-tech-accent/15 rounded-3xl overflow-hidden backdrop-blur-xl border border-tech-accent/30 dark:border-tech-accent/20 transition-all active:scale-[0.98]">
-        {/* Background image if photo exists */}
-        {previewPhoto && (
-          <div className="absolute inset-0 opacity-20">
-            <img
-              src={previewPhoto.url}
-              alt="Job preview"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+    <div className="relative min-h-[50vh] bg-gradient-to-br from-tech-accent/10 to-tech-accent/5 dark:from-tech-accent/20 dark:to-tech-accent/15 rounded-3xl overflow-hidden backdrop-blur-xl border border-tech-accent/30 dark:border-tech-accent/20">
+      {/* Background image if photo exists */}
+      {previewPhoto && (
+        <div className="absolute inset-0 opacity-20">
+          <img
+            src={previewPhoto.url}
+            alt="Job preview"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
 
-        {/* Content */}
-        <div className="relative z-10 p-6 flex flex-col justify-between h-full min-h-[50vh]">
-          {/* Top section - badges */}
-          <div className="flex items-start justify-between">
-            <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1.5 bg-tech-accent/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
-                <span className="material-symbols-outlined text-sm">play_arrow</span>
-                Started
+      {/* Content */}
+      <div className="relative z-10 p-6 flex flex-col justify-between h-full min-h-[50vh]">
+        {/* Top section - badges */}
+        <div className="flex items-start justify-between">
+          <div className="flex flex-wrap gap-2">
+            <span className="px-3 py-1.5 bg-tech-accent/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
+              <span className="material-symbols-outlined text-sm">play_arrow</span>
+              Started
+            </span>
+            {isDoneEnough && (
+              <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                Ready to Submit
               </span>
-              {isDoneEnough && (
-                <span className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0">
-                  <span className="material-symbols-outlined text-sm">check_circle</span>
-                  Ready to Submit
+            )}
+            {job.syncStatus && job.syncStatus !== 'synced' && (
+              <span className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0 ${
+                job.syncStatus === 'failed'
+                  ? 'bg-red-500/90 text-white'
+                  : 'bg-amber-500/90 text-white'
+              }`}>
+                <span className={`material-symbols-outlined text-sm ${job.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
+                  {job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
                 </span>
-              )}
-              {job.syncStatus && job.syncStatus !== 'synced' && (
-                <span className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wider rounded-lg flex items-center gap-1.5 shrink-0 ${
-                  job.syncStatus === 'failed'
-                    ? 'bg-red-500/90 text-white'
-                    : 'bg-amber-500/90 text-white'
-                }`}>
-                  <span className={`material-symbols-outlined text-sm ${job.syncStatus === 'pending' ? 'animate-pulse' : ''}`}>
-                    {job.syncStatus === 'failed' ? 'sync_problem' : 'sync'}
-                  </span>
-                  {job.syncStatus === 'failed' ? 'Sync Failed' : 'Syncing'}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Middle section - job details */}
-          <div className="flex-1 flex flex-col justify-center py-8">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">
-              {job.title || `Job #${job.id.slice(0, 6)}`}
-            </h2>
-            <p className="text-lg text-slate-700 dark:text-slate-300 mb-4 truncate">
-              {client?.name || job.client || 'Client'}
-            </p>
-            {job.address && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5 truncate">
-                <span className="material-symbols-outlined text-sm shrink-0">location_on</span>
-                <span className="truncate">{job.address}</span>
-              </p>
+                {job.syncStatus === 'failed' ? 'Sync Failed' : 'Syncing'}
+              </span>
             )}
           </div>
+        </div>
 
-          {/* Bottom section - progress indicators & CTA */}
-          <div className="space-y-4">
-            {/* Progress indicators */}
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className={`size-10 rounded-xl flex items-center justify-center ${
-                  job.photos.length > 0 ? 'bg-emerald-500/20' : 'bg-slate-500/20'
-                }`}>
-                  <span className={`material-symbols-outlined ${
-                    job.photos.length > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'
-                  }`}>
-                    {job.photos.length > 0 ? 'check_circle' : 'photo_camera'}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Photos</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">
-                    {job.photos.length}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`size-10 rounded-xl flex items-center justify-center ${
-                  job.signature ? 'bg-emerald-500/20' : 'bg-slate-500/20'
-                }`}>
-                  <span className={`material-symbols-outlined ${
-                    job.signature ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'
-                  }`}>
-                    {job.signature ? 'check_circle' : 'signature'}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Signature</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">
-                    {job.signature ? 'Complete' : 'Required'}
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* Middle section - job details (tappable to navigate) */}
+        <Link to={`/tech/job/${job.id}`} className="flex-1 flex flex-col justify-center py-8 active:opacity-80 transition-opacity">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">
+            {job.title || `Job #${job.id.slice(0, 6)}`}
+          </h2>
+          <p className="text-lg text-slate-700 dark:text-slate-300 mb-4 truncate">
+            {client?.name || job.client || 'Client'}
+          </p>
+          {job.address && (
+            <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1.5 truncate">
+              <span className="material-symbols-outlined text-sm shrink-0">location_on</span>
+              <span className="truncate">{job.address}</span>
+            </p>
+          )}
+        </Link>
 
-            {/* Primary CTA */}
-            <div className="flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 min-h-[56px]">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Continue working on this job
-              </span>
-              <span className="material-symbols-outlined text-2xl text-primary">chevron_right</span>
-            </div>
+        {/* Bottom section - evidence progress + action CTAs */}
+        <div className="space-y-4">
+          {/* Evidence progress bar (replaces text-based photo/signature indicators) */}
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl p-3">
+            <EvidenceProgressBar job={job} />
+          </div>
+
+          {/* Direct action CTAs: Capture + Continue/Complete */}
+          <div className="flex gap-2">
+            <Link
+              to={`/tech/job/${job.id}/capture`}
+              className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[56px]"
+              aria-label="Capture evidence"
+            >
+              <span className="material-symbols-outlined">photo_camera</span>
+              Capture
+            </Link>
+            {isDoneEnough ? (
+              <Link
+                to={`/tech/job/${job.id}/review`}
+                className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[56px]"
+                aria-label="Complete and submit job"
+              >
+                <span className="material-symbols-outlined">rate_review</span>
+                Complete
+              </Link>
+            ) : (
+              <Link
+                to={`/tech/job/${job.id}`}
+                className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[56px]"
+                aria-label="Continue working on job"
+              >
+                <span className="material-symbols-outlined">play_arrow</span>
+                Continue
+              </Link>
+            )}
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 });
 

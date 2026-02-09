@@ -1,13 +1,16 @@
 /**
  * SoloContractorDashboard - Focus Stack for Self-Employed Workers
  *
- * Implements Context Thrash Prevention for solo contractors:
- * - IN FOCUS (Dominant): Current active job (~50% screen)
- * - NEXT 3 (QUEUE): System-ordered, no user sorting controls
- * - REST (COLLAPSED): Scroll-only, no affordances
+ * UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
+ * - FOCUS: Current active job with evidence progress + capture CTA (~45%)
+ * - QUEUE: Next 3 jobs, system-ordered, each with one action (~35%)
+ * - BACKGROUND: Completed jobs count, collapsed (~10%)
+ * - ACTIONS: 3 contextual buttons max (~10%)
  *
- * Key difference from Technician: Solo contractors self-dispatch,
- * so they need overview without planning overhead.
+ * Primary question: "What's my current job, what's next?"
+ *
+ * Invoicing: Deferred to next release (signposted on roadmap).
+ * Solo contractors do NOT assign technicians (they ARE the technician).
  */
 
 import React, { useMemo, useCallback, useState } from 'react';
@@ -15,15 +18,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContent } from '../../components/layout';
 import { Card, ActionButton, LoadingSkeleton, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
+import { EvidenceProgressBar } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
 import { route, ROUTES } from '../../lib/routes';
-import { Job, Client } from '../../types';
+import { Job } from '../../types';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
-import QuickAssignModal from '../../components/modals/QuickAssignModal';
-import QuickInvoiceModal from '../../components/modals/QuickInvoiceModal';
 
 // ============================================================================
 // HELPERS
@@ -45,25 +47,6 @@ function formatRelativeTime(timestamp: number): string {
   return `${days}d ago`;
 }
 
-/**
- * Get evidence status summary
- */
-function getEvidenceSummary(job: Job): { icon: string; text: string; color: string } {
-  const photoCount = job.photos?.length || 0;
-  const hasSignature = !!job.signature;
-
-  if (photoCount === 0 && !hasSignature) {
-    return { icon: 'photo_camera', text: 'No evidence', color: 'text-slate-400' };
-  }
-  if (photoCount > 0 && hasSignature) {
-    return { icon: 'verified', text: `${photoCount} photos + signature`, color: 'text-emerald-400' };
-  }
-  if (photoCount > 0) {
-    return { icon: 'photo_library', text: `${photoCount} photo${photoCount !== 1 ? 's' : ''}`, color: 'text-amber-400' };
-  }
-  return { icon: 'draw', text: 'Signature only', color: 'text-amber-400' };
-}
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -73,19 +56,12 @@ const SoloContractorDashboard: React.FC = () => {
   const { userId } = useAuth();
   const { jobs, clients, isLoading, error, refresh } = useData();
 
-  // Modal state management
+  // Search modal state (only modal a solo contractor needs)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [selectedJobForAssign, setSelectedJobForAssign] = useState<Job | null>(null);
 
-  // Keyboard shortcuts for quick actions
+  // Keyboard shortcut: Ctrl+K for search
   useGlobalKeyboardShortcuts({
     onSearch: () => setIsSearchModalOpen(true),
-    onAssign: () => {
-      setSelectedJobForAssign(null);
-      setIsAssignModalOpen(true);
-    },
     disabled: false,
   });
 
@@ -95,7 +71,6 @@ const SoloContractorDashboard: React.FC = () => {
       j.technicianId === userId ||
       j.techId === userId ||
       j.techMetadata?.createdByTechId === userId ||
-      // For solo contractors, show all their workspace jobs
       !j.technicianId
     );
   }, [jobs, userId]);
@@ -118,30 +93,27 @@ const SoloContractorDashboard: React.FC = () => {
   // Queue sorting: last touched → scheduled time
   const sortQueueJobs = useCallback((queueJobs: Job[]) => {
     return [...queueJobs].sort((a, b) => {
-      // Primary: Last updated (most recent first) - favors "last touched"
       const aUpdated = a.lastUpdated || 0;
       const bUpdated = b.lastUpdated || 0;
       if (Math.abs(aUpdated - bUpdated) > 3600000) {
-        // If more than 1 hour difference, use lastUpdated
         return bUpdated - aUpdated;
       }
-
-      // Secondary: Scheduled date (earliest first)
       const aDate = new Date(a.date).getTime();
       const bDate = new Date(b.date).getTime();
       return aDate - bDate;
     });
   }, []);
 
-  // Navigate to job
+  // Navigate to job detail
   const handleContinueFocusJob = useCallback((job: Job) => {
     navigate(route(ROUTES.JOB_DETAIL, { id: job.id }));
   }, [navigate]);
 
-  // Render: Focus job (dominant, ~50% screen)
+  // ========================================================================
+  // RENDER: Focus job (dominant, ~45% screen)
+  // UX Contract: Max 1, must be actionable, must explain why it's focus
+  // ========================================================================
   const renderFocusJob = useCallback(({ job, client, onContinue }: FocusJobRenderProps) => {
-    const evidence = getEvidenceSummary(job);
-
     return (
       <Card className="bg-primary/5 dark:bg-primary/10 border-primary/30">
         <div className="p-2">
@@ -171,10 +143,6 @@ const SoloContractorDashboard: React.FC = () => {
                 <span className="truncate">{job.address}</span>
               </div>
             )}
-            <div className={`flex items-center gap-2 text-sm ${evidence.color}`}>
-              <span className="material-symbols-outlined text-base">{evidence.icon}</span>
-              <span>{evidence.text}</span>
-            </div>
             {job.lastUpdated && (
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span className="material-symbols-outlined text-base">schedule</span>
@@ -183,23 +151,38 @@ const SoloContractorDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Primary CTA */}
-          <button
-            onClick={onContinue}
-            className="w-full py-4 bg-primary text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[56px]"
-          >
-            <span className="material-symbols-outlined">play_arrow</span>
-            Continue Working
-          </button>
+          {/* Evidence progress (replaces old text-only evidence summary) */}
+          <div className="mb-4">
+            <EvidenceProgressBar job={job} />
+          </div>
+
+          {/* Primary CTAs: Continue + Capture */}
+          <div className="flex gap-2">
+            <button
+              onClick={onContinue}
+              className="flex-1 py-4 bg-primary text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[56px]"
+            >
+              <span className="material-symbols-outlined">play_arrow</span>
+              Continue
+            </button>
+            <Link
+              to={route(ROUTES.JOB_DETAIL, { id: job.id }) + '/evidence'}
+              className="py-4 px-5 bg-emerald-600 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[56px] hover:bg-emerald-700"
+            >
+              <span className="material-symbols-outlined">photo_camera</span>
+              Capture
+            </Link>
+          </div>
         </div>
       </Card>
     );
   }, []);
 
-  // Render: Queue job (compact, read-only)
+  // ========================================================================
+  // RENDER: Queue job (compact, read-only)
+  // UX Contract: Max 3, ordered by urgency, each with one action
+  // ========================================================================
   const renderQueueJob = useCallback(({ job, client, position }: QueueJobRenderProps) => {
-    const evidence = getEvidenceSummary(job);
-
     return (
       <Link to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
         <Card variant="interactive">
@@ -215,10 +198,10 @@ const SoloContractorDashboard: React.FC = () => {
                 {job.title || `Job #${job.id.slice(0, 6)}`}
               </p>
               <p className="text-sm text-slate-500 truncate">{client?.name || 'Unknown'}</p>
-              <p className={`text-xs ${evidence.color} flex items-center gap-1 mt-0.5`}>
-                <span className="material-symbols-outlined text-xs">{evidence.icon}</span>
-                {evidence.text}
-              </p>
+              {/* Compact evidence bar */}
+              <div className="mt-1.5">
+                <EvidenceProgressBar job={job} compact />
+              </div>
             </div>
 
             {/* Time */}
@@ -236,7 +219,10 @@ const SoloContractorDashboard: React.FC = () => {
     );
   }, []);
 
-  // Render: Collapsed job (minimal)
+  // ========================================================================
+  // RENDER: Collapsed job (minimal, scroll-only)
+  // UX Contract: Background - collapsed by default, no alerts
+  // ========================================================================
   const renderCollapsedJob = useCallback(({ job, client }: CollapsedJobRenderProps) => (
     <Link
       to={route(ROUTES.JOB_DETAIL, { id: job.id })}
@@ -247,7 +233,7 @@ const SoloContractorDashboard: React.FC = () => {
           <span className="font-medium text-slate-900 dark:text-white">
             {job.title || `Job #${job.id.slice(0, 6)}`}
           </span>
-          <span className="mx-2 opacity-50">•</span>
+          <span className="mx-2 opacity-50">&middot;</span>
           <span>{client?.name || 'Unknown'}</span>
         </span>
         <span className="text-xs text-slate-400 shrink-0 ml-2">
@@ -266,7 +252,7 @@ const SoloContractorDashboard: React.FC = () => {
     );
   }
 
-  // Error state
+  // Error state with retry (UX Contract: every data fetch needs ErrorState)
   if (error) {
     return (
       <PageContent>
@@ -348,7 +334,7 @@ const SoloContractorDashboard: React.FC = () => {
             collapsedHeader="More jobs"
           />
 
-          {/* Completed Jobs Link */}
+          {/* Completed Jobs Link (BACKGROUND: collapsed, read-only) */}
           {completedCount > 0 && (
             <motion.section
               variants={fadeInUp}
@@ -370,123 +356,42 @@ const SoloContractorDashboard: React.FC = () => {
             </motion.section>
           )}
 
-          {/* Quick Actions */}
+          {/* Contextual Actions: 3 max, 56px touch targets */}
           <motion.section variants={fadeInUp}>
-            <div
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-              data-testid="quick-actions-grid"
-            >
-              {/* Search */}
+            <div className="grid grid-cols-3 gap-3">
+              <Link
+                to={ROUTES.JOB_NEW}
+                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Create new job"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                <span className="text-xs">New Job</span>
+              </Link>
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                "
+                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
-                title="Search jobs - Press Ctrl+K"
               >
                 <span className="material-symbols-outlined text-lg">search</span>
                 <span className="text-xs">Search</span>
               </button>
-
-              {/* Assign Technician */}
-              <button
-                onClick={() => {
-                  setSelectedJobForAssign(null);
-                  setIsAssignModalOpen(true);
-                }}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                "
-                aria-label="Assign technician (Ctrl+A)"
-                title="Assign technician - Press Ctrl+A"
-              >
-                <span className="material-symbols-outlined text-lg">person_add</span>
-                <span className="text-xs">Assign</span>
-              </button>
-
-              {/* Create Invoice */}
-              <button
-                onClick={() => setIsInvoiceModalOpen(true)}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                "
-                aria-label="Create invoice"
-                title="Create invoice for completed job"
-              >
-                <span className="material-symbols-outlined text-lg">receipt</span>
-                <span className="text-xs">Invoice</span>
-              </button>
-
-              {/* Clients Link */}
               <Link
-                to={ROUTES.CLIENTS}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                "
-                aria-label="View clients"
-                title="View all clients"
+                to={ROUTES.JOBS}
+                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="View all jobs"
               >
-                <span className="material-symbols-outlined text-lg">people</span>
-                <span className="text-xs">Clients</span>
+                <span className="material-symbols-outlined text-lg">list_alt</span>
+                <span className="text-xs">All Jobs</span>
               </Link>
             </div>
           </motion.section>
         </motion.div>
       </PageContent>
 
-      {/* Quick Action Modals */}
+      {/* Search Modal (only modal a solo contractor needs) */}
       <QuickSearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
-      />
-
-      <QuickAssignModal
-        isOpen={isAssignModalOpen}
-        jobId={selectedJobForAssign?.id}
-        onClose={() => {
-          setIsAssignModalOpen(false);
-          setSelectedJobForAssign(null);
-        }}
-        onSuccess={(job) => {
-          refresh(); // Refresh dashboard data after successful assignment
-        }}
-      />
-
-      <QuickInvoiceModal
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
-        onSuccess={() => {
-          refresh(); // Refresh dashboard data after successful invoice creation
-        }}
       />
     </div>
   );

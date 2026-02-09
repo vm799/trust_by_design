@@ -1,12 +1,15 @@
 /**
- * ManagerFocusDashboard - Exception-Based Manager Dashboard
+ * ManagerFocusDashboard - Unified Manager Dashboard
  *
- * Implements Context Thrash Prevention for managers:
- * - TECHNICIAN ROWS: Shows counts, not job lists
- * - ATTENTION QUEUE: Only exceptions appear (idle, stuck, rapid switching)
- * - DRILL-DOWN: On demand, shows technician's focus + queue + collapsed
+ * UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
+ * - PROOF GAP BAR: "Are we defensible?" at a glance (~10%)
+ * - ATTENTION QUEUE: Only exceptions appear (idle, stuck, sync failed) (~30%)
+ * - TECHNICIAN ROWS: Shows counts, not job lists (~40%)
+ * - CONTEXTUAL ACTIONS: 3 max (Search, Assign, All Jobs) (~10%)
  *
- * Core principle: Manager answers "Who needs attention?" - not "What are all the jobs?"
+ * Primary questions: "Who's blocked?" / "Are we defensible?" / "Is crew on track?"
+ *
+ * Invoicing: Deferred to next release (signposted on roadmap).
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -14,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageContent } from '../../components/layout';
 import { Card, ActionButton, LoadingSkeleton, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
+import { ProofGapBar } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client, Technician, TechnicianSummary, AttentionItem } from '../../types';
@@ -21,7 +25,6 @@ import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/anim
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
 import QuickAssignModal from '../../components/modals/QuickAssignModal';
-import QuickInvoiceModal from '../../components/modals/QuickInvoiceModal';
 
 // ============================================================================
 // UTILITIES
@@ -343,7 +346,6 @@ const ManagerFocusDashboard: React.FC = () => {
   const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [selectedJobForAssign, setSelectedJobForAssign] = useState<Job | null>(null);
 
   useGlobalKeyboardShortcuts({
@@ -438,6 +440,11 @@ const ManagerFocusDashboard: React.FC = () => {
           animate="visible"
           className="space-y-8"
         >
+          {/* PROOF GAP BAR - "Are we defensible?" */}
+          <motion.section variants={fadeInUp}>
+            <ProofGapBar jobs={jobs} />
+          </motion.section>
+
           {/* ATTENTION QUEUE - Critical exceptions only */}
           {attentionItems.length > 0 && (
             <motion.section variants={fadeInUp}>
@@ -592,191 +599,42 @@ const ManagerFocusDashboard: React.FC = () => {
             </motion.section>
           )}
 
-          {/* Quick Actions Grid */}
+          {/* Contextual Actions: 3 max, 56px touch targets */}
           <motion.section variants={fadeInUp}>
-            <div
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-              data-testid="quick-actions-grid"
-            >
-              {/* Search */}
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                  shadow-lg shadow-blue-500/20
-                "
+                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
-                title="Search jobs - Press Ctrl+K"
               >
                 <span className="material-symbols-outlined text-lg">search</span>
                 <span className="text-xs">Search</span>
               </button>
-
-              {/* Assign Technician */}
               <button
                 onClick={() => {
                   setSelectedJobForAssign(null);
                   setIsAssignModalOpen(true);
                 }}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-gradient-to-br from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                  shadow-lg shadow-purple-500/20
-                "
+                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Assign technician (Ctrl+A)"
-                title="Assign technician - Press Ctrl+A"
               >
                 <span className="material-symbols-outlined text-lg">person_add</span>
                 <span className="text-xs">Assign</span>
               </button>
-
-              {/* Create Invoice */}
-              <button
-                onClick={() => setIsInvoiceModalOpen(true)}
-                className="
-                  min-h-[56px] sm:min-h-[44px]
-                  px-3 py-2
-                  bg-gradient-to-br from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600
-                  text-white text-sm font-semibold
-                  rounded-lg
-                  transition-colors duration-200
-                  flex flex-col items-center justify-center gap-1
-                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                  shadow-lg shadow-green-500/20
-                "
-                aria-label="Create invoice"
-                title="Create invoice for completed job"
+              <Link
+                to={ROUTES.JOBS}
+                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="View all jobs"
               >
-                <span className="material-symbols-outlined text-lg">receipt_long</span>
-                <span className="text-xs">Invoice</span>
-              </button>
-
-              {/* All Jobs */}
-              <Link to={ROUTES.JOBS}>
-                <button
-                  className="
-                    w-full min-h-[56px] sm:min-h-[44px]
-                    px-3 py-2
-                    bg-gradient-to-br from-orange-600 to-amber-700 hover:from-orange-500 hover:to-amber-600
-                    text-white text-sm font-semibold
-                    rounded-lg
-                    transition-colors duration-200
-                    flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                    shadow-lg shadow-orange-500/20
-                  "
-                  aria-label="View all jobs"
-                  title="View all jobs"
-                >
-                  <span className="material-symbols-outlined text-lg">list</span>
-                  <span className="text-xs">All Jobs</span>
-                </button>
-              </Link>
-
-              {/* Clients */}
-              <Link to={ROUTES.CLIENTS}>
-                <button
-                  className="
-                    w-full min-h-[56px] sm:min-h-[44px]
-                    px-3 py-2
-                    bg-gradient-to-br from-amber-600 to-yellow-700 hover:from-amber-500 hover:to-yellow-600
-                    text-white text-sm font-semibold
-                    rounded-lg
-                    transition-colors duration-200
-                    flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                    shadow-lg shadow-amber-500/20
-                  "
-                  aria-label="View clients"
-                  title="View clients"
-                >
-                  <span className="material-symbols-outlined text-lg">people</span>
-                  <span className="text-xs">Clients</span>
-                </button>
-              </Link>
-
-              {/* Technicians */}
-              <Link to={ROUTES.TECHNICIANS}>
-                <button
-                  className="
-                    w-full min-h-[56px] sm:min-h-[44px]
-                    px-3 py-2
-                    bg-gradient-to-br from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600
-                    text-white text-sm font-semibold
-                    rounded-lg
-                    transition-colors duration-200
-                    flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                    shadow-lg shadow-cyan-500/20
-                  "
-                  aria-label="View technicians"
-                  title="View technicians"
-                >
-                  <span className="material-symbols-outlined text-lg">engineering</span>
-                  <span className="text-xs">Technicians</span>
-                </button>
-              </Link>
-
-              {/* Settings */}
-              <Link to={ROUTES.SETTINGS}>
-                <button
-                  className="
-                    w-full min-h-[56px] sm:min-h-[44px]
-                    px-3 py-2
-                    bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                    text-white text-sm font-semibold
-                    rounded-lg
-                    transition-colors duration-200
-                    flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                  "
-                  aria-label="Workspace settings"
-                  title="Workspace settings"
-                >
-                  <span className="material-symbols-outlined text-lg">settings</span>
-                  <span className="text-xs">Settings</span>
-                </button>
-              </Link>
-
-              {/* Invoices */}
-              <Link to={ROUTES.INVOICES}>
-                <button
-                  className="
-                    w-full min-h-[56px] sm:min-h-[44px]
-                    px-3 py-2
-                    bg-slate-700 hover:bg-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600
-                    text-white text-sm font-semibold
-                    rounded-lg
-                    transition-colors duration-200
-                    flex flex-col items-center justify-center gap-1
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800
-                  "
-                  aria-label="View invoices"
-                  title="View invoices"
-                >
-                  <span className="material-symbols-outlined text-lg">receipt</span>
-                  <span className="text-xs">Invoices</span>
-                </button>
+                <span className="material-symbols-outlined text-lg">list_alt</span>
+                <span className="text-xs">All Jobs</span>
               </Link>
             </div>
           </motion.section>
         </motion.div>
       </PageContent>
 
-      {/* Quick Action Modals */}
+      {/* Modals (Search + Assign only; invoicing deferred to next release) */}
       <QuickSearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
@@ -788,13 +646,6 @@ const ManagerFocusDashboard: React.FC = () => {
           setIsAssignModalOpen(false);
           setSelectedJobForAssign(null);
         }}
-        onSuccess={(job) => {
-          refresh();
-        }}
-      />
-      <QuickInvoiceModal
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
         onSuccess={() => {
           refresh();
         }}
