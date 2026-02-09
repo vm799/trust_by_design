@@ -5,6 +5,7 @@ import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { generateSecureSlugSuffix } from '../lib/secureId';
 import { setTechnicianWorkMode } from '../lib/db';
+import { clearProfileCache } from '../lib/auth';
 import { fadeInUp, staggerContainer } from '../lib/animations';
 
 /**
@@ -267,6 +268,13 @@ const OAuthSetup: React.FC = () => {
   };
 
   const navigateToDestination = (selectedPersona: Persona) => {
+    // CRITICAL FIX: Clear stale profile cache (which cached null when profile didn't exist)
+    // and signal App.tsx to re-fetch the profile BEFORE navigating.
+    // Without this, App.tsx's profileLoadedRef blocks re-fetch and user stays null,
+    // causing PersonaRedirect → /auth/setup redirect loop (visible flicker).
+    clearProfileCache();
+    window.dispatchEvent(new CustomEvent('jobproof:profile-created'));
+
     // Smart routing based on persona
     if (selectedPersona === 'solo') {
       navigate('/tech', { replace: true });

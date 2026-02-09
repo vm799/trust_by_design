@@ -213,6 +213,11 @@ const AppContent: React.FC = () => {
   // This prevents premature redirects that cause the /admin ↔ /auth/setup loop
   const [profileLoading, setProfileLoading] = useState(true);
 
+  // CRITICAL FIX: Counter to force profile re-fetch after OAuthSetup creates a new profile.
+  // Without this, profileLoadedRef blocks re-fetch and user stays null after setup,
+  // causing a flicker loop between PersonaRedirect → /auth/setup.
+  const [profileRefreshKey, setProfileRefreshKey] = useState(0);
+
   // CRITICAL FIX: Use STABLE primitive values instead of session object
   // The session object changes reference on EVERY token refresh (every ~10-50 minutes)
   // This was causing 9+ database calls per token refresh = ~877 requests/hour
@@ -223,6 +228,21 @@ const AppContent: React.FC = () => {
 
   // Track if profile has been loaded to prevent duplicate loads
   const profileLoadedRef = useRef<string | null>(null);
+
+  // CRITICAL FIX: Listen for profile-created event from OAuthSetup.
+  // When a new user completes setup, OAuthSetup dispatches this event to force
+  // App.tsx to re-fetch the profile. Without this, profileLoadedRef blocks re-fetch
+  // because it already "loaded" for this sessionUserId (got null = no profile).
+  useEffect(() => {
+    const handleProfileCreated = () => {
+      // Immediately invalidate so profileNotReadyForUser becomes true → shows spinner
+      profileLoadedRef.current = null;
+      // Increment key to trigger the loadProfile effect to re-run
+      setProfileRefreshKey(k => k + 1);
+    };
+    window.addEventListener('jobproof:profile-created', handleProfileCreated);
+    return () => window.removeEventListener('jobproof:profile-created', handleProfileCreated);
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -351,7 +371,7 @@ const AppContent: React.FC = () => {
 
     loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionUserId]); // FIXED: Only depends on primitive userId, not session object
+  }, [sessionUserId, profileRefreshKey]); // Also re-runs when OAuthSetup signals profile creation
 
   // REMEDIATION #1: Data loading and mutations now handled by DataContext
   // Start background sync worker on app mount
