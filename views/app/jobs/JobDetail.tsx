@@ -186,9 +186,40 @@ const JobDetail: React.FC = () => {
     }
   };
 
-  // Copy magic link to clipboard
+  // Seal-on-dispatch helper - seals evidence before any dispatch action
+  const performSealOnDispatch = async (): Promise<boolean> => {
+    if (!job || !isFeatureEnabled('SEAL_ON_DISPATCH') || job.sealedAt) return true;
+
+    setSealingOnDispatch(true);
+    setSealError(null);
+    try {
+      const sealResult = await sealEvidence(job.id);
+      if (!sealResult.success) {
+        setSealError(sealResult.error || 'Failed to seal evidence before dispatch');
+        return false;
+      }
+      const updatedJob: Job = {
+        ...job,
+        sealedAt: sealResult.sealedAt,
+        evidenceHash: sealResult.evidenceHash,
+      };
+      contextUpdateJob(updatedJob);
+      return true;
+    } catch (error) {
+      console.error('[JobDetail] Seal-on-dispatch error:', error);
+      setSealError(error instanceof Error ? error.message : 'Sealing failed');
+      return false;
+    } finally {
+      setSealingOnDispatch(false);
+    }
+  };
+
+  // Copy magic link to clipboard (with seal-on-dispatch)
   const handleCopyLink = async () => {
     if (!magicLink) return;
+
+    const sealed = await performSealOnDispatch();
+    if (!sealed) return;
 
     try {
       await navigator.clipboard.writeText(magicLink);
@@ -199,41 +230,13 @@ const JobDetail: React.FC = () => {
     }
   };
 
-  // Send email to technician
-  // When SEAL_ON_DISPATCH is enabled, seal evidence BEFORE sending the magic link
+  // Send email to technician (with seal-on-dispatch)
   const handleSendEmail = async () => {
     if (!magicLink || !technician || !job) return;
 
-    // Clear any previous seal error
     setSealError(null);
-
-    // Phase C.3: Seal-on-dispatch - seal evidence before sending magic link
-    if (isFeatureEnabled('SEAL_ON_DISPATCH') && !job.sealedAt) {
-      setSealingOnDispatch(true);
-      try {
-        const sealResult = await sealEvidence(job.id);
-        if (!sealResult.success) {
-          setSealError(sealResult.error || 'Failed to seal evidence before dispatch');
-          setSealingOnDispatch(false);
-          return; // Don't send link if sealing fails
-        }
-
-        // Update job with sealedAt timestamp via DataContext
-        const updatedJob: Job = {
-          ...job,
-          sealedAt: sealResult.sealedAt,
-          evidenceHash: sealResult.evidenceHash,
-        };
-        contextUpdateJob(updatedJob);
-      } catch (error) {
-        console.error('[JobDetail] Seal-on-dispatch error:', error);
-        setSealError(error instanceof Error ? error.message : 'Sealing failed');
-        setSealingOnDispatch(false);
-        return; // Don't send link if sealing fails
-      } finally {
-        setSealingOnDispatch(false);
-      }
-    }
+    const sealed = await performSealOnDispatch();
+    if (!sealed) return;
 
     const subject = encodeURIComponent(`Job Assignment: ${job?.title || 'New Job'}`);
     const body = encodeURIComponent(
@@ -257,9 +260,12 @@ const JobDetail: React.FC = () => {
     setTimeout(() => setMailClientOpened(false), 3000);
   };
 
-  // Share via Web Share API
+  // Share via Web Share API (with seal-on-dispatch)
   const handleShare = async () => {
     if (!magicLink || !navigator.share) return;
+
+    const sealed = await performSealOnDispatch();
+    if (!sealed) return;
 
     try {
       await navigator.share({

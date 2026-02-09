@@ -24,6 +24,9 @@ export {
   TechnicianCreationBreadcrumbs,
 } from './Breadcrumbs';
 export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
+export { default as JobActionMenu } from './JobActionMenu';
+export type { JobAction, JobActionConfig, JobActionMenuProps } from './JobActionMenu';
+export { getJobActions } from './JobActionMenu';
 export {
   default as FocusStack,
   DefaultFocusJobCard,

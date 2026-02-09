@@ -315,7 +315,7 @@ export const sealEvidence = async (jobId: string, providedSession?: Session | nu
       };
     }
 
-    // Create evidence bundle
+    // Create evidence bundle with full forensic metadata
     const bundle = {
       job: {
         id: job.id,
@@ -323,23 +323,38 @@ export const sealEvidence = async (jobId: string, providedSession?: Session | nu
         client: job.client,
         address: job.address,
         status: job.status,
-        completedAt: job.completedAt
+        completedAt: job.completedAt,
+        lat: job.lat,
+        lng: job.lng,
+        w3w: job.w3w,
+        locationVerified: job.locationVerified,
       },
       photos: job.photos.map(p => ({
         id: p.id,
         url: p.url,
         timestamp: p.timestamp,
         type: p.type,
-        verified: p.verified
+        verified: p.verified,
+        lat: p.lat,
+        lng: p.lng,
+        gps_accuracy: p.gps_accuracy,
+        w3w: p.w3w,
+        w3w_verified: p.w3w_verified,
+        photo_hash: p.photo_hash,
+        device_info: p.device_info,
       })),
       signature: {
         url: job.signature,
         signerName: job.signerName,
-        signerRole: job.signerRole
+        signerRole: job.signerRole,
+        signatureHash: job.signatureHash,
+        signatureTimestamp: job.signatureTimestamp,
       },
       metadata: {
         sealedAt: new Date().toISOString(),
-        sealedBy: 'test@jobproof.pro'
+        sealedBy: 'test@jobproof.pro',
+        algorithm: 'SHA-256',
+        signatureAlgorithm: 'RSA-2048',
       }
     };
 
