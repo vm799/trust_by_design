@@ -21,12 +21,16 @@
  * @see WEEK2_EXECUTION_PLAN.md FIX 2.1
  */
 
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../../components/AppLayout';
 import EmptyState from '../../../components/EmptyState';
+import { Modal, ConfirmDialog } from '../../../components/ui';
+import { JobActionMenu } from '../../../components/ui';
+import type { JobAction } from '../../../components/ui/JobActionMenu';
 import { Job, UserProfile } from '../../../types';
-import { ROUTES } from '../../../lib/routes';
+import { useData } from '../../../lib/DataContext';
+import { route, ROUTES } from '../../../lib/routes';
 import {
   JOB_STATUS,
   SYNC_STATUS,
@@ -160,6 +164,114 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const {
+    technicians,
+    updateJob: contextUpdateJob,
+    deleteJob: contextDeleteJob,
+  } = useData();
+
+  // Action state
+  const [actionJob, setActionJob] = useState<Job | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showRemindModal, setShowRemindModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Handle job actions from the JobActionMenu
+  const handleJobAction = useCallback((action: JobAction, job: Job) => {
+    setActionJob(job);
+    switch (action) {
+      case 'assign':
+      case 'reassign':
+        setShowAssignModal(true);
+        break;
+      case 'send':
+        navigate(`/admin/report/${job.id}`);
+        break;
+      case 'remind':
+      case 'chase':
+        setShowRemindModal(true);
+        break;
+      case 'review_seal':
+        navigate(route(ROUTES.JOB_EVIDENCE, { id: job.id }));
+        break;
+      case 'invoice':
+        navigate(`${ROUTES.INVOICES}?jobId=${job.id}`);
+        break;
+      case 'view_report':
+        navigate(route(ROUTES.JOB_EVIDENCE, { id: job.id }));
+        break;
+      case 'edit':
+        navigate(route(ROUTES.JOB_EDIT, { id: job.id }));
+        break;
+      case 'delete':
+        setShowDeleteDialog(true);
+        break;
+      case 'start':
+        navigate(`/admin/report/${job.id}`);
+        break;
+    }
+  }, [navigate]);
+
+  const handleDelete = useCallback(async () => {
+    if (!actionJob) return;
+    setDeleting(true);
+    try {
+      contextDeleteJob(actionJob.id);
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+      setActionJob(null);
+    }
+  }, [actionJob, contextDeleteJob]);
+
+  const handleAssignTech = useCallback((techId: string) => {
+    if (!actionJob) return;
+    const tech = technicians.find(t => t.id === techId);
+    if (!tech) return;
+    const updatedJob: Job = {
+      ...actionJob,
+      technicianId: techId,
+      technician: tech.name,
+    };
+    contextUpdateJob(updatedJob);
+    setShowAssignModal(false);
+    setActionJob(null);
+  }, [actionJob, technicians, contextUpdateJob]);
+
+  const handleSendReminder = useCallback(() => {
+    if (!actionJob) return;
+    const tech = technicians.find(
+      t => t.id === actionJob.technicianId || t.id === actionJob.techId
+    );
+    if (!tech?.email) {
+      setShowRemindModal(false);
+      setActionJob(null);
+      return;
+    }
+    const isChase = actionJob.status === 'In Progress';
+    const subject = encodeURIComponent(
+      isChase
+        ? `Follow-Up: ${actionJob.title || 'Job'}`
+        : `Reminder: ${actionJob.title || 'Job'} Awaiting Action`
+    );
+    const body = encodeURIComponent(
+      `Hi ${tech.name},\n\n` +
+      (isChase
+        ? `This is a follow-up regarding the job "${actionJob.title}". Please provide an update on progress.\n\n`
+        : `This is a reminder that the job "${actionJob.title}" is awaiting your action.\n\n`) +
+      `Client: ${actionJob.client || 'N/A'}\n` +
+      `Address: ${actionJob.address || 'N/A'}\n` +
+      `Date: ${actionJob.date ? new Date(actionJob.date).toLocaleDateString('en-GB') : 'N/A'}\n\n` +
+      (actionJob.magicLinkUrl ? `Access the job here:\n${actionJob.magicLinkUrl}\n\n` : '') +
+      `Please respond at your earliest convenience.\n\nThanks,\nJobProof`
+    );
+    window.open(`mailto:${tech.email}?subject=${subject}&body=${body}`, '_blank');
+    setShowRemindModal(false);
+    setActionJob(null);
+  }, [actionJob, technicians]);
 
   // Virtual scrolling state
   const containerRef = useRef<HTMLDivElement>(null);
@@ -426,12 +538,16 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                             Sync Failed
                           </div>
                         )}
-                      </div>
 
-                      {/* Arrow */}
-                      <span className="material-symbols-outlined text-slate-500 group-hover:text-white transition-colors">
-                        chevron_right
-                      </span>
+                        {/* Quick Actions */}
+                        <div className="mt-3 pt-3 border-t border-white/5">
+                          <JobActionMenu
+                            job={job}
+                            onAction={handleJobAction}
+                            compact
+                          />
+                        </div>
+                      </div>
                     </div>
                   </button>
                 );
@@ -459,7 +575,8 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Technician</div>
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Status</div>
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Date</div>
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white text-right">Sync</div>
+                  <div className="px-4 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Actions</div>
+                  <div className="px-4 py-5 w-24 text-[11px] font-black uppercase tracking-widest text-white text-right">Sync</div>
                 </div>
               </div>
 
@@ -545,13 +662,21 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                         </div>
                       </div>
 
+                      {/* Actions Column */}
+                      <div className="px-4 py-3 flex-1 flex items-center">
+                        <JobActionMenu
+                          job={job}
+                          onAction={handleJobAction}
+                          compact
+                        />
+                      </div>
+
                       {/* Sync Column */}
-                      <div className="px-8 py-5 flex-1 text-right">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
-                          <span className={`material-symbols-outlined text-sm font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
+                      <div className="px-4 py-5 w-24 text-right">
+                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-black uppercase tracking-tight ${syncStatus.bgColor} ${syncStatus.color} ${syncStatus.borderColor}`}>
+                          <span className={`material-symbols-outlined text-xs font-black ${job.syncStatus === SYNC_STATUS.SYNCING ? 'animate-spin' : ''}`}>
                             {syncStatus.icon}
                           </span>
-                          {syncStatus.label}
                         </div>
                       </div>
                     </div>
@@ -562,6 +687,81 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => { setShowDeleteDialog(false); setActionJob(null); }}
+        onConfirm={handleDelete}
+        title="Delete Job"
+        message={`Are you sure you want to delete "${actionJob?.title || 'this job'}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleting}
+      />
+
+      {/* Assign Technician Modal */}
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => { setShowAssignModal(false); setActionJob(null); }}
+        title={actionJob?.technicianId ? 'Reassign Technician' : 'Assign Technician'}
+        size="md"
+      >
+        {technicians.length === 0 ? (
+          <div className="text-center py-8">
+            <span className="material-symbols-outlined text-3xl text-slate-500 mb-2">engineering</span>
+            <p className="text-slate-400 text-sm">No technicians yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {technicians.map(tech => (
+              <button
+                key={tech.id}
+                onClick={() => handleAssignTech(tech.id)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left active:scale-[0.98] min-h-[44px]"
+              >
+                <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                  <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white">{tech.name}</p>
+                  <p className="text-sm text-slate-400">{tech.phone || tech.email}</p>
+                </div>
+                {(actionJob?.technicianId === tech.id || actionJob?.techId === tech.id) && (
+                  <span className="material-symbols-outlined text-primary">check_circle</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* Remind/Chase Modal */}
+      <Modal
+        isOpen={showRemindModal}
+        onClose={() => { setShowRemindModal(false); setActionJob(null); }}
+        title={actionJob?.status === 'In Progress' ? 'Chase Technician' : 'Remind Technician'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-800 rounded-xl">
+            <p className="text-sm text-white font-medium mb-1">{actionJob?.title}</p>
+            <p className="text-xs text-slate-400">{actionJob?.client}</p>
+          </div>
+          <p className="text-sm text-slate-300">
+            {actionJob?.status === 'In Progress'
+              ? 'Send a follow-up to the technician requesting a progress update on this job.'
+              : 'Send a reminder to the technician that this job is awaiting their action.'}
+          </p>
+          <button
+            onClick={handleSendReminder}
+            className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 min-h-[44px]"
+          >
+            <span className="material-symbols-outlined text-lg">email</span>
+            {actionJob?.status === 'In Progress' ? 'Send Chase Email' : 'Send Reminder Email'}
+          </button>
+        </div>
+      </Modal>
     </Layout>
   );
 };

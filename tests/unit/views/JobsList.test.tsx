@@ -27,6 +27,38 @@ import JobsList from '../../../views/app/jobs/JobsList';
 import type { Job, UserProfile } from '../../../types';
 import { JOB_STATUS, SYNC_STATUS } from '../../../lib/constants';
 
+// Mock DataContext so JobsList can use useData()
+vi.mock('../../../lib/DataContext', () => ({
+  useData: () => ({
+    jobs: [],
+    clients: [],
+    technicians: [],
+    invoices: [],
+    templates: [],
+    isLoading: false,
+    isRefreshing: false,
+    isInitialized: true,
+    error: null,
+    addJob: vi.fn(),
+    updateJob: vi.fn(),
+    deleteJob: vi.fn(),
+    addClient: vi.fn(),
+    updateClient: vi.fn(),
+    deleteClient: vi.fn(),
+    addTechnician: vi.fn(),
+    updateTechnician: vi.fn(),
+    deleteTechnician: vi.fn(),
+    addInvoice: vi.fn(),
+    updateInvoice: vi.fn(),
+    updateInvoiceStatus: vi.fn(),
+    deleteInvoice: vi.fn(),
+    addTemplate: vi.fn(),
+    updateTemplate: vi.fn(),
+    deleteTemplate: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
 // Mock ResizeObserver for testing
 class ResizeObserverMock {
   observe = vi.fn();
