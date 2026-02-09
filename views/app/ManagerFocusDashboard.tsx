@@ -52,9 +52,7 @@ function formatTimeSince(timestampMs: number): string {
 // ATTENTION DETECTION
 // ============================================================================
 
-const IDLE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes without activity
 const STUCK_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours on same job
-const RAPID_SWITCH_COUNT = 3; // 3+ switches in an hour is concerning
 
 /**
  * Generate attention items from current state
@@ -161,7 +159,6 @@ function generateAttentionItems(
 function createTechnicianSummaries(
   technicians: Technician[],
   jobs: Job[],
-  now: number
 ): TechnicianSummary[] {
   return technicians.map(tech => {
     const techJobs = jobs.filter(j =>
@@ -363,7 +360,7 @@ const ManagerFocusDashboard: React.FC = () => {
   const { attentionItems, technicianSummaries } = useMemo(() => {
     return {
       attentionItems: generateAttentionItems(technicians, jobs, now),
-      technicianSummaries: createTechnicianSummaries(technicians, jobs, now),
+      technicianSummaries: createTechnicianSummaries(technicians, jobs),
     };
   }, [technicians, jobs, now]);
 
