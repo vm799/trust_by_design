@@ -26,8 +26,8 @@ import { useEffect, useCallback, useRef } from 'react';
 export interface UseGlobalKeyboardShortcutsOptions {
   /** Callback when Ctrl+K (Cmd+K on macOS) is pressed */
   onSearch: () => void;
-  /** Callback when Ctrl+A (Cmd+A on macOS) is pressed */
-  onAssign: () => void;
+  /** Callback when Ctrl+A (Cmd+A on macOS) is pressed (optional for views without assignment) */
+  onAssign?: () => void;
   /** Disable all keyboard listeners (default: false) */
   disabled?: boolean;
 }
@@ -101,7 +101,7 @@ export const useGlobalKeyboardShortcuts = ({
 
     // Ctrl+A (Windows/Linux) or Cmd+A (macOS) for assign
     // Note: This overrides browser's select-all behavior
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && onAssignRef.current) {
       e.preventDefault();
       onAssignRef.current();
     }

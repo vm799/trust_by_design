@@ -277,7 +277,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(DEFAULT_LIST_HEIGHT);
-  const [containerWidth, setContainerWidth] = useState(1200);
+  const [, setContainerWidth] = useState(1200);
 
   // Get filter from URL params
   const currentFilter = (searchParams.get('filter') as FilterType) || 'all';
@@ -586,7 +586,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 style={{ height: containerHeight, width: '100%', overflow: 'auto' }}
                 className="divide-y divide-white/5"
               >
-                {filteredJobs.map((job, index) => {
+                {filteredJobs.map((job) => {
                   const lifecycle = getJobLifecycle(job);
                   const syncStatus = getSyncStatus(job);
 

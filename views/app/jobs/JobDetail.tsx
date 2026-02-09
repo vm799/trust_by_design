@@ -43,7 +43,7 @@ const JobDetail: React.FC = () => {
   const [showSendModal, setShowSendModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [assigning, setAssigning] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [, setDeleteError] = useState<string | null>(null);
 
   // Magic link state
   const [magicLink, setMagicLink] = useState<string | null>(null);
@@ -52,8 +52,8 @@ const JobDetail: React.FC = () => {
   const [mailClientOpened, setMailClientOpened] = useState(false);
 
   // Seal-on-dispatch state (Phase C.3)
-  const [sealingOnDispatch, setSealingOnDispatch] = useState(false);
-  const [sealError, setSealError] = useState<string | null>(null);
+  const [, setSealingOnDispatch] = useState(false);
+  const [, setSealError] = useState<string | null>(null);
 
   // Sync conflict state (Fix 3.3)
   const [unresolvedConflict, setUnresolvedConflict] = useState(false);
