@@ -13,14 +13,14 @@
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageContent } from '../../components/layout';
 import { Card, ActionButton, LoadingSkeleton, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
-import { ProofGapBar } from '../../components/dashboard';
+import { ProofGapBar, TechnicianStatusGrid, StatusBreakdownModal } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
-import { Job, Client, Technician, TechnicianSummary, AttentionItem } from '../../types';
+import { Job, Client, Technician, TechnicianSummary, AttentionItem, JobStatus } from '../../types';
 import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
@@ -339,11 +339,13 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
 // ============================================================================
 
 const ManagerFocusDashboard: React.FC = () => {
-  const { jobs, clients, technicians, isLoading, error, refresh } = useData();
+  const navigate = useNavigate();
+  const { jobs, clients, technicians, updateJob, deleteJob, isLoading, error, refresh } = useData();
   const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedJobForAssign, setSelectedJobForAssign] = useState<Job | null>(null);
+  const [statusModalStatus, setStatusModalStatus] = useState<JobStatus | null>(null);
 
   useGlobalKeyboardShortcuts({
     onSearch: () => setIsSearchModalOpen(true),
@@ -406,23 +408,32 @@ const ManagerFocusDashboard: React.FC = () => {
 
   return (
     <div>
-      {/* Header with counts */}
+      {/* Header with clickable status chips */}
       <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-white">Team Overview</h1>
-          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-2 text-xs">
+            <button
+              onClick={() => setStatusModalStatus('In Progress')}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors min-h-[32px]"
+            >
               <span className="size-2 rounded-full bg-emerald-500" />
-              {totalActive} active
-            </span>
-            <span className="flex items-center gap-1">
+              <span className="font-bold">{totalActive}</span> active
+            </button>
+            <button
+              onClick={() => setStatusModalStatus('Pending')}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors min-h-[32px]"
+            >
               <span className="size-2 rounded-full bg-amber-500" />
-              {totalPending} pending
-            </span>
-            <span className="flex items-center gap-1">
+              <span className="font-bold">{totalPending}</span> pending
+            </button>
+            <button
+              onClick={() => setStatusModalStatus('Complete')}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 transition-colors min-h-[32px]"
+            >
               <span className="size-2 rounded-full bg-blue-500" />
-              {totalComplete} done
-            </span>
+              <span className="font-bold">{totalComplete}</span> done
+            </button>
           </div>
         </div>
         <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
@@ -437,9 +448,12 @@ const ManagerFocusDashboard: React.FC = () => {
           animate="visible"
           className="space-y-8"
         >
-          {/* PROOF GAP BAR - "Are we defensible?" */}
+          {/* PROOF GAP BAR - "Are we defensible?" - clickable to navigate to evidence gaps */}
           <motion.section variants={fadeInUp}>
-            <ProofGapBar jobs={jobs} />
+            <ProofGapBar
+              jobs={jobs}
+              onClick={() => navigate(`${ROUTES.JOBS}?filter=needs_proof`)}
+            />
           </motion.section>
 
           {/* ATTENTION QUEUE - Critical exceptions only */}
@@ -497,7 +511,7 @@ const ManagerFocusDashboard: React.FC = () => {
             </motion.section>
           )}
 
-          {/* TECHNICIAN ROWS - Counts, not lists */}
+          {/* TECHNICIAN STATUS GRID - Categorized, mobile-first */}
           <motion.section variants={fadeInUp}>
             <div className="flex items-center gap-3 mb-4">
               <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -520,65 +534,41 @@ const ManagerFocusDashboard: React.FC = () => {
                 </ActionButton>
               </Card>
             ) : (
-              <motion.div
-                variants={staggerContainerFast}
-                initial="hidden"
-                animate="visible"
-                className="space-y-2"
-              >
-                {technicianSummaries.map(summary => (
-                  <motion.div key={summary.id} variants={fadeInUp}>
-                    <Card
-                      variant="interactive"
-                      onClick={() => {
-                        const tech = technicians.find(t => t.id === summary.id);
-                        if (tech) setSelectedTechnician(tech);
-                      }}
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        {/* Status indicator */}
-                        <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${
-                          summary.status === 'working'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : summary.status === 'idle'
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400'
-                        }`}>
-                          <span className="material-symbols-outlined">
-                            {summary.status === 'working' ? 'engineering' :
-                             summary.status === 'idle' ? 'hourglass_empty' : 'wifi_off'}
-                          </span>
-                        </div>
-
-                        {/* Technician info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{summary.name}</p>
-                          {summary.activeJobTitle ? (
-                            <p className="text-sm text-emerald-400 truncate">
-                              Working: {summary.activeJobTitle}
-                            </p>
-                          ) : summary.status === 'offline' ? (
-                            <p className="text-sm text-slate-500">
-                              Last seen: {formatTimeSince(summary.lastActivityAt)}
-                            </p>
-                          ) : (
-                            <p className="text-sm text-slate-400">No active job</p>
-                          )}
-                        </div>
-
-                        {/* Jobs remaining count */}
-                        <div className="text-center shrink-0">
-                          <p className="text-lg font-bold text-white">{summary.jobsRemaining}</p>
-                          <p className="text-xs text-slate-500">remaining</p>
-                        </div>
-
-                        <span className="material-symbols-outlined text-slate-500 shrink-0">chevron_right</span>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </motion.div>
+              <TechnicianStatusGrid
+                summaries={technicianSummaries}
+                onTechnicianClick={(techId) => {
+                  const tech = technicians.find(t => t.id === techId);
+                  if (tech) setSelectedTechnician(tech);
+                }}
+              />
             )}
+          </motion.section>
+
+          {/* MOBILE STATUS CHIPS - Visible only on small screens */}
+          <motion.section variants={fadeInUp} className="sm:hidden">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setStatusModalStatus('In Progress')}
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 min-h-[56px]"
+              >
+                <span className="text-lg font-bold text-emerald-400">{totalActive}</span>
+                <span className="text-xs text-emerald-400/80">Active</span>
+              </button>
+              <button
+                onClick={() => setStatusModalStatus('Pending')}
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 min-h-[56px]"
+              >
+                <span className="text-lg font-bold text-amber-400">{totalPending}</span>
+                <span className="text-xs text-amber-400/80">Pending</span>
+              </button>
+              <button
+                onClick={() => setStatusModalStatus('Complete')}
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 min-h-[56px]"
+              >
+                <span className="text-lg font-bold text-blue-400">{totalComplete}</span>
+                <span className="text-xs text-blue-400/80">Done</span>
+              </button>
+            </div>
           </motion.section>
 
           {/* ALL CAUGHT UP STATE */}
@@ -645,6 +635,31 @@ const ManagerFocusDashboard: React.FC = () => {
         }}
         onSuccess={() => {
           refresh();
+        }}
+      />
+
+      {/* Status Breakdown Modal - color-coded drill-down per status */}
+      <StatusBreakdownModal
+        isOpen={!!statusModalStatus}
+        onClose={() => setStatusModalStatus(null)}
+        status={statusModalStatus || 'Pending'}
+        jobs={jobs}
+        clients={clients}
+        technicians={technicians}
+        onAssignJob={(jobId) => {
+          setStatusModalStatus(null);
+          const job = jobs.find(j => j.id === jobId);
+          if (job) setSelectedJobForAssign(job);
+          setIsAssignModalOpen(true);
+        }}
+        onArchiveJob={(jobId) => {
+          const job = jobs.find(j => j.id === jobId);
+          if (job) {
+            updateJob({ ...job, status: 'Archived', archivedAt: new Date().toISOString(), isArchived: true });
+          }
+        }}
+        onDeleteJob={(jobId) => {
+          deleteJob(jobId);
         }}
       />
 

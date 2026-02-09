@@ -94,8 +94,8 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
       },
       {
         title: 'Revenue Pending',
-        value: `$${(revenuePending / 1000).toFixed(1)}K`,
-        trend: `+$${(revenueLastWeek / 1000).toFixed(1)}K this week`,
+        value: `$${Math.round(revenuePending / 1000)}K`,
+        trend: `+$${Math.round(revenueLastWeek / 1000)}K this week`,
         trendColor: revenueLastWeek > 0 ? 'green' : 'neutral',
         icon: 'trending_up',
         color: 'purple',

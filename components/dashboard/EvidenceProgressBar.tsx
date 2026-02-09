@@ -24,6 +24,8 @@ interface EvidenceProgressBarProps {
   compact?: boolean;
   /** Additional CSS classes */
   className?: string;
+  /** Called when a missing evidence segment is clicked */
+  onSegmentClick?: (segmentKey: 'before' | 'after' | 'signature') => void;
 }
 
 interface EvidenceState {
@@ -62,6 +64,7 @@ const EvidenceProgressBar: React.FC<EvidenceProgressBarProps> = React.memo(({
   job,
   compact = false,
   className = '',
+  onSegmentClick,
 }) => {
   const evidence = useMemo(() => computeEvidenceState(job), [job]);
 
@@ -83,6 +86,19 @@ const EvidenceProgressBar: React.FC<EvidenceProgressBarProps> = React.memo(({
       <div data-testid="evidence-segments" className="flex gap-1.5">
         {SEGMENTS.map(segment => {
           const captured = getSegmentState(segment.key);
+          const isClickable = !captured && !!onSegmentClick;
+
+          if (isClickable) {
+            return (
+              <button
+                key={segment.key}
+                onClick={() => onSegmentClick!(segment.key)}
+                aria-label={`${segment.label} missing - tap to capture`}
+                className="flex-1 h-2 rounded-full transition-colors duration-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 cursor-pointer"
+              />
+            );
+          }
+
           return (
             <div
               key={segment.key}

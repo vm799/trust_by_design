@@ -99,7 +99,7 @@ const ProofGapBar: React.FC<ProofGapBarProps> = React.memo(({
 
   const content = (
     <div
-      aria-label="Evidence compliance"
+      {...(!onClick ? { 'aria-label': 'Evidence compliance' } : {})}
       data-status={status}
       className={`p-4 rounded-xl ${colors.bg} ${className} ${
         onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
