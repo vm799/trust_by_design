@@ -308,6 +308,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
                 workspaceId: wsId,
                 // Flag to indicate this came from bunker_jobs (magic link flow)
                 source: 'bunker' as const,
+                techEmail: row.technician_email,
+                managerEmail: row.manager_email,
+                clientEmail: row.client_email,
               }));
 
               // Merge: bunker jobs take precedence if same ID exists (they have the evidence)

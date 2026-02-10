@@ -51,7 +51,7 @@ const TechJobDetail: React.FC = () => {
 
   // Use DataContext for centralized state management (CLAUDE.md mandate)
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
-  const { userId } = useAuth();
+  const { userId, userEmail } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
   // Task 3.4: Error state for retry functionality
@@ -63,11 +63,13 @@ const TechJobDetail: React.FC = () => {
     const found = jobs.find(j => j.id === jobId) || null;
     if (!found || !userId) return found;
     // Ownership check: technician can only view their own jobs
+    // Match by UUID (techId/technicianId) OR by email (techEmail)
     const isOwner = found.technicianId === userId ||
       found.techId === userId ||
-      found.techMetadata?.createdByTechId === userId;
+      found.techMetadata?.createdByTechId === userId ||
+      (userEmail && found.techEmail && found.techEmail.toLowerCase() === userEmail.toLowerCase());
     return isOwner ? found : null;
-  }, [jobs, jobId, userId]);
+  }, [jobs, jobId, userId, userEmail]);
   const client = useMemo(() =>
     job ? clients.find(c => c.id === job.clientId) || null : null,
     [clients, job]

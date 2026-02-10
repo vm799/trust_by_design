@@ -129,6 +129,12 @@ export interface Job {
   proofCompletedAt?: string; // ISO timestamp when full proof submitted
   managerNotifiedAt?: string; // ISO timestamp when manager emailed
   clientNotifiedAt?: string; // ISO timestamp when client emailed
+
+  // Security: Email-based technician matching (for bunker_jobs without assigned_technician_id)
+  managerEmail?: string; // Manager email (from dispatch)
+  clientEmail?: string; // Client email (optional)
+  techEmail?: string; // Technician email (from magic link dispatch)
+  source?: string; // Data source flag (e.g., 'bunker')
 }
 
 export interface InvoiceItem {
