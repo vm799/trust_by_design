@@ -34,7 +34,7 @@ const EvidenceCapture: React.FC = () => {
   const navigate = useNavigate();
 
   // Use DataContext for state management
-  const { jobs, updateJob: contextUpdateJob } = useData();
+  const { jobs, updateJob: contextUpdateJob, isLoading, error: dataError, refresh } = useData();
 
   // Memoized job derivation from DataContext
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
@@ -94,7 +94,7 @@ const EvidenceCapture: React.FC = () => {
   }, [location]);
 
   // Draft key for photo persistence (survives app crash)
-  const draftKey = `photo_draft_${jobId}`;
+  const draftKey = useMemo(() => `photo_draft_${jobId}`, [jobId]);
 
   // Restore draft photo on mount (survives app crash/reload)
   useEffect(() => {
@@ -121,9 +121,6 @@ const EvidenceCapture: React.FC = () => {
       setDraftSaveWarning(false); // Clear warning on success
       setStorageFullWarning(false);
     } catch (err) {
-      // P0 CRITICAL: Never silently fail - user must know photo is at risk
-      console.error('[EvidenceCapture] Draft save failed:', err);
-
       // P0-3 FIX: Detect storage quota exceeded specifically
       if (err instanceof StorageQuotaExceededError) {
         setStorageFullWarning(true);
@@ -153,8 +150,7 @@ const EvidenceCapture: React.FC = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
-      } catch (err) {
-        console.error('Camera access failed:', err);
+      } catch {
         setError('Unable to access camera. Please grant camera permissions.');
       }
     };
@@ -181,8 +177,7 @@ const EvidenceCapture: React.FC = () => {
           });
           setIsAcquiringGPS(false);
         },
-        (err) => {
-          console.warn('Geolocation failed:', err);
+        () => {
           setIsAcquiringGPS(false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -336,8 +331,7 @@ const EvidenceCapture: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
-    } catch (err) {
-      console.error('Camera retry failed:', err);
+    } catch {
       setCameraRetryCount(prev => prev + 1);
       setError('Unable to access camera. Please grant camera permissions.');
     }
@@ -500,7 +494,7 @@ const EvidenceCapture: React.FC = () => {
                     persistDraft(updated);
                   }}
                   className={`
-                    px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all
+                    px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all min-h-[44px]
                     ${capturedPhoto.type === type
                       ? 'bg-primary text-white'
                       : 'bg-slate-800 text-slate-400'}
@@ -542,6 +536,7 @@ const EvidenceCapture: React.FC = () => {
           {/* Cancel Button */}
           <button
             onClick={goBack}
+            aria-label="Cancel and go back"
             className="absolute top-4 left-4 z-10 p-3 min-w-[44px] min-h-[44px] bg-black/50 backdrop-blur rounded-full text-white"
           >
             <span className="material-symbols-outlined">close</span>
@@ -584,7 +579,7 @@ const EvidenceCapture: React.FC = () => {
           <div className="bg-slate-950 px-4 py-3 border-t border-white/10">
             <div className="flex justify-center gap-2">
               {(['before', 'during', 'after'] as PhotoType[]).map((type) => {
-                const existingPhotos = (job?.photos || []).filter((p: { type?: string }) => p.type === type);
+                const existingPhotos = (job?.photos || []).filter((p) => p.type?.toLowerCase() === type);
                 const typeColors = {
                   before: { active: 'bg-blue-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-blue-400/20 text-blue-300' },
                   during: { active: 'bg-amber-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-amber-400/20 text-amber-300' },
@@ -619,6 +614,7 @@ const EvidenceCapture: React.FC = () => {
           <div className="bg-slate-950 px-4 py-6 pb-safe flex flex-col items-center gap-2">
             <button
               onClick={capturePhoto}
+              aria-label="Capture photo"
               className="size-20 rounded-full bg-white border-4 border-primary shadow-lg shadow-primary/30 flex items-center justify-center active:scale-95 transition-transform"
             >
               <span className="material-symbols-outlined text-4xl text-primary">photo_camera</span>

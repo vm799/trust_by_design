@@ -277,3 +277,31 @@ export const stepNumberHover = {
   scale: 1.1,
   rotate: 5,
 };
+
+// ============================================
+// STEP TRANSITION ANIMATIONS
+// ============================================
+
+/** Step slide transition for multi-step wizards */
+export const stepSlide: Variants = {
+  hidden: { opacity: 0, x: 20 },
+  visible: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
+
+/** Step slide transition timing */
+export const stepSlideTransition: Transition = {
+  duration: 0.25,
+};
+
+/** Fade overlay for modal backdrops */
+export const fadeOverlay: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+/** Subtle tap shrink for thumbnails */
+export const tapShrink = {
+  scale: 0.96,
+};

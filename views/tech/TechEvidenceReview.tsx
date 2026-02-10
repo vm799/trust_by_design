@@ -21,25 +21,13 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
-import { Job } from '../../types';
-import { EmptyState, LoadingSkeleton, ActionButton } from '../../components/ui';
+import { Job, Photo } from '../../types';
+import { EmptyState, LoadingSkeleton, ActionButton, ErrorState } from '../../components/ui';
 import SealingProgressModal, { SealingStatus } from '../../components/ui/SealingProgressModal';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
-import { fadeInUp, fadeInScale } from '../../lib/animations';
+import { fadeInUp, fadeInScale, stepSlide, stepSlideTransition, fadeOverlay, tapShrink } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
-import { celebrateSuccess, hapticFeedback } from '../../lib/microInteractions';
-
-interface Photo {
-  id?: string;
-  url?: string;
-  localPath?: string;
-  type?: 'before' | 'during' | 'after';
-  timestamp?: string;
-  lat?: number;
-  lng?: number;
-  w3w?: string;
-  w3w_verified?: boolean;
-}
+import { celebrateSuccess, hapticFeedback, showToast } from '../../lib/microInteractions';
 
 const SATISFACTION_STATEMENT =
   "I confirm I am satisfied with the completed work and approve this evidence for submission";
@@ -57,11 +45,17 @@ const NOTE_PROMPTS = [
   'Safety concerns',
 ] as const;
 
+const PHOTO_COLOR_MAP = {
+  blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', badge: 'bg-blue-500/80' },
+  amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', badge: 'bg-amber-500/80' },
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', badge: 'bg-emerald-500/80' },
+} as const;
+
 const TechEvidenceReview: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
+  const { jobs, clients, updateJob: contextUpdateJob, isLoading, error: dataError, refresh } = useData();
 
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
   const client = useMemo(
@@ -326,23 +320,26 @@ const TechEvidenceReview: React.FC = () => {
 
       navigate(`/tech/job/${job.id}`);
     } catch (error) {
-      alert('Failed to submit evidence. Please try again.');
+      showToast('Failed to submit evidence. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
   }, [hasSignature, isConfirmed, job, contextUpdateJob, navigate, autoSealJob, completionNotes]);
 
-  // Group photos by type
+  // Group photos by type (case-insensitive matching for canonical PhotoType)
   const groupedPhotos = useMemo(() => {
-    const photos = (job?.photos || []) as Photo[];
+    const photos = job?.photos || [];
     return {
-      before: photos.filter(p => p.type === 'before'),
-      during: photos.filter(p => p.type === 'during'),
-      after: photos.filter(p => p.type === 'after'),
+      before: photos.filter(p => p.type?.toLowerCase() === 'before'),
+      during: photos.filter(p => p.type?.toLowerCase() === 'during'),
+      after: photos.filter(p => p.type?.toLowerCase() === 'after'),
     };
   }, [job?.photos]);
 
-  const totalPhotos = groupedPhotos.before.length + groupedPhotos.during.length + groupedPhotos.after.length;
+  const totalPhotos = useMemo(
+    () => groupedPhotos.before.length + groupedPhotos.during.length + groupedPhotos.after.length,
+    [groupedPhotos]
+  );
 
   // Step navigation
   const goToStep = useCallback((step: number) => {
@@ -387,6 +384,14 @@ const TechEvidenceReview: React.FC = () => {
     );
   }
 
+  if (dataError) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <ErrorState message={dataError} onRetry={refresh} />
+      </div>
+    );
+  }
+
   if (!job) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
@@ -407,6 +412,7 @@ const TechEvidenceReview: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => currentStep > 0 ? handlePrevStep() : navigate(`/tech/job/${job.id}`)}
+            aria-label={currentStep > 0 ? 'Go to previous step' : 'Back to job details'}
             className="p-2 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -428,7 +434,8 @@ const TechEvidenceReview: React.FC = () => {
             <button
               key={step.id}
               onClick={() => goToStep(i)}
-              className="flex-1 flex flex-col items-center gap-1 group"
+              aria-label={`Go to step: ${step.label}`}
+              className="flex-1 flex flex-col items-center gap-1 group min-h-[44px]"
             >
               <div className="w-full flex items-center gap-1">
                 <div className={`
@@ -459,10 +466,11 @@ const TechEvidenceReview: React.FC = () => {
           {currentStep === 0 && (
             <motion.div
               key="review"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
+              variants={stepSlide}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={stepSlideTransition}
             >
               {/* Evidence Summary Card */}
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 mb-6">
@@ -546,10 +554,11 @@ const TechEvidenceReview: React.FC = () => {
           {currentStep === 1 && (
             <motion.div
               key="notes"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
+              variants={stepSlide}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={stepSlideTransition}
             >
               {/* Notes Header */}
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6">
@@ -617,10 +626,11 @@ const TechEvidenceReview: React.FC = () => {
           {currentStep === 2 && (
             <motion.div
               key="sign"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
+              variants={stepSlide}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={stepSlideTransition}
             >
               {!showSignaturePad ? (
                 /* Client Handoff Screen */
@@ -724,6 +734,7 @@ const TechEvidenceReview: React.FC = () => {
                         setShowSignaturePad(false);
                         clearSignature();
                       }}
+                      aria-label="Close signature pad"
                       className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
                     >
                       <span className="material-symbols-outlined">close</span>
@@ -871,9 +882,10 @@ const TechEvidenceReview: React.FC = () => {
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={fadeOverlay}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col"
             onClick={() => setSelectedPhoto(null)}
           >
@@ -887,6 +899,7 @@ const TechEvidenceReview: React.FC = () => {
                 {selectedPhoto.type}
               </span>
               <button
+                aria-label="Close photo viewer"
                 className="p-2 text-white hover:bg-white/10 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={() => setSelectedPhoto(null)}
               >
@@ -943,12 +956,7 @@ interface PhotoSectionProps {
 }
 
 const PhotoSection: React.FC<PhotoSectionProps> = ({ title, count, color, photos, onPhotoClick }) => {
-  const colorMap = {
-    blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', badge: 'bg-blue-500/80' },
-    amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', badge: 'bg-amber-500/80' },
-    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', badge: 'bg-emerald-500/80' },
-  };
-  const c = colorMap[color];
+  const c = PHOTO_COLOR_MAP[color];
 
   return (
     <div>
@@ -983,16 +991,11 @@ interface PhotoThumbnailProps {
 }
 
 const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, color, onClick }) => {
-  const badgeColor = {
-    blue: 'bg-blue-500/80',
-    amber: 'bg-amber-500/80',
-    emerald: 'bg-emerald-500/80',
-  };
-
   return (
     <motion.button
       onClick={onClick}
-      whileTap={{ scale: 0.96 }}
+      whileTap={tapShrink}
+      aria-label={`View ${photo.type || 'evidence'} photo`}
       className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-white/10 hover:border-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
     >
       <img
@@ -1001,7 +1004,7 @@ const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, color, onClick }
         className="w-full h-full object-cover"
       />
       {/* Type badge */}
-      <span className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase text-white ${badgeColor[color]}`}>
+      <span className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase text-white ${PHOTO_COLOR_MAP[color].badge}`}>
         {photo.type}
       </span>
       {/* Timestamp */}
