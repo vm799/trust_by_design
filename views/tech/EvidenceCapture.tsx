@@ -14,6 +14,7 @@ import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast, playCameraShutter } from '../../lib/microInteractions';
+import { compressImage } from '../../lib/imageCompression';
 import { MetadataHUD, BunkerStatusBadge } from '../../components/evidence';
 import { convertToW3W } from '../../lib/services/what3words';
 import { PhotoSavedConfirmation } from '../../components/PhotoSavedConfirmation';
@@ -187,7 +188,7 @@ const EvidenceCapture: React.FC = () => {
     }
   }, []);
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -206,8 +207,9 @@ const EvidenceCapture: React.FC = () => {
     // Play camera shutter sound for tactile feedback
     playCameraShutter();
 
-    // Convert to data URL
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    // Convert to data URL and compress to <500KB for storage efficiency
+    const rawDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const { dataUrl } = await compressImage(rawDataUrl, 500);
 
     const photo: CapturedPhoto = {
       dataUrl,
