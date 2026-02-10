@@ -19,6 +19,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { useData } from '../../lib/DataContext';
 import { DashboardRole, QueueItem, BackgroundItem } from '../../lib/dashboardState';
 import { isFeatureEnabled } from '../../lib/featureFlags';
+import { ROUTES } from '../../lib/routes';
 import FocusCard, { FocusCardSkeleton } from './FocusCard';
 import QueueList, { QueueListSkeleton } from './QueueList';
 import BackgroundCollapse, { BackgroundCollapseSkeleton } from './BackgroundCollapse';
@@ -186,7 +187,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
                 subtitle="Create a new job"
                 icon="add_circle"
                 statusColor="info"
-                route="/admin/jobs/new"
+                route={ROUTES.JOB_CREATE}
               />
               <QuickActionCard
                 id="action-new-client"
@@ -337,7 +338,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
               subtitle="Create a new job"
               icon="add_circle"
               statusColor="info"
-              route="/admin/jobs/new"
+              route={ROUTES.JOB_CREATE}
             />
             <QuickActionCard
               id="action-new-client"
@@ -409,7 +410,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
                 subtitle="Start tracking work"
                 icon="add_circle"
                 statusColor="info"
-                route="/admin/jobs/new"
+                route={ROUTES.JOB_CREATE}
               />
             </div>
           </div>

@@ -309,15 +309,16 @@ const JobDetail: React.FC = () => {
 
   const expiryInfo = getExpiryInfo();
 
-  // Get computed status
-  const getJobStatus = (): 'draft' | 'dispatched' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' => {
+  // Get computed status - proof-based: each stage requires evidence of progression
+  const getJobStatus = (): 'draft' | 'assigned' | 'sent' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' => {
     if (!job) return 'draft';
     if (job.status === 'Archived') return 'archived';
     if (job.invoiceId) return 'invoiced';
     if (job.sealedAt) return 'sealed';
     if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
     if (job.status === 'In Progress') return 'active';
-    if (job.technicianId || job.techId) return 'dispatched';
+    if (job.magicLinkUrl) return 'sent';
+    if (job.technicianId || job.techId) return 'assigned';
     return 'draft';
   };
 
@@ -349,7 +350,7 @@ const JobDetail: React.FC = () => {
   }
 
   const status = getJobStatus();
-  const canSend = (status === 'dispatched' || technician) && !job.sealedAt && status !== 'archived';
+  const canSend = (status === 'assigned' || status === 'sent' || technician) && !job.sealedAt && status !== 'archived';
 
   // Show conflict resolver if conflict is unresolved (Fix 3.3)
   if (unresolvedConflict && job) {
@@ -418,13 +419,14 @@ const JobDetail: React.FC = () => {
       />
 
       <PageContent>
-        {/* Status Banner */}
+        {/* Status Banner - proof-based: shows actual stage, not assumed progress */}
         <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
           status === 'archived' ? 'bg-slate-700/50 border border-slate-600/50' :
           status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
           status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
           status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
-          status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20' :
+          status === 'sent' ? 'bg-blue-500/10 border border-blue-500/20' :
+          status === 'assigned' ? 'bg-indigo-500/10 border border-indigo-500/20' :
           status === 'invoiced' ? 'bg-cyan-500/10 border border-cyan-500/20' :
           'bg-slate-800 border border-white/10'
         }`}>
@@ -433,7 +435,8 @@ const JobDetail: React.FC = () => {
             status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
             status === 'review' ? 'bg-purple-500/20 text-purple-400' :
             status === 'active' ? 'bg-amber-500/20 text-amber-400' :
-            status === 'dispatched' ? 'bg-blue-500/20 text-blue-400' :
+            status === 'sent' ? 'bg-blue-500/20 text-blue-400' :
+            status === 'assigned' ? 'bg-indigo-500/20 text-indigo-400' :
             status === 'invoiced' ? 'bg-cyan-500/20 text-cyan-400' :
             'bg-slate-700 text-slate-400'
           }`}>
@@ -442,7 +445,8 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
                status === 'active' ? 'pending' :
-               status === 'dispatched' ? 'send' :
+               status === 'sent' ? 'mark_email_read' :
+               status === 'assigned' ? 'person' :
                status === 'invoiced' ? 'receipt' :
                'edit_note'}
             </span>
@@ -453,7 +457,8 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
                status === 'active' ? 'Work In Progress' :
-               status === 'dispatched' ? 'Dispatched to Technician' :
+               status === 'sent' ? 'Link Sent to Technician' :
+               status === 'assigned' ? 'Technician Assigned' :
                status === 'invoiced' ? 'Invoiced' :
                'Draft - Needs Technician'}
             </p>
@@ -462,7 +467,8 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
-               status === 'dispatched' ? 'Send link to technician to start' :
+               status === 'sent' ? 'Waiting for technician to start work' :
+               status === 'assigned' ? 'Generate and send link to technician' :
                status === 'invoiced' ? 'Invoice has been generated' :
                'Assign a technician to dispatch this job'}
             </p>

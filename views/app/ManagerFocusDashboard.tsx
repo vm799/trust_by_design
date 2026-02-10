@@ -436,7 +436,7 @@ const ManagerFocusDashboard: React.FC = () => {
             </button>
           </div>
         </div>
-        <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
+        <ActionButton variant="primary" icon="add" to={ROUTES.JOB_CREATE}>
           New Job
         </ActionButton>
       </div>

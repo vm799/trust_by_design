@@ -10,7 +10,9 @@ import React from 'react';
 
 type StatusType =
   | 'draft'
+  | 'assigned'
   | 'dispatched'
+  | 'sent'
   | 'active'
   | 'review'
   | 'sealed'
@@ -34,9 +36,19 @@ const statusConfig: Record<StatusType, { label: string; icon: string; color: str
     icon: 'edit_note',
     color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
   },
+  assigned: {
+    label: 'Tech Assigned',
+    icon: 'person',
+    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  },
   dispatched: {
     label: 'Dispatched',
     icon: 'send',
+    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  },
+  sent: {
+    label: 'Link Sent',
+    icon: 'mark_email_read',
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   },
   active: {
@@ -105,7 +117,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   if (variant === 'dot') {
     const dotColors: Record<StatusType, string> = {
       draft: 'bg-slate-400',
+      assigned: 'bg-indigo-400',
       dispatched: 'bg-blue-400',
+      sent: 'bg-blue-400',
       active: 'bg-amber-400',
       review: 'bg-purple-400',
       sealed: 'bg-emerald-400',

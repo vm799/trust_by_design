@@ -89,11 +89,39 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
     };
   }
 
-  // DISPATCHED: Created but not yet started or no evidence
+  // SENT: Magic link generated (proof of dispatch)
+  if (job.magicLinkUrl) {
+    return {
+      stage: 'dispatched',
+      label: 'Link Sent',
+      icon: 'mark_email_read',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/20',
+      pulseColor: 'blue',
+      glowClass: '',
+    };
+  }
+
+  // ASSIGNED: Tech assigned but no link yet
+  if (job.technicianId || job.techId) {
+    return {
+      stage: 'dispatched',
+      label: 'Tech Assigned',
+      icon: 'person',
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/10',
+      borderColor: 'border-indigo-500/20',
+      pulseColor: 'none',
+      glowClass: '',
+    };
+  }
+
+  // DRAFT: No technician assigned
   return {
     stage: 'dispatched',
-    label: 'Dispatched',
-    icon: 'send',
+    label: 'Draft',
+    icon: 'edit_note',
     color: 'text-slate-400',
     bgColor: 'bg-slate-800',
     borderColor: 'border-slate-700',
