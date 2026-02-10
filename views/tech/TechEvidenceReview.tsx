@@ -1,13 +1,18 @@
 /**
  * TechEvidenceReview - Technician Evidence Review with Client Signature
  *
- * Shows evidence gallery → client satisfaction statement → signature → auto-seal
+ * Guided 3-step completion flow:
+ *   Step 1: Review Evidence (photo gallery with larger thumbnails)
+ *   Step 2: Completion Notes (technician documents work performed)
+ *   Step 3: Client Attestation (handoff screen + signature + seal)
  *
- * Workflow:
- * 1. Technician reviews all captured photos
- * 2. Client reviews satisfaction statement
- * 3. Client signs to approve evidence
- * 4. Status changes to 'Submitted' and auto-seal triggers
+ * UX Principles:
+ * - Stepper progress gives technicians confidence and orientation
+ * - Completion notes capture critical field observations
+ * - "Hand to Client" transition creates a clean handoff moment
+ * - 280px signature canvas for comfortable signing
+ * - 2-column photo grid for better visibility in bright sunlight
+ * - Color-coded sections: blue (review) → amber (notes) → emerald (sign)
  *
  * Phase G: Technician Portal - Evidence Flow
  */
@@ -20,7 +25,7 @@ import { Job } from '../../types';
 import { EmptyState, LoadingSkeleton, ActionButton } from '../../components/ui';
 import SealingProgressModal, { SealingStatus } from '../../components/ui/SealingProgressModal';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
-import { fadeInUp } from '../../lib/animations';
+import { fadeInUp, fadeInScale } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
 import { celebrateSuccess, hapticFeedback } from '../../lib/microInteractions';
 
@@ -36,25 +41,45 @@ interface Photo {
   w3w_verified?: boolean;
 }
 
-// Client satisfaction statement (as per requirements)
 const SATISFACTION_STATEMENT =
   "I confirm I am satisfied with the completed work and approve this evidence for submission";
+
+const COMPLETION_STEPS = [
+  { id: 'review', label: 'Review Evidence', icon: 'photo_library' },
+  { id: 'notes', label: 'Completion Notes', icon: 'edit_note' },
+  { id: 'sign', label: 'Client Attestation', icon: 'draw' },
+] as const;
+
+const NOTE_PROMPTS = [
+  'Work performed',
+  'Issues found',
+  'Follow-up needed',
+  'Safety concerns',
+] as const;
 
 const TechEvidenceReview: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  // Use DataContext for centralized state management
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
 
-  // Derive job and client from DataContext (memoized)
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
   const client = useMemo(
     () => (job ? clients.find(c => c.id === job.clientId) || null : null),
     [clients, job]
   );
 
+  // Stepper state
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Notes state
+  const [completionNotes, setCompletionNotes] = useState('');
+  const [activeNotePrompt, setActiveNotePrompt] = useState<string | null>(null);
+
+  // Photo viewer
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+
+  // Signature state
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -69,6 +94,7 @@ const TechEvidenceReview: React.FC = () => {
 
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const notesRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Initialize canvas with gradient background
   React.useEffect(() => {
@@ -92,27 +118,31 @@ const TechEvidenceReview: React.FC = () => {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.lineWidth = 3;
-      ctx.strokeStyle = '#10b981'; // emerald for signature ink
+      ctx.strokeStyle = '#10b981';
 
-      // Dark gradient background (slate-900 to slate-800)
       const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
-      gradient.addColorStop(0, '#0f172a'); // slate-900
-      gradient.addColorStop(1, '#1e293b'); // slate-800
+      gradient.addColorStop(0, '#0f172a');
+      gradient.addColorStop(1, '#1e293b');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Draw animated signature line guide with glow
-      ctx.strokeStyle = '#10b981'; // emerald-500
+      // Signature line guide
+      ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.4; // Semi-transparent for subtle effect
+      ctx.globalAlpha = 0.3;
       ctx.beginPath();
-      ctx.moveTo(20, rect.height - 40);
-      ctx.lineTo(rect.width - 20, rect.height - 40);
+      ctx.moveTo(24, rect.height - 48);
+      ctx.lineTo(rect.width - 24, rect.height - 48);
       ctx.stroke();
 
-      // Reset for drawing
+      // "Sign here" label
+      ctx.font = '12px system-ui';
+      ctx.fillStyle = '#10b981';
+      ctx.globalAlpha = 0.4;
+      ctx.fillText('Sign here', 24, rect.height - 56);
+
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#10b981'; // emerald-500 for clear signature strokes
+      ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 3;
     }
   }, [showSignaturePad]);
@@ -165,7 +195,6 @@ const TechEvidenceReview: React.FC = () => {
         ctx.stroke();
         if (!hasSignature) {
           setHasSignature(true);
-          // Trigger success animation and haptic feedback on first signature stroke
           hapticFeedback('light');
         }
       }
@@ -190,24 +219,27 @@ const TechEvidenceReview: React.FC = () => {
     const rect = container.getBoundingClientRect();
 
     if (ctx) {
-      // Dark gradient background (slate-900 to slate-800)
       const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
-      gradient.addColorStop(0, '#0f172a'); // slate-900
-      gradient.addColorStop(1, '#1e293b'); // slate-800
+      gradient.addColorStop(0, '#0f172a');
+      gradient.addColorStop(1, '#1e293b');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Redraw signature line guide with glow
-      ctx.strokeStyle = '#10b981'; // emerald-500
+      ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.4;
+      ctx.globalAlpha = 0.3;
       ctx.beginPath();
-      ctx.moveTo(20, rect.height - 40);
-      ctx.lineTo(rect.width - 20, rect.height - 40);
+      ctx.moveTo(24, rect.height - 48);
+      ctx.lineTo(rect.width - 24, rect.height - 48);
       ctx.stroke();
 
+      ctx.font = '12px system-ui';
+      ctx.fillStyle = '#10b981';
+      ctx.globalAlpha = 0.4;
+      ctx.fillText('Sign here', 24, rect.height - 56);
+
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#10b981'; // emerald-500
+      ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 3;
 
       setHasSignature(false);
@@ -215,31 +247,26 @@ const TechEvidenceReview: React.FC = () => {
     }
   }, []);
 
-  // Auto-seal evidence after job submission
-  const autoSealJob = useCallback(async (jobId: string) => {
+  const autoSealJob = useCallback(async (sealJobId: string) => {
     setSealingModalOpen(true);
     setSealingStatus('hashing');
     setSealingProgress(0);
     setSealingError(undefined);
 
     try {
-      // Phase 1: Hashing (0-33%)
       setSealingProgress(10);
       await new Promise(resolve => setTimeout(resolve, 300));
       setSealingProgress(33);
 
-      // Phase 2: Signing (33-66%)
       setSealingStatus('signing');
       setSealingProgress(40);
       await new Promise(resolve => setTimeout(resolve, 300));
       setSealingProgress(66);
 
-      // Phase 3: Storing (66-90%)
       setSealingStatus('storing');
       setSealingProgress(75);
 
-      // Invoke seal-evidence edge function
-      const result = await invokeSealing(jobId);
+      const result = await invokeSealing(sealJobId);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to seal evidence');
@@ -248,11 +275,9 @@ const TechEvidenceReview: React.FC = () => {
       setSealingProgress(90);
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Phase 4: Complete (90-100%)
       setSealingProgress(100);
       setSealingStatus('complete');
 
-      // Update job with seal data
       if (job) {
         const sealedJob: Job = {
           ...job,
@@ -262,13 +287,11 @@ const TechEvidenceReview: React.FC = () => {
         contextUpdateJob(sealedJob);
       }
     } catch (error) {
-      console.error('Auto-seal failed:', error);
       setSealingStatus('error');
       setSealingError(error instanceof Error ? error.message : 'Failed to seal evidence');
     }
   }, [job, contextUpdateJob]);
 
-  // Retry sealing on failure
   const handleSealRetry = useCallback(() => {
     if (job) {
       autoSealJob(job.id);
@@ -283,7 +306,6 @@ const TechEvidenceReview: React.FC = () => {
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
       const timestamp = new Date().toISOString();
 
-      // Trigger celebration effects on successful signature capture
       celebrateSuccess();
       hapticFeedback('success');
 
@@ -294,23 +316,21 @@ const TechEvidenceReview: React.FC = () => {
           timestamp,
           confirmed: true,
         },
-        status: 'Submitted', // Auto-advance to Submitted - triggers auto-seal
+        completionNotes: completionNotes || undefined,
+        status: 'Submitted',
       };
 
       contextUpdateJob(updatedJob);
 
-      // AUTO-SEAL: Trigger cryptographic sealing on job submission
       await autoSealJob(job.id);
 
-      // Navigate back to job detail after sealing completes
       navigate(`/tech/job/${job.id}`);
     } catch (error) {
-      console.error('Failed to submit evidence:', error);
       alert('Failed to submit evidence. Please try again.');
     } finally {
       setSubmitting(false);
     }
-  }, [hasSignature, isConfirmed, job, contextUpdateJob, navigate, autoSealJob]);
+  }, [hasSignature, isConfirmed, job, contextUpdateJob, navigate, autoSealJob, completionNotes]);
 
   // Group photos by type
   const groupedPhotos = useMemo(() => {
@@ -323,6 +343,41 @@ const TechEvidenceReview: React.FC = () => {
   }, [job?.photos]);
 
   const totalPhotos = groupedPhotos.before.length + groupedPhotos.during.length + groupedPhotos.after.length;
+
+  // Step navigation
+  const goToStep = useCallback((step: number) => {
+    if (step >= 0 && step <= 2) {
+      setCurrentStep(step);
+      hapticFeedback('light');
+    }
+  }, []);
+
+  const handleNextStep = useCallback(() => {
+    if (currentStep < 2) {
+      setCurrentStep(prev => prev + 1);
+      hapticFeedback('light');
+      // Scroll to top of content on step change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
+
+  const handlePrevStep = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+      hapticFeedback('light');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
+
+  // Insert note prompt chip
+  const handleNotePrompt = useCallback((prompt: string) => {
+    const prefix = completionNotes.length > 0 ? '\n\n' : '';
+    const newText = `${completionNotes}${prefix}${prompt}: `;
+    setCompletionNotes(newText);
+    setActiveNotePrompt(prompt);
+    // Focus textarea
+    setTimeout(() => notesRef.current?.focus(), 100);
+  }, [completionNotes]);
 
   if (isLoading) {
     return (
@@ -348,259 +403,469 @@ const TechEvidenceReview: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4">
-        <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-3">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(`/tech/job/${job.id}`)}
-            className="p-1 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+            onClick={() => currentStep > 0 ? handlePrevStep() : navigate(`/tech/job/${job.id}`)}
+            className="p-2 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <div className="flex-1">
-            <h1 className="font-medium text-white">Evidence Review</h1>
-            <p className="text-xs text-slate-500">{client?.name}</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-semibold text-white text-sm truncate">
+              {COMPLETION_STEPS[currentStep].label}
+            </h1>
+            <p className="text-xs text-slate-500 truncate">
+              {job.title} {client ? `\u2022 ${client.name}` : ''}
+            </p>
           </div>
           <OfflineIndicator />
         </div>
+
+        {/* Stepper Progress Bar */}
+        <div className="flex items-center gap-1.5 mt-3">
+          {COMPLETION_STEPS.map((step, i) => (
+            <button
+              key={step.id}
+              onClick={() => goToStep(i)}
+              className="flex-1 flex flex-col items-center gap-1 group"
+            >
+              <div className="w-full flex items-center gap-1">
+                <div className={`
+                  h-1.5 flex-1 rounded-full transition-all duration-500
+                  ${i < currentStep
+                    ? 'bg-emerald-500'
+                    : i === currentStep
+                    ? step.id === 'review' ? 'bg-blue-500' : step.id === 'notes' ? 'bg-amber-500' : 'bg-emerald-500'
+                    : 'bg-slate-800'
+                  }
+                `} />
+              </div>
+              <span className={`
+                text-[10px] font-medium transition-colors
+                ${i <= currentStep ? 'text-slate-300' : 'text-slate-600'}
+              `}>
+                {step.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </header>
 
-      {/* Content */}
-      <main className="flex-1 px-4 py-6 pb-32 overflow-y-auto">
-        {/* Photo Gallery Section */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
-              Captured Evidence
-            </h2>
-            <span className="text-xs text-emerald-400 font-medium">
-              {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          {totalPhotos === 0 ? (
-            <EmptyState
-              icon="photo_camera"
-              title="No evidence captured"
-              description="Return to job and capture photos first."
-            />
-          ) : (
-            <div className="space-y-6">
-              {/* Before Photos */}
-              {groupedPhotos.before.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                    Before ({groupedPhotos.before.length})
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {groupedPhotos.before.map((photo, i) => (
-                      <PhotoThumbnail
-                        key={photo.id || photo.url || photo.timestamp || `before-${i}`}
-                        photo={photo}
-                        onClick={() => setSelectedPhoto(photo)}
-                      />
-                    ))}
+      {/* Content - Step Based */}
+      <main className="flex-1 px-4 py-5 pb-32 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {/* STEP 1: Review Evidence */}
+          {currentStep === 0 && (
+            <motion.div
+              key="review"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* Evidence Summary Card */}
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="size-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-blue-400">photo_library</span>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="font-semibold text-white">Evidence Summary</h2>
+                    <p className="text-xs text-slate-400">
+                      {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} captured
+                    </p>
                   </div>
                 </div>
-              )}
+                <div className="flex gap-2">
+                  {groupedPhotos.before.length > 0 && (
+                    <span className="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-medium">
+                      {groupedPhotos.before.length} Before
+                    </span>
+                  )}
+                  {groupedPhotos.during.length > 0 && (
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-medium">
+                      {groupedPhotos.during.length} During
+                    </span>
+                  )}
+                  {groupedPhotos.after.length > 0 && (
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-medium">
+                      {groupedPhotos.after.length} After
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              {/* During Photos */}
-              {groupedPhotos.during.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                    During ({groupedPhotos.during.length})
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {groupedPhotos.during.map((photo, i) => (
-                      <PhotoThumbnail
-                        key={photo.id || photo.url || photo.timestamp || `during-${i}`}
-                        photo={photo}
-                        onClick={() => setSelectedPhoto(photo)}
-                      />
-                    ))}
-                  </div>
+              {/* Photo Gallery */}
+              {totalPhotos === 0 ? (
+                <EmptyState
+                  icon="photo_camera"
+                  title="No evidence captured"
+                  description="Return to job and capture photos first."
+                />
+              ) : (
+                <div className="space-y-6">
+                  {/* Before Photos */}
+                  {groupedPhotos.before.length > 0 && (
+                    <PhotoSection
+                      title="Before"
+                      count={groupedPhotos.before.length}
+                      color="blue"
+                      photos={groupedPhotos.before}
+                      onPhotoClick={setSelectedPhoto}
+                    />
+                  )}
+
+                  {/* During Photos */}
+                  {groupedPhotos.during.length > 0 && (
+                    <PhotoSection
+                      title="During"
+                      count={groupedPhotos.during.length}
+                      color="amber"
+                      photos={groupedPhotos.during}
+                      onPhotoClick={setSelectedPhoto}
+                    />
+                  )}
+
+                  {/* After Photos */}
+                  {groupedPhotos.after.length > 0 && (
+                    <PhotoSection
+                      title="After"
+                      count={groupedPhotos.after.length}
+                      color="emerald"
+                      photos={groupedPhotos.after}
+                      onPhotoClick={setSelectedPhoto}
+                    />
+                  )}
                 </div>
               )}
-
-              {/* After Photos */}
-              {groupedPhotos.after.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                    After ({groupedPhotos.after.length})
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {groupedPhotos.after.map((photo, i) => (
-                      <PhotoThumbnail
-                        key={photo.id || photo.url || photo.timestamp || `after-${i}`}
-                        photo={photo}
-                        onClick={() => setSelectedPhoto(photo)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            </motion.div>
           )}
-        </section>
 
-        {/* Client Satisfaction & Signature Section */}
-        {!showSignaturePad ? (
-          <motion.section variants={fadeInUp} initial="hidden" animate="visible">
-            <div className="bg-emerald-950/30 border-2 border-emerald-500/20 rounded-2xl p-6">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-emerald-400 text-2xl">
-                    verified
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <h2 className="font-bold text-white text-lg mb-2">
-                    Client Satisfaction Confirmation
-                  </h2>
-                  <p className="text-base font-bold text-white leading-relaxed">
-                    {SATISFACTION_STATEMENT}
-                  </p>
-                </div>
-              </div>
-
-              <ActionButton
-                variant="primary"
-                icon="draw"
-                onClick={() => setShowSignaturePad(true)}
-                fullWidth
-                size="lg"
-                disabled={totalPhotos === 0}
-              >
-                Request Client Signature
-              </ActionButton>
-
-              {totalPhotos === 0 && (
-                <p className="text-xs text-center text-amber-400 mt-2">
-                  Capture photos before requesting signature
-                </p>
-              )}
-            </div>
-          </motion.section>
-        ) : (
-          /* Signature Pad */
-          <motion.section
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            className="bg-slate-900 border-2 border-slate-800 rounded-2xl overflow-hidden"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-emerald-950/20">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-emerald-400">
-                    verified
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white">Client Confirmation</h3>
-                  <p className="text-sm text-slate-400">
-                    {client?.name || 'Client'}, please sign below
-                  </p>
+          {/* STEP 2: Completion Notes */}
+          {currentStep === 1 && (
+            <motion.div
+              key="notes"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* Notes Header */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-amber-400">edit_note</span>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="font-semibold text-white">Completion Notes</h2>
+                    <p className="text-xs text-slate-400">
+                      Document work performed, issues found, or follow-up needed
+                    </p>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  setShowSignaturePad(false);
-                  clearSignature();
-                }}
-                className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 min-h-[44px] min-w-[44px]"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
 
-            {/* Satisfaction Statement */}
-            <div className="p-4 bg-emerald-500/10 border-b border-emerald-500/20">
-              <p className="text-base font-bold text-white leading-relaxed">
-                {SATISFACTION_STATEMENT}
-              </p>
-            </div>
+              {/* Quick Note Prompts */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {NOTE_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleNotePrompt(prompt)}
+                    className={`
+                      px-3.5 py-2 rounded-xl text-sm font-medium transition-all min-h-[44px]
+                      ${activeNotePrompt === prompt
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700'
+                      }
+                    `}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
 
-            {/* Canvas */}
-            <div className="p-4">
-              <motion.div
-                ref={containerRef}
-                className="h-[200px] rounded-xl overflow-hidden border-2 border-emerald-500/40 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-lg shadow-emerald-500/20"
-                animate={hasSignature ? { boxShadow: '0 0 24px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 12px rgba(16, 185, 129, 0.15)' }}
-                transition={{ duration: 0.5, repeat: hasSignature ? Infinity : 0, repeatType: 'reverse' }}
-              >
-                <canvas
-                  ref={canvasRef}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                  className="w-full h-full cursor-crosshair touch-none"
+              {/* Notes Textarea */}
+              <div className="relative">
+                <textarea
+                  ref={notesRef}
+                  value={completionNotes}
+                  onChange={(e) => {
+                    setCompletionNotes(e.target.value);
+                    setActiveNotePrompt(null);
+                  }}
+                  placeholder="Describe the work completed, any issues found, or important notes for the client and office..."
+                  rows={8}
+                  className="w-full bg-slate-900 border-2 border-slate-700 focus:border-amber-500/50 rounded-2xl p-4 text-white text-base placeholder:text-slate-600 resize-none focus:outline-none transition-colors leading-relaxed"
                 />
-              </motion.div>
+                <div className="absolute bottom-3 right-3 text-xs text-slate-600">
+                  {completionNotes.length > 0 ? `${completionNotes.length} chars` : 'Optional'}
+                </div>
+              </div>
 
-              {!hasSignature && (
-                <p className="text-xs text-slate-500 text-center mt-2">
-                  Sign above the line with your finger or stylus
+              {/* Helpful tip */}
+              <div className="mt-4 flex items-start gap-2.5 bg-slate-900/50 border border-white/5 rounded-xl p-3">
+                <span className="material-symbols-outlined text-sm text-amber-400 mt-0.5">lightbulb</span>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Good notes help with invoicing, dispute resolution, and follow-up scheduling. Include what was done, any problems discovered, and recommended next steps.
                 </p>
-              )}
+              </div>
+            </motion.div>
+          )}
 
-              {hasSignature && (
-                <button
-                  onClick={clearSignature}
-                  className="mt-2 px-4 py-2 text-sm text-slate-400 hover:text-white"
+          {/* STEP 3: Client Attestation */}
+          {currentStep === 2 && (
+            <motion.div
+              key="sign"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+            >
+              {!showSignaturePad ? (
+                /* Client Handoff Screen */
+                <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+                  {/* Handoff Card */}
+                  <div className="bg-gradient-to-br from-emerald-950/60 to-emerald-900/30 border-2 border-emerald-500/30 rounded-3xl p-6 mb-6 text-center">
+                    <div className="size-16 mx-auto mb-4 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-3xl text-emerald-400">
+                        phone_forwarded
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">
+                      Hand Device to Client
+                    </h2>
+                    <p className="text-slate-300 text-sm mb-1">
+                      Please pass the device to
+                    </p>
+                    <p className="text-emerald-400 text-lg font-bold">
+                      {client?.name || 'the client'}
+                    </p>
+                  </div>
+
+                  {/* Evidence Summary for Client */}
+                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 mb-6">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                      Evidence to be sealed
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm text-blue-400">photo_camera</span>
+                        <span className="text-sm text-white font-medium">{totalPhotos} photos</span>
+                      </div>
+                      {completionNotes && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-sm text-amber-400">description</span>
+                          <span className="text-sm text-white font-medium">Notes attached</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Satisfaction Statement */}
+                  <div className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-2xl p-5 mb-6">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="material-symbols-outlined text-emerald-400">verified</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-2">
+                          Client Satisfaction Confirmation
+                        </h3>
+                        <p className="text-base text-white leading-relaxed font-medium">
+                          {SATISFACTION_STATEMENT}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ActionButton
+                    variant="primary"
+                    icon="draw"
+                    onClick={() => setShowSignaturePad(true)}
+                    fullWidth
+                    size="lg"
+                    disabled={totalPhotos === 0}
+                  >
+                    Sign to Confirm
+                  </ActionButton>
+
+                  {totalPhotos === 0 && (
+                    <p className="text-xs text-center text-amber-400 mt-2">
+                      Capture photos before requesting signature
+                    </p>
+                  )}
+                </motion.div>
+              ) : (
+                /* Signature Pad */
+                <motion.div
+                  variants={fadeInScale}
+                  initial="hidden"
+                  animate="visible"
+                  className="bg-slate-900 border-2 border-emerald-500/30 rounded-2xl overflow-hidden"
                 >
-                  Clear signature
-                </button>
+                  {/* Signature Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-emerald-950/30">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-emerald-400">draw</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-sm">
+                          {client?.name || 'Client'}, sign below
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          Use your finger or stylus
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowSignaturePad(false);
+                        clearSignature();
+                      }}
+                      className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+
+                  {/* Compact Statement Reminder */}
+                  <div className="px-4 py-3 bg-emerald-500/5 border-b border-emerald-500/10">
+                    <p className="text-sm text-emerald-300/80 leading-relaxed">
+                      &ldquo;{SATISFACTION_STATEMENT}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Canvas - 280px for comfortable signing */}
+                  <div className="p-4">
+                    <motion.div
+                      ref={containerRef}
+                      className="h-[280px] rounded-2xl overflow-hidden border-2 transition-all duration-500"
+                      style={{
+                        borderColor: hasSignature ? 'rgba(16, 185, 129, 0.5)' : 'rgba(16, 185, 129, 0.2)',
+                        boxShadow: hasSignature
+                          ? '0 0 30px rgba(16, 185, 129, 0.2), inset 0 0 30px rgba(16, 185, 129, 0.05)'
+                          : '0 0 15px rgba(16, 185, 129, 0.1)',
+                      }}
+                    >
+                      <canvas
+                        ref={canvasRef}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        className="w-full h-full cursor-crosshair touch-none"
+                      />
+                    </motion.div>
+
+                    {!hasSignature && (
+                      <p className="text-xs text-slate-500 text-center mt-3">
+                        Draw your signature above the line
+                      </p>
+                    )}
+
+                    {hasSignature && (
+                      <div className="flex justify-center mt-3">
+                        <button
+                          onClick={clearSignature}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors min-h-[44px]"
+                        >
+                          <span className="material-symbols-outlined text-sm">refresh</span>
+                          Clear and redo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirmation Checkbox */}
+                  <div className="px-4 pb-4">
+                    <label className="flex items-start gap-3.5 cursor-pointer p-4 rounded-xl bg-slate-800/50 border-2 transition-colors hover:border-emerald-700 min-h-[56px]"
+                      style={{
+                        borderColor: isConfirmed ? 'rgba(16, 185, 129, 0.4)' : 'rgba(51, 65, 85, 1)',
+                        backgroundColor: isConfirmed ? 'rgba(16, 185, 129, 0.05)' : undefined,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isConfirmed}
+                        onChange={(e) => setIsConfirmed(e.target.checked)}
+                        className="mt-0.5 w-7 h-7 rounded-lg accent-emerald-500 flex-shrink-0"
+                      />
+                      <span className="text-slate-200 leading-relaxed text-base">
+                        I confirm the statement above is true and authorize submission of this evidence.
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+                    <ActionButton
+                      variant="primary"
+                      icon="lock"
+                      onClick={handleSubmitWithSignature}
+                      disabled={!hasSignature || !isConfirmed}
+                      loading={submitting}
+                      fullWidth
+                      size="lg"
+                    >
+                      {submitting ? 'Sealing Evidence...' : 'Submit & Seal Evidence'}
+                    </ActionButton>
+
+                    {!hasSignature && (
+                      <p className="text-xs text-center text-slate-500 mt-2">
+                        Signature required to proceed
+                      </p>
+                    )}
+                    {hasSignature && !isConfirmed && (
+                      <p className="text-xs text-center text-amber-400 mt-2">
+                        Tick the confirmation box above
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
 
-            {/* Confirmation Checkbox */}
-            <div className="px-4 pb-4">
-              <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl bg-slate-800/50 border-2 border-slate-700 hover:border-emerald-700 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={isConfirmed}
-                  onChange={(e) => setIsConfirmed(e.target.checked)}
-                  className="mt-1 w-6 h-6 rounded accent-emerald-500"
-                />
-                <span className="text-slate-300 leading-relaxed text-sm">
-                  I confirm the statement above is true and authorize submission of this evidence.
-                </span>
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <div className="p-4 border-t border-slate-800 bg-slate-800/30">
+      {/* Bottom Navigation - Step Controls */}
+      {!showSignaturePad && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-safe">
+          <div className="flex gap-3">
+            {currentStep > 0 && (
+              <ActionButton
+                variant="ghost"
+                icon="arrow_back"
+                onClick={handlePrevStep}
+                size="lg"
+              >
+                Back
+              </ActionButton>
+            )}
+            {currentStep < 2 ? (
               <ActionButton
                 variant="primary"
-                icon="check_circle"
-                onClick={handleSubmitWithSignature}
-                disabled={!hasSignature || !isConfirmed}
-                loading={submitting}
+                icon="arrow_forward"
+                iconPosition="right"
+                onClick={handleNextStep}
                 fullWidth
                 size="lg"
               >
-                {submitting ? 'Submitting...' : 'Submit & Seal Evidence'}
+                {currentStep === 0 ? 'Continue to Notes' : 'Continue to Signing'}
               </ActionButton>
-
-              {!hasSignature && (
-                <p className="text-xs text-center text-slate-500 mt-2">
-                  Signature required
-                </p>
-              )}
-              {hasSignature && !isConfirmed && (
-                <p className="text-xs text-center text-amber-400 mt-2">
-                  Please confirm the statement above
-                </p>
-              )}
-            </div>
-          </motion.section>
-        )}
-      </main>
+            ) : null}
+          </div>
+          {/* Step hint */}
+          <p className="text-[10px] text-slate-600 text-center mt-2">
+            Step {currentStep + 1} of {COMPLETION_STEPS.length}
+          </p>
+        </div>
+      )}
 
       {/* Photo Viewer Modal */}
       <AnimatePresence>
@@ -609,39 +874,48 @@ const TechEvidenceReview: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col"
             onClick={() => setSelectedPhoto(null)}
           >
-            <button
-              className="absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-lg min-w-[44px] min-h-[44px]"
-              onClick={() => setSelectedPhoto(null)}
-            >
-              <span className="material-symbols-outlined text-2xl">close</span>
-            </button>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className="max-w-full max-h-[80vh]"
-              type="button"
-              aria-label="View evidence photo"
-            >
+            {/* Close bar */}
+            <div className="flex items-center justify-between px-4 py-3 bg-black/50">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
+                selectedPhoto.type === 'before' ? 'bg-blue-500/20 text-blue-400' :
+                selectedPhoto.type === 'during' ? 'bg-amber-500/20 text-amber-400' :
+                'bg-emerald-500/20 text-emerald-400'
+              }`}>
+                {selectedPhoto.type}
+              </span>
+              <button
+                className="p-2 text-white hover:bg-white/10 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+                onClick={() => setSelectedPhoto(null)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Photo */}
+            <div className="flex-1 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
               <img
                 src={selectedPhoto.url || selectedPhoto.localPath}
                 alt="Evidence"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                className="max-w-full max-h-full object-contain rounded-lg"
               />
-            </button>
-            {selectedPhoto.timestamp && (
-              <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur px-3 py-2 rounded-lg">
-                <p className="text-xs text-slate-400">
+            </div>
+
+            {/* Metadata bar */}
+            <div className="px-4 py-3 bg-black/50 flex items-center gap-4">
+              {selectedPhoto.timestamp && (
+                <span className="text-xs text-slate-400">
                   {new Date(selectedPhoto.timestamp).toLocaleString('en-GB')}
-                </p>
-                {selectedPhoto.w3w && (
-                  <p className="text-xs text-emerald-400 font-mono">
-                    {`///${selectedPhoto.w3w}`}
-                  </p>
-                )}
-              </div>
-            )}
+                </span>
+              )}
+              {selectedPhoto.w3w && (
+                <span className="text-xs text-emerald-400 font-mono">
+                  ///{selectedPhoto.w3w}
+                </span>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -659,36 +933,84 @@ const TechEvidenceReview: React.FC = () => {
   );
 };
 
-// Photo Thumbnail Component
+// Photo Section Component - 2-column grid with color coding
+interface PhotoSectionProps {
+  title: string;
+  count: number;
+  color: 'blue' | 'amber' | 'emerald';
+  photos: Photo[];
+  onPhotoClick: (photo: Photo) => void;
+}
+
+const PhotoSection: React.FC<PhotoSectionProps> = ({ title, count, color, photos, onPhotoClick }) => {
+  const colorMap = {
+    blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', badge: 'bg-blue-500/80' },
+    amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', badge: 'bg-amber-500/80' },
+    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', badge: 'bg-emerald-500/80' },
+  };
+  const c = colorMap[color];
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`w-1.5 h-5 rounded-full ${c.badge}`} />
+        <h3 className={`text-xs font-bold uppercase tracking-wider ${c.text}`}>
+          {title}
+        </h3>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${c.bg} ${c.text}`}>
+          {count}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {photos.map((photo, i) => (
+          <PhotoThumbnail
+            key={photo.id || photo.url || photo.timestamp || `${title}-${i}`}
+            photo={photo}
+            color={color}
+            onClick={() => onPhotoClick(photo)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Photo Thumbnail Component - Larger with better touch target
 interface PhotoThumbnailProps {
   photo: Photo;
+  color: 'blue' | 'amber' | 'emerald';
   onClick: () => void;
 }
 
-const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, onClick }) => {
+const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, color, onClick }) => {
+  const badgeColor = {
+    blue: 'bg-blue-500/80',
+    amber: 'bg-amber-500/80',
+    emerald: 'bg-emerald-500/80',
+  };
+
   return (
     <motion.button
       onClick={onClick}
-      whileTap={{ scale: 0.95 }}
-      className="relative aspect-square rounded-lg overflow-hidden bg-slate-800 border border-white/10 hover:border-primary/50 transition-colors"
+      whileTap={{ scale: 0.96 }}
+      className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-white/10 hover:border-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
     >
       <img
         src={photo.url || photo.localPath}
         alt={photo.type || 'Evidence'}
         className="w-full h-full object-cover"
       />
-      {photo.type && (
-        <span
-          className={`absolute top-1 left-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-            photo.type === 'before'
-              ? 'bg-blue-500/80 text-white'
-              : photo.type === 'during'
-              ? 'bg-amber-500/80 text-white'
-              : 'bg-emerald-500/80 text-white'
-          }`}
-        >
-          {photo.type}
-        </span>
+      {/* Type badge */}
+      <span className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase text-white ${badgeColor[color]}`}>
+        {photo.type}
+      </span>
+      {/* Timestamp */}
+      {photo.timestamp && (
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2 pt-6">
+          <p className="text-[10px] text-slate-300 font-mono">
+            {new Date(photo.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
       )}
     </motion.button>
   );

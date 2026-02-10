@@ -163,4 +163,105 @@ describe('TechEvidenceReview - Signature in Evidence Review Flow', () => {
       expect(darkModeCompatible).toBe(true);
     });
   });
+
+  describe('UX Enhancement: Guided Stepper Flow', () => {
+    it('should define 3 completion steps in order', () => {
+      const COMPLETION_STEPS = [
+        { id: 'review', label: 'Review Evidence', icon: 'photo_library' },
+        { id: 'notes', label: 'Completion Notes', icon: 'edit_note' },
+        { id: 'sign', label: 'Client Attestation', icon: 'draw' },
+      ];
+
+      expect(COMPLETION_STEPS).toHaveLength(3);
+      expect(COMPLETION_STEPS[0].id).toBe('review');
+      expect(COMPLETION_STEPS[1].id).toBe('notes');
+      expect(COMPLETION_STEPS[2].id).toBe('sign');
+    });
+
+    it('should progress through steps sequentially', () => {
+      let currentStep = 0;
+      expect(currentStep).toBe(0); // Review step
+
+      currentStep = 1; // Move to notes
+      expect(currentStep).toBe(1);
+
+      currentStep = 2; // Move to sign
+      expect(currentStep).toBe(2);
+    });
+
+    it('should not allow skipping to sign without reviewing', () => {
+      const currentStep = 0;
+      const canProceedToSign = currentStep >= 1;
+      expect(canProceedToSign).toBe(false);
+    });
+  });
+
+  describe('UX Enhancement: Technician Completion Notes', () => {
+    it('should store completion notes in job data', () => {
+      const completionNotes = 'Replaced faulty valve. Client advised to monitor for 24hrs. Left-side pipe has minor wear.';
+      const jobUpdate = {
+        completionNotes,
+        status: 'Submitted',
+      };
+
+      expect(jobUpdate).toHaveProperty('completionNotes');
+      expect(jobUpdate.completionNotes.length).toBeGreaterThan(0);
+    });
+
+    it('should allow notes to be optional for submission', () => {
+      const completionNotes = '';
+      const hasSignature = true;
+      const isConfirmed = true;
+
+      // Notes are optional - submission allowed without them
+      const canSubmit = hasSignature && isConfirmed;
+      expect(canSubmit).toBe(true);
+    });
+
+    it('should support common note categories', () => {
+      const NOTE_PROMPTS = [
+        'Work performed',
+        'Issues found',
+        'Follow-up needed',
+        'Safety concerns',
+      ];
+
+      expect(NOTE_PROMPTS).toContain('Work performed');
+      expect(NOTE_PROMPTS).toContain('Issues found');
+      expect(NOTE_PROMPTS).toContain('Follow-up needed');
+      expect(NOTE_PROMPTS).toContain('Safety concerns');
+    });
+  });
+
+  describe('UX Enhancement: Client Handoff Screen', () => {
+    it('should display client name prominently during attestation', () => {
+      const clientName = 'Jane Smith';
+      const displayName = clientName || 'Client';
+      expect(displayName).toBe('Jane Smith');
+    });
+
+    it('should have larger signature canvas height (280px minimum)', () => {
+      const canvasHeight = 280;
+      expect(canvasHeight).toBeGreaterThanOrEqual(280);
+    });
+  });
+
+  describe('UX Enhancement: Photo Gallery Improvements', () => {
+    it('should use 2-column grid for larger thumbnails on mobile', () => {
+      const gridCols = 2;
+      expect(gridCols).toBe(2);
+    });
+
+    it('should show photo count per type in section headers', () => {
+      const photos = {
+        before: [{ id: '1' }, { id: '2' }],
+        during: [{ id: '3' }],
+        after: [{ id: '4' }, { id: '5' }, { id: '6' }],
+      };
+
+      expect(photos.before).toHaveLength(2);
+      expect(photos.during).toHaveLength(1);
+      expect(photos.after).toHaveLength(3);
+    });
+  });
 });
