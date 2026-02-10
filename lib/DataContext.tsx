@@ -555,6 +555,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, []);
 
   const deleteJob = useCallback(async (id: string) => {
+    // Store original job before removal (for rollback on failure)
+    const originalJob = jobs.find(j => j.id === id);
+
     // Optimistic update: Remove from local state immediately
     setJobs(prev => prev.filter(j => j.id !== id));
 
@@ -565,13 +568,17 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
       if (!result.success) {
         // Restore to state if delete failed
-        setJobs(prev => [...prev, jobs.find(j => j.id === id)!].filter(Boolean) as Job[]);
-        console.error('[DataContext] Job delete failed:', result.error);
+        if (originalJob) {
+          setJobs(prev => [...prev, originalJob]);
+        }
+        throw new Error(result.error || 'Failed to delete job');
       }
     } catch (err) {
       // Restore to state if error occurred
-      setJobs(prev => [...prev, jobs.find(j => j.id === id)!].filter(Boolean) as Job[]);
-      console.error('[DataContext] Job delete error:', err);
+      if (originalJob) {
+        setJobs(prev => [...prev, originalJob]);
+      }
+      throw err instanceof Error ? err : new Error('Failed to delete job');
     }
   }, [jobs]);
 
