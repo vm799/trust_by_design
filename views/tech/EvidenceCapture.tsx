@@ -580,35 +580,52 @@ const EvidenceCapture: React.FC = () => {
             </div>
           </div>
 
-          {/* Photo Type Selector */}
+          {/* Photo Type Selector with Counts */}
           <div className="bg-slate-950 px-4 py-3 border-t border-white/10">
-            <p className="text-xs text-slate-500 text-center mb-2">Capturing</p>
             <div className="flex justify-center gap-2">
-              {(['before', 'during', 'after'] as PhotoType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setPhotoType(type)}
-                  className={`
-                    px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all
-                    ${photoType === type
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-800 text-slate-400'}
-                  `}
-                >
-                  {type}
-                </button>
-              ))}
+              {(['before', 'during', 'after'] as PhotoType[]).map((type) => {
+                const existingPhotos = (job?.photos || []).filter((p: { type?: string }) => p.type === type);
+                const typeColors = {
+                  before: { active: 'bg-blue-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-blue-400/20 text-blue-300' },
+                  during: { active: 'bg-amber-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-amber-400/20 text-amber-300' },
+                  after: { active: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-emerald-400/20 text-emerald-300' },
+                };
+                const colors = typeColors[type];
+                const isSelected = photoType === type;
+
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setPhotoType(type)}
+                    className={`
+                      flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium capitalize transition-all min-h-[48px]
+                      ${isSelected ? colors.active : colors.inactive}
+                    `}
+                  >
+                    {type}
+                    <span className={`
+                      text-[10px] font-bold px-1.5 py-0.5 rounded-md
+                      ${isSelected ? 'bg-white/20 text-white' : colors.badge}
+                    `}>
+                      {existingPhotos.length}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Capture Button */}
-          <div className="bg-slate-950 px-4 py-6 pb-safe flex justify-center">
+          <div className="bg-slate-950 px-4 py-6 pb-safe flex flex-col items-center gap-2">
             <button
               onClick={capturePhoto}
               className="size-20 rounded-full bg-white border-4 border-primary shadow-lg shadow-primary/30 flex items-center justify-center active:scale-95 transition-transform"
             >
               <span className="material-symbols-outlined text-4xl text-primary">photo_camera</span>
             </button>
+            <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+              Tap to capture {photoType}
+            </p>
           </div>
         </div>
       )}

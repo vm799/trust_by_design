@@ -111,6 +111,9 @@ export interface Job {
     confirmed: boolean; // Always true when present
   };
 
+  // Technician completion notes (work performed, issues, follow-up)
+  completionNotes?: string;
+
   // Phase 15: Field Proof System (Security-Hardened)
   // NOTE: Raw tokens are NEVER stored - only hashes
   techTokenHash?: string; // SHA256 hash of token (raw never stored)
