@@ -294,9 +294,11 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
 
   try {
     // Using bunker_jobs as primary table (jobs table doesn't exist)
+    // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
     const { data, error } = await supabase
       .from('bunker_jobs')
       .select('*')
+      .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -311,7 +313,8 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       client: row.client || '',
       clientId: row.client_id,
       technician: row.technician_name || '',
-      techId: row.technician_id,
+      techId: row.assigned_technician_id || row.technician_id,
+      technicianId: row.assigned_technician_id || row.technician_id,
       status: row.status || 'Pending',
       date: row.created_at?.split('T')[0],
       address: row.address,
@@ -331,6 +334,7 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       workspaceId: row.workspace_id || workspaceId,
       managerEmail: row.manager_email,
       clientEmail: row.client_email,
+      techEmail: row.technician_email,
     }));
 
     return { success: true, data: jobs };
@@ -741,6 +745,17 @@ export const generateMagicLink = async (
 
     if (!data) {
       return { success: false, error: 'Failed to create invite' };
+    }
+
+    // SECURITY FIX: Write technician_email to bunker_jobs for email-based matching
+    // This links the dispatched job to the technician's email so TechPortal can filter
+    try {
+      await supabase
+        .from('bunker_jobs')
+        .update({ technician_email: deliveryEmail })
+        .eq('id', jobId);
+    } catch (emailUpdateErr) {
+      console.warn('[generateMagicLink] Failed to set technician_email (non-critical):', emailUpdateErr);
     }
 
     // Use validated handshake URL with required email

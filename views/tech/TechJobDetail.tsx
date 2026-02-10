@@ -17,6 +17,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
+import { useAuth } from '../../lib/AuthContext';
 import { Job } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
@@ -70,11 +71,25 @@ const TechJobDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
+  const { userId, userEmail } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<{ type: 'start' | 'complete' | 'review'; message: string } | null>(null);
 
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
+  // Derive job and client from DataContext (memoized for performance)
+  // SECURITY FIX: Only find jobs assigned to this technician
+  const job = useMemo(() => {
+    const found = jobs.find(j => j.id === jobId) || null;
+    if (!found || !userId) return found;
+    // Ownership check: technician can only view their own jobs
+    // Match by UUID (techId/technicianId) OR by email (techEmail)
+    const isOwner = found.technicianId === userId ||
+      found.techId === userId ||
+      found.techMetadata?.createdByTechId === userId ||
+      (userEmail && found.techEmail && found.techEmail.toLowerCase() === userEmail.toLowerCase());
+    return isOwner ? found : null;
+  }, [jobs, jobId, userId, userEmail]);
   const client = useMemo(() =>
     job ? clients.find(c => c.id === job.clientId) || null : null,
     [clients, job]
