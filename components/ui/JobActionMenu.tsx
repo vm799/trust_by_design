@@ -4,14 +4,19 @@
  * Renders the correct set of action buttons based on job status,
  * technician assignment, seal state, and invoice state.
  *
- * Actions by lifecycle stage:
+ * Actions by lifecycle stage (proof-based transitions):
  * - Draft (no tech): Assign, Edit, Delete
- * - Dispatched (has tech, no link): Send Job, Reassign, Edit, Delete
- * - Sent (magic link exists): Remind, Chase, Resend, Reassign, Edit, Delete
+ * - Assigned (has tech, no link): Send Job, Reassign, Edit, Delete
+ * - Sent (magic link generated): Remind, Chase, Resend, Reassign, Edit, Delete
  * - In Progress: Chase (if stuck), Edit
  * - Complete/Submitted: Review & Seal, Edit
  * - Sealed: Generate Invoice, View Report
  * - Invoiced: View Report
+ *
+ * IMPORTANT: Stages reflect actual proof of progression:
+ * - "assigned" = technician selected (NOT dispatched until link exists)
+ * - "sent" = magic link generated (proof that link was created)
+ * - "active" = technician started work (status changed to In Progress)
  *
  * @see CLAUDE.md - Job Status Lifecycle
  */
@@ -61,16 +66,20 @@ export interface JobActionMenuProps {
 // ============================================================================
 
 /**
- * Determine the lifecycle stage of a job for action computation
+ * Determine the lifecycle stage of a job for action computation.
+ *
+ * Proof-based: Each stage requires actual evidence of progression,
+ * not just data presence. "assigned" means tech selected but no link
+ * generated. "sent" means a magic link URL exists as proof of dispatch.
  */
-function getJobStage(job: Job): 'draft' | 'dispatched' | 'sent' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' {
+function getJobStage(job: Job): 'draft' | 'assigned' | 'sent' | 'active' | 'review' | 'sealed' | 'invoiced' | 'archived' {
   if (job.status === 'Archived') return 'archived';
   if (job.invoiceId) return 'invoiced';
   if (job.sealedAt) return 'sealed';
   if (job.status === 'Complete' || job.status === 'Submitted') return 'review';
   if (job.status === 'In Progress') return 'active';
   if (job.magicLinkUrl) return 'sent';
-  if (job.technicianId || job.techId) return 'dispatched';
+  if (job.technicianId || job.techId) return 'assigned';
   return 'draft';
 }
 
@@ -130,12 +139,13 @@ export function getJobActions(job: Job, compact: boolean = false): JobActionConf
       }
       break;
 
-    case 'dispatched':
+    case 'assigned':
       actions.push({
         action: 'send',
-        label: 'Send Job',
+        label: 'Send Link',
         icon: 'send',
         variant: 'primary',
+        tooltip: 'Generate and send magic link to technician',
       });
       if (!compact) {
         actions.push({

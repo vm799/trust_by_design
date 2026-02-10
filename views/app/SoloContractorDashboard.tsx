@@ -290,7 +290,7 @@ const SoloContractorDashboard: React.FC = () => {
           <p className="text-slate-400 text-sm mb-6 max-w-xs">
             Create your first job to start capturing evidence and building your audit trail.
           </p>
-          <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
+          <ActionButton variant="primary" icon="add" to={ROUTES.JOB_CREATE}>
             Create First Job
           </ActionButton>
         </div>
@@ -311,7 +311,7 @@ const SoloContractorDashboard: React.FC = () => {
             </div>
           )}
         </div>
-        <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
+        <ActionButton variant="primary" icon="add" to={ROUTES.JOB_CREATE}>
           New Job
         </ActionButton>
       </div>
@@ -435,7 +435,7 @@ const SoloContractorDashboard: React.FC = () => {
           <motion.section variants={fadeInUp}>
             <div className="grid grid-cols-3 gap-3">
               <Link
-                to={ROUTES.JOB_NEW}
+                to={ROUTES.JOB_CREATE}
                 className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Create new job"
               >
