@@ -19,6 +19,7 @@ import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import { safeSaveDraft, loadDraft, clearDraft, migrateDraftFromLocalStorage } from '../../../lib/utils/storageUtils';
 import { JOB_STATUS, SYNC_STATUS } from '../../../lib/constants';
+import { hapticConfirm, hapticWarning } from '../../../lib/haptics';
 
 interface FormData {
   title: string;
@@ -266,6 +267,7 @@ const JobForm: React.FC = () => {
           priority: formData.priority,
         };
         contextUpdateJob(updatedJob);
+        hapticConfirm();
         navigate(route(ROUTES.JOB_DETAIL, { id }));
       } else {
         // Create new job
@@ -296,10 +298,12 @@ const JobForm: React.FC = () => {
           lastUpdated: Date.now(),
         };
         contextAddJob(newJob);
+        hapticConfirm();
         navigate(route(ROUTES.JOB_DETAIL, { id: newJob.id }));
       }
     } catch (error) {
       console.error('Failed to save job:', error);
+      hapticWarning();
       alert('Failed to save job. Please try again.');
     } finally {
       setSaving(false);
