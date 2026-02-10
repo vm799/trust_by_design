@@ -10,6 +10,7 @@ import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
+import { useAuth } from '../../lib/AuthContext';
 import { Job } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 
@@ -50,13 +51,23 @@ const TechJobDetail: React.FC = () => {
 
   // Use DataContext for centralized state management (CLAUDE.md mandate)
   const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
+  const { userId } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
   // Task 3.4: Error state for retry functionality
   const [actionError, setActionError] = useState<{ type: 'start' | 'complete' | 'review'; message: string } | null>(null);
 
   // Derive job and client from DataContext (memoized for performance)
-  const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
+  // SECURITY FIX: Only find jobs assigned to this technician
+  const job = useMemo(() => {
+    const found = jobs.find(j => j.id === jobId) || null;
+    if (!found || !userId) return found;
+    // Ownership check: technician can only view their own jobs
+    const isOwner = found.technicianId === userId ||
+      found.techId === userId ||
+      found.techMetadata?.createdByTechId === userId;
+    return isOwner ? found : null;
+  }, [jobs, jobId, userId]);
   const client = useMemo(() =>
     job ? clients.find(c => c.id === job.clientId) || null : null,
     [clients, job]
