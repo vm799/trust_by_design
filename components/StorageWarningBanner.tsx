@@ -78,10 +78,15 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
 
   if (!warning || isDismissed) return null;
 
-  const isCritical = warning.percent >= 90;
-  const barColor = isCritical ? 'bg-red-500' : 'bg-amber-500';
-  const textColor = isCritical ? 'text-red-400' : 'text-amber-400';
-  const bgStrip = isCritical ? 'bg-red-500/10' : 'bg-amber-500/10';
+  // 3-status color logic: Green (<70%), Yellow (70-90%), Red (>90%)
+  const isHealthy = warning.percent < 70;
+  const isActionRequired = warning.percent >= 70 && warning.percent <= 90;
+  const isCritical = warning.percent > 90;
+
+  const barColor = isCritical ? 'bg-red-500' : isActionRequired ? 'bg-amber-500' : 'bg-emerald-500';
+  const textColor = isCritical ? 'text-red-400' : isActionRequired ? 'text-amber-400' : 'text-emerald-400';
+  const bgStrip = isCritical ? 'bg-red-500/10' : isActionRequired ? 'bg-amber-500/10' : 'bg-emerald-500/10';
+  const statusLabel = isCritical ? 'Critical: Delete Data' : isActionRequired ? 'Action Required' : 'Healthy';
 
   return (
     <div className="w-full" role="status" aria-label="Storage usage warning">
@@ -93,20 +98,30 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
         aria-expanded={isExpanded}
         aria-controls="storage-panel"
       >
-        {/* Progress bar inline */}
-        <div className="w-20 sm:w-32 h-1.5 bg-slate-700 rounded-full overflow-hidden flex-shrink-0">
+        {/* Progress bar inline - max-width: 100%, relative units */}
+        <div className="w-20 sm:w-32 max-w-full h-1.5 bg-slate-700 rounded-full overflow-hidden flex-shrink-0">
           <div
-            className={`h-full ${barColor} transition-all`}
-            style={{ width: `${Math.min(warning.percent, 100)}%` }}
+            className={`h-full ${barColor} transition-all duration-300 rounded-full`}
+            style={{ width: `${Math.min(Math.round(warning.percent), 100)}%`, maxWidth: '100%' }}
           />
         </div>
 
         <span className={`text-xs font-bold ${textColor} whitespace-nowrap`}>
-          {warning.percent}% storage used
+          {Math.round(warning.percent)}% Used
         </span>
 
         <span className="text-xs text-slate-500 hidden sm:inline">
-          {(warning.usage / (1024 * 1024)).toFixed(1)}MB / {(warning.quota / (1024 * 1024)).toFixed(0)}MB
+          {warning.usage >= 1024 * 1024 * 1024
+            ? `${(warning.usage / (1024 * 1024 * 1024)).toFixed(1)}GB`
+            : `${(warning.usage / (1024 * 1024)).toFixed(1)}MB`
+          } of {warning.quota >= 1024 * 1024 * 1024
+            ? `${(warning.quota / (1024 * 1024 * 1024)).toFixed(0)}GB`
+            : `${(warning.quota / (1024 * 1024)).toFixed(0)}MB`
+          }
+        </span>
+
+        <span className={`text-[10px] font-bold ${textColor} hidden sm:inline`}>
+          {statusLabel}
         </span>
 
         <span className={`text-xs ${textColor} ml-auto flex items-center gap-1`}>

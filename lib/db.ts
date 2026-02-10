@@ -634,6 +634,11 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
   }
 
   try {
+    // Validate ID before sending to Supabase (prevent PostgreSQL type errors)
+    if (!jobId || typeof jobId !== 'string' || jobId.trim() === '') {
+      return { success: false, error: 'Invalid job ID' };
+    }
+
     // Fetch job first to get workspace_id for cache invalidation
     const { data: jobData } = await supabase
       .from('jobs')
@@ -647,6 +652,13 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
       .eq('id', jobId);
 
     if (error) {
+      // PostgreSQL type error (e.g., invalid UUID format)
+      if (error.message?.includes('invalid input syntax')) {
+        return {
+          success: false,
+          error: 'Invalid job ID format. The ID may be corrupted.'
+        };
+      }
       return { success: false, error: error.message };
     }
 
@@ -2065,12 +2077,29 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
   }
 
   try {
-    // Delete client
+    // Validate ID before sending to Supabase (prevent PostgreSQL type errors)
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      return { success: false, error: 'Invalid client ID' };
+    }
+
+    // Fetch workspace_id BEFORE deletion for cache invalidation
+    let workspaceIdForCache: string | null = null;
+    try {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('workspace_id')
+        .eq('id', clientId)
+        .single();
+      workspaceIdForCache = clientData?.workspace_id || null;
+    } catch {
+      // Pre-fetch is optional; continue with delete
+    }
+
+    // Delete client (count: 'exact' without .select() to avoid parsing issues)
     const { error, count } = await supabase
       .from('clients')
       .delete({ count: 'exact' })
-      .eq('id', clientId)
-      .select('id');
+      .eq('id', clientId);
 
     if (error) {
       // RLS policy likely blocking - provide helpful error message
@@ -2080,29 +2109,26 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
           error: 'Permission denied. Verify workspace configuration and that the client exists in your workspace.'
         };
       }
+      // PostgreSQL type error (e.g., invalid UUID format)
+      if (error.message?.includes('invalid input syntax')) {
+        return {
+          success: false,
+          error: 'Invalid client ID format. The ID may be corrupted.'
+        };
+      }
       return { success: false, error: error.message };
     }
 
-    if (!count || count === 0) {
+    if (count !== null && count !== undefined && count === 0) {
       return {
         success: false,
         error: 'Client not found or already deleted'
       };
     }
 
-    // Try to invalidate cache (optional)
-    try {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('workspace_id')
-        .eq('id', clientId)
-        .single();
-
-      if (clientData?.workspace_id) {
-        requestCache.clearKey(generateCacheKey('getClients', clientData.workspace_id));
-      }
-    } catch {
-      // Cache invalidation is optional
+    // Invalidate cache using pre-fetched workspace_id
+    if (workspaceIdForCache) {
+      requestCache.clearKey(generateCacheKey('getClients', workspaceIdForCache));
     }
 
     return { success: true };
@@ -2345,12 +2371,29 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
   }
 
   try {
-    // Delete technician
+    // Validate ID before sending to Supabase (prevent PostgreSQL type errors)
+    if (!techId || typeof techId !== 'string' || techId.trim() === '') {
+      return { success: false, error: 'Invalid technician ID' };
+    }
+
+    // Fetch workspace_id BEFORE deletion for cache invalidation
+    let workspaceIdForCache: string | null = null;
+    try {
+      const { data: technicianData } = await supabase
+        .from('technicians')
+        .select('workspace_id')
+        .eq('id', techId)
+        .single();
+      workspaceIdForCache = technicianData?.workspace_id || null;
+    } catch {
+      // Pre-fetch is optional; continue with delete
+    }
+
+    // Delete technician (count: 'exact' without .select() to avoid parsing issues)
     const { error, count } = await supabase
       .from('technicians')
       .delete({ count: 'exact' })
-      .eq('id', techId)
-      .select('id');
+      .eq('id', techId);
 
     if (error) {
       // RLS policy likely blocking - provide helpful error message
@@ -2360,29 +2403,26 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
           error: 'Permission denied. Verify workspace configuration and that the technician exists in your workspace.'
         };
       }
+      // PostgreSQL type error (e.g., invalid UUID format)
+      if (error.message?.includes('invalid input syntax')) {
+        return {
+          success: false,
+          error: 'Invalid technician ID format. The ID may be corrupted.'
+        };
+      }
       return { success: false, error: error.message };
     }
 
-    if (!count || count === 0) {
+    if (count !== null && count !== undefined && count === 0) {
       return {
         success: false,
         error: 'Technician not found or already deleted'
       };
     }
 
-    // Try to invalidate cache (optional)
-    try {
-      const { data: technicianData } = await supabase
-        .from('technicians')
-        .select('workspace_id')
-        .eq('id', techId)
-        .single();
-
-      if (technicianData?.workspace_id) {
-        requestCache.clearKey(generateCacheKey('getTechnicians', technicianData.workspace_id));
-      }
-    } catch {
-      // Cache invalidation is optional
+    // Invalidate cache using pre-fetched workspace_id
+    if (workspaceIdForCache) {
+      requestCache.clearKey(generateCacheKey('getTechnicians', workspaceIdForCache));
     }
 
     return { success: true };

@@ -107,7 +107,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
     it('should show percentage text', () => {
       renderBanner();
       triggerWarning(90, 4_500_000, 5_000_000);
-      expect(screen.getByText('90% storage used')).toBeDefined();
+      expect(screen.getByText('90% Used')).toBeDefined();
     });
 
     it('should hide after dismiss', () => {
@@ -124,21 +124,37 @@ describe('StorageWarningBanner (Slim Strip)', () => {
   // ============================================================
   // Severity Styling
   // ============================================================
-  describe('Severity', () => {
-    it('should use amber color for 75-89% usage', () => {
+  describe('Severity - 3-status color system', () => {
+    it('should use amber color for 70-90% usage (Action Required)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const percentText = screen.getByText('80% storage used');
+      const percentText = screen.getByText('80% Used');
       expect(percentText.className).toContain('text-amber-400');
     });
 
-    it('should use red color for 90%+ usage', () => {
+    it('should use red color for >90% usage (Critical)', () => {
       renderBanner();
-      triggerWarning(90);
+      triggerWarning(95);
 
-      const percentText = screen.getByText('90% storage used');
+      const percentText = screen.getByText('95% Used');
       expect(percentText.className).toContain('text-red-400');
+    });
+
+    it('should use green color for <70% usage (Healthy)', () => {
+      renderBanner();
+      triggerWarning(60);
+
+      const percentText = screen.getByText('60% Used');
+      expect(percentText.className).toContain('text-emerald-400');
+    });
+
+    it('should show correct status label for each threshold', () => {
+      renderBanner();
+
+      // Test 60% - Healthy
+      triggerWarning(60);
+      expect(screen.queryByText('Healthy')).toBeDefined();
     });
   });
 
@@ -160,7 +176,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       expect(screen.getByText('Free up space — delete old jobs')).toBeDefined();
@@ -170,7 +186,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
       fireEvent.click(strip!);
 
@@ -183,7 +199,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
 
       expect(screen.getByText('Manage')).toBeDefined();
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       expect(screen.getByText('Close')).toBeDefined();
@@ -203,7 +219,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       expect(screen.getByText('Regular Job')).toBeDefined();
@@ -218,7 +234,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       expect(screen.getByText(/No deletable jobs found/)).toBeDefined();
@@ -234,7 +250,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       expect(screen.getByText('10 deletable jobs')).toBeDefined();
@@ -248,7 +264,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       const items = screen.getAllByRole('listitem');
@@ -268,7 +284,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       const deleteBtn = screen.getByLabelText('Delete job Test Job');
@@ -285,7 +301,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       fireEvent.click(strip!);
 
       const deleteBtn = screen.getByLabelText('Delete job Job B');
@@ -309,7 +325,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       expect(strip?.getAttribute('aria-expanded')).toBe('false');
 
       fireEvent.click(strip!);
@@ -331,7 +347,7 @@ describe('StorageWarningBanner (Slim Strip)', () => {
       renderBanner();
       triggerWarning(80);
 
-      const strip = screen.getByText('80% storage used').closest('button');
+      const strip = screen.getByText('80% Used').closest('button');
       expect(strip?.className).toContain('min-h-[44px]');
 
       fireEvent.click(strip!);

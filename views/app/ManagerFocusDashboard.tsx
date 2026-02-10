@@ -1,15 +1,15 @@
 /**
- * ManagerFocusDashboard - Unified Manager Dashboard
+ * ManagerFocusDashboard - Mission Control Center
  *
  * UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
+ * - ACTION TILES: Search, Assign, All Jobs — top-loaded immediately after header
  * - PROOF GAP BAR: "Are we defensible?" at a glance (~10%)
+ * - JOB STATUS PILLS: Color-coded filter pills (Pending, Active, Awaiting, Closed)
+ * - TECHNICIAN PULSE: Dynamic "X On-Site" — reactive, not hard-coded
  * - ATTENTION QUEUE: Only exceptions appear (idle, stuck, sync failed) (~30%)
  * - TECHNICIAN ROWS: Shows counts, not job lists (~40%)
- * - CONTEXTUAL ACTIONS: 3 max (Search, Assign, All Jobs) (~10%)
  *
  * Primary questions: "Who's blocked?" / "Are we defensible?" / "Is crew on track?"
- *
- * Invoicing: Deferred to next release (signposted on roadmap).
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -30,11 +30,6 @@ import QuickAssignModal from '../../components/modals/QuickAssignModal';
 // UTILITIES
 // ============================================================================
 
-/**
- * Format time difference for display
- * @param timestampMs Timestamp in milliseconds
- * @returns Human-readable time difference (e.g., "2h ago", "30m ago")
- */
 function formatTimeSince(timestampMs: number): string {
   const now = Date.now();
   const diffMs = now - timestampMs;
@@ -49,15 +44,89 @@ function formatTimeSince(timestampMs: number): string {
 }
 
 // ============================================================================
+// JOB STATUS PILL CONFIG
+// ============================================================================
+
+interface JobPillConfig {
+  key: string;
+  label: string;
+  icon: string;
+  statuses: JobStatus[];
+  color: {
+    bg: string;
+    border: string;
+    text: string;
+    activeBg: string;
+    activeBorder: string;
+    dot: string;
+  };
+}
+
+const JOB_PILLS: JobPillConfig[] = [
+  {
+    key: 'pending',
+    label: 'Pending',
+    icon: 'schedule',
+    statuses: ['Pending', 'Draft'],
+    color: {
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/20',
+      text: 'text-blue-400',
+      activeBg: 'bg-blue-500/25',
+      activeBorder: 'border-blue-500/50',
+      dot: 'bg-blue-500',
+    },
+  },
+  {
+    key: 'active',
+    label: 'Active',
+    icon: 'play_circle',
+    statuses: ['In Progress'],
+    color: {
+      bg: 'bg-orange-500/10',
+      border: 'border-orange-500/20',
+      text: 'text-orange-400',
+      activeBg: 'bg-orange-500/25',
+      activeBorder: 'border-orange-500/50',
+      dot: 'bg-orange-500',
+    },
+  },
+  {
+    key: 'awaiting',
+    label: 'Awaiting',
+    icon: 'hourglass_top',
+    statuses: ['Complete', 'Submitted'],
+    color: {
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      text: 'text-amber-400',
+      activeBg: 'bg-amber-500/25',
+      activeBorder: 'border-amber-500/50',
+      dot: 'bg-amber-500',
+    },
+  },
+  {
+    key: 'closed',
+    label: 'Closed',
+    icon: 'check_circle',
+    statuses: ['Archived', 'Cancelled'],
+    color: {
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      text: 'text-emerald-400',
+      activeBg: 'bg-emerald-500/25',
+      activeBorder: 'border-emerald-500/50',
+      dot: 'bg-emerald-500',
+    },
+  },
+];
+
+// ============================================================================
 // ATTENTION DETECTION
 // ============================================================================
 
 const STUCK_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours on same job
 
-/**
- * Generate attention items from current state
- * Only exceptions appear - no normal activity
- */
 function generateAttentionItems(
   technicians: Technician[],
   jobs: Job[],
@@ -153,9 +222,6 @@ function generateAttentionItems(
   });
 }
 
-/**
- * Create technician summaries with counts
- */
 function createTechnicianSummaries(
   technicians: Technician[],
   jobs: Job[],
@@ -174,12 +240,10 @@ function createTechnicianSummaries(
       j.id !== activeJob?.id
     );
 
-    // Determine status
     let status: 'working' | 'idle' | 'offline' = 'idle';
     if (activeJob) {
       status = 'working';
     }
-    // Could add offline detection based on last activity
 
     return {
       id: tech.id,
@@ -229,7 +293,6 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
     });
   }, []);
 
-  // Render functions for drill-down FocusStack
   const renderFocusJob = useCallback(({ job, client }: FocusJobRenderProps) => (
     <Link to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
       <Card className="bg-primary/5 dark:bg-primary/10 border-primary/30">
@@ -310,7 +373,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
         </div>
 
         {/* Content - Focus Stack */}
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
+        <div className="p-4 overflow-y-auto max-h-[60vh]" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
           <FocusStack
             jobs={techJobs}
             clients={clients}
@@ -335,6 +398,92 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
 };
 
 // ============================================================================
+// ON-SITE TECHNICIAN PULSE MODAL
+// ============================================================================
+
+interface TechPulseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSiteTechs: Array<{ tech: Technician; activeJob: Job; isOvertime: boolean }>;
+}
+
+const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSiteTechs }) => {
+  if (!isOpen) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-emerald-400">location_on</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white">On-Site Technicians</h3>
+              <p className="text-sm text-slate-500">{onSiteTechs.length} currently working</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-[44px]"
+          >
+            <span className="material-symbols-outlined text-slate-500">close</span>
+          </button>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+          {onSiteTechs.map(({ tech, activeJob, isOvertime }) => (
+            <div
+              key={tech.id}
+              className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
+                isOvertime
+                  ? 'border-amber-500/30 bg-amber-500/5'
+                  : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50'
+              }`}
+            >
+              <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-emerald-400">engineering</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-slate-900 dark:text-white truncate">{tech.name}</p>
+                <p className="text-xs text-slate-500 truncate">
+                  {activeJob.title || `Job #${activeJob.id.slice(0, 6)}`}
+                </p>
+                {isOvertime && (
+                  <p className="text-xs text-amber-400 font-medium mt-0.5">
+                    <span className="material-symbols-outlined text-xs align-middle mr-0.5">warning</span>
+                    Exceeding estimated time
+                  </p>
+                )}
+              </div>
+              {tech.phone && (
+                <a
+                  href={`tel:${tech.phone}`}
+                  className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 min-h-[44px] hover:bg-emerald-500/30 transition-colors"
+                  aria-label={`Call ${tech.name}`}
+                >
+                  <span className="material-symbols-outlined text-emerald-400">call</span>
+                </a>
+              )}
+            </div>
+          ))}
+          {onSiteTechs.length === 0 && (
+            <div className="text-center py-8 text-slate-500">
+              <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
+              <p className="text-sm">No technicians currently on-site</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -346,6 +495,8 @@ const ManagerFocusDashboard: React.FC = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedJobForAssign, setSelectedJobForAssign] = useState<Job | null>(null);
   const [statusModalStatus, setStatusModalStatus] = useState<JobStatus | null>(null);
+  const [activePillFilter, setActivePillFilter] = useState<string | null>(null);
+  const [isTechPulseOpen, setIsTechPulseOpen] = useState(false);
 
   useGlobalKeyboardShortcuts({
     onSearch: () => setIsSearchModalOpen(true),
@@ -366,20 +517,58 @@ const ManagerFocusDashboard: React.FC = () => {
     };
   }, [technicians, jobs, now]);
 
-  // Counts for header
-  const { totalPending, totalActive, totalComplete } = useMemo(() => {
-    const pending = jobs.filter(j =>
-      j.status !== 'Complete' &&
-      j.status !== 'Submitted' &&
-      j.status !== 'In Progress'
-    ).length;
-    const active = jobs.filter(j => j.status === 'In Progress').length;
-    const complete = jobs.filter(j =>
-      j.status === 'Complete' || j.status === 'Submitted'
-    ).length;
+  // Reactive metrics - all computed from data, no hard-coded values
+  const metrics = useMemo(() => {
+    const onSiteTechs = technicians.filter(tech => {
+      const techJobs = jobs.filter(j =>
+        (j.technicianId === tech.id || j.techId === tech.id) && j.status === 'In Progress'
+      );
+      return techJobs.length > 0;
+    }).length;
 
-    return { totalPending: pending, totalActive: active, totalComplete: complete };
+    const failedSyncs = jobs.filter(j => j.syncStatus === 'failed').length;
+    const overdueJobs = jobs.filter(j => {
+      if (j.status !== 'In Progress') return false;
+      const age = now - (j.lastUpdated || 0);
+      return age > STUCK_THRESHOLD_MS;
+    }).length;
+
+    const hasIssues = failedSyncs > 0 || overdueJobs > 0;
+
+    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues };
+  }, [technicians, jobs, now]);
+
+  // On-site technicians with job details for pulse modal
+  const onSiteTechDetails = useMemo(() => {
+    return technicians
+      .map(tech => {
+        const activeJob = jobs.find(j =>
+          (j.technicianId === tech.id || j.techId === tech.id) && j.status === 'In Progress'
+        );
+        if (!activeJob) return null;
+        const age = now - (activeJob.lastUpdated || 0);
+        const isOvertime = age > STUCK_THRESHOLD_MS * 0.6; // 20% over estimated (using 60% of 2hr = ~72min as proxy)
+        return { tech, activeJob, isOvertime };
+      })
+      .filter(Boolean) as Array<{ tech: Technician; activeJob: Job; isOvertime: boolean }>;
+  }, [technicians, jobs, now]);
+
+  // Job counts per pill category
+  const pillCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    JOB_PILLS.forEach(pill => {
+      counts[pill.key] = jobs.filter(j => pill.statuses.includes(j.status)).length;
+    });
+    return counts;
   }, [jobs]);
+
+  // Filtered jobs when a pill is active
+  const filteredJobs = useMemo(() => {
+    if (!activePillFilter) return null;
+    const pill = JOB_PILLS.find(p => p.key === activePillFilter);
+    if (!pill) return null;
+    return jobs.filter(j => pill.statuses.includes(j.status));
+  }, [jobs, activePillFilter]);
 
   // Loading state
   if (isLoading) {
@@ -407,33 +596,31 @@ const ManagerFocusDashboard: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header with clickable status chips */}
       <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-white">Team Overview</h1>
+          <h1 className="text-lg font-bold text-white">Mission Control</h1>
+          {/* Desktop status chips */}
           <div className="hidden sm:flex items-center gap-2 text-xs">
             <button
-              onClick={() => setStatusModalStatus('In Progress')}
+              onClick={() => setIsTechPulseOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors min-h-[32px]"
             >
-              <span className="size-2 rounded-full bg-emerald-500" />
-              <span className="font-bold">{totalActive}</span> active
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold">{metrics.onSiteTechs}</span> on-site
             </button>
-            <button
-              onClick={() => setStatusModalStatus('Pending')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors min-h-[32px]"
-            >
-              <span className="size-2 rounded-full bg-amber-500" />
-              <span className="font-bold">{totalPending}</span> pending
-            </button>
-            <button
-              onClick={() => setStatusModalStatus('Complete')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 transition-colors min-h-[32px]"
-            >
-              <span className="size-2 rounded-full bg-blue-500" />
-              <span className="font-bold">{totalComplete}</span> done
-            </button>
+            {metrics.hasIssues ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400">
+                <span className="material-symbols-outlined text-xs">warning</span>
+                <span className="font-bold">{metrics.failedSyncs + metrics.overdueJobs}</span> issue{metrics.failedSyncs + metrics.overdueJobs !== 1 ? 's' : ''}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400/80">
+                <span className="material-symbols-outlined text-xs">check_circle</span>
+                Ready for Dispatch
+              </span>
+            )}
           </div>
         </div>
         <ActionButton variant="primary" icon="add" to={ROUTES.JOB_NEW}>
@@ -446,9 +633,50 @@ const ManagerFocusDashboard: React.FC = () => {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="space-y-8"
+          className="space-y-6"
         >
-          {/* PROOF GAP BAR - "Are we defensible?" - clickable to navigate to evidence gaps */}
+          {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
+          <motion.section variants={fadeInUp}>
+            <div className="grid grid-cols-4 gap-3">
+              <button
+                onClick={() => setIsSearchModalOpen(true)}
+                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-orange-500/30 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Search jobs (Ctrl+K)"
+              >
+                <span className="material-symbols-outlined text-lg text-orange-400">search</span>
+                <span className="text-xs">Search</span>
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedJobForAssign(null);
+                  setIsAssignModalOpen(true);
+                }}
+                className="min-h-[56px] px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-sm font-semibold rounded-xl border-2 border-orange-500/20 hover:border-orange-500/40 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Assign technician (Ctrl+A)"
+              >
+                <span className="material-symbols-outlined text-lg">person_add</span>
+                <span className="text-xs">Assign</span>
+              </button>
+              <Link
+                to={ROUTES.JOBS}
+                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-orange-500/30 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="View all jobs"
+              >
+                <span className="material-symbols-outlined text-lg text-orange-400">list_alt</span>
+                <span className="text-xs">All Jobs</span>
+              </Link>
+              <Link
+                to={ROUTES.JOB_NEW}
+                className="min-h-[56px] px-3 py-2 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 text-sm font-semibold rounded-xl border-2 border-orange-500/30 hover:border-orange-500/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary sm:hidden"
+                aria-label="Create new job"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                <span className="text-xs">New Job</span>
+              </Link>
+            </div>
+          </motion.section>
+
+          {/* PROOF GAP BAR - "Are we defensible?" */}
           <motion.section variants={fadeInUp}>
             <ProofGapBar
               jobs={jobs}
@@ -456,7 +684,110 @@ const ManagerFocusDashboard: React.FC = () => {
             />
           </motion.section>
 
-          {/* ATTENTION QUEUE - Critical exceptions only */}
+          {/* JOB STATUS PILLS - Color-coded filter system */}
+          <motion.section variants={fadeInUp}>
+            <div className="flex flex-wrap gap-2">
+              {JOB_PILLS.map(pill => {
+                const count = pillCounts[pill.key] || 0;
+                const isActive = activePillFilter === pill.key;
+                return (
+                  <button
+                    key={pill.key}
+                    onClick={() => setActivePillFilter(isActive ? null : pill.key)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary ${
+                      isActive
+                        ? `${pill.color.activeBg} ${pill.color.activeBorder} ${pill.color.text}`
+                        : `${pill.color.bg} ${pill.color.border} ${pill.color.text} hover:${pill.color.activeBg}`
+                    }`}
+                    aria-pressed={isActive}
+                    aria-label={`${pill.label}: ${count} jobs`}
+                  >
+                    <span className={`size-2 rounded-full ${pill.color.dot}`} />
+                    <span className="text-sm font-bold tabular-nums">{count}</span>
+                    <span className="text-sm">{pill.label}</span>
+                    <span className={`material-symbols-outlined text-xs ${pill.color.text}`}>{pill.icon}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Filtered job list when a pill is active */}
+            <AnimatePresence>
+              {filteredJobs && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 overflow-hidden"
+                >
+                  <div
+                    className="space-y-1 max-h-[300px] overflow-y-auto rounded-xl"
+                    style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', willChange: 'transform' }}
+                  >
+                    {filteredJobs.slice(0, 10).map(job => {
+                      const client = clients.find(c => c.id === job.clientId);
+                      return (
+                        <Link
+                          key={job.id}
+                          to={route(ROUTES.JOB_DETAIL, { id: job.id })}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-white/5 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">
+                              {job.title || `Job #${job.id.slice(0, 6)}`}
+                            </p>
+                            <p className="text-xs text-slate-400 truncate">
+                              {client?.name || 'No client'} · {job.status}
+                            </p>
+                          </div>
+                          <span className="material-symbols-outlined text-slate-500 shrink-0 text-sm">chevron_right</span>
+                        </Link>
+                      );
+                    })}
+                    {filteredJobs.length > 10 && (
+                      <Link
+                        to={ROUTES.JOBS}
+                        className="block text-center py-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                      >
+                        View all {filteredJobs.length} jobs
+                      </Link>
+                    )}
+                    {filteredJobs.length === 0 && (
+                      <div className="text-center py-4 text-slate-500 text-sm">
+                        No jobs in this category
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.section>
+
+          {/* MOBILE TECHNICIAN PULSE — Visible only on small screens */}
+          <motion.section variants={fadeInUp} className="sm:hidden">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setIsTechPulseOpen(true)}
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]"
+              >
+                <span className="text-lg font-bold text-emerald-400">{metrics.onSiteTechs}</span>
+                <span className="text-xs text-emerald-400/80">On-Site</span>
+              </button>
+              {metrics.hasIssues ? (
+                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-red-500/10 border-2 border-red-500/20 min-h-[56px]">
+                  <span className="text-lg font-bold text-red-400">{metrics.failedSyncs + metrics.overdueJobs}</span>
+                  <span className="text-xs text-red-400/80">Issues</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]">
+                  <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
+                  <span className="text-xs text-emerald-400/80">All Clear</span>
+                </div>
+              )}
+            </div>
+          </motion.section>
+
+          {/* ATTENTION QUEUE - Critical exceptions only — hidden when no issues */}
           {attentionItems.length > 0 && (
             <motion.section variants={fadeInUp}>
               <div className="flex items-center gap-3 mb-4">
@@ -544,84 +875,27 @@ const ManagerFocusDashboard: React.FC = () => {
             )}
           </motion.section>
 
-          {/* MOBILE STATUS CHIPS - Visible only on small screens */}
-          <motion.section variants={fadeInUp} className="sm:hidden">
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setStatusModalStatus('In Progress')}
-                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 min-h-[56px]"
-              >
-                <span className="text-lg font-bold text-emerald-400">{totalActive}</span>
-                <span className="text-xs text-emerald-400/80">Active</span>
-              </button>
-              <button
-                onClick={() => setStatusModalStatus('Pending')}
-                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 min-h-[56px]"
-              >
-                <span className="text-lg font-bold text-amber-400">{totalPending}</span>
-                <span className="text-xs text-amber-400/80">Pending</span>
-              </button>
-              <button
-                onClick={() => setStatusModalStatus('Complete')}
-                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 min-h-[56px]"
-              >
-                <span className="text-lg font-bold text-blue-400">{totalComplete}</span>
-                <span className="text-xs text-blue-400/80">Done</span>
-              </button>
-            </div>
-          </motion.section>
-
-          {/* ALL CAUGHT UP STATE */}
+          {/* READY STATE — Only shown when no attention items and techs exist */}
           {attentionItems.length === 0 && technicians.length > 0 && (
             <motion.section variants={fadeInUp}>
-              <Card className="text-center py-8">
-                <div className="size-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="material-symbols-outlined text-3xl text-emerald-400">verified_user</span>
+              <Card className="text-center py-6">
+                <div className="size-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+                  <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Team Running Smoothly</h3>
+                <h3 className="text-base font-bold text-white mb-1">Ready for Dispatch</h3>
                 <p className="text-slate-400 text-sm">
-                  No items need attention. All technicians on track.
+                  {metrics.onSiteTechs > 0
+                    ? `${metrics.onSiteTechs} technician${metrics.onSiteTechs !== 1 ? 's' : ''} on-site. No issues detected.`
+                    : 'All technicians available. No issues detected.'
+                  }
                 </p>
               </Card>
             </motion.section>
           )}
-
-          {/* Contextual Actions: 3 max, 56px touch targets */}
-          <motion.section variants={fadeInUp}>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Search jobs (Ctrl+K)"
-              >
-                <span className="material-symbols-outlined text-lg">search</span>
-                <span className="text-xs">Search</span>
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedJobForAssign(null);
-                  setIsAssignModalOpen(true);
-                }}
-                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Assign technician (Ctrl+A)"
-              >
-                <span className="material-symbols-outlined text-lg">person_add</span>
-                <span className="text-xs">Assign</span>
-              </button>
-              <Link
-                to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="View all jobs"
-              >
-                <span className="material-symbols-outlined text-lg">list_alt</span>
-                <span className="text-xs">All Jobs</span>
-              </Link>
-            </div>
-          </motion.section>
         </motion.div>
       </PageContent>
 
-      {/* Modals (Search + Assign only; invoicing deferred to next release) */}
+      {/* Modals */}
       <QuickSearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
@@ -661,6 +935,13 @@ const ManagerFocusDashboard: React.FC = () => {
         onDeleteJob={(jobId) => {
           deleteJob(jobId);
         }}
+      />
+
+      {/* Technician Pulse Modal */}
+      <TechPulseModal
+        isOpen={isTechPulseOpen}
+        onClose={() => setIsTechPulseOpen(false)}
+        onSiteTechs={onSiteTechDetails}
       />
 
       {/* Technician Drill-Down Modal */}

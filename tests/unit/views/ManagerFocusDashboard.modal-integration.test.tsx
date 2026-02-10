@@ -163,7 +163,7 @@ describe('ManagerFocusDashboard - Integration', () => {
         </TestWrapper>
       );
 
-      const grids = container.querySelectorAll('.grid-cols-3');
+      const grids = container.querySelectorAll('.grid-cols-4');
       expect(grids.length).toBeGreaterThan(0);
     });
   });
