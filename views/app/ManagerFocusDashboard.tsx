@@ -83,12 +83,12 @@ const JOB_PILLS: JobPillConfig[] = [
     icon: 'play_circle',
     statuses: ['In Progress'],
     color: {
-      bg: 'bg-orange-500/10',
-      border: 'border-orange-500/20',
-      text: 'text-orange-400',
-      activeBg: 'bg-orange-500/25',
-      activeBorder: 'border-orange-500/50',
-      dot: 'bg-orange-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      text: 'text-amber-400',
+      activeBg: 'bg-amber-500/25',
+      activeBorder: 'border-amber-500/50',
+      dot: 'bg-amber-500',
     },
   },
   {
@@ -640,10 +640,10 @@ const ManagerFocusDashboard: React.FC = () => {
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-orange-500/30 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
               >
-                <span className="material-symbols-outlined text-lg text-orange-400">search</span>
+                <span className="material-symbols-outlined text-lg text-slate-400">search</span>
                 <span className="text-xs">Search</span>
               </button>
               <button
@@ -651,7 +651,7 @@ const ManagerFocusDashboard: React.FC = () => {
                   setSelectedJobForAssign(null);
                   setIsAssignModalOpen(true);
                 }}
-                className="min-h-[56px] px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-sm font-semibold rounded-xl border-2 border-orange-500/20 hover:border-orange-500/40 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl border-2 border-primary/20 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Assign technician (Ctrl+A)"
               >
                 <span className="material-symbols-outlined text-lg">person_add</span>
@@ -659,15 +659,15 @@ const ManagerFocusDashboard: React.FC = () => {
               </button>
               <Link
                 to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-orange-500/30 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-700 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="View all jobs"
               >
-                <span className="material-symbols-outlined text-lg text-orange-400">list_alt</span>
+                <span className="material-symbols-outlined text-lg text-slate-400">list_alt</span>
                 <span className="text-xs">All Jobs</span>
               </Link>
               <Link
-                to={ROUTES.JOB_NEW}
-                className="min-h-[56px] px-3 py-2 bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 text-sm font-semibold rounded-xl border-2 border-orange-500/30 hover:border-orange-500/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary sm:hidden"
+                to={ROUTES.JOB_CREATE}
+                className="min-h-[56px] px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary sm:hidden"
                 aria-label="Create new job"
               >
                 <span className="material-symbols-outlined text-lg">add_circle</span>

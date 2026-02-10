@@ -10,7 +10,7 @@ interface ClientsViewProps {
   user: UserProfile | null;
   clients: Client[];
   onAdd: (c: Client) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelete }) => {
@@ -45,6 +45,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
       await onDelete(clientId);
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete client');
+    } finally {
       setDeletingId(null);
     }
   }, [onDelete]);
@@ -80,14 +81,14 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
           </div>
         )}
 
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Client Registry</h2>
-            <p className="text-slate-400">Primary organizational database for customer assets and service locations.</p>
+            <p className="text-slate-400 text-sm">Manage customer records and service locations.</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="bg-primary text-white px-5 py-3 min-h-[44px] rounded-xl text-xs font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 uppercase tracking-wide whitespace-nowrap"
+            className="bg-primary text-white px-5 py-3 min-h-[44px] rounded-xl text-xs font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 uppercase tracking-wide whitespace-nowrap self-stretch sm:self-auto"
           >
             <span className="material-symbols-outlined text-base">{showAdd ? 'close' : 'add'}</span>
             {showAdd ? 'Cancel' : 'Register Client'}
@@ -103,7 +104,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             aria-label="Search clients"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-700 focus:border-orange-500/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-500"
+            className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-500"
           />
           {searchQuery && (
             <button
@@ -135,23 +136,23 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             </div>
           ) : (
             filteredClients.map(client => (
-              <div key={client.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-orange-500/20 p-6 rounded-3xl space-y-4 hover:border-orange-500/50 transition-all group shadow-lg shadow-orange-500/10">
+              <div key={client.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 hover:border-primary/40 transition-all group shadow-lg shadow-primary/10">
                 {/* ID Badge and Job Count */}
                 <div className="flex justify-between items-start">
                   <div className="space-y-1 flex-1">
-                    <p className="text-[8px] font-black text-orange-400 uppercase tracking-[0.15em] font-mono">Client ID</p>
+                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] font-mono">Client ID</p>
                     <p className="text-xs font-black text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Jobs</p>
-                    <p className="text-xl font-black text-orange-400">{client.totalJobs || 0}</p>
+                    <p className="text-xl font-black text-primary">{client.totalJobs || 0}</p>
                   </div>
                 </div>
 
                 {/* Organization Name */}
                 <div>
-                  <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-orange-400 transition-colors">{client.name}</h3>
-                  <p className="text-[10px] text-orange-300 font-mono">{client.email}</p>
+                  <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-primary transition-colors">{client.name}</h3>
+                  <p className="text-[10px] text-primary/80 font-mono">{client.email}</p>
                 </div>
 
                 {/* Location and Details */}
@@ -179,7 +180,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                   </button>
                   <button
                     onClick={() => navigate(`/admin/jobs?client=${client.id}`)}
-                    className="flex-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border-2 border-orange-500/30 hover:border-orange-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
+                    className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary border-2 border-primary/30 hover:border-primary/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
                     title="View client's jobs"
                   >
                     <span className="material-symbols-outlined text-xs">work</span>

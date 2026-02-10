@@ -241,9 +241,9 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     if (!actionJob) return;
     setDeleting(true);
     try {
-      contextDeleteJob(actionJob.id);
-    } catch (error) {
-      console.error('Failed to delete job:', error);
+      await contextDeleteJob(actionJob.id);
+    } catch {
+      // Error feedback handled by DataContext rollback
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);

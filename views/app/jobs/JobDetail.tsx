@@ -98,10 +98,9 @@ const JobDetail: React.FC = () => {
     setDeleting(true);
     setDeleteError(null);
     try {
-      contextDeleteJob(job.id);
+      await contextDeleteJob(job.id);
       navigate(ROUTES.JOBS);
-    } catch (error) {
-      console.error('Failed to delete job:', error);
+    } catch {
       setDeleteError('Failed to delete job. Please try again.');
     } finally {
       setDeleting(false);
