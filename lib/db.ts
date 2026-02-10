@@ -294,9 +294,11 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
 
   try {
     // Using bunker_jobs as primary table (jobs table doesn't exist)
+    // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
     const { data, error } = await supabase
       .from('bunker_jobs')
       .select('*')
+      .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -311,7 +313,8 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       client: row.client || '',
       clientId: row.client_id,
       technician: row.technician_name || '',
-      techId: row.technician_id,
+      techId: row.assigned_technician_id || row.technician_id,
+      technicianId: row.assigned_technician_id || row.technician_id,
       status: row.status || 'Pending',
       date: row.created_at?.split('T')[0],
       address: row.address,

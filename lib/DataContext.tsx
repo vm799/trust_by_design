@@ -269,9 +269,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         try {
           const supabase = db.getSupabase?.();
           if (supabase) {
+            // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
             const { data: bunkerJobs, error: bunkerError } = await supabase
               .from('bunker_jobs')
               .select('*')
+              .eq('workspace_id', wsId)
               .order('last_updated', { ascending: false });
 
             if (!bunkerError && bunkerJobs && bunkerJobs.length > 0) {
@@ -282,7 +284,8 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
                 client: row.client || row.client_name || '',
                 clientId: row.client_id,
                 technician: row.technician_name || '',
-                techId: row.technician_id,
+                techId: row.assigned_technician_id || row.technician_id,
+                technicianId: row.assigned_technician_id || row.technician_id,
                 status: row.status || 'Complete',
                 date: row.scheduled_date || row.created_at?.split('T')[0],
                 address: row.address || '',
