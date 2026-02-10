@@ -1,10 +1,12 @@
 /**
- * BottomNav - Mobile Bottom Navigation
+ * BottomNav - Mobile Sticky Bottom Navigation
  *
- * Provides thumb-zone optimized navigation for mobile users.
+ * 5-item bottom bar with center FAB for quick job creation.
+ * Optimized for thumb-zone ergonomics on field worker devices.
+ *
+ * Layout: [Dashboard] [Jobs] [+FAB] [Clients] [Techs]
+ *
  * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
- *
- * Phase A: Foundation & App Shell
  */
 
 import React, { memo } from 'react';
@@ -21,19 +23,20 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/app', icon: 'dashboard', label: 'Home' },
-  { to: '/app/clients', icon: 'group', label: 'Clients' },
-  { to: '/app/jobs', icon: 'work', label: 'Jobs' },
-  { to: '/app/settings', icon: 'more_horiz', label: 'More' },
+  { to: '/admin', icon: 'dashboard', label: 'Dashboard' },
+  { to: '/admin/jobs', icon: 'work', label: 'Jobs' },
+  // Center FAB slot is rendered separately
+  { to: '/admin/clients', icon: 'group', label: 'Clients' },
+  { to: '/admin/technicians', icon: 'engineering', label: 'Techs' },
 ];
 
-// Memoized nav item component to prevent re-renders when other items change
 const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) => (
   <Link
     to={item.to}
+    aria-current={active ? 'page' : undefined}
     className={`
-      flex flex-col items-center justify-center gap-1
-      min-w-[64px] min-h-[48px] px-3 py-2
+      flex flex-col items-center justify-center gap-0.5
+      min-w-[56px] min-h-[48px] px-2 py-1.5
       rounded-xl transition-colors
       ${active
         ? 'text-primary'
@@ -41,10 +44,10 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
       }
     `}
   >
-    <span className={`material-symbols-outlined text-2xl ${active ? 'font-bold' : ''}`}>
+    <span className={`material-symbols-outlined text-xl ${active ? 'font-bold' : ''}`}>
       {item.icon}
     </span>
-    <span className={`text-xs ${active ? 'font-bold' : 'font-medium'}`}>
+    <span className={`text-[10px] leading-tight ${active ? 'font-bold' : 'font-medium'}`}>
       {item.label}
     </span>
   </Link>
@@ -56,26 +59,60 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    if (path === '/app') {
-      return location.pathname === '/app' || location.pathname === '/app/';
-    }
-    if (path === '/app/settings') {
-      // "More" tab is active for settings, technicians, and other secondary pages
-      return location.pathname.startsWith('/app/settings') ||
-             location.pathname.startsWith('/app/technicians');
+    if (path === '/admin') {
+      return location.pathname === '/admin' || location.pathname === '/admin/';
     }
     return location.pathname.startsWith(path);
   };
 
+  const leftItems = navItems.slice(0, 2);
+  const rightItems = navItems.slice(2);
+
   return (
-    <nav className={`
-      fixed bottom-0 left-0 right-0 z-40
-      bg-slate-950/95 backdrop-blur-xl border-t border-white/10
-      px-2 pb-safe
-      ${className}
-    `}>
-      <div className="flex items-center justify-around h-16">
-        {navItems.map(item => (
+    <nav
+      aria-label="Main navigation"
+      className={`
+        fixed bottom-0 left-0 right-0 z-40
+        bg-slate-950/95 backdrop-blur-xl border-t border-white/10
+        pb-safe
+        ${className}
+      `}
+    >
+      <div className="flex items-end justify-around h-16 px-1 relative">
+        {/* Left items: Dashboard, Jobs */}
+        {leftItems.map(item => (
+          <NavItemLink
+            key={item.to}
+            item={item}
+            active={isActive(item.to)}
+          />
+        ))}
+
+        {/* Center FAB: Add Job */}
+        <div className="flex flex-col items-center -mt-4">
+          <Link
+            to="/admin/jobs/new"
+            aria-label="Create new job"
+            className="
+              size-[56px] rounded-2xl
+              bg-gradient-to-br from-primary to-blue-600
+              flex items-center justify-center
+              shadow-lg shadow-primary/30
+              active:scale-95 transition-transform
+              min-h-[56px]
+            "
+          >
+            <span className="material-symbols-outlined text-white text-3xl font-bold">
+              add
+            </span>
+          </Link>
+          <span className="text-[10px] font-medium text-slate-500 mt-0.5 leading-tight">
+            New
+          </span>
+        </div>
+
+        {/* Right items: Clients, Techs */}
+        {rightItems.map(item => (
           <NavItemLink
             key={item.to}
             item={item}
@@ -87,5 +124,4 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
   );
 };
 
-// REMEDIATION ITEM 6: Export memoized component
 export default memo(BottomNav);
