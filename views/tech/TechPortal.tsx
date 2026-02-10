@@ -35,20 +35,22 @@ import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/animations';
 
 const TechPortal: React.FC = () => {
-  const { userId, session } = useAuth();
+  const { userId, session, userEmail } = useAuth();
   const { jobs: allJobsData, clients: clientsData, isLoading } = useData();
 
   // Get tech name for display
   const techName = session?.user?.user_metadata?.full_name || 'Technician';
 
   // Filter jobs assigned to this technician ONLY
+  // SECURITY FIX: Match by UUID (techId/technicianId) OR by email (techEmail)
   const myJobs = useMemo(() => {
     return allJobsData.filter(j =>
       j.technicianId === userId ||
       j.techId === userId ||
-      j.techMetadata?.createdByTechId === userId
+      j.techMetadata?.createdByTechId === userId ||
+      (userEmail && j.techEmail && j.techEmail.toLowerCase() === userEmail.toLowerCase())
     );
-  }, [allJobsData, userId]);
+  }, [allJobsData, userId, userEmail]);
 
   // Categorize by status: Assigned (pending), Started (in progress), Finished
   const { assignedJobs, startedJob, finishedJobs } = useMemo(() => {

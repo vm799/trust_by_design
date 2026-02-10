@@ -334,6 +334,7 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       workspaceId: row.workspace_id || workspaceId,
       managerEmail: row.manager_email,
       clientEmail: row.client_email,
+      techEmail: row.technician_email,
     }));
 
     return { success: true, data: jobs };
@@ -744,6 +745,17 @@ export const generateMagicLink = async (
 
     if (!data) {
       return { success: false, error: 'Failed to create invite' };
+    }
+
+    // SECURITY FIX: Write technician_email to bunker_jobs for email-based matching
+    // This links the dispatched job to the technician's email so TechPortal can filter
+    try {
+      await supabase
+        .from('bunker_jobs')
+        .update({ technician_email: deliveryEmail })
+        .eq('id', jobId);
+    } catch (emailUpdateErr) {
+      console.warn('[generateMagicLink] Failed to set technician_email (non-critical):', emailUpdateErr);
     }
 
     // Use validated handshake URL with required email
