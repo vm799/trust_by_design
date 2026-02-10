@@ -25,7 +25,7 @@ import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../../components/AppLayout';
 import EmptyState from '../../../components/EmptyState';
-import { Modal, ConfirmDialog } from '../../../components/ui';
+import { Modal, ConfirmDialog, SLACountdown } from '../../../components/ui';
 import { JobActionMenu } from '../../../components/ui';
 import type { JobAction } from '../../../components/ui/JobActionMenu';
 import { Job, UserProfile } from '../../../types';
@@ -554,6 +554,13 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                             })}
                           </span>
                         </div>
+
+                        {/* SLA Countdown */}
+                        {!['Complete', 'Submitted', 'Archived', 'Cancelled'].includes(job.status) && job.date && (
+                          <div className="mt-1.5">
+                            <SLACountdown deadline={job.date} />
+                          </div>
+                        )}
 
                         {/* Sync Status */}
                         {job.syncStatus === SYNC_STATUS.FAILED && (
