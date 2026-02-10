@@ -399,3 +399,74 @@ export function deriveTechWorkStatusCounts(
 export function getJobsReadyForInvoicing(jobs: Job[]): Job[] {
   return jobs.filter((job) => deriveEvidenceStatus(job).readyForInvoicing);
 }
+
+// ============================================================================
+// REPORT READINESS & DELETION RULES
+// ============================================================================
+
+/**
+ * Check if a job has all evidence required for report generation.
+ *
+ * A report should only be generated when ALL of:
+ * 1. Before photo exists
+ * 2. After photo exists
+ * 3. Signature captured
+ * 4. Client attestation/confirmation completed
+ *
+ * @param job The job to check
+ * @returns true if all evidence requirements are met for report generation
+ */
+export function isReportReady(job: Job): boolean {
+  const photos = job.photos || [];
+  const photoTypes = photos.map(p => (p.type || '').toLowerCase());
+
+  const hasBefore = photoTypes.includes('before');
+  const hasAfter = photoTypes.includes('after');
+  const hasSignature = !!job.signature;
+  const hasClientConfirmation = !!job.clientConfirmation?.confirmed;
+
+  return hasBefore && hasAfter && hasSignature && hasClientConfirmation;
+}
+
+/**
+ * Check if a job can be deleted.
+ *
+ * Jobs CANNOT be deleted when:
+ * - Evidence is sealed (sealedAt present)
+ * - An invoice is attached (invoiceId present)
+ *
+ * @param job The job to check
+ * @returns true if the job can be safely deleted
+ */
+export function canDeleteJob(job: Job): boolean {
+  if (job.sealedAt) return false;
+  if (job.invoiceId) return false;
+  return true;
+}
+
+/**
+ * Get the count of missing evidence items for a job.
+ *
+ * @param job The job to check
+ * @returns Object with individual flags and total missing count
+ */
+export function getMissingEvidence(job: Job): {
+  missingBefore: boolean;
+  missingAfter: boolean;
+  missingSignature: boolean;
+  missingClientConfirmation: boolean;
+  missingCount: number;
+} {
+  const photos = job.photos || [];
+  const photoTypes = photos.map(p => (p.type || '').toLowerCase());
+
+  const missingBefore = !photoTypes.includes('before');
+  const missingAfter = !photoTypes.includes('after');
+  const missingSignature = !job.signature;
+  const missingClientConfirmation = !job.clientConfirmation?.confirmed;
+
+  const missingCount = [missingBefore, missingAfter, missingSignature, missingClientConfirmation]
+    .filter(Boolean).length;
+
+  return { missingBefore, missingAfter, missingSignature, missingClientConfirmation, missingCount };
+}

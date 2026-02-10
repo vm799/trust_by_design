@@ -24,6 +24,7 @@ import QueueList, { QueueListSkeleton } from './QueueList';
 import BackgroundCollapse, { BackgroundCollapseSkeleton } from './BackgroundCollapse';
 import TeamStatusBar from './TeamStatusBar';
 import ReadyToInvoiceSection from './ReadyToInvoiceSection';
+import ProofGapBar from './ProofGapBar';
 import QuickActionCard from './QuickActionCard';
 import {
   staggerContainer,
@@ -274,26 +275,43 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
         </motion.section>
       )}
 
-      {/* QUICK STATS - Clickable overview cards */}
+      {/* PROOF GAP BAR - Evidence defensibility at a glance (manager role) */}
+      {role === 'manager' && jobs.length > 0 && (
+        <motion.section variants={fadeInUp}>
+          <ProofGapBar
+            jobs={jobs}
+            onClick={() => navigate('/admin/jobs?filter=needs_proof')}
+          />
+        </motion.section>
+      )}
+
+      {/* QUICK STATS - Clickable overview cards with color-coded status */}
       {role === 'manager' && (
         <motion.section variants={fadeInUp}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <QuickActionCard
-              id="stat-jobs"
-              title={`${stats.totalJobs}`}
-              subtitle="Total Jobs"
-              icon="work"
+              id="stat-active"
+              title={`${stats.inProgressJobs}`}
+              subtitle="Active"
+              icon="play_circle"
               statusColor={stats.inProgressJobs > 0 ? 'info' : 'neutral'}
-              route="/admin/jobs"
-              badge={stats.inProgressJobs > 0 ? `${stats.inProgressJobs} active` : undefined}
+              route="/admin/jobs?status=in-progress"
             />
             <QuickActionCard
-              id="stat-clients"
-              title={`${stats.activeClients}`}
-              subtitle="Clients"
-              icon="business"
-              statusColor="success"
-              route="/admin/clients"
+              id="stat-pending"
+              title={`${stats.pendingJobs}`}
+              subtitle="Pending"
+              icon="schedule"
+              statusColor={stats.pendingJobs > 0 ? 'warning' : 'neutral'}
+              route="/admin/jobs?status=pending"
+            />
+            <QuickActionCard
+              id="stat-completed"
+              title={`${stats.completedJobs}`}
+              subtitle="Done"
+              icon="check_circle"
+              statusColor={stats.completedJobs > 0 ? 'success' : 'neutral'}
+              route="/admin/jobs?status=complete"
             />
             <QuickActionCard
               id="stat-technicians"
@@ -302,15 +320,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
               icon="engineering"
               statusColor={stats.activeTechnicians > 0 ? 'success' : 'warning'}
               route="/admin/technicians"
-              badge={stats.totalTechnicians > stats.activeTechnicians ? `${stats.totalTechnicians} total` : undefined}
-            />
-            <QuickActionCard
-              id="stat-completed"
-              title={`${stats.completedJobs}`}
-              subtitle="Completed"
-              icon="check_circle"
-              statusColor="success"
-              route="/admin/jobs?status=complete"
+              badge={stats.totalTechnicians > stats.activeTechnicians ? `${stats.totalTechnicians - stats.activeTechnicians} idle` : undefined}
             />
           </div>
         </motion.section>

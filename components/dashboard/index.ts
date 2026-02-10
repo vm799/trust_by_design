@@ -19,6 +19,10 @@ export { default as GlassActionTile } from './GlassActionTile';
 export { default as EvidenceProgressBar, isJobDefensible } from './EvidenceProgressBar';
 export { default as ProofGapBar } from './ProofGapBar';
 
+// Technician & Status modals
+export { default as TechnicianStatusGrid } from './TechnicianStatusGrid';
+export { default as StatusBreakdownModal } from './StatusBreakdownModal';
+
 // Utilities
 export { default as SyncStatusBadge, SyncStatusIcon, getSyncStatusConfig } from './SyncStatusBadge';
 

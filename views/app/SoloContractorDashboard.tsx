@@ -25,6 +25,7 @@ import { route, ROUTES } from '../../lib/routes';
 import { Job } from '../../types';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
+import { isReportReady, canDeleteJob } from '../../lib/statusHelpers';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
 
 // ============================================================================
@@ -54,7 +55,7 @@ function formatRelativeTime(timestamp: number): string {
 const SoloContractorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { jobs, clients, isLoading, error, refresh } = useData();
+  const { jobs, clients, updateJob, deleteJob, isLoading, error, refresh } = useData();
 
   // Search modal state (only modal a solo contractor needs)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -151,9 +152,18 @@ const SoloContractorDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Evidence progress (replaces old text-only evidence summary) */}
+          {/* Evidence progress - clickable segments to capture missing evidence */}
           <div className="mb-4">
-            <EvidenceProgressBar job={job} />
+            <EvidenceProgressBar
+              job={job}
+              onSegmentClick={(segmentKey) => {
+                if (segmentKey === 'signature') {
+                  navigate(route(ROUTES.JOB_DETAIL, { id: job.id }));
+                } else {
+                  navigate(route(ROUTES.JOB_DETAIL, { id: job.id }) + '/evidence');
+                }
+              }}
+            />
           </div>
 
           {/* Primary CTAs: Continue + Capture */}
@@ -334,25 +344,90 @@ const SoloContractorDashboard: React.FC = () => {
             collapsedHeader="More jobs"
           />
 
-          {/* Completed Jobs Link (BACKGROUND: collapsed, read-only) */}
+          {/* Completed Jobs - Actions first, report only when evidence complete */}
           {completedCount > 0 && (
             <motion.section
               variants={fadeInUp}
               className="pt-4 border-t border-white/5"
             >
-              <Link
-                to={`${ROUTES.JOBS}?status=review`}
-                className="flex items-center justify-between py-3 text-slate-400 hover:text-white transition-colors min-h-[44px]"
-              >
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-500">check_circle</span>
-                  <span className="text-sm">Completed Jobs</span>
+                  <span className="text-sm font-medium text-white">Completed</span>
+                  <span className="text-xs text-slate-400 font-bold">({completedCount})</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{completedCount}</span>
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
-                </div>
-              </Link>
+                <Link
+                  to={`${ROUTES.JOBS}?status=review`}
+                  className="text-xs text-slate-400 hover:text-white transition-colors min-h-[44px] flex items-center gap-1"
+                >
+                  View all <span className="material-symbols-outlined text-xs">chevron_right</span>
+                </Link>
+              </div>
+              {/* Show up to 3 recent completed jobs with actions */}
+              <div className="space-y-2">
+                {myJobs
+                  .filter(j => j.status === 'Complete' || j.status === 'Submitted')
+                  .slice(0, 3)
+                  .map(job => {
+                    const client = clients.find(c => c.id === job.clientId);
+                    const reportReady = isReportReady(job);
+                    const deletable = canDeleteJob(job);
+
+                    return (
+                      <Card key={job.id} padding="sm">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="size-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">
+                              {job.title || `Job #${job.id.slice(0, 6)}`}
+                            </p>
+                            <p className="text-xs text-slate-400 truncate">{client?.name || 'Unknown'}</p>
+                          </div>
+                        </div>
+                        {/* Actions row - actions first, report conditional */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              updateJob({ ...job, status: 'Archived', archivedAt: new Date().toISOString(), isArchived: true });
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-xs font-medium min-h-[44px] hover:bg-slate-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-sm">inventory_2</span>
+                            Archive
+                          </button>
+                          {deletable && (
+                            <button
+                              onClick={() => deleteJob(job.id)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium min-h-[44px] hover:bg-red-500/20 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-sm">delete</span>
+                              Delete
+                            </button>
+                          )}
+                          {reportReady ? (
+                            <Link
+                              to={route(ROUTES.JOB_DETAIL, { id: job.id })}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium min-h-[44px] hover:bg-emerald-500/20 transition-colors ml-auto"
+                            >
+                              <span className="material-symbols-outlined text-sm">description</span>
+                              Report
+                            </Link>
+                          ) : (
+                            <Link
+                              to={route(ROUTES.JOB_DETAIL, { id: job.id })}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium min-h-[44px] hover:bg-slate-700 transition-colors ml-auto"
+                            >
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                              View
+                            </Link>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+              </div>
             </motion.section>
           )}
 
