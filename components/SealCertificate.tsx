@@ -13,7 +13,7 @@
  * Phase: 10/10 UX Improvements
  */
 
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import type { Job } from '../types';
 import Modal from './ui/Modal';
 
@@ -23,38 +23,38 @@ interface SealCertificateProps {
   onClose: () => void;
 }
 
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return 'N/A';
+  try {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    }) + ' UTC';
+  } catch {
+    return dateString;
+  }
+};
+
+const truncateHash = (hash: string | undefined, length: number = 32): string => {
+  if (!hash) return 'N/A';
+  if (hash.length <= length) return hash;
+  return `${hash.substring(0, length / 2)}...${hash.substring(hash.length - length / 2)}`;
+};
+
 const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      }) + ' UTC';
-    } catch {
-      return dateString;
-    }
-  };
-
-  const truncateHash = (hash: string | undefined, length: number = 32): string => {
-    if (!hash) return 'N/A';
-    if (hash.length <= length) return hash;
-    return `${hash.substring(0, length / 2)}...${hash.substring(hash.length - length / 2)}`;
-  };
-
-  const photoCounts = {
-    before: (job.photos || []).filter(p => p.type === 'before' || p.type === 'Before').length,
-    during: (job.photos || []).filter(p => p.type === 'during' || p.type === 'During').length,
-    after: (job.photos || []).filter(p => p.type === 'after' || p.type === 'After').length,
+  const photoCounts = useMemo(() => ({
+    before: (job.photos || []).filter(p => p.type?.toLowerCase() === 'before').length,
+    during: (job.photos || []).filter(p => p.type?.toLowerCase() === 'during').length,
+    after: (job.photos || []).filter(p => p.type?.toLowerCase() === 'after').length,
     total: (job.photos || []).length,
-  };
+  }), [job.photos]);
 
   const generateCertificate = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -63,7 +63,10 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
     setIsGenerating(true);
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      setIsGenerating(false);
+      return;
+    }
 
     const width = 800;
     const height = 1120;
@@ -340,9 +343,10 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
     link.click();
   }, [job.title]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setTimeout(generateCertificate, 100);
+      const timer = setTimeout(generateCertificate, 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, generateCertificate]);
 
@@ -356,7 +360,7 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         {/* Header */}
         <div className="text-center">
           <div className="size-16 mx-auto mb-4 rounded-2xl bg-success/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-4xl text-success font-black">verified</span>
+            <span className="material-symbols-outlined text-4xl text-success font-black" aria-hidden="true">verified</span>
           </div>
           <h2 className="text-xl font-black text-white uppercase tracking-tight">
             Seal Certificate
@@ -370,6 +374,8 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         <div className="relative bg-slate-900 rounded-2xl p-4 overflow-hidden">
           <canvas
             ref={canvasRef}
+            role="img"
+            aria-label={`Seal certificate for job: ${job.title}`}
             className="w-full h-auto rounded-xl"
             style={{ maxHeight: '450px', objectFit: 'contain' }}
           />
@@ -429,7 +435,7 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
             onClick={downloadCertificate}
             className="flex-1 px-4 py-3 bg-success hover:bg-success/90 text-white rounded-xl text-sm font-semibold tracking-wider transition-all flex items-center justify-center gap-2 min-h-[48px]"
           >
-            <span className="material-symbols-outlined text-lg">download</span>
+            <span className="material-symbols-outlined text-lg" aria-hidden="true">download</span>
             Download
           </button>
         </div>

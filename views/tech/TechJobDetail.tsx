@@ -12,13 +12,13 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card, ActionButton, EmptyState, LoadingSkeleton } from '../../components/ui';
+import { Card, ActionButton, EmptyState, LoadingSkeleton, ErrorState } from '../../components/ui';
 import { useData } from '../../lib/DataContext';
 import { useAuth } from '../../lib/AuthContext';
-import { Job } from '../../types';
+import { Job, Photo } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
 
@@ -42,14 +42,6 @@ const formatTimeUTC = (dateString: string): string => {
   }) + ' UTC';
 };
 
-interface Photo {
-  id?: string;
-  url?: string;
-  localPath?: string;
-  type?: 'before' | 'during' | 'after';
-  timestamp?: string;
-}
-
 // Workflow steps for progress indicator
 const WORKFLOW_STEPS = [
   { id: 'start', label: 'Start', icon: 'play_arrow' },
@@ -70,14 +62,12 @@ const TechJobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  const { jobs, clients, updateJob: contextUpdateJob, isLoading } = useData();
+  const { jobs, clients, updateJob: contextUpdateJob, isLoading, error: dataError, refresh } = useData();
   const { userId, userEmail } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<{ type: 'start' | 'complete' | 'review'; message: string } | null>(null);
 
-  const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);
-  // Derive job and client from DataContext (memoized for performance)
   // SECURITY FIX: Only find jobs assigned to this technician
   const job = useMemo(() => {
     const found = jobs.find(j => j.id === jobId) || null;
@@ -95,54 +85,82 @@ const TechJobDetail: React.FC = () => {
     [clients, job]
   );
 
-  const loading = isLoading;
+  // Memoize derived photo data
+  const { photos, beforePhotos, duringPhotos, afterPhotos, isActive, canComplete, isSealed, isSubmitted, currentWorkflowStep } = useMemo(() => {
+    if (!job) return { photos: [] as Photo[], beforePhotos: [] as Photo[], duringPhotos: [] as Photo[], afterPhotos: [] as Photo[], isActive: false, canComplete: false, isSealed: false, isSubmitted: false, currentWorkflowStep: 0 };
+    const p = job.photos || [];
+    const before = p.filter(ph => ph.type?.toLowerCase() === 'before');
+    const during = p.filter(ph => ph.type?.toLowerCase() === 'during');
+    const after = p.filter(ph => ph.type?.toLowerCase() === 'after');
+    const active = job.status === 'In Progress';
+    const complete = before.length >= 1 && after.length >= 1;
+    return {
+      photos: p,
+      beforePhotos: before,
+      duringPhotos: during,
+      afterPhotos: after,
+      isActive: active,
+      canComplete: complete,
+      isSealed: !!job.sealedAt,
+      isSubmitted: job.status === 'Submitted' || job.status === 'Complete',
+      currentWorkflowStep: getWorkflowStep(job, complete),
+    };
+  }, [job]);
 
-  const handleStartJob = async () => {
+  const handleStartJob = useCallback(async () => {
     if (!job) return;
     setActionError(null);
 
     try {
       const updatedJob: Job = { ...job, status: 'In Progress' };
       contextUpdateJob(updatedJob);
-    } catch (error) {
+    } catch {
       setActionError({ type: 'start', message: 'Failed to start job. Tap to retry.' });
     }
-  };
+  }, [job, contextUpdateJob]);
 
-  const handleReviewEvidence = async () => {
+  const handleReviewEvidence = useCallback(async () => {
     if (!job) return;
     setActionError(null);
 
     setSubmitting(true);
     try {
       navigate(`/tech/job/${job.id}/review`);
-    } catch (error) {
+    } catch {
       setActionError({ type: 'review', message: 'Failed to open evidence review. Tap to retry.' });
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [job, navigate]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     if (actionError?.type === 'start') {
       handleStartJob();
     } else if (actionError?.type === 'complete' || actionError?.type === 'review') {
       handleReviewEvidence();
     }
-  };
+  }, [actionError, handleStartJob, handleReviewEvidence]);
 
-  const openMaps = () => {
+  const openMaps = useCallback(() => {
     if (!job?.address) return;
 
     const encodedAddress = encodeURIComponent(job.address);
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
     window.open(mapsUrl, '_blank');
-  };
+  }, [job?.address]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 px-4 py-6">
         <LoadingSkeleton variant="card" count={2} />
+      </div>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <ErrorState message={dataError} onRetry={refresh} />
       </div>
     );
   }
@@ -160,22 +178,12 @@ const TechJobDetail: React.FC = () => {
     );
   }
 
-  const photos = (job.photos || []) as Photo[];
-  const beforePhotos = photos.filter(p => p.type === 'before');
-  const duringPhotos = photos.filter(p => p.type === 'during');
-  const afterPhotos = photos.filter(p => p.type === 'after');
-  const isActive = job.status === 'In Progress';
-  const canComplete = beforePhotos.length >= 1 && afterPhotos.length >= 1;
-  const isSealed = !!job.sealedAt;
-  const isSubmitted = job.status === 'Submitted' || job.status === 'Complete';
-  const currentWorkflowStep = getWorkflowStep(job, canComplete);
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4">
         <div className="flex items-center gap-4">
-          <Link to="/tech" className="p-1 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <Link to="/tech" aria-label="Back to jobs list" className="p-1 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
             <span className="material-symbols-outlined">arrow_back</span>
           </Link>
           <div className="flex-1">
@@ -305,7 +313,8 @@ const TechJobDetail: React.FC = () => {
                 {job.address && (
                   <button
                     onClick={openMaps}
-                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-white/5 transition-colors text-left"
+                    aria-label="Open address in Google Maps"
+                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-white/5 transition-colors text-left min-h-[44px]"
                   >
                     <span className="material-symbols-outlined text-primary">location_on</span>
                     <div className="flex-1">
@@ -372,11 +381,11 @@ const TechJobDetail: React.FC = () => {
               </div>
               {beforePhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
-                  {beforePhotos.map((photo, i) => (
-                    <div key={photo.id || photo.url || photo.timestamp || `before-${i}`} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-blue-500/20">
+                  {beforePhotos.map((photo) => (
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-blue-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`Before ${i + 1}`}
+                        alt={`Before photo for ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -400,11 +409,11 @@ const TechJobDetail: React.FC = () => {
               </div>
               {duringPhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
-                  {duringPhotos.map((photo, i) => (
-                    <div key={photo.id || photo.url || photo.timestamp || `during-${i}`} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-amber-500/20">
+                  {duringPhotos.map((photo) => (
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-amber-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`During ${i + 1}`}
+                        alt={`During photo for ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -428,11 +437,11 @@ const TechJobDetail: React.FC = () => {
               </div>
               {afterPhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
-                  {afterPhotos.map((photo, i) => (
-                    <div key={photo.id || photo.url || photo.timestamp || `after-${i}`} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-emerald-500/20">
+                  {afterPhotos.map((photo) => (
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-emerald-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`After ${i + 1}`}
+                        alt={`After photo for ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>
