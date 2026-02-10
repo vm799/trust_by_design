@@ -14,6 +14,8 @@ import { SYNC_STATUS } from '../../lib/constants';
 import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast, playCameraShutter } from '../../lib/microInteractions';
+import { compressImage } from '../../lib/imageCompression';
+import { hapticSuccess, hapticWarning } from '../../lib/haptics';
 import { MetadataHUD, BunkerStatusBadge } from '../../components/evidence';
 import { convertToW3W } from '../../lib/services/what3words';
 import { PhotoSavedConfirmation } from '../../components/PhotoSavedConfirmation';
@@ -125,9 +127,11 @@ const EvidenceCapture: React.FC = () => {
       if (err instanceof StorageQuotaExceededError) {
         setStorageFullWarning(true);
         setDraftSaveWarning(false);
+        hapticWarning();
       } else {
         setDraftSaveWarning(true);
         setStorageFullWarning(false);
+        hapticWarning();
       }
     }
   }, [draftKey, jobId]);
@@ -187,7 +191,7 @@ const EvidenceCapture: React.FC = () => {
     }
   }, []);
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -203,11 +207,13 @@ const EvidenceCapture: React.FC = () => {
     // Draw video frame to canvas
     context.drawImage(video, 0, 0);
 
-    // Play camera shutter sound for tactile feedback
+    // Play camera shutter sound + haptic for tactile feedback
     playCameraShutter();
+    hapticSuccess();
 
-    // Convert to data URL
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    // Convert to data URL and compress to <500KB for storage efficiency
+    const rawDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const { dataUrl } = await compressImage(rawDataUrl, 500);
 
     const photo: CapturedPhoto = {
       dataUrl,

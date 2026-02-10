@@ -18,6 +18,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Dexie, { type Table } from 'dexie';
+import { compressImage } from '../../lib/imageCompression';
 
 // ============================================================================
 // TYPES - Self-contained, no external dependencies
@@ -94,53 +95,6 @@ class BunkerDatabase extends Dexie {
 }
 
 const bunkerDb = new BunkerDatabase();
-
-// ============================================================================
-// IMAGE COMPRESSION - Keep photos <1MB
-// ============================================================================
-
-async function compressImage(dataUrl: string, maxSizeKB: number = 800): Promise<{ dataUrl: string; sizeBytes: number }> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-
-      // Calculate dimensions (max 1200px on longest side)
-      let { width, height } = img;
-      const maxDim = 1200;
-
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = (height / width) * maxDim;
-          width = maxDim;
-        } else {
-          width = (width / height) * maxDim;
-          height = maxDim;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Try different quality levels until under maxSizeKB
-      let quality = 0.8;
-      let compressed = canvas.toDataURL('image/jpeg', quality);
-
-      while (compressed.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
-        quality -= 0.1;
-        compressed = canvas.toDataURL('image/jpeg', quality);
-      }
-
-      resolve({
-        dataUrl: compressed,
-        sizeBytes: Math.round(compressed.length * 0.75) // Approximate actual bytes
-      });
-    };
-    img.src = dataUrl;
-  });
-}
 
 // ============================================================================
 // SYNC ENGINE - Auto-sync when online

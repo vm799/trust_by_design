@@ -25,7 +25,7 @@ import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../../components/AppLayout';
 import EmptyState from '../../../components/EmptyState';
-import { Modal, ConfirmDialog } from '../../../components/ui';
+import { Modal, ConfirmDialog, SLACountdown, SyncDot } from '../../../components/ui';
 import { JobActionMenu } from '../../../components/ui';
 import type { JobAction } from '../../../components/ui/JobActionMenu';
 import { Job, UserProfile } from '../../../types';
@@ -537,6 +537,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                           <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
                             {lifecycle.label}
                           </span>
+                          <SyncDot status={job.syncStatus} />
                         </div>
                         <p className="text-xs text-slate-400 truncate mb-1">
                           {job.client}
@@ -555,11 +556,10 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                           </span>
                         </div>
 
-                        {/* Sync Status */}
-                        {job.syncStatus === SYNC_STATUS.FAILED && (
-                          <div className="mt-2 flex items-center gap-1 text-danger text-[10px] font-black uppercase">
-                            <span className="material-symbols-outlined text-xs">sync_problem</span>
-                            Sync Failed
+                        {/* SLA Countdown */}
+                        {!['Complete', 'Submitted', 'Archived', 'Cancelled'].includes(job.status) && job.date && (
+                          <div className="mt-1.5">
+                            <SLACountdown deadline={job.date} />
                           </div>
                         )}
 

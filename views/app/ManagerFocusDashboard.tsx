@@ -16,7 +16,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageContent } from '../../components/layout';
-import { Card, ActionButton, LoadingSkeleton, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
+import { Card, ActionButton, LoadingSkeleton, StatusRing, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
 import { ProofGapBar, TechnicianStatusGrid, StatusBreakdownModal } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
@@ -535,7 +535,15 @@ const ManagerFocusDashboard: React.FC = () => {
 
     const hasIssues = failedSyncs > 0 || overdueJobs > 0;
 
-    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues };
+    const completedJobs = jobs.filter(j =>
+      ['Complete', 'Submitted', 'Archived'].includes(j.status)
+    ).length;
+    const activeJobs = jobs.filter(j => j.status === 'In Progress').length;
+    const pendingJobs = jobs.filter(j =>
+      ['Pending', 'Draft'].includes(j.status)
+    ).length;
+
+    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs };
   }, [technicians, jobs, now]);
 
   // On-site technicians with job details for pulse modal
@@ -600,6 +608,13 @@ const ManagerFocusDashboard: React.FC = () => {
       {/* Header with clickable status chips */}
       <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          <StatusRing
+            totalJobs={jobs.length}
+            completedJobs={metrics.completedJobs}
+            activeJobs={metrics.activeJobs}
+            pendingJobs={metrics.pendingJobs}
+            className="hidden sm:inline-flex"
+          />
           <h1 className="text-lg font-bold text-white">Mission Control</h1>
           {/* Desktop status chips */}
           <div className="hidden sm:flex items-center gap-2 text-xs">

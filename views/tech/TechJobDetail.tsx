@@ -21,6 +21,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { Job, Photo } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
+import { hapticConfirm, hapticTap } from '../../lib/haptics';
 
 const formatDateUTC = (dateString: string): string => {
   const date = new Date(dateString);
@@ -114,6 +115,7 @@ const TechJobDetail: React.FC = () => {
     try {
       const updatedJob: Job = { ...job, status: 'In Progress' };
       contextUpdateJob(updatedJob);
+      hapticConfirm();
     } catch {
       setActionError({ type: 'start', message: 'Failed to start job. Tap to retry.' });
     }
@@ -125,6 +127,7 @@ const TechJobDetail: React.FC = () => {
 
     setSubmitting(true);
     try {
+      hapticTap();
       navigate(`/tech/job/${job.id}/review`);
     } catch {
       setActionError({ type: 'review', message: 'Failed to open evidence review. Tap to retry.' });

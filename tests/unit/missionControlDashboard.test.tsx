@@ -83,6 +83,9 @@ vi.mock('../../components/ui', () => ({
   ActionButton: ({ children, onClick, to, icon }: any) =>
     to ? <a href={to}>{children}</a> : <button onClick={onClick}>{children}</button>,
   LoadingSkeleton: () => <div data-testid="loading-skeleton">Loading...</div>,
+  StatusRing: ({ totalJobs, completedJobs }: any) => (
+    <div data-testid="status-ring" aria-label={`${completedJobs} of ${totalJobs}`}>StatusRing</div>
+  ),
   FocusStack: () => null,
   FocusJobRenderProps: undefined,
   QueueJobRenderProps: undefined,
