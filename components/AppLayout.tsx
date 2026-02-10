@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { JobProofLogo } from './branding/jobproof-logo';
 import { UserProfile } from '../types';
+import BottomNav from './layout/BottomNav';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -161,21 +162,25 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            {/* Desktop: header button | Mobile: bottom nav FAB replaces this */}
             <Link
               to="/admin/create"
               id="btn-dispatch"
-              className="bg-primary hover:bg-primary-hover text-white text-xs lg:text-sm font-black min-h-[44px] min-w-[44px] px-4 lg:px-5 py-2.5 lg:py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-95"
+              className="hidden lg:flex bg-primary hover:bg-primary-hover text-white text-sm font-black min-h-[44px] px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20 items-center justify-center gap-2 active:scale-95"
               aria-label="Create new job"
             >
               <span className="material-symbols-outlined text-base font-black" aria-hidden="true">add</span>
-              <span className="hidden sm:inline tracking-widest uppercase">New Job</span>
+              <span className="tracking-widest uppercase">New Job</span>
             </Link>
           </div>
         </header>
-        <main className="p-6 md:p-8 lg:p-12 max-w-7xl mx-auto w-full">
+        <main className="p-6 md:p-8 lg:p-12 pb-28 lg:pb-12 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation - hidden on desktop */}
+      <BottomNav className="lg:hidden" />
     </div>
   );
 });
