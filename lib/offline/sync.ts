@@ -1,4 +1,4 @@
-import { getDatabase, LocalJob } from './db';
+import { getDatabase, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
@@ -362,13 +362,27 @@ async function _pushQueueImpl() {
         try {
             let success = false;
             switch (action.type) {
+                case 'CREATE_JOB':
+                    success = await processCreateJob(action.payload);
+                    break;
                 case 'UPDATE_JOB':
                     success = await processUpdateJob(action.payload);
                     break;
                 case 'UPLOAD_PHOTO':
                     success = await processUploadPhoto(action.payload);
                     break;
-                // Add other cases
+                case 'CREATE_CLIENT':
+                    success = await processCreateClient(action.payload);
+                    break;
+                case 'UPDATE_CLIENT':
+                    success = await processUpdateClient(action.payload);
+                    break;
+                case 'CREATE_TECHNICIAN':
+                    success = await processCreateTechnician(action.payload);
+                    break;
+                case 'UPDATE_TECHNICIAN':
+                    success = await processUpdateTechnician(action.payload);
+                    break;
             }
 
             if (success) {
@@ -407,6 +421,149 @@ async function processUpdateJob(job: Partial<LocalJob>) {
         .eq('id', job.id);
 
     return !error;
+}
+
+/**
+ * Process CREATE_JOB: Insert a locally-created job into Supabase
+ */
+async function processCreateJob(job: any) {
+    const supabase = getSupabase();
+    if (!supabase || !job.id) return false;
+
+    const { error } = await supabase
+        .from('jobs')
+        .upsert({
+            id: job.id,
+            title: job.title || '',
+            description: job.description || '',
+            status: job.status || 'Draft',
+            client_id: job.clientId || null,
+            technician_id: job.technicianId || job.techId || null,
+            workspace_id: job.workspaceId || job.workspace_id || null,
+            location: job.location || null,
+            scheduled_date: job.scheduledDate || null,
+            photos: job.photos || [],
+            notes: job.notes || null,
+            safety_checklist: job.safetyChecklist || [],
+            created_at: job.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+    if (error) {
+        console.error('[Sync] CREATE_JOB failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process CREATE_CLIENT: Insert a locally-created client into Supabase
+ */
+async function processCreateClient(client: any) {
+    const supabase = getSupabase();
+    if (!supabase || !client.id) return false;
+
+    const { error } = await supabase
+        .from('clients')
+        .upsert({
+            id: client.id,
+            name: client.name || '',
+            email: client.email || null,
+            phone: client.phone || null,
+            address: client.address || null,
+            type: client.type || null,
+            notes: client.notes || null,
+            workspace_id: client.workspaceId || client.workspace_id || null,
+            created_at: client.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+    if (error) {
+        console.error('[Sync] CREATE_CLIENT failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process UPDATE_CLIENT: Update an existing client in Supabase
+ */
+async function processUpdateClient(client: any) {
+    const supabase = getSupabase();
+    if (!supabase || !client.id) return false;
+
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (client.name) updateData.name = client.name;
+    if (client.email !== undefined) updateData.email = client.email;
+    if (client.phone !== undefined) updateData.phone = client.phone;
+    if (client.address !== undefined) updateData.address = client.address;
+    if (client.type !== undefined) updateData.type = client.type;
+    if (client.notes !== undefined) updateData.notes = client.notes;
+
+    const { error } = await supabase
+        .from('clients')
+        .update(updateData)
+        .eq('id', client.id);
+
+    if (error) {
+        console.error('[Sync] UPDATE_CLIENT failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process CREATE_TECHNICIAN: Insert a locally-created technician into Supabase
+ */
+async function processCreateTechnician(tech: any) {
+    const supabase = getSupabase();
+    if (!supabase || !tech.id) return false;
+
+    const { error } = await supabase
+        .from('technicians')
+        .upsert({
+            id: tech.id,
+            name: tech.name || '',
+            email: tech.email || null,
+            phone: tech.phone || null,
+            status: tech.status || 'Available',
+            specialty: tech.specialty || null,
+            workspace_id: tech.workspaceId || tech.workspace_id || null,
+            created_at: tech.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+    if (error) {
+        console.error('[Sync] CREATE_TECHNICIAN failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process UPDATE_TECHNICIAN: Update an existing technician in Supabase
+ */
+async function processUpdateTechnician(tech: any) {
+    const supabase = getSupabase();
+    if (!supabase || !tech.id) return false;
+
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (tech.name) updateData.name = tech.name;
+    if (tech.email !== undefined) updateData.email = tech.email;
+    if (tech.phone !== undefined) updateData.phone = tech.phone;
+    if (tech.status) updateData.status = tech.status;
+    if (tech.specialty !== undefined) updateData.specialty = tech.specialty;
+
+    const { error } = await supabase
+        .from('technicians')
+        .update(updateData)
+        .eq('id', tech.id);
+
+    if (error) {
+        console.error('[Sync] UPDATE_TECHNICIAN failed:', error.message);
+        return false;
+    }
+    return true;
 }
 
 async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?: string }) {
@@ -552,5 +709,189 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
     } catch (e) {
         console.error(`[Sync] Exception in processUploadPhoto:`, e);
         return false;
+    }
+}
+
+// ============================================================================
+// P2-1: ORPHAN PHOTO RETRY
+// Orphan photos are created when upload fails (network timeout or IndexedDB data lost).
+// This function retries uploading orphans where local media still exists in IndexedDB.
+// ============================================================================
+
+const MAX_ORPHAN_RECOVERY_ATTEMPTS = 5;
+
+/**
+ * Retry uploading orphan photos that still have local media data.
+ * Called during each sync cycle alongside pushQueue/pullJobs.
+ */
+export async function retryOrphanPhotos() {
+    if (!navigator.onLine || !isSupabaseAvailable()) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    const cacheKey = generateCacheKey('retryOrphanPhotos');
+    return requestCache.dedupe(cacheKey, async () => {
+        return _retryOrphanPhotosImpl();
+    }, 5000);
+}
+
+async function _retryOrphanPhotosImpl() {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    const orphans = await getAllOrphanPhotos();
+    if (orphans.length === 0) return;
+
+    let recovered = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const orphan of orphans) {
+        if (orphan.recoveryAttempts >= MAX_ORPHAN_RECOVERY_ATTEMPTS) {
+            skipped++;
+            continue;
+        }
+
+        try {
+            await incrementOrphanRecoveryAttempts(orphan.id);
+
+            // Check if local media data still exists in IndexedDB
+            const dataUrl = await getMediaLocal(orphan.id);
+            if (!dataUrl) {
+                // Binary data is gone — cannot recover, skip
+                skipped++;
+                continue;
+            }
+
+            // Attempt upload to Supabase Storage
+            const base64Data = dataUrl.split(',')[1];
+            const mimeType = dataUrl.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
+            const blob = await fetch(`data:${mimeType};base64,${base64Data}`).then(r => r.blob());
+            const filePath = `${orphan.jobId}/${orphan.id}.jpg`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('job-photos')
+                .upload(filePath, blob, { contentType: mimeType, upsert: true });
+
+            if (uploadError) {
+                failed++;
+                continue;
+            }
+
+            // Upload succeeded — remove from orphan table
+            await deleteOrphanPhoto(orphan.id);
+            recovered++;
+
+        } catch {
+            failed++;
+        }
+    }
+
+    if (recovered > 0) {
+        showPersistentNotification({
+            type: 'success',
+            title: 'Photos Recovered',
+            message: `${recovered} orphan photo(s) successfully uploaded.${failed > 0 ? ` ${failed} still pending.` : ''}`,
+            persistent: false,
+        });
+    }
+}
+
+// ============================================================================
+// P2-3: PULL SYNC FOR CLIENTS AND TECHNICIANS
+// Matches the pullJobs() pattern — fetch from Supabase, update local Dexie cache.
+// ============================================================================
+
+/**
+ * PULL: Fetch latest clients from Supabase and update local Dexie cache.
+ * Uses request deduplication to prevent concurrent duplicate requests.
+ */
+export async function pullClients(workspaceId: string) {
+    if (!navigator.onLine || !isSupabaseAvailable()) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    const cacheKey = generateCacheKey('pullClients', workspaceId);
+    return requestCache.dedupe(cacheKey, async () => {
+        return _pullClientsImpl(workspaceId);
+    }, 5000);
+}
+
+async function _pullClientsImpl(workspaceId: string) {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('workspace_id', workspaceId);
+
+        if (error || !data) return;
+
+        const localClients = data.map((row: any) => ({
+            id: row.id,
+            name: row.name || '',
+            email: row.email || '',
+            phone: row.phone || '',
+            address: row.address || '',
+            totalJobs: row.total_jobs || 0,
+            type: row.type || '',
+            notes: row.notes || '',
+            workspaceId,
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now(),
+        }));
+
+        await saveClientsBatch(localClients);
+    } catch (err) {
+        console.error('[Sync] pullClients failed:', err);
+    }
+}
+
+/**
+ * PULL: Fetch latest technicians from Supabase and update local Dexie cache.
+ * Uses request deduplication to prevent concurrent duplicate requests.
+ */
+export async function pullTechnicians(workspaceId: string) {
+    if (!navigator.onLine || !isSupabaseAvailable()) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    const cacheKey = generateCacheKey('pullTechnicians', workspaceId);
+    return requestCache.dedupe(cacheKey, async () => {
+        return _pullTechniciansImpl(workspaceId);
+    }, 5000);
+}
+
+async function _pullTechniciansImpl(workspaceId: string) {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('technicians')
+            .select('*')
+            .eq('workspace_id', workspaceId);
+
+        if (error || !data) return;
+
+        const localTechs = data.map((row: any) => ({
+            id: row.id,
+            name: row.name || '',
+            email: row.email || '',
+            phone: row.phone || '',
+            status: row.status || 'Available',
+            rating: row.rating || 0,
+            jobsCompleted: row.jobs_completed || 0,
+            specialty: row.specialty || '',
+            workspaceId,
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now(),
+        }));
+
+        await saveTechniciansBatch(localTechs);
+    } catch (err) {
+        console.error('[Sync] pullTechnicians failed:', err);
     }
 }

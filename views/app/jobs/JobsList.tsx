@@ -440,6 +440,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
       ...actionJob,
       technicianId: techId,
       technician: tech.name,
+      techEmail: tech.email, // Store email for TechPortal matching (tech table ID != auth UID)
     };
     contextUpdateJob(updatedJob);
     setShowAssignModal(false);

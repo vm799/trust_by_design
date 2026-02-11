@@ -63,24 +63,34 @@ const TechJobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  const { jobs, clients, updateJob: contextUpdateJob, isLoading, error: dataError, refresh } = useData();
+  const { jobs, clients, technicians, updateJob: contextUpdateJob, isLoading, error: dataError, refresh } = useData();
   const { userId, userEmail } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<{ type: 'start' | 'complete' | 'review'; message: string } | null>(null);
+
+  // Find the current user's technician record by email
+  // Managers assign jobs using the technician table ID (not auth UID), so we need
+  // to look up our tech record to match by that ID too
+  const myTechRecord = useMemo(() =>
+    technicians.find(t => t.email && userEmail && t.email.toLowerCase() === userEmail.toLowerCase()),
+    [technicians, userEmail]
+  );
 
   // SECURITY FIX: Only find jobs assigned to this technician
   const job = useMemo(() => {
     const found = jobs.find(j => j.id === jobId) || null;
     if (!found || !userId) return found;
     // Ownership check: technician can only view their own jobs
-    // Match by UUID (techId/technicianId) OR by email (techEmail)
+    // Match by auth UID, tech table ID (via email lookup), or email
     const isOwner = found.technicianId === userId ||
       found.techId === userId ||
       found.techMetadata?.createdByTechId === userId ||
+      // Match by technician table ID (managers assign using tech table ID, not auth UID)
+      (myTechRecord && (found.technicianId === myTechRecord.id || found.techId === myTechRecord.id)) ||
       (userEmail && found.techEmail && found.techEmail.toLowerCase() === userEmail.toLowerCase());
     return isOwner ? found : null;
-  }, [jobs, jobId, userId, userEmail]);
+  }, [jobs, jobId, userId, userEmail, myTechRecord]);
   const client = useMemo(() =>
     job ? clients.find(c => c.id === job.clientId) || null : null,
     [clients, job]

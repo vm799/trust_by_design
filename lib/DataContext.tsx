@@ -544,15 +544,75 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
   // Job mutations
   // Sprint 2 Task 2.6: Normalize technician IDs on mutation
-  const addJob = useCallback((job: Job) => {
-    setJobs(prev => [normalizeJobTechnicianId(job), ...prev]);
-  }, []);
+  // FIX: Storage continuity - persist to Supabase (online) or Dexie queue (offline)
+  const addJob = useCallback(async (job: Job) => {
+    const normalizedJob = normalizeJobTechnicianId(job);
 
-  const updateJob = useCallback((updatedJob: Job) => {
+    // Optimistic update: Always succeeds locally
+    setJobs(prev => [normalizedJob, ...prev]);
+
+    // Persist to backend (non-blocking for UI)
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.createJob(normalizedJob, workspaceId);
+        if (!result.success) {
+          // Backend rejected - queue for later sync
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+        }
+      } else {
+        // Offline - save to Dexie and queue for sync when online
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+      }
+    } catch {
+      // Non-blocking: Data is safe in React state + localStorage (debounced save)
+      // Queue for later sync on next opportunity
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+      } catch {
+        // Last resort: data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
+
+  const updateJob = useCallback(async (updatedJob: Job) => {
     // Sprint 2 Task 2.6: Normalize technician IDs on mutation
     const normalizedJob = normalizeJobTechnicianId(updatedJob);
+
+    // Optimistic update: Always succeeds locally
     setJobs(prev => prev.map(j => j.id === normalizedJob.id ? normalizedJob : j));
-  }, []);
+
+    // Persist to backend (non-blocking for UI)
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.updateJob(normalizedJob.id, normalizedJob);
+        if (!result.success) {
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+        }
+      } else {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+      }
+    } catch {
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+      } catch {
+        // Data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
 
   const deleteJob = useCallback(async (id: string) => {
     // Store original job before removal (for rollback on failure)
@@ -583,13 +643,64 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, [jobs]);
 
   // Client mutations
-  const addClient = useCallback((client: Client) => {
+  // FIX: Storage continuity - persist to Supabase (online) or Dexie queue (offline)
+  const addClient = useCallback(async (client: Client) => {
+    // Optimistic update: Always succeeds locally
     setClients(prev => [...prev, client]);
-  }, []);
 
-  const updateClient = useCallback((updatedClient: Client) => {
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.createClient(client, workspaceId);
+        if (!result.success) {
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveClientLocal({ ...client, totalJobs: client.totalJobs || 0, workspaceId, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('CREATE_CLIENT', { ...client, workspaceId });
+        }
+      } else {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveClientLocal({ ...client, totalJobs: client.totalJobs || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_CLIENT', { ...client, workspaceId: workspaceId || '' });
+      }
+    } catch {
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveClientLocal({ ...client, totalJobs: client.totalJobs || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_CLIENT', { ...client, workspaceId: workspaceId || '' });
+      } catch {
+        // Data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
+
+  const updateClient = useCallback(async (updatedClient: Client) => {
+    // Optimistic update: Always succeeds locally
     setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
-  }, []);
+
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.updateClient(updatedClient.id, updatedClient);
+        if (!result.success) {
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveClientLocal({ ...updatedClient, totalJobs: updatedClient.totalJobs || 0, workspaceId, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('UPDATE_CLIENT', { ...updatedClient, workspaceId });
+        }
+      } else {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveClientLocal({ ...updatedClient, totalJobs: updatedClient.totalJobs || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_CLIENT', { ...updatedClient, workspaceId: workspaceId || '' });
+      }
+    } catch {
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveClientLocal({ ...updatedClient, totalJobs: updatedClient.totalJobs || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_CLIENT', { ...updatedClient, workspaceId: workspaceId || '' });
+      } catch {
+        // Data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
 
   const deleteClient = useCallback(async (id: string) => {
     // Store original client in case we need to restore
@@ -622,13 +733,64 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   }, [clients]);
 
   // Technician mutations
-  const addTechnician = useCallback((tech: Technician) => {
+  // FIX: Storage continuity - persist to Supabase (online) or Dexie queue (offline)
+  const addTechnician = useCallback(async (tech: Technician) => {
+    // Optimistic update: Always succeeds locally
     setTechnicians(prev => [...prev, tech]);
-  }, []);
 
-  const updateTechnician = useCallback((updatedTech: Technician) => {
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.createTechnician(tech, workspaceId);
+        if (!result.success) {
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveTechnicianLocal({ ...tech, status: tech.status || 'Available', rating: tech.rating || 0, jobsCompleted: tech.jobsCompleted || 0, workspaceId, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('CREATE_TECHNICIAN', { ...tech, workspaceId });
+        }
+      } else {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveTechnicianLocal({ ...tech, status: tech.status || 'Available', rating: tech.rating || 0, jobsCompleted: tech.jobsCompleted || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_TECHNICIAN', { ...tech, workspaceId: workspaceId || '' });
+      }
+    } catch {
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveTechnicianLocal({ ...tech, status: tech.status || 'Available', rating: tech.rating || 0, jobsCompleted: tech.jobsCompleted || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_TECHNICIAN', { ...tech, workspaceId: workspaceId || '' });
+      } catch {
+        // Data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
+
+  const updateTechnician = useCallback(async (updatedTech: Technician) => {
+    // Optimistic update: Always succeeds locally
     setTechnicians(prev => prev.map(t => t.id === updatedTech.id ? updatedTech : t));
-  }, []);
+
+    try {
+      if (navigator.onLine && workspaceId) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.updateTechnician(updatedTech.id, updatedTech);
+        if (!result.success) {
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.saveTechnicianLocal({ ...updatedTech, status: updatedTech.status || 'Available', rating: updatedTech.rating || 0, jobsCompleted: updatedTech.jobsCompleted || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('UPDATE_TECHNICIAN', { ...updatedTech, workspaceId: workspaceId || '' });
+        }
+      } else {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveTechnicianLocal({ ...updatedTech, status: updatedTech.status || 'Available', rating: updatedTech.rating || 0, jobsCompleted: updatedTech.jobsCompleted || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_TECHNICIAN', { ...updatedTech, workspaceId: workspaceId || '' });
+      }
+    } catch {
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.saveTechnicianLocal({ ...updatedTech, status: updatedTech.status || 'Available', rating: updatedTech.rating || 0, jobsCompleted: updatedTech.jobsCompleted || 0, workspaceId: workspaceId || '', syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_TECHNICIAN', { ...updatedTech, workspaceId: workspaceId || '' });
+      } catch {
+        // Data is in React state and will be saved to localStorage
+      }
+    }
+  }, [workspaceId]);
 
   const deleteTechnician = useCallback(async (id: string) => {
     // Store original technician in case we need to restore
