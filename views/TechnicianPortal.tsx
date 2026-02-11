@@ -1964,8 +1964,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
+                <label htmlFor="tech-signer-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
                 <input
+                  id="tech-signer-name"
                   ref={signerNameRef}
                   type="text"
                   placeholder="Full Legal Name"
@@ -1975,8 +1976,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorisation Role</label>
+                <label htmlFor="tech-signer-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorisation Role</label>
                 <select
+                  id="tech-signer-role"
                   value={signerRole}
                   onChange={e => setSignerRole(e.target.value)}
                   className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary uppercase font-black text-[10px] appearance-none cursor-pointer"
@@ -1990,9 +1992,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
             {/* UX Flow Contract: Attestation checkbox - REQUIRED before sealing */}
             <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4">
-              <label className="flex items-start gap-4 cursor-pointer group">
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- htmlFor matches sr-only input */}
+              <label htmlFor="attestation-confirmed" className="flex items-start gap-4 cursor-pointer group">
+                <span className="sr-only">I confirm I am satisfied with the work completed</span>
                 <div className="relative flex-shrink-0 mt-0.5">
                   <input
+                    id="attestation-confirmed"
                     type="checkbox"
                     checked={attestationConfirmed}
                     onChange={(e) => setAttestationConfirmed(e.target.checked)}
@@ -2004,7 +2009,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     )}
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1" aria-hidden="true">
                   <p className="text-xs font-bold text-white leading-relaxed">
                     I confirm I am satisfied with the work completed
                   </p>
@@ -2268,8 +2273,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Latitude</label>
+                <label htmlFor="manual-latitude" className="block text-xs text-slate-500 mb-1">Latitude</label>
                 <input
+                  id="manual-latitude"
                   type="number"
                   step="any"
                   value={manualLatInput}
@@ -2279,8 +2285,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Longitude</label>
+                <label htmlFor="manual-longitude" className="block text-xs text-slate-500 mb-1">Longitude</label>
                 <input
+                  id="manual-longitude"
                   type="number"
                   step="any"
                   value={manualLngInput}
@@ -2330,7 +2337,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="grid gap-3">
                 <div className="bg-slate-800/50 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Working Offline?</p>
-                  <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you're back online. Keep working!</p>
+                  <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you&apos;re back online. Keep working!</p>
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Photo Tips</p>
@@ -2351,8 +2358,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </h3>
               <div className="space-y-2">
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
-                  <summary className="text-xs font-bold text-white">What if GPS doesn't work?</summary>
-                  <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as "unverified" in the report.</p>
+                  <summary className="text-xs font-bold text-white">What if GPS doesn&apos;t work?</summary>
+                  <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as &quot;unverified&quot; in the report.</p>
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">Can I go back and change something?</summary>
@@ -2363,7 +2370,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                   <p className="text-xs text-slate-400 mt-2">Sealing finalizes the evidence bundle for this job. The client and manager receive a professional report.</p>
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
-                  <summary className="text-xs font-bold text-white">I see "Syncing" but nothing happens</summary>
+                  <summary className="text-xs font-bold text-white">I see &quot;Syncing&quot; but nothing happens</summary>
                   <p className="text-xs text-slate-400 mt-2">If sync seems stuck, your data is safe locally. Move to better signal area. Sync will auto-retry for up to 12 minutes.</p>
                 </details>
               </div>

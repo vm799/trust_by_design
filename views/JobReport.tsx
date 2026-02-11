@@ -1283,7 +1283,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    );
 };
 
-const TimelineStep = ({ label, time, status: _status, icon, active = true }: any) => (
+const TimelineStep = ({ label, time, icon, active = true }: any) => (
    <div className={`flex flex-col items-center text-center space-y-2 ${active ? 'opacity-100' : 'opacity-20'}`}>
       <div className={`size-8 rounded-xl flex items-center justify-center ${active ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>
          <span className="material-symbols-outlined text-sm font-black">{icon}</span>

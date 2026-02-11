@@ -367,8 +367,8 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
         await runDb.jobs.update(job.id, { reportUrl: result.pdfUrl });
       }
     }
-  } catch {
-    console.error('[BunkerRun] Report error:', error);
+  } catch (err) {
+    console.error('[BunkerRun] Report error:', err);
   }
 }
 
@@ -416,15 +416,6 @@ export default function BunkerRun() {
   const [showEmailFallback, setShowEmailFallback] = useState(false);
   const [fallbackEmailInput, setFallbackEmailInput] = useState('');
 
-  // DEBUG: Log when BunkerRun component loads
-  useEffect(() => {
-    console.log('[BunkerRun] Component loaded for ID:', jobId);
-    console.log('[BunkerRun] Current URL:', window.location.href);
-    console.log('[BunkerRun] Theme:', resolvedTheme, 'isDaylight:', isDaylight);
-    console.log('[BunkerRun] Handshake:', handshake);
-    console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
-  }, [jobId, resolvedTheme, isDaylight, handshake]);
-
   // Sync handshake data to STORAGE_KEYS for backward compatibility
   useEffect(() => {
     if (handshake.managerEmail) {
@@ -445,7 +436,6 @@ export default function BunkerRun() {
   useEffect(() => {
     const lockedContext = HandshakeService.get();
     if (lockedContext?.isLocked && lockedContext.jobId !== jobId) {
-      console.warn('[BunkerRun] Blocked: handshake locked to different job', lockedContext.jobId);
       // Redirect to the locked job
       navigate(`/run/${lockedContext.jobId}`);
     }
@@ -456,16 +446,13 @@ export default function BunkerRun() {
   useEffect(() => {
     const hsContext = HandshakeService.get();
     if (hsContext && hsContext.jobId === jobId) {
-      console.log('[BunkerRun] Found HandshakeService context for this job:', hsContext);
       // Use data from HandshakeService if available and hook doesn't have it
       if (hsContext.deliveryEmail && !handshake.managerEmail) {
-        console.log('[BunkerRun] Syncing deliveryEmail from HandshakeService:', hsContext.deliveryEmail);
         setHandshakeManagerEmail(hsContext.deliveryEmail);
         // Also write directly to localStorage for immediate availability
         localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, hsContext.deliveryEmail);
       }
       if (hsContext.clientEmail && !handshake.clientEmail) {
-        console.log('[BunkerRun] Syncing clientEmail from HandshakeService:', hsContext.clientEmail);
         localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, hsContext.clientEmail);
       }
     }
@@ -542,7 +529,7 @@ export default function BunkerRun() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => console.warn('[BunkerRun] GPS error:', err),
+        () => {},
         { enableHighAccuracy: true, timeout: 10000 }
       );
     }
@@ -563,9 +550,7 @@ export default function BunkerRun() {
 
     // Security: Validate checksum using handshake data
     if (handshake.checksum && !handshake.isChecksumValid) {
-      console.warn('[BunkerRun] Invalid checksum for job:', jobId);
       // Don't block - allow access for backwards compatibility with old links
-      // But log for security monitoring
     }
 
     loadJob(jobId);
@@ -606,7 +591,6 @@ export default function BunkerRun() {
     if (cached) {
       // LOOP-BREAKER: If job is already complete and synced, show success screen
       if (cached.completedAt && cached.syncStatus === 'synced') {
-        console.log('[BunkerRun] Job already complete, showing success:', id);
         setJob(cached);
         setIsJobFinished(true);
         return;
@@ -620,14 +604,12 @@ export default function BunkerRun() {
       if (!isStale || !isOnline) {
         setJob(cached);
         storeJobDetailsForSync(cached);
-        console.log('[BunkerRun] Loaded from cache:', id, { age: Math.round(cacheAge / 1000) + 's' });
         return;
       }
 
       // Cache is stale and we're online - show cached data immediately but refresh in background
       setJob(cached);
       storeJobDetailsForSync(cached);
-      console.log('[BunkerRun] Cache stale, refreshing from server:', id);
       // Continue to step 2 to refresh from Supabase
     }
 
@@ -671,15 +653,12 @@ export default function BunkerRun() {
 
             // If already complete, show success screen (LOOP-BREAKER)
             if (isComplete) {
-              console.log('[BunkerRun] Job already complete in DB, showing success:', id);
               setIsJobFinished(true);
-            } else {
-              console.log('[BunkerRun] Loaded from Supabase:', id);
             }
             return;
           }
         }
-      } catch {
+      } catch (error) {
         console.error('[BunkerRun] Fetch error:', error);
       }
     }
@@ -702,7 +681,6 @@ export default function BunkerRun() {
     setJob(newJob);
     // Store in localStorage (even without emails, so success page knows job ID)
     storeJobDetailsForSync(newJob);
-    console.log('[BunkerRun] Created new job with handshake:', id, { managerEmail: handshake.managerEmail, clientEmail: handshake.clientEmail });
   };
 
   // ============================================================================
@@ -794,21 +772,14 @@ export default function BunkerRun() {
       // CRITICAL FIX: Clear handshake lock to allow next technician to access new jobs
       // This ensures subsequent magic links are not blocked by stale locks
       HandshakeService.clear();
-      console.log('[BunkerRun] Handshake cleared after successful sync');
 
       // AUTO-SEAL: Cryptographically seal evidence after successful sync
       try {
-        console.log('[BunkerRun] Attempting auto-seal for job:', job.id);
         const sealResult = await sealEvidence(job.id);
         if (sealResult.success) {
-          console.log('[BunkerRun] Evidence sealed successfully:', sealResult.evidenceHash?.substring(0, 16));
           setToastMessage({ text: 'Evidence sealed & synced!', type: 'success' });
-        } else {
-          console.warn('[BunkerRun] Auto-seal skipped:', sealResult.error);
-          // Don't show error to user - seal can happen later via manager review
         }
-      } catch (sealError) {
-        console.warn('[BunkerRun] Auto-seal error (non-blocking):', sealError);
+      } catch {
         // Non-blocking - job is synced, seal can happen later
       }
 

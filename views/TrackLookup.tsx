@@ -127,7 +127,7 @@ const TrackLookup: React.FC = () => {
         {/* Footer Links */}
         <div className="text-center space-y-3">
           <p className="text-slate-300 text-sm">
-            Don't have a job link?
+            Don&apos;t have a job link?
           </p>
           <button
             onClick={() => navigate('/auth')}

@@ -147,8 +147,9 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                </div>
                <div className="p-6 sm:p-10 space-y-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Workspace Name</label>
+                    <label htmlFor="settings-workspace-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Workspace Name</label>
                     <input
+                      id="settings-workspace-name"
                       type="text"
                       className="w-full bg-slate-800 border-slate-700 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
                       value={wsName}
@@ -426,8 +427,9 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email Address</label>
+                <label htmlFor="invite-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email Address</label>
                 <input
+                  id="invite-email"
                   type="email"
                   placeholder="teammate@example.com"
                   className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -435,8 +437,8 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
-                <select className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
+                <label htmlFor="invite-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
+                <select id="invite-role" className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
                   <option>Admin</option>
                   <option>Manager</option>
                   <option>Technician</option>

@@ -398,7 +398,7 @@ const TechJobDetail: React.FC = () => {
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-blue-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`Before photo for ${job.title}`}
+                        alt={`Before - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -426,7 +426,7 @@ const TechJobDetail: React.FC = () => {
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-amber-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`During photo for ${job.title}`}
+                        alt={`During - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -454,7 +454,7 @@ const TechJobDetail: React.FC = () => {
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-emerald-500/20">
                       <img
                         src={photo.url || photo.localPath}
-                        alt={`After photo for ${job.title}`}
+                        alt={`After - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
                     </div>

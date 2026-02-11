@@ -42,8 +42,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   clients = [],
   technicians = [],
   user,
-  showOnboarding: _showOnboarding,
-  onCloseOnboarding: _onCloseOnboarding
 }) => {
   const navigate = useNavigate();
   const { updateJob, deleteJob } = useData();

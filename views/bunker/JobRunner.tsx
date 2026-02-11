@@ -933,10 +933,11 @@ export default function JobRunner() {
 
       <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="bunker-job-id" className="block text-sm font-medium text-slate-300 mb-2">
             Job ID *
           </label>
           <input
+            id="bunker-job-id"
             type="text"
             value={manualJobId}
             onChange={(e) => setManualJobId(e.target.value)}
@@ -946,10 +947,11 @@ export default function JobRunner() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="bunker-technician-name" className="block text-sm font-medium text-slate-300 mb-2">
             Your Name (Technician)
           </label>
           <input
+            id="bunker-technician-name"
             type="text"
             value={technicianName}
             onChange={(e) => setTechnicianName(e.target.value)}
@@ -959,10 +961,11 @@ export default function JobRunner() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="bunker-manager-email" className="block text-sm font-medium text-slate-300 mb-2">
             Manager Email (for report delivery)
           </label>
           <input
+            id="bunker-manager-email"
             type="email"
             value={managerEmail}
             onChange={(e) => setManagerEmail(e.target.value)}
@@ -1129,10 +1132,11 @@ export default function JobRunner() {
       ) : (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="bunker-signer-name" className="block text-sm font-medium text-slate-300 mb-2">
               Signer Name *
             </label>
             <input
+              id="bunker-signer-name"
               type="text"
               value={signerName}
               onChange={(e) => setSignerName(e.target.value)}

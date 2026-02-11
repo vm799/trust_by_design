@@ -613,7 +613,7 @@ const TechProofScreen: React.FC = () => {
           {/* Sign-off declaration text */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
             <p className="text-sm text-slate-300 leading-relaxed font-medium">
-              "I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements."
+              &quot;I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements.&quot;
             </p>
           </div>
 

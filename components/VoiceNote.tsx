@@ -243,7 +243,9 @@ const VoiceNote: React.FC<VoiceNoteProps> = ({
           src={state.audioUrl}
           controls
           className="w-full h-10 rounded-lg"
-        />
+        >
+          <track kind="captions" />
+        </audio>
       )}
 
       {/* Controls */}

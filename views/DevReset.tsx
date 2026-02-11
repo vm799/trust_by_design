@@ -41,6 +41,7 @@ const DevReset: React.FC = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<ResetResult | null>(null);
   const [layers, setLayers] = useState<LayerDisplayStatus[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- setter used by layer inspection
   const [_controlPlaneStatus, setControlPlaneStatus] = useState<LayerStatus | null>(null);
   const [devModeEnabled, setDevModeEnabled] = useState(isDevMode());
 

@@ -227,10 +227,11 @@ const ManagerOnboarding: React.FC = () => {
             <div className="space-y-5">
               {/* Company Name - Primary Focus */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="onboarding-company-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Company Name *
                 </label>
                 <input
+                  id="onboarding-company-name"
                   ref={companyNameRef}
                   type="text"
                   required
@@ -243,10 +244,11 @@ const ManagerOnboarding: React.FC = () => {
 
               {/* Country */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="onboarding-country" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Country
                 </label>
                 <select
+                  id="onboarding-country"
                   value={companyData.country}
                   onChange={(e) => setCompanyData({ ...companyData, country: e.target.value })}
                   className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
@@ -259,12 +261,13 @@ const ManagerOnboarding: React.FC = () => {
 
               {/* Work Hours */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Default Work Hours
-                </label>
+                </span>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="relative">
                     <input
+                      aria-label="Work hours start"
                       type="time"
                       value={companyData.workHoursStart}
                       onChange={(e) => setCompanyData({ ...companyData, workHoursStart: e.target.value })}
@@ -286,9 +289,9 @@ const ManagerOnboarding: React.FC = () => {
 
               {/* Safety Requirements */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Default Safety Requirements
-                </label>
+                </span>
                 <div className="grid grid-cols-2 gap-2">
                   {SAFETY_PRESETS.map((safety) => (
                     <button
@@ -411,7 +414,7 @@ const ManagerOnboarding: React.FC = () => {
                 <span className="material-symbols-outlined text-success text-5xl">rocket_launch</span>
               </div>
               <h1 className="text-2xl font-black text-white uppercase tracking-tight">
-                You're All Set!
+                You&apos;re All Set!
               </h1>
               <p className="text-slate-400 text-sm max-w-sm mx-auto">
                 <span className="text-white font-bold">{companyData.companyName}</span> is ready to go.

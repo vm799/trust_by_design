@@ -306,7 +306,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
               {custody.length > 0 && (
                 <div className="pt-2 mt-2 border-t border-white/10">
                   <p className="text-[10px] text-slate-500 uppercase mb-1">Chain of Custody</p>
-                  {custody.map((event, i) => (
+                  {custody.map((event) => (
                     <div key={`custody-${event.action}-${event.timestamp}`} className="flex items-center gap-2 text-[10px]">
                       <span className={`size-1.5 rounded-full ${
                         event.action === 'captured' ? 'bg-blue-400' :

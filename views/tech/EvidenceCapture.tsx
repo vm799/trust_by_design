@@ -36,7 +36,7 @@ const EvidenceCapture: React.FC = () => {
   const navigate = useNavigate();
 
   // Use DataContext for state management
-  const { jobs, updateJob: contextUpdateJob, isLoading: _isLoading, error: _dataError, refresh: _refresh } = useData();
+  const { jobs, updateJob: contextUpdateJob } = useData();
 
   // Memoized job derivation from DataContext
   const job = useMemo(() => jobs.find(j => j.id === jobId) || null, [jobs, jobId]);

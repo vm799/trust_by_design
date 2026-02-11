@@ -82,13 +82,11 @@ const OAuthSetup: React.FC = () => {
       // CRITICAL FIX: Don't redirect to /auth if user has already started setup
       // This prevents race condition where auth state changes mid-flow
       if (setupStartedRef.current) {
-        console.log('[OAuthSetup] Setup already started, skipping auth check');
         return;
       }
 
       if (!isAuthenticated || !userId) {
         hasCheckedRef.current = true;
-        console.log('[OAuthSetup] Not authenticated, redirecting to /auth');
         navigate('/auth');
         return;
       }
@@ -362,7 +360,7 @@ const OAuthSetup: React.FC = () => {
                   Hey there! 👋
                 </h1>
                 <p className="text-slate-400 text-base">
-                  Let's get you set up in 30 seconds
+                  Let&apos;s get you set up in 30 seconds
                 </p>
               </div>
             </div>
@@ -376,8 +374,9 @@ const OAuthSetup: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-300">What should we call you?</label>
+                <label htmlFor="oauth-full-name" className="text-sm font-bold text-slate-300">What should we call you?</label>
                 <input
+                  id="oauth-full-name"
                   type="text"
                   placeholder="Your name"
                   className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
@@ -532,7 +531,7 @@ const OAuthSetup: React.FC = () => {
                 Name your workspace
               </h1>
               <p className="text-slate-400 text-sm">
-                This is where your team's jobs will live
+                This is where your team&apos;s jobs will live
               </p>
             </div>
 
@@ -545,8 +544,9 @@ const OAuthSetup: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-300">Company or workspace name</label>
+                <label htmlFor="oauth-workspace-name" className="text-sm font-bold text-slate-300">Company or workspace name</label>
                 <input
+                  id="oauth-workspace-name"
                   type="text"
                   placeholder={`${firstName}'s Workspace`}
                   className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
@@ -554,7 +554,7 @@ const OAuthSetup: React.FC = () => {
                   onChange={e => setWorkspaceName(e.target.value)}
                 />
                 <p className="text-slate-500 text-xs">
-                  Leave blank to use "{displayWorkspaceName}"
+                  Leave blank to use &quot;{displayWorkspaceName}&quot;
                 </p>
               </div>
 

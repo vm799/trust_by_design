@@ -43,7 +43,7 @@ const SignupSuccess: React.FC = () => {
             Welcome to <span className="text-primary font-black">{workspaceName}</span>!
           </p>
           <p className="text-slate-500 text-sm">
-            We've sent a verification email to <span className="text-white font-bold">{email}</span>
+            We&apos;ve sent a verification email to <span className="text-white font-bold">{email}</span>
           </p>
         </div>
 
@@ -79,7 +79,7 @@ const SignupSuccess: React.FC = () => {
                   2. Sign In to Your Hub
                 </h3>
                 <p className="text-slate-400 text-xs leading-relaxed">
-                  After verifying your email, you'll be automatically redirected to your workspace dashboard
+                  After verifying your email, you&apos;ll be automatically redirected to your workspace dashboard
                 </p>
               </div>
             </div>
@@ -110,7 +110,7 @@ const SignupSuccess: React.FC = () => {
 
           {/* Secondary Action */}
           <div className="text-center">
-            <p className="text-slate-500 text-xs mb-2">Didn't receive the email?</p>
+            <p className="text-slate-500 text-xs mb-2">Didn&apos;t receive the email?</p>
             <button
               type="button"
               className="text-primary text-xs font-bold hover:underline uppercase tracking-wide"

@@ -229,9 +229,10 @@ const ClientForm: React.FC = () => {
             <div className="space-y-6">
               {/* Client Type */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="client-type" className="block text-sm font-medium text-slate-300 mb-2">
                   Client Type
                 </label>
+                <input id="client-type" type="hidden" value={formData.type} />
                 <div className="flex gap-3">
                   <button
                     type="button"

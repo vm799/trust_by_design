@@ -76,9 +76,8 @@ const TechEvidenceReview: React.FC = () => {
 
   // Signature state
   const [showSignaturePad, setShowSignaturePad] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignature, setHasSignature] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [, setHasSignature] = useState(false);
+  const [, setIsConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Auto-seal state
@@ -141,28 +140,6 @@ const TechEvidenceReview: React.FC = () => {
       ctx.lineWidth = 3;
     }
   }, [showSignaturePad]);
-
-  const getCoordinates = useCallback(
-    (e: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-
-      const rect = canvas.getBoundingClientRect();
-
-      if ('touches' in e) {
-        const touch = e.touches[0];
-        return {
-          x: touch.clientX - rect.left,
-          y: touch.clientY - rect.top,
-        };
-      }
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    },
-    []
-  );
 
   const clearSignature = useCallback(() => {
     const canvas = canvasRef.current;

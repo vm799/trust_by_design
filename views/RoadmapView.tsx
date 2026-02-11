@@ -360,8 +360,8 @@ const RoadmapView: React.FC = () => {
               <h3 className="text-sm font-black text-white uppercase">Development Transparency</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
                 This roadmap reflects our commitment to building a real trust system, not a demo.
-                All "In Development" features are actively being built and will be completed before beta launch.
-                Features marked "Future" are not yet scheduled but represent our long-term vision.
+                All &quot;In Development&quot; features are actively being built and will be completed before beta launch.
+                Features marked &quot;Future&quot; are not yet scheduled but represent our long-term vision.
               </p>
               <p className="text-slate-400 text-sm leading-relaxed">
                 We maintain this roadmap with complete honesty. If a feature is not implemented,

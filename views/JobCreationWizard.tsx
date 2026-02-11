@@ -122,7 +122,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
           setFormData(draft.formData);
           setStep(draft.step || 1);
-          console.log('[JobCreationWizard] Draft restored from localStorage');
         } else {
           localStorage.removeItem(JOB_DRAFT_KEY);
         }
@@ -334,7 +333,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
           existingJobs.unshift(localJob);
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-          console.log(`[JobCreationWizard] Persisted job ${newId} with magicLinkToken to localStorage`);
         } catch (e) {
           console.error('[JobCreationWizard] Failed to persist job to localStorage:', e);
         }
@@ -343,7 +341,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         setCreatedJobId(newId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
-        console.log(`[JobCreationWizard] Generated local magic link: ${localMagicLink.url}`);
 
         clearDraft(); // Clear draft on successful creation
         setShowSuccessModal(true);
@@ -372,7 +369,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           magicLinkToken: magicLinkResult.data.token,
           magicLinkUrl: magicLinkResult.data.url
         };
-        console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation (user.email already validated above)
         const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
@@ -384,7 +380,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           magicLinkToken: localMagicLink.token,
           magicLinkUrl: localMagicLink.url
         };
-        console.log(`[JobCreationWizard] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       // Update localStorage with token-embedded job
@@ -420,7 +415,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     let urlToCopy = magicLinkUrl;
     let tokenToTrack = magicLinkToken;
     if (!urlToCopy && createdJobId) {
-      console.warn('[JobCreationWizard] magicLinkUrl was not set, generating emergency local link');
       if (!user?.email) {
         showToast('Cannot copy link: Your email is not available. Please log in again.', 'error');
         return;
@@ -613,10 +607,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-job-address" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Job Address *
                 </label>
                 <input
+                  id="wizard-job-address"
                   ref={addressRef}
                   type="text"
                   required
@@ -628,10 +623,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-site-notes" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Site Notes (Optional)
                 </label>
                 <textarea
+                  id="wizard-site-notes"
                   value={formData.siteNotes}
                   onChange={(e) => setFormData({ ...formData, siteNotes: e.target.value })}
                   className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
@@ -689,10 +685,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Work Description *
                 </label>
                 <textarea
+                  id="wizard-work-description"
                   ref={descriptionRef}
                   required
                   value={formData.workDescription}
@@ -705,9 +702,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Safety Requirements
-                </label>
+                </span>
                 <div className="space-y-2">
                   {SAFETY_REQUIREMENTS.map((req) => (
                     <button
@@ -739,9 +736,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Required PPE
-                </label>
+                </span>
                 <div className="grid grid-cols-4 gap-2">
                   {PPE_OPTIONS.map((ppe) => (
                     <button
@@ -822,10 +819,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Client *
                 </label>
                 <select
+                  id="wizard-client"
                   ref={clientRef}
                   required
                   value={formData.clientId}
@@ -850,10 +848,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Technician *
                 </label>
                 <select
+                  id="wizard-technician"
                   required
                   value={formData.techId}
                   onChange={(e) => {
