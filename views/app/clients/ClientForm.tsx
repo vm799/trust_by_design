@@ -12,12 +12,13 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
+import { useAuth } from '../../../lib/AuthContext';
 import { Client } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import { showToast } from '../../../lib/microInteractions';
 import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offline/db';
 
-// Form type identifier for Dexie storage
+// Form type identifier for Dexie storage - scoped by workspace at runtime
 const FORM_TYPE = 'client';
 
 interface FormData {
@@ -38,6 +39,10 @@ const ClientForm: React.FC = () => {
 
   // Use centralized DataContext (FIELD UX FIX: replaces deprecated useWorkspaceData)
   const { clients, addClient, updateClient } = useData();
+  const { workspaceId } = useAuth();
+
+  // Workspace-scoped draft key prevents cross-workspace collisions
+  const draftKey = workspaceId ? `${FORM_TYPE}_${workspaceId}` : FORM_TYPE;
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -58,7 +63,7 @@ const ClientForm: React.FC = () => {
 
     const loadDraft = async () => {
       try {
-        const draft = await getFormDraft(FORM_TYPE);
+        const draft = await getFormDraft(draftKey);
         if (draft) {
           // Type-safe cast: FormDraft stores Record<string, unknown>, narrow to FormData
           setFormData(draft.data as unknown as FormData);
@@ -71,7 +76,7 @@ const ClientForm: React.FC = () => {
     };
 
     loadDraft();
-  }, [isEdit]);
+  }, [isEdit, draftKey]);
 
   // CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
   // No debounce - saves immediately on every change
@@ -81,16 +86,16 @@ const ClientForm: React.FC = () => {
     // Only save if form has content
     if (formData.name || formData.email || formData.phone || formData.address || formData.notes) {
       // Cast FormData to Record for saveFormDraft which expects generic storage type
-      saveFormDraft(FORM_TYPE, formData as unknown as Record<string, unknown>).catch(e => {
+      saveFormDraft(draftKey, formData as unknown as Record<string, unknown>).catch(e => {
         console.warn('Failed to save draft to IndexedDB:', e);
       });
     }
-  }, [formData, isEdit]);
+  }, [formData, isEdit, draftKey]);
 
   // CLAUDE.md: Clear draft after successful save
   const clearDraft = useCallback(async () => {
-    await clearFormDraft(FORM_TYPE);
-  }, []);
+    await clearFormDraft(draftKey);
+  }, [draftKey]);
 
   useEffect(() => {
     if (!isEdit) return;

@@ -13,17 +13,6 @@ export const initDB = (): Promise<IDBDatabase> => {
   });
 };
 
-export const saveMedia = async (key: string, data: string): Promise<void> => {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    store.put(data, key);
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-  });
-};
-
 export const getMedia = async (key: string): Promise<string | null> => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
