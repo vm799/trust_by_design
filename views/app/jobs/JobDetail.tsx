@@ -113,10 +113,6 @@ const JobDetail: React.FC = () => {
 
   // Handle conflict resolution (Fix 3.3)
   const handleResolveConflict = (resolution: 'local' | 'remote' | 'manual') => {
-    console.log(`[JobDetail] Resolving sync conflict with strategy: ${resolution}`, {
-      jobId: job?.id,
-      strategy: resolution,
-    });
     // In a full implementation, this would:
     // 1. Save the resolution to IndexedDB syncConflicts table
     // 2. Apply the resolution (merge local/remote/manual)

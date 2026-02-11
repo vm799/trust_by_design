@@ -50,13 +50,11 @@ export default function BunkerSuccess() {
       clientEmail: localStorage.getItem(STORAGE_KEYS.CLIENT_EMAIL),
     };
     setJobDetails(details);
-    console.log('[BunkerSuccess] Loaded job details from localStorage:', details);
   }, []);
 
   const handleNewJob = () => {
     // CRITICAL FIX: Clear handshake lock to allow next technician to access new jobs
     HandshakeService.clear();
-    console.log('[BunkerSuccess] Handshake cleared for next job');
 
     // Clear stored job details for next job
     Object.values(STORAGE_KEYS).forEach(key => {
@@ -69,7 +67,6 @@ export default function BunkerSuccess() {
   const handleCreateAnother = () => {
     // CRITICAL FIX: Clear handshake lock to allow next technician to access new jobs
     HandshakeService.clear();
-    console.log('[BunkerSuccess] Handshake cleared for create another');
 
     // Clear stored job details for next job
     Object.values(STORAGE_KEYS).forEach(key => {

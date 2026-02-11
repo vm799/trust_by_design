@@ -143,7 +143,6 @@ async function checkConnection(): Promise<boolean> {
     clearTimeout(timeout);
     return response.ok || response.status === 400; // 400 = auth required but reachable
   } catch (error) {
-    console.log('[BunkerRun] Ping failed:', error);
     return false;
   }
 }
@@ -163,13 +162,11 @@ async function relentlessSync(
   if (!isConnected) {
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerRun] No connection, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Waiting for connection... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
       return relentlessSync(job, onStatusChange, retryCount + 1);
     } else {
-      console.log('[BunkerRun] Max retries reached, will sync later');
       onStatusChange('failed', 'No connection - will sync when online');
       return false;
     }
@@ -187,7 +184,6 @@ async function relentlessSync(
     // Sync failed even with connection - retry
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerRun] Sync failed, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Retrying sync... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -290,7 +286,6 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
 
     if (response.ok) {
       await runDb.jobs.update(job.id, { syncStatus: 'synced' });
-      console.log('[BunkerRun] Synced:', job.id);
 
       // Trigger report generation if complete
       if (job.completedAt && job.managerEmail) {
@@ -322,11 +317,6 @@ function storeJobDetailsForSync(job: RunJob): void {
     if (job.clientEmail) {
       localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, job.clientEmail);
     }
-    console.log('[BunkerRun] Stored job details for sync:', {
-      id: job.id,
-      managerEmail: job.managerEmail,
-      clientEmail: job.clientEmail,
-    });
   } catch (error) {
     console.warn('[BunkerRun] Failed to store job details:', error);
   }
@@ -428,15 +418,6 @@ export default function BunkerRun() {
   const [showEmailFallback, setShowEmailFallback] = useState(false);
   const [fallbackEmailInput, setFallbackEmailInput] = useState('');
 
-  // DEBUG: Log when BunkerRun component loads
-  useEffect(() => {
-    console.log('[BunkerRun] Component loaded for ID:', jobId);
-    console.log('[BunkerRun] Current URL:', window.location.href);
-    console.log('[BunkerRun] Theme:', resolvedTheme, 'isDaylight:', isDaylight);
-    console.log('[BunkerRun] Handshake:', handshake);
-    console.log('[BunkerRun] This page has NO auth requirements - Job ID is the permission');
-  }, [jobId, resolvedTheme, isDaylight, handshake]);
-
   // Sync handshake data to STORAGE_KEYS for backward compatibility
   useEffect(() => {
     if (handshake.managerEmail) {
@@ -468,16 +449,13 @@ export default function BunkerRun() {
   useEffect(() => {
     const hsContext = HandshakeService.get();
     if (hsContext && hsContext.jobId === jobId) {
-      console.log('[BunkerRun] Found HandshakeService context for this job:', hsContext);
       // Use data from HandshakeService if available and hook doesn't have it
       if (hsContext.deliveryEmail && !handshake.managerEmail) {
-        console.log('[BunkerRun] Syncing deliveryEmail from HandshakeService:', hsContext.deliveryEmail);
         setHandshakeManagerEmail(hsContext.deliveryEmail);
         // Also write directly to localStorage for immediate availability
         localStorage.setItem(STORAGE_KEYS.MANAGER_EMAIL, hsContext.deliveryEmail);
       }
       if (hsContext.clientEmail && !handshake.clientEmail) {
-        console.log('[BunkerRun] Syncing clientEmail from HandshakeService:', hsContext.clientEmail);
         localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, hsContext.clientEmail);
       }
     }
@@ -618,7 +596,6 @@ export default function BunkerRun() {
     if (cached) {
       // LOOP-BREAKER: If job is already complete and synced, show success screen
       if (cached.completedAt && cached.syncStatus === 'synced') {
-        console.log('[BunkerRun] Job already complete, showing success:', id);
         setJob(cached);
         setIsJobFinished(true);
         return;
@@ -632,14 +609,12 @@ export default function BunkerRun() {
       if (!isStale || !isOnline) {
         setJob(cached);
         storeJobDetailsForSync(cached);
-        console.log('[BunkerRun] Loaded from cache:', id, { age: Math.round(cacheAge / 1000) + 's' });
         return;
       }
 
       // Cache is stale and we're online - show cached data immediately but refresh in background
       setJob(cached);
       storeJobDetailsForSync(cached);
-      console.log('[BunkerRun] Cache stale, refreshing from server:', id);
       // Continue to step 2 to refresh from Supabase
     }
 
@@ -683,10 +658,7 @@ export default function BunkerRun() {
 
             // If already complete, show success screen (LOOP-BREAKER)
             if (isComplete) {
-              console.log('[BunkerRun] Job already complete in DB, showing success:', id);
               setIsJobFinished(true);
-            } else {
-              console.log('[BunkerRun] Loaded from Supabase:', id);
             }
             return;
           }
@@ -714,7 +686,6 @@ export default function BunkerRun() {
     setJob(newJob);
     // Store in localStorage (even without emails, so success page knows job ID)
     storeJobDetailsForSync(newJob);
-    console.log('[BunkerRun] Created new job with handshake:', id, { managerEmail: handshake.managerEmail, clientEmail: handshake.clientEmail });
   };
 
   // ============================================================================
@@ -806,14 +777,11 @@ export default function BunkerRun() {
       // CRITICAL FIX: Clear handshake lock to allow next technician to access new jobs
       // This ensures subsequent magic links are not blocked by stale locks
       HandshakeService.clear();
-      console.log('[BunkerRun] Handshake cleared after successful sync');
 
       // AUTO-SEAL: Cryptographically seal evidence after successful sync
       try {
-        console.log('[BunkerRun] Attempting auto-seal for job:', job.id);
         const sealResult = await sealEvidence(job.id);
         if (sealResult.success) {
-          console.log('[BunkerRun] Evidence sealed successfully:', sealResult.evidenceHash?.substring(0, 16));
           setToastMessage({ text: 'Evidence sealed & synced!', type: 'success' });
         } else {
           console.warn('[BunkerRun] Auto-seal skipped:', sealResult.error);

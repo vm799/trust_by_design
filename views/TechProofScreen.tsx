@@ -177,7 +177,6 @@ const TechProofScreen: React.FC = () => {
               w3w: locationResult.w3w,
               w3wVerified: locationResult.isVerified,
             }));
-            console.log('[TechProofScreen] W3W location:', locationResult.w3w, 'verified:', locationResult.isVerified);
           } catch (e) {
             console.warn('[TechProofScreen] W3W lookup failed:', e);
           }

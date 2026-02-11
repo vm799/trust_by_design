@@ -309,24 +309,27 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       return { success: false, error: error.message };
     }
 
-    // Map bunker_jobs schema to Job type
+    // Map bunker_jobs schema to Job type (complete mapping including photo data)
     const jobs: Job[] = (data || []).map(row => ({
       id: row.id,
       title: row.title || 'Untitled Job',
-      client: row.client || '',
+      client: row.client || row.client_name || '',
       clientId: row.client_id,
       technician: row.technician_name || '',
       techId: row.assigned_technician_id || row.technician_id,
       technicianId: row.assigned_technician_id || row.technician_id,
       status: row.status || 'Pending',
-      date: row.created_at?.split('T')[0],
+      date: row.scheduled_date || row.created_at?.split('T')[0],
       address: row.address,
-      lat: row.before_photo_lat || row.after_photo_lat,
-      lng: row.before_photo_lng || row.after_photo_lng,
+      lat: row.lat || row.before_photo_lat || row.after_photo_lat,
+      lng: row.lng || row.before_photo_lng || row.after_photo_lng,
       w3w: row.w3w,
       notes: row.notes,
       workSummary: row.work_summary,
-      photos: [],
+      photos: row.before_photo_data || row.after_photo_data ? [
+        ...(row.before_photo_data ? [{ id: `${row.id}_before`, url: row.before_photo_data, type: 'before' as const, timestamp: row.created_at, verified: true, syncStatus: 'synced' as const }] : []),
+        ...(row.after_photo_data ? [{ id: `${row.id}_after`, url: row.after_photo_data, type: 'after' as const, timestamp: row.completed_at || row.created_at, verified: true, syncStatus: 'synced' as const }] : [])
+      ] : [],
       signature: row.signature_data || row.signature_url,
       signerName: row.signer_name,
       safetyChecklist: [],
@@ -335,6 +338,7 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       syncStatus: 'synced' as const,
       lastUpdated: row.last_updated ? new Date(row.last_updated).getTime() : Date.now(),
       workspaceId: row.workspace_id || workspaceId,
+      source: 'bunker' as const,
       managerEmail: row.manager_email,
       clientEmail: row.client_email,
       techEmail: row.technician_email,

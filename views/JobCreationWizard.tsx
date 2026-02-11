@@ -123,7 +123,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
           setFormData(draft.formData);
           setStep(draft.step || 1);
-          console.log('[JobCreationWizard] Draft restored from localStorage');
         } else {
           localStorage.removeItem(JOB_DRAFT_KEY);
         }
@@ -335,7 +334,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
           existingJobs.unshift(localJob);
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-          console.log(`[JobCreationWizard] Persisted job ${newId} with magicLinkToken to localStorage`);
         } catch (e) {
           console.error('[JobCreationWizard] Failed to persist job to localStorage:', e);
         }
@@ -344,7 +342,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         setCreatedJobId(newId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
-        console.log(`[JobCreationWizard] Generated local magic link: ${localMagicLink.url}`);
 
         clearDraft(); // Clear draft on successful creation
         setShowSuccessModal(true);
@@ -373,7 +370,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           magicLinkToken: magicLinkResult.data.token,
           magicLinkUrl: magicLinkResult.data.url
         };
-        console.log(`[JobCreationWizard] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation (user.email already validated above)
         const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
@@ -385,7 +381,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
           magicLinkToken: localMagicLink.token,
           magicLinkUrl: localMagicLink.url
         };
-        console.log(`[JobCreationWizard] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       // Update localStorage with token-embedded job
