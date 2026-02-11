@@ -262,87 +262,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       ]);
 
       if (jobsResult.success && jobsResult.data) {
-        // FIX: Also fetch from bunker_jobs to include magic link completed jobs
-        // BunkerRun.tsx syncs completed jobs to bunker_jobs table, not jobs table
-        let allJobs = jobsResult.data;
-
-        try {
-          const supabase = db.getSupabase?.();
-          if (supabase) {
-            // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
-            const { data: bunkerJobs, error: bunkerError } = await supabase
-              .from('bunker_jobs')
-              .select('*')
-              .eq('workspace_id', wsId)
-              .order('last_updated', { ascending: false });
-
-            if (!bunkerError && bunkerJobs && bunkerJobs.length > 0) {
-              // Map bunker_jobs to Job type and merge with existing jobs
-              const bunkerJobsMapped: Job[] = bunkerJobs.map((row: any) => ({
-                id: row.id,
-                title: row.title || 'Untitled Job',
-                client: row.client || row.client_name || '',
-                clientId: row.client_id,
-                technician: row.technician_name || '',
-                techId: row.assigned_technician_id || row.technician_id,
-                technicianId: row.assigned_technician_id || row.technician_id,
-                status: row.status || 'Complete',
-                date: row.scheduled_date || row.created_at?.split('T')[0],
-                address: row.address || '',
-                lat: row.lat,
-                lng: row.lng,
-                w3w: row.w3w,
-                notes: row.notes || '',
-                workSummary: row.work_summary,
-                photos: row.before_photo_data || row.after_photo_data ? [
-                  ...(row.before_photo_data ? [{ id: 'before', url: row.before_photo_data, type: 'before' as const, timestamp: row.created_at, verified: true, syncStatus: 'synced' as const }] : []),
-                  ...(row.after_photo_data ? [{ id: 'after', url: row.after_photo_data, type: 'after' as const, timestamp: row.completed_at || row.created_at, verified: true, syncStatus: 'synced' as const }] : [])
-                ] : [],
-                signature: row.signature_data || null,
-                signerName: row.signer_name,
-                safetyChecklist: [],
-                siteHazards: [],
-                completedAt: row.completed_at,
-                syncStatus: 'synced' as const,
-                lastUpdated: row.last_updated ? new Date(row.last_updated).getTime() : Date.now(),
-                workspaceId: wsId,
-                // Flag to indicate this came from bunker_jobs (magic link flow)
-                source: 'bunker' as const,
-                techEmail: row.technician_email,
-                managerEmail: row.manager_email,
-                clientEmail: row.client_email,
-              }));
-
-              // Merge: bunker jobs take precedence if same ID exists (they have the evidence)
-              const existingIds = new Set(allJobs.map(j => j.id));
-              const newBunkerJobs = bunkerJobsMapped.filter(bj => !existingIds.has(bj.id));
-
-              // For jobs that exist in both, prefer the one with more data (photos/signature)
-              const mergedJobs = allJobs.map(job => {
-                const bunkerVersion = bunkerJobsMapped.find(bj => bj.id === job.id);
-                if (bunkerVersion && (bunkerVersion.photos.length > 0 || bunkerVersion.signature)) {
-                  // Bunker version has evidence, merge it
-                  return {
-                    ...job,
-                    ...bunkerVersion,
-                    // Preserve original job metadata
-                    clientId: job.clientId || bunkerVersion.clientId,
-                    techId: job.techId || bunkerVersion.techId,
-                  };
-                }
-                return job;
-              });
-
-              allJobs = [...mergedJobs, ...newBunkerJobs];
-            }
-          }
-        } catch (bunkerErr) {
-          console.warn('[DataContext] bunker_jobs fetch failed (non-critical):', bunkerErr);
-          // Continue with regular jobs - bunker_jobs is additive, not required
-        }
-
+        // db.getJobs() fetches from bunker_jobs with complete mapping (photos, scheduled_date, source)
         // Sprint 2 Task 2.6: Normalize technician IDs on load
-        setJobs(normalizeJobs(allJobs));
+        setJobs(normalizeJobs(jobsResult.data));
       } else {
         console.warn('[DataContext] Supabase jobs failed, using localStorage');
         // WORKSPACE_ISOLATED_STORAGE: Use workspace-scoped key when enabled

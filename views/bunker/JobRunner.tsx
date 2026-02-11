@@ -133,7 +133,6 @@ async function checkConnection(): Promise<boolean> {
     clearTimeout(timeout);
     return response.ok || response.status === 400; // 400 = auth required but reachable
   } catch (error) {
-    console.log('[BunkerSync] Ping failed:', error);
     return false;
   }
 }
@@ -153,13 +152,11 @@ async function relentlessSync(
   if (!isConnected) {
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerSync] No connection, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Waiting for connection... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
       return relentlessSync(job, onStatusChange, retryCount + 1);
     } else {
-      console.log('[BunkerSync] Max retries reached, will sync later');
       onStatusChange('failed', 'No connection - will sync when online');
       return false;
     }
@@ -177,7 +174,6 @@ async function relentlessSync(
     // Sync failed even with connection - retry
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerSync] Sync failed, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Retrying sync... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -232,7 +228,6 @@ async function syncJobToCloud(job: BunkerJob): Promise<boolean> {
 
     if (response.ok) {
       await bunkerDb.jobs.update(job.id, { syncStatus: 'synced' });
-      console.log('[BunkerSync] Job synced successfully:', job.id);
 
       // Trigger report generation if job is complete and manager email is set
       if (job.completedAt && job.managerEmail) {
@@ -258,7 +253,6 @@ async function triggerReportGeneration(job: BunkerJob): Promise<void> {
   if (!SUPABASE_URL || !job.managerEmail) return;
 
   try {
-    console.log('[BunkerSync] Triggering report generation for:', job.id);
 
     const reportPayload = {
       jobId: job.id,
@@ -299,7 +293,6 @@ async function triggerReportGeneration(job: BunkerJob): Promise<void> {
 
     if (response.ok) {
       const result = await response.json();
-      console.log('[BunkerSync] Report generated:', result);
 
       // Update local job with report URL
       if (result.pdfUrl) {
@@ -696,13 +689,11 @@ export default function JobRunner() {
       if (savedJob) {
         // LOOP-BREAKER: If job is already complete and synced, show success screen
         if (savedJob.completedAt && savedJob.syncStatus === 'synced') {
-          console.log('[Bunker] Job already complete, showing success:', jobId);
           setState(s => ({ ...s, job: savedJob }));
           setIsJobFinished(true);
           return;
         }
         setState(s => ({ ...s, job: savedJob }));
-        console.log('[Bunker] Restored job from IndexedDB:', jobId);
       }
     };
 

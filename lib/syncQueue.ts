@@ -7,7 +7,7 @@
 
 import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
-import { getMedia } from '../db';
+import { getMediaLocal as getMedia } from './offline/db';
 import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
 import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';

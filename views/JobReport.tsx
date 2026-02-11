@@ -4,7 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../components/AppLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Job, PhotoType, Invoice, UserProfile, Technician } from '../types';
-import { getMedia } from '../db';
+import { getMediaLocal as getMedia } from '../lib/offline/db';
 import SealBadge from '../components/SealBadge';
 import ClientReceiptView from '../components/ClientReceiptView';
 import { getReportUrl, getValidatedHandshakeUrl } from '../lib/redirects';

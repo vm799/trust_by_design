@@ -377,7 +377,6 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
           const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
           existingJobs.unshift(localJob);
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-          console.log(`[CreateJob] Immediately persisted job ${newId} to localStorage`);
         } catch (e) {
           console.error('[CreateJob] Failed to persist job to localStorage:', e);
         }
@@ -396,7 +395,6 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         const localMagicLink = storeMagicLinkLocal(newId, user.email, user?.workspace?.id || 'local');
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
-        console.log(`[CreateJob] Generated local magic link: ${localMagicLink.url}`);
 
         clearDraft();
         setShowConfirmModal(false);
@@ -419,13 +417,11 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       if (magicLinkResult.success && magicLinkResult.data?.url) {
         setMagicLinkUrl(magicLinkResult.data.url);
         setMagicLinkToken(magicLinkResult.data.token);
-        console.log(`[CreateJob] Generated magic link from DB: ${magicLinkResult.data.url}`);
       } else {
         // Fallback to local token generation if DB token generation fails (user.email already validated above)
         const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
         setMagicLinkUrl(localMagicLink.url);
         setMagicLinkToken(localMagicLink.token);
-        console.log(`[CreateJob] Generated fallback local magic link: ${localMagicLink.url}`);
       }
 
       // Also add to local state via onAddJob for immediate UI update

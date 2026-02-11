@@ -209,7 +209,6 @@ const OAuthSetup: React.FC = () => {
         }
         // 409/23505 = conflict, user already exists - update their full_name and continue
         if (workspaceError.code === '409' || workspaceError.code === '23505') {
-          console.log('[OAuthSetup] User/workspace already exists, updating full_name...');
           // CRITICAL FIX: Update full_name for existing users who may have NULL full_name
           // This fixes the "Welcome to JobProof" bug for returning users
           const { error: updateError } = await supabase
