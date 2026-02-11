@@ -46,14 +46,23 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
           className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation menu"
           onClick={closeMobileMenu}
+          onKeyDown={(e) => { if (e.key === 'Escape') { closeMobileMenu(); } }}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
         >
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
           <div
             className="relative h-full w-72 bg-slate-900 border-r border-white/10 animate-in slide-in-from-left"
+            role="presentation"
             onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
           >
             <Sidebar
               className="flex"

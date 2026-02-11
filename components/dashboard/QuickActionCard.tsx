@@ -14,6 +14,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SyncStatusBadge from './SyncStatusBadge';
+import { hoverLiftSmall, tapScaleSubtle, pulseIndicator, transitionPulse, hoverScaleLarge, tapScale, fadeOverlay, dropdownMenu } from '../../lib/animations';
 
 export type StatusColor = 'critical' | 'warning' | 'success' | 'info' | 'neutral';
 export type SyncStatus = 'pending' | 'synced' | 'failed';
@@ -128,8 +129,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={hoverLiftSmall}
+      whileTap={tapScaleSubtle}
       className="relative"
     >
       <button
@@ -152,8 +153,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
           {/* Pulse for critical items */}
           {statusColor === 'critical' && (
             <motion.span
-              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              animate={pulseIndicator}
+              transition={transitionPulse}
               className={`absolute -top-1 -right-1 size-3 rounded-full ${colorConfig.pulse}`}
             />
           )}
@@ -192,8 +193,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                 <motion.button
                   key={action.label}
                   onClick={(e) => handleAction(action, e)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={hoverScaleLarge}
+                  whileTap={tapScale}
                   className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] ${
                     action.variant === 'danger'
                       ? 'text-red-400 hover:bg-red-500/20'
@@ -234,17 +235,17 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
           <>
             {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={fadeOverlay.hidden}
+              animate={fadeOverlay.visible}
+              exit={fadeOverlay.exit}
               onClick={() => setShowMenu(false)}
               className="fixed inset-0 z-40"
             />
             {/* Menu */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -10 }}
+              initial={dropdownMenu.initial}
+              animate={dropdownMenu.animate}
+              exit={dropdownMenu.exit}
               className="absolute top-full right-0 mt-1 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 z-50 min-w-[180px] overflow-hidden"
             >
               {actions.map((action, i) => (

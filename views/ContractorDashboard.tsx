@@ -68,16 +68,17 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
     ];
   }, [jobs, user, activeJobCount]);
 
-  // Custom header for contractor role
+  // Custom header for contractor role - clear visual hierarchy
   const dashboardHeader = useMemo(() => (
-    <header className="flex items-center justify-between py-4 mb-2">
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-2xl bg-solo-accent/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-solo-accent text-lg font-black">work</span>
+    <header className="flex items-center justify-between py-6 mb-4 border-b border-white/5">
+      <div className="flex items-center gap-4">
+        <div className="size-12 rounded-2xl bg-solo-accent/20 flex items-center justify-center">
+          <span className="material-symbols-outlined text-solo-accent text-xl font-black">work</span>
         </div>
         <div>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
-            {activeJobCount === 0 ? 'No jobs' : `${activeJobCount} active`}
+          <h1 className="text-2xl font-black text-white uppercase tracking-tighter">My Jobs</h1>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+            {activeJobCount === 0 ? 'No active jobs' : `${activeJobCount} active job${activeJobCount !== 1 ? 's' : ''}`}
           </p>
         </div>
       </div>
@@ -104,7 +105,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
         <OnboardingTour onComplete={onCloseOnboarding} persona={user?.persona} />
       )}
 
-      <div className="min-h-screen pb-32 max-w-2xl mx-auto px-4">
+      <div className="min-h-screen pb-32">
         {/* Metric cards - derived from actual job data */}
         {contractorMetrics.length > 0 && (
           <MetricCardRow metrics={contractorMetrics} className="mb-6" />

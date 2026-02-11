@@ -16,6 +16,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
+import { fadeInUp, fadeInDownSmall, fadeInUpSmall, fadeOverlay, fadeInScaleSmall, hoverLiftShadow, hoverScaleSlight, transitionFast, transitionMedium, slideInLeftSmall, transitionQuick } from '../../lib/animations';
 
 interface TeamStatusHeroProps {
   onTechnicianClick?: () => void;
@@ -51,8 +52,8 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
   if (error) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={fadeInDownSmall.initial}
+        animate={fadeInDownSmall.animate}
         className="bg-red-50 dark:bg-red-950 border-2 border-red-200 dark:border-red-800 rounded-xl p-6"
       >
         <div className="flex items-start justify-between">
@@ -125,9 +126,9 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      initial={fadeInUp.hidden}
+      animate={fadeInUp.visible}
+      transition={transitionMedium}
       className={`
         rounded-xl border-2 p-8
         ${colors.bg} ${colors.border}
@@ -137,9 +138,9 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
       {/* Status Indicator */}
       <motion.div
         className="flex items-center gap-3 mb-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        initial={slideInLeftSmall.initial}
+        animate={slideInLeftSmall.animate}
+        transition={{ ...transitionQuick, delay: 0.1 }}
       >
         <div className={`w-3 h-3 rounded-full animate-pulse ${colors.dot}`} />
         <h2 className={`text-lg font-bold ${colors.text}`}>
@@ -150,16 +151,16 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
       {/* Metrics Grid - Staggered animation */}
       <motion.div
         className="grid grid-cols-3 gap-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={fadeOverlay.hidden}
+        animate={fadeOverlay.visible}
         transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
       >
         {/* Technicians */}
         <motion.button
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ y: -4, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
-          transition={{ duration: 0.2 }}
+          initial={fadeInScaleSmall.initial}
+          animate={fadeInScaleSmall.animate}
+          whileHover={hoverLiftShadow}
+          transition={transitionFast}
           onClick={onTechnicianClick}
           className={`
             p-4 rounded-lg text-left
@@ -181,10 +182,10 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
         {/* Total Jobs */}
         <motion.button
           onClick={onJobsClick}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ y: -4, boxShadow: '0 10px 15px rgba(0,0,0,0.1)' }}
-          transition={{ duration: 0.2 }}
+          initial={fadeInScaleSmall.initial}
+          animate={fadeInScaleSmall.animate}
+          whileHover={hoverLiftShadow}
+          transition={transitionFast}
           className={`
             p-4 rounded-lg text-left
             bg-white dark:bg-slate-800 bg-opacity-50 dark:bg-opacity-50
@@ -204,8 +205,8 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
 
         {/* Active Jobs */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={fadeInScaleSmall.initial}
+          animate={fadeInScaleSmall.animate}
           className={`
             p-4 rounded-lg text-left
             bg-white dark:bg-slate-800 bg-opacity-50 dark:bg-opacity-50
@@ -224,11 +225,11 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
       {metrics.status === 'critical' && (
         <motion.button
           onClick={onOverdueClick}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={fadeInUpSmall.initial}
+          animate={fadeInUpSmall.animate}
           exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          whileHover={{ scale: 1.02 }}
+          transition={transitionQuick}
+          whileHover={hoverScaleSlight}
           className={`
             mt-6 w-full p-4 rounded-lg
             bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800

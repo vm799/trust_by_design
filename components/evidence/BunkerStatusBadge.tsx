@@ -11,6 +11,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { pulseOpacity, pulseOpacityGentle, transitionPulse, spinAnimate, transitionSpin, fadeInDown, pulseScaleGentle } from '../../lib/animations';
 
 type SyncState = 'synced' | 'local' | 'syncing' | 'failed';
 
@@ -129,8 +130,8 @@ const BunkerStatusBadge: React.FC<BunkerStatusBadgeProps> = ({
   if (!showLabel) {
     return (
       <motion.div
-        animate={config.pulse ? { opacity: [1, 0.6, 1] } : {}}
-        transition={config.pulse ? { duration: 2, repeat: Infinity } : {}}
+        animate={config.pulse ? pulseOpacity : {}}
+        transition={config.pulse ? transitionPulse : {}}
         className={`
           ${sizeConfig.badge} flex items-center justify-center
           ${config.bgColor} ${config.borderColor} border
@@ -140,8 +141,8 @@ const BunkerStatusBadge: React.FC<BunkerStatusBadgeProps> = ({
         title={config.label}
       >
         <motion.span
-          animate={effectiveState === 'syncing' ? { rotate: 360 } : {}}
-          transition={effectiveState === 'syncing' ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
+          animate={effectiveState === 'syncing' ? spinAnimate : {}}
+          transition={effectiveState === 'syncing' ? transitionSpin : {}}
           className={`material-symbols-outlined ${sizeConfig.icon} ${config.color}`}
         >
           {config.icon}
@@ -152,8 +153,8 @@ const BunkerStatusBadge: React.FC<BunkerStatusBadgeProps> = ({
 
   return (
     <motion.div
-      animate={config.pulse ? { opacity: [1, 0.8, 1] } : {}}
-      transition={config.pulse ? { duration: 2, repeat: Infinity } : {}}
+      animate={config.pulse ? pulseOpacityGentle : {}}
+      transition={config.pulse ? transitionPulse : {}}
       className={`
         inline-flex items-center gap-2
         ${sizeConfig.container}
@@ -164,8 +165,8 @@ const BunkerStatusBadge: React.FC<BunkerStatusBadgeProps> = ({
     >
       {/* Icon */}
       <motion.span
-        animate={effectiveState === 'syncing' ? { rotate: 360 } : {}}
-        transition={effectiveState === 'syncing' ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
+        animate={effectiveState === 'syncing' ? spinAnimate : {}}
+        transition={effectiveState === 'syncing' ? transitionSpin : {}}
         className={`material-symbols-outlined ${sizeConfig.icon} ${config.color}`}
       >
         {config.icon}
@@ -204,8 +205,8 @@ export const BunkerModeBanner: React.FC<{
   className?: string;
 }> = React.memo(({ pendingCount = 0, className = '' }) => (
   <motion.div
-    initial={{ y: -20, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
+    initial={fadeInDown.hidden}
+    animate={fadeInDown.visible}
     className={`
       flex items-center justify-between gap-4 p-4 rounded-xl
       bg-amber-500/10 border border-amber-500/20
@@ -215,8 +216,8 @@ export const BunkerModeBanner: React.FC<{
   >
     <div className="flex items-center gap-3">
       <motion.div
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 2, repeat: Infinity }}
+        animate={pulseScaleGentle}
+        transition={transitionPulse}
         className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center"
       >
         <span className="material-symbols-outlined text-xl text-amber-400">shield</span>

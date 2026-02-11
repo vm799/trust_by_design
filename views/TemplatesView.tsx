@@ -53,7 +53,11 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
             </div>
           ))}
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => navigate('/admin/create')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin/create'); } }}
+            aria-label="Create new template"
             className="border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-8 gap-3 opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
           >
             <span className="material-symbols-outlined text-4xl font-black">add</span>

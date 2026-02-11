@@ -10,7 +10,7 @@
 
 import React, { useState, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fadeInUp } from '../../lib/animations';
+import { fadeInUp, hoverScaleUp, tapScale, transitionFast, collapseExpand } from '../../lib/animations';
 
 export type SectionType = 'urgent' | 'active' | 'completed' | 'pending' | 'neutral';
 
@@ -117,8 +117,8 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
             e.stopPropagation();
             action.onClick();
           }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={hoverScaleUp}
+          whileTap={tapScale}
           className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold ${colorConfig.headerText} hover:bg-white/50 dark:hover:bg-black/20 transition-colors min-h-[44px]`}
         >
           <span className="material-symbols-outlined text-sm">{action.icon}</span>
@@ -159,10 +159,10 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({
       <AnimatePresence initial={false}>
         {(!collapsible || isOpen) && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
+            initial={collapseExpand.hidden}
+            animate={collapseExpand.visible}
+            exit={collapseExpand.exit}
+            transition={transitionFast}
             className="space-y-2 overflow-hidden"
           >
             {children}
