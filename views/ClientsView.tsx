@@ -6,12 +6,16 @@ import { Client, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
 import { generateUUID } from '../lib/secureId';
 import { useData } from '../lib/DataContext';
+import { useLongPress } from '../hooks/useLongPress';
+import { hapticFeedback } from '../lib/microInteractions';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/ui/PullToRefreshIndicator';
 
 interface ClientsViewProps {
   user: UserProfile | null;
   clients: Client[];
   onAdd: (c: Client) => void;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (id: string) => void;
 }
 
 /**
@@ -75,9 +79,96 @@ const ClientsSkeleton = React.memo(() => (
 ));
 ClientsSkeleton.displayName = 'ClientsSkeleton';
 
+/**
+ * ClientCard - Long-press enabled client card
+ * Long press reveals delete action on mobile
+ */
+const ClientCard = React.memo(({
+  client,
+  onDelete,
+  onViewJobs,
+  deletingId,
+}: {
+  client: Client;
+  onDelete: (id: string) => void;
+  onViewJobs: (id: string) => void;
+  deletingId: string | null;
+}) => {
+  const { handlers, isPressed } = useLongPress({
+    onLongPress: () => onDelete(client.id),
+  });
+
+  return (
+    <div
+      {...handlers}
+      className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 hover:border-primary/40 transition-all group shadow-lg shadow-primary/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
+    >
+      {/* ID Badge and Job Count */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-1 flex-1">
+          <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] font-mono">Client ID</p>
+          <p className="text-xs font-black text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Jobs</p>
+          <p className="text-xl font-black text-primary">{client.totalJobs || 0}</p>
+        </div>
+      </div>
+
+      {/* Organization Name */}
+      <div>
+        <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-primary transition-colors">{client.name}</h3>
+        <p className="text-[10px] text-primary/80 font-mono">{client.email}</p>
+      </div>
+
+      {/* Location and Details */}
+      <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/5">
+        <div className="flex items-start gap-2">
+          <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
+          <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-2">
+        <button
+          onClick={() => onDelete(client.id)}
+          disabled={deletingId === client.id}
+          className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-2 border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Remove client"
+        >
+          {deletingId === client.id ? (
+            <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+          ) : (
+            <span className="material-symbols-outlined text-xs">delete</span>
+          )}
+          <span className="hidden sm:inline">{deletingId === client.id ? 'Deleting...' : 'Remove'}</span>
+        </button>
+        <button
+          onClick={() => onViewJobs(client.id)}
+          className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary border-2 border-primary/30 hover:border-primary/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
+          title="View client's jobs"
+        >
+          <span className="material-symbols-outlined text-xs">work</span>
+          <span className="hidden sm:inline">Jobs</span>
+        </button>
+      </div>
+    </div>
+  );
+});
+ClientCard.displayName = 'ClientCard';
+
 const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelete }) => {
   const navigate = useNavigate();
-  const { isLoading } = useData();
+  const { isLoading, refresh } = useData();
+
+  // Pull-to-refresh gesture
+  const {
+    containerRef: pullRefreshRef,
+    isPulling,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({ onRefresh: refresh });
   const [showAdd, setShowAdd] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '', address: '' });
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -92,6 +183,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
       ...newClient,
       totalJobs: 0
     });
+    hapticFeedback('success');
     setNewClient({ name: '', email: '', address: '' });
     setShowAdd(false);
 
@@ -134,7 +226,8 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
   return (
     <Layout user={user}>
-      <div className="space-y-6">
+      <div ref={pullRefreshRef} className="space-y-6">
+        <PullToRefreshIndicator progress={progress} isRefreshing={isRefreshing} isPulling={isPulling} />
         {deleteError && (
           <div className="bg-danger/10 border border-danger/20 rounded-xl p-4 flex items-start gap-3 animate-in">
             <span className="material-symbols-outlined text-danger flex-shrink-0">error</span>
@@ -207,58 +300,13 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             </div>
           ) : (
             filteredClients.map(client => (
-              <div key={client.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 hover:border-primary/40 transition-all group shadow-lg shadow-primary/10">
-                {/* ID Badge and Job Count */}
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] font-mono">Client ID</p>
-                    <p className="text-xs font-black text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Jobs</p>
-                    <p className="text-xl font-black text-primary">{client.totalJobs || 0}</p>
-                  </div>
-                </div>
-
-                {/* Organization Name */}
-                <div>
-                  <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-primary transition-colors">{client.name}</h3>
-                  <p className="text-[10px] text-primary/80 font-mono">{client.email}</p>
-                </div>
-
-                {/* Location and Details */}
-                <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/5">
-                  <div className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
-                    <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => setConfirmDeleteId(client.id)}
-                    disabled={deletingId === client.id}
-                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-2 border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove client"
-                  >
-                    {deletingId === client.id ? (
-                      <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                    ) : (
-                      <span className="material-symbols-outlined text-xs">delete</span>
-                    )}
-                    <span className="hidden sm:inline">{deletingId === client.id ? 'Deleting...' : 'Remove'}</span>
-                  </button>
-                  <button
-                    onClick={() => navigate(`/admin/jobs?client=${client.id}`)}
-                    className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary border-2 border-primary/30 hover:border-primary/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
-                    title="View client's jobs"
-                  >
-                    <span className="material-symbols-outlined text-xs">work</span>
-                    <span className="hidden sm:inline">Jobs</span>
-                  </button>
-                </div>
-              </div>
+              <ClientCard
+                key={client.id}
+                client={client}
+                onDelete={(id) => setConfirmDeleteId(id)}
+                onViewJobs={(id) => navigate(`/admin/jobs?client=${id}`)}
+                deletingId={deletingId}
+              />
             ))
           )}
         </div>

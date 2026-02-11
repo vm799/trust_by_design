@@ -40,6 +40,7 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/AppLayout';
 import { UnifiedDashboard } from '../components/dashboard';
+import MetricCardRow from '../components/dashboard/MetricCardRow';
 import { Job, UserProfile, Invoice } from '../types';
 
 interface ClientDashboardProps {
@@ -79,6 +80,23 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
     ).length;
   }, [jobs, user]);
 
+  // Completed jobs count for this client
+  const completedJobsCount = useMemo(() => {
+    if (!user) return 0;
+    return jobs.filter(job =>
+      (job.client === user.name || job.client === user.email) &&
+      (job.status === 'Complete' || job.status === 'Submitted')
+    ).length;
+  }, [jobs, user]);
+
+  // Client metrics - derived from actual data
+  const clientMetrics = useMemo(() => [
+    { label: 'Total Jobs', value: myJobsCount, icon: 'work', color: 'blue' as const },
+    { label: 'Completed', value: completedJobsCount, icon: 'check_circle', color: 'emerald' as const },
+    { label: 'Pending Invoices', value: pendingInvoices.length, icon: 'receipt', color: 'amber' as const },
+    { label: 'All Invoices', value: myInvoices.length, icon: 'receipt_long', color: 'slate' as const },
+  ], [myJobsCount, completedJobsCount, pendingInvoices.length, myInvoices.length]);
+
   // Custom header for client role
   const dashboardHeader = useMemo(() => (
     <header className="space-y-2 mb-6">
@@ -109,6 +127,9 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
       <div className="space-y-8 pb-32 max-w-2xl mx-auto">
         {/* Header */}
         {dashboardHeader}
+
+        {/* Client metrics - derived from actual data */}
+        <MetricCardRow metrics={clientMetrics} className="mb-2" />
 
         {/* Action Required Section - Client-specific invoice handling */}
         {pendingInvoices.length > 0 && (

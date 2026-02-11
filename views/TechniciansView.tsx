@@ -6,6 +6,10 @@ import { Technician, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
 import { generateUUID } from '../lib/secureId';
 import { useData } from '../lib/DataContext';
+import { useLongPress } from '../hooks/useLongPress';
+import { hapticFeedback } from '../lib/microInteractions';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/ui/PullToRefreshIndicator';
 
 interface TechniciansViewProps {
   user: UserProfile | null;
@@ -76,9 +80,117 @@ const TechniciansSkeleton = React.memo(() => (
 ));
 TechniciansSkeleton.displayName = 'TechniciansSkeleton';
 
+/**
+ * TechCard - Long-press enabled technician card
+ * Long press reveals delete action on mobile
+ */
+const TechCard = React.memo(({
+  tech,
+  onDelete,
+  onViewJobs,
+  deletingId,
+}: {
+  tech: Technician;
+  onDelete: (id: string) => void;
+  onViewJobs: (id: string) => void;
+  deletingId: string | null;
+}) => {
+  const { handlers, isPressed } = useLongPress({
+    onLongPress: () => onDelete(tech.id),
+  });
+
+  return (
+    <div
+      {...handlers}
+      className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
+    >
+      {/* ID Badge and Status */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-1 flex-1">
+          <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.15em] font-mono">Tech ID</p>
+          <p className="text-xs font-black text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
+        </div>
+        <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ml-2 ${
+          tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' :
+          tech.status === 'Available' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+          tech.status === 'On Site' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+          tech.status === 'In Transit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+          tech.status === 'Off Duty' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+          tech.status === 'Offline' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+          'bg-slate-700/50 text-slate-300 border-slate-600/30'
+        }`}>
+          {tech.status}
+        </span>
+      </div>
+
+      {/* Avatar and Name */}
+      <div className="flex gap-3">
+        <div className="size-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-black text-2xl uppercase flex-shrink-0 shadow-lg shadow-blue-500/30">
+          {tech.name[0]}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-blue-400 transition-colors">{tech.name}</h3>
+          <p className="text-[10px] text-blue-300 font-mono truncate">{tech.email}</p>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
+        <div className="space-y-0.5">
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Jobs Completed</p>
+          <p className="text-lg font-black text-white">{tech.jobsCompleted || 0}</p>
+        </div>
+        {tech.rating > 0 && (
+          <div className="space-y-0.5">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+              <span className="material-symbols-outlined text-xs text-amber-500">star</span>
+              Rating
+            </p>
+            <p className="text-lg font-black text-amber-400">{tech.rating.toFixed(1)}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-2">
+        <button
+          onClick={() => onDelete(tech.id)}
+          disabled={deletingId === tech.id}
+          className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-2 border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Remove technician"
+        >
+          {deletingId === tech.id ? (
+            <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+          ) : (
+            <span className="material-symbols-outlined text-xs">delete</span>
+          )}
+          <span className="hidden sm:inline">{deletingId === tech.id ? 'Deleting...' : 'Remove'}</span>
+        </button>
+        <button
+          onClick={() => onViewJobs(tech.id)}
+          className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-2 border-blue-500/30 hover:border-blue-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
+          title="View technician's jobs"
+        >
+          <span className="material-symbols-outlined text-xs">work</span>
+          <span className="hidden sm:inline">Jobs</span>
+        </button>
+      </div>
+    </div>
+  );
+});
+TechCard.displayName = 'TechCard';
+
 const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, onDelete }) => {
   const navigate = useNavigate();
-  const { isLoading } = useData();
+  const { isLoading, refresh } = useData();
+
+  // Pull-to-refresh gesture
+  const {
+    containerRef: pullRefreshRef,
+    isPulling,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({ onRefresh: refresh });
   const [showAdd, setShowAdd] = useState(false);
   const [newTech, setNewTech] = useState({ name: '', email: '' });
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -96,6 +208,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
       rating: 0,
       jobsCompleted: 0
     });
+    hapticFeedback('success');
     setNewTech({ name: '', email: '' });
     setShowAdd(false);
 
@@ -137,7 +250,8 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
   return (
     <Layout user={user}>
-      <div className="space-y-6">
+      <div ref={pullRefreshRef} className="space-y-6">
+        <PullToRefreshIndicator progress={progress} isRefreshing={isRefreshing} isPulling={isPulling} />
         {deleteError && (
           <div className="bg-danger/10 border border-danger/20 rounded-xl p-4 flex items-start gap-3 animate-in">
             <span className="material-symbols-outlined text-danger flex-shrink-0">error</span>
@@ -209,71 +323,13 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             </div>
           ) : (
             filteredTechs.map(tech => (
-              <div key={tech.id} className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10">
-                {/* ID Badge and Status */}
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.15em] font-mono">Tech ID</p>
-                    <p className="text-xs font-black text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
-                  </div>
-                  <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ml-2 ${tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' : 'bg-slate-700/50 text-slate-300 border-slate-600/30'}`}>
-                    {tech.status}
-                  </span>
-                </div>
-
-                {/* Avatar and Name */}
-                <div className="flex gap-3">
-                  <div className="size-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-black text-2xl uppercase flex-shrink-0 shadow-lg shadow-blue-500/30">
-                    {tech.name[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-blue-400 transition-colors">{tech.name}</h3>
-                    <p className="text-[10px] text-blue-300 font-mono truncate">{tech.email}</p>
-                  </div>
-                </div>
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
-                  <div className="space-y-0.5">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Jobs Completed</p>
-                    <p className="text-lg font-black text-white">{tech.jobsCompleted || 0}</p>
-                  </div>
-                  {tech.rating > 0 && (
-                    <div className="space-y-0.5">
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs text-amber-500">star</span>
-                        Rating
-                      </p>
-                      <p className="text-lg font-black text-amber-400">{tech.rating.toFixed(1)}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => setConfirmDeleteId(tech.id)}
-                    disabled={deletingId === tech.id}
-                    className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-2 border-red-500/20 hover:border-red-500/40 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove technician"
-                  >
-                    {deletingId === tech.id ? (
-                      <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                    ) : (
-                      <span className="material-symbols-outlined text-xs">delete</span>
-                    )}
-                    <span className="hidden sm:inline">{deletingId === tech.id ? 'Deleting...' : 'Remove'}</span>
-                  </button>
-                  <button
-                    onClick={() => navigate(`/admin/jobs?technician=${tech.id}`)}
-                    className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-2 border-blue-500/30 hover:border-blue-500/50 rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 min-h-[44px]"
-                    title="View technician's jobs"
-                  >
-                    <span className="material-symbols-outlined text-xs">work</span>
-                    <span className="hidden sm:inline">Jobs</span>
-                  </button>
-                </div>
-              </div>
+              <TechCard
+                key={tech.id}
+                tech={tech}
+                onDelete={(id) => setConfirmDeleteId(id)}
+                onViewJobs={(id) => navigate(`/admin/jobs?technician=${id}`)}
+                deletingId={deletingId}
+              />
             ))
           )}
         </div>

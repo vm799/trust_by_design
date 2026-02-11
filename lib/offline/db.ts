@@ -87,7 +87,7 @@ export interface LocalTechnician {
     name: string;
     email?: string;
     phone?: string;
-    status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
+    status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised' | 'In Transit' | 'Offline';
     rating: number;
     jobsCompleted: number;
     specialty?: string;

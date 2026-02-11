@@ -85,7 +85,7 @@ export function usePullToRefresh({
     if (distance >= threshold) {
       // Check offline status
       if (!navigator.onLine) {
-        showToast('Offline', 'Cannot refresh while offline', 'warning');
+        showToast('Cannot refresh while offline', 'warning');
         setState({ isPulling: false, pullDistance: 0, isRefreshing: false });
         return;
       }

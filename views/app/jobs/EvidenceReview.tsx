@@ -25,6 +25,7 @@ import { useData } from '../../../lib/DataContext';
 import { route, ROUTES } from '../../../lib/routes';
 import { fadeInUp, staggerContainer } from '../../../lib/animations';
 import SealBadge from '../../../components/SealBadge';
+import BottomSheet from '../../../components/ui/BottomSheet';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
 
 interface Photo {
@@ -533,141 +534,135 @@ const EvidenceReview: React.FC = () => {
       </PageContent>
 
       {/* ============================================================ */}
-      {/* PHOTO VIEWER MODAL - Enhanced with GPS/W3W metadata */}
+      {/* PHOTO VIEWER - BottomSheet with GPS/W3W metadata */}
       {/* ============================================================ */}
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <button
-            className="absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-lg z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            onClick={() => setSelectedPhoto(null)}
-          >
-            <span className="material-symbols-outlined text-2xl">close</span>
-          </button>
+      <BottomSheet
+        isOpen={!!selectedPhoto}
+        onClose={() => setSelectedPhoto(null)}
+        title="Evidence Photo"
+        subtitle={selectedPhoto?.type ? `${selectedPhoto.type.charAt(0).toUpperCase() + selectedPhoto.type.slice(1)} Work` : undefined}
+        maxHeight={90}
+      >
+        {selectedPhoto && (
+          <div className="p-4 space-y-4">
+            {/* Photo */}
+            <img
+              src={selectedPhoto.url || selectedPhoto.localPath}
+              alt="Evidence"
+              className="w-full max-h-[50vh] object-contain rounded-lg bg-black"
+            />
 
-          {/* Photo */}
-          <img
-            src={selectedPhoto.url || selectedPhoto.localPath}
-            alt="Evidence"
-            className="max-w-full max-h-[65vh] object-contain rounded-lg"
-            onClick={e => e.stopPropagation()}
-          />
+            {/* Metadata Panel */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {/* Timestamp */}
+                {selectedPhoto.timestamp && (
+                  <div>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Captured</p>
+                    <p className="text-xs text-white font-mono">
+                      {new Date(selectedPhoto.timestamp).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                )}
 
-          {/* Metadata Panel */}
-          <div
-            className="mt-4 w-full max-w-2xl bg-slate-900/90 backdrop-blur rounded-2xl p-4 border border-white/10"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Timestamp */}
-              {selectedPhoto.timestamp && (
+                {/* GPS */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Captured</p>
-                  <p className="text-xs text-white font-mono">
-                    {new Date(selectedPhoto.timestamp).toLocaleString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })}
-                  </p>
-                </div>
-              )}
-
-              {/* GPS */}
-              <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">GPS</p>
-                {(selectedPhoto.lat || selectedPhoto.location) ? (
-                  <div>
-                    <p className="text-xs text-emerald-400 font-mono">
-                      {(selectedPhoto.lat || selectedPhoto.location?.lat)?.toFixed(6)},
-                      {(selectedPhoto.lng || selectedPhoto.location?.lng)?.toFixed(6)}
-                    </p>
-                    {(selectedPhoto.gps_accuracy || selectedPhoto.location?.accuracy) && (
-                      <p className="text-[10px] text-slate-400">
-                        ±{Math.round(selectedPhoto.gps_accuracy || selectedPhoto.location?.accuracy || 0)}m accuracy
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">GPS</p>
+                  {(selectedPhoto.lat || selectedPhoto.location) ? (
+                    <div>
+                      <p className="text-xs text-emerald-400 font-mono">
+                        {(selectedPhoto.lat || selectedPhoto.location?.lat)?.toFixed(6)},
+                        {(selectedPhoto.lng || selectedPhoto.location?.lng)?.toFixed(6)}
                       </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500">Not captured</p>
-                )}
-              </div>
+                      {(selectedPhoto.gps_accuracy || selectedPhoto.location?.accuracy) && (
+                        <p className="text-[10px] text-slate-400">
+                          ±{Math.round(selectedPhoto.gps_accuracy || selectedPhoto.location?.accuracy || 0)}m accuracy
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">Not captured</p>
+                  )}
+                </div>
 
-              {/* W3W */}
-              <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">What3Words</p>
-                {selectedPhoto.w3w ? (
-                  <div>
-                    <p className="text-xs text-emerald-400 font-mono">
-                      ///{selectedPhoto.w3w}
+                {/* W3W */}
+                <div>
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">What3Words</p>
+                  {selectedPhoto.w3w ? (
+                    <div>
+                      <p className="text-xs text-emerald-400 font-mono">
+                        ///{selectedPhoto.w3w}
+                      </p>
+                      <p className={`text-[10px] flex items-center gap-1 ${
+                        selectedPhoto.w3w_verified ? 'text-emerald-400' : 'text-amber-400'
+                      }`}>
+                        <span className="material-symbols-outlined text-[10px]">
+                          {selectedPhoto.w3w_verified ? 'verified' : 'warning'}
+                        </span>
+                        {selectedPhoto.w3w_verified ? 'API Verified' : 'Unverified'}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">Not captured</p>
+                  )}
+                </div>
+
+                {/* Integrity */}
+                <div>
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity</p>
+                  {(selectedPhoto.photo_hash || selectedPhoto.hash) ? (
+                    <p className="text-[10px] text-emerald-400 font-mono break-all">
+                      {(selectedPhoto.photo_hash || selectedPhoto.hash || '').slice(0, 16)}...
                     </p>
-                    <p className={`text-[10px] flex items-center gap-1 ${
-                      selectedPhoto.w3w_verified ? 'text-emerald-400' : 'text-amber-400'
-                    }`}>
-                      <span className="material-symbols-outlined text-[10px]">
-                        {selectedPhoto.w3w_verified ? 'verified' : 'warning'}
-                      </span>
-                      {selectedPhoto.w3w_verified ? 'API Verified' : 'Unverified'}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500">Not captured</p>
-                )}
+                  ) : (
+                    <p className="text-xs text-slate-500">No hash</p>
+                  )}
+                </div>
               </div>
 
-              {/* Integrity */}
-              <div>
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity</p>
-                {(selectedPhoto.photo_hash || selectedPhoto.hash) ? (
-                  <p className="text-[10px] text-emerald-400 font-mono break-all">
-                    {(selectedPhoto.photo_hash || selectedPhoto.hash || '').slice(0, 16)}...
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-500">No hash</p>
-                )}
-              </div>
-            </div>
-
-            {/* Type badge and seal status */}
-            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/5">
-              {selectedPhoto.type && (
-                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
-                  selectedPhoto.type === 'before' ? 'bg-blue-500/20 text-blue-400' :
-                  selectedPhoto.type === 'during' ? 'bg-amber-500/20 text-amber-400' :
-                  selectedPhoto.type === 'after' ? 'bg-emerald-500/20 text-emerald-400' :
-                  'bg-slate-500/20 text-slate-400'
-                }`}>
-                  {selectedPhoto.type}
-                </span>
-              )}
-              {isSealed && (
-                <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold uppercase">
-                  <span className="material-symbols-outlined text-sm">verified</span>
-                  Sealed
-                </span>
-              )}
-              {selectedPhoto.syncStatus && (
-                <span className={`flex items-center gap-1 text-[10px] font-bold uppercase ${
-                  selectedPhoto.syncStatus === 'synced' ? 'text-emerald-400' :
-                  selectedPhoto.syncStatus === 'pending' ? 'text-amber-400' :
-                  'text-red-400'
-                }`}>
-                  <span className="material-symbols-outlined text-sm">
-                    {selectedPhoto.syncStatus === 'synced' ? 'cloud_done' :
-                     selectedPhoto.syncStatus === 'pending' ? 'cloud_upload' : 'cloud_off'}
+              {/* Type badge and seal status */}
+              <div className="flex items-center gap-3 pt-3 border-t border-white/5">
+                {selectedPhoto.type && (
+                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                    selectedPhoto.type === 'before' ? 'bg-blue-500/20 text-blue-400' :
+                    selectedPhoto.type === 'during' ? 'bg-amber-500/20 text-amber-400' :
+                    selectedPhoto.type === 'after' ? 'bg-emerald-500/20 text-emerald-400' :
+                    'bg-slate-500/20 text-slate-400'
+                  }`}>
+                    {selectedPhoto.type}
                   </span>
-                  {selectedPhoto.syncStatus}
-                </span>
-              )}
+                )}
+                {isSealed && (
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold uppercase">
+                    <span className="material-symbols-outlined text-sm">verified</span>
+                    Sealed
+                  </span>
+                )}
+                {selectedPhoto.syncStatus && (
+                  <span className={`flex items-center gap-1 text-[10px] font-bold uppercase ${
+                    selectedPhoto.syncStatus === 'synced' ? 'text-emerald-400' :
+                    selectedPhoto.syncStatus === 'pending' ? 'text-amber-400' :
+                    'text-red-400'
+                  }`}>
+                    <span className="material-symbols-outlined text-sm">
+                      {selectedPhoto.syncStatus === 'synced' ? 'cloud_done' :
+                       selectedPhoto.syncStatus === 'pending' ? 'cloud_upload' : 'cloud_off'}
+                    </span>
+                    {selectedPhoto.syncStatus}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </BottomSheet>
     </div>
   );
 };

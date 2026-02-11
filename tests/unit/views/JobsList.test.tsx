@@ -59,6 +59,19 @@ vi.mock('../../../lib/DataContext', () => ({
   }),
 }));
 
+// Mock useSwipeAction hook (mobile swipe gestures not tested in JobsList unit tests)
+vi.mock('../../../hooks/useSwipeAction', () => ({
+  useSwipeAction: () => ({
+    elementRef: { current: null },
+    offsetX: 0,
+    leftRevealed: false,
+    rightRevealed: false,
+    isSwiping: false,
+    reset: vi.fn(),
+    isEnabled: false,
+  }),
+}));
+
 // Mock ResizeObserver for testing
 class ResizeObserverMock {
   observe = vi.fn();
@@ -307,9 +320,9 @@ describe('JobsList Virtual Scrolling', () => {
         </MemoryRouter>
       );
 
-      // Job cards should be clickable (filter out nav buttons)
-      const jobCards = Array.from(container.querySelectorAll('.lg\\:hidden button')).filter(btn =>
-        btn.textContent?.includes('Job')
+      // Job cards should be clickable (MobileJobCard uses div[role="button"])
+      const jobCards = Array.from(container.querySelectorAll('.lg\\:hidden [role="button"]')).filter(el =>
+        el.textContent?.includes('Job')
       );
       expect(jobCards.length).toBeGreaterThan(0);
     });
