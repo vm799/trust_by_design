@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { PersonaType, PERSONA_METADATA, PERSONA_STEPS } from '../lib/onboarding';
+import { PersonaType, PERSONA_STEPS } from '../lib/onboarding';
 import PersonaCard from '../components/PersonaCard';
 
 /**
@@ -258,7 +258,7 @@ const CompleteOnboarding: React.FC = () => {
                         </div>
                         <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">Welcome!</h1>
                         <p className="text-slate-400">
-                            Let's get you set up. What should we call you?
+                            Let&apos;s get you set up. What should we call you?
                         </p>
                     </div>
 
@@ -273,7 +273,6 @@ const CompleteOnboarding: React.FC = () => {
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 placeholder="John Smith"
-                                autoFocus
                                 autoComplete="name"
                                 className="w-full px-4 py-4 bg-slate-900 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg"
                                 required
@@ -327,7 +326,7 @@ const CompleteOnboarding: React.FC = () => {
                         Hi{fullName ? `, ${fullName.split(' ')[0]}` : ''}! Choose Your Role
                     </h1>
                     <p className="text-slate-400 max-w-2xl mx-auto">
-                        Select how you will use JobProof. We'll customise your experience with workflows optimised for your daily operations.
+                        Select how you will use JobProof. We&apos;ll customise your experience with workflows optimised for your daily operations.
                     </p>
                 </div>
 

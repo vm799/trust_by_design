@@ -25,7 +25,7 @@ import { motion } from 'framer-motion';
 import { ActionButton, Card, LoadingSkeleton, Tooltip } from '../components/ui';
 import { showToast } from '../lib/microInteractions';
 import { fadeInUp } from '../lib/animations';
-import { getVerifiedLocation, type VerifiedLocationResult } from '../lib/services/what3words';
+import { getVerifiedLocation } from '../lib/services/what3words';
 
 // Supabase client for RPC calls
 const getSupabaseClient = async () => {

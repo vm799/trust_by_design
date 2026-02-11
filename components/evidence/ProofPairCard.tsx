@@ -323,7 +323,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                     <span className={`material-symbols-outlined text-xs ${beforePhoto.w3w_verified ? 'text-emerald-400' : 'text-amber-400'}`}>
                       grid_3x3
                     </span>
-                    <span className="text-cyan-400">///</span>
+                    <span className="text-cyan-400">{'///'}</span>
                     <span className="text-slate-300">{beforePhoto.w3w.replace(/^\/\/\//, '')}</span>
                     {beforePhoto.w3w_verified && (
                       <span className="text-emerald-400 text-[9px]">VERIFIED</span>

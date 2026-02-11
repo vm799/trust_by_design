@@ -160,7 +160,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
             </p>
             {isFirstTimeUser && (
               <p className="text-sm text-primary mt-2">
-                Let's get you set up! Start by creating your first job.
+                Let&apos;s get you set up! Start by creating your first job.
               </p>
             )}
           </div>
@@ -173,7 +173,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
               variant="tip"
               onDismiss={dismissPwaTip}
             >
-              For quick access, bookmark this app. On mobile, tap your browser's share button and select "Add to Home Screen".
+              For quick access, bookmark this app. On mobile, tap your browser&apos;s share button and select &quot;Add to Home Screen&quot;.
             </InfoBox>
           )}
 

@@ -114,9 +114,9 @@ const TechnicianOnboarding: React.FC<TechnicianOnboardingProps> = ({
     <div className={`fixed inset-0 z-[200] bg-slate-950 flex flex-col transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
       {/* Progress Dots */}
       <div className="flex justify-center gap-2 pt-8 pb-4">
-        {ONBOARDING_STEPS.map((_, idx) => (
+        {ONBOARDING_STEPS.map((step, idx) => (
           <button
-            key={idx}
+            key={step.id}
             onClick={() => { setCurrentStep(idx); hapticTap(); }}
             className={`w-2 h-2 rounded-full transition-all ${
               idx === currentStep

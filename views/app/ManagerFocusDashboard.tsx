@@ -21,27 +21,10 @@ import { ProofGapBar, TechnicianStatusGrid, StatusBreakdownModal } from '../../c
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client, Technician, TechnicianSummary, AttentionItem, JobStatus } from '../../types';
-import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/animations';
+import { fadeInUp, staggerContainer } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
 import QuickAssignModal from '../../components/modals/QuickAssignModal';
-
-// ============================================================================
-// UTILITIES
-// ============================================================================
-
-function formatTimeSince(timestampMs: number): string {
-  const now = Date.now();
-  const diffMs = now - timestampMs;
-  const diffMins = Math.round(diffMs / (60 * 1000));
-  const diffHours = Math.round(diffMs / (60 * 60 * 1000));
-  const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
-}
 
 // ============================================================================
 // JOB STATUS PILL CONFIG

@@ -84,7 +84,6 @@ const TrackLookup: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Paste your magic link or token here"
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl py-4 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
-                autoFocus
               />
             </label>
 

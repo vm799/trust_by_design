@@ -426,7 +426,7 @@ const Milestone = ({ week, title, items, status }: any) => {
           <h4 className="text-white font-black uppercase tracking-tight">{title}</h4>
           <ul className="space-y-1">
             {items.map((item: string, i: number) => (
-              <li key={i} className="text-slate-400 text-xs flex items-center gap-2">
+              <li key={`milestone-item-${i}`} className="text-slate-400 text-xs flex items-center gap-2">
                 <span className={`size-1.5 rounded-full ${isActive ? 'bg-primary' : 'bg-slate-600'}`}></span>
                 {item}
               </li>

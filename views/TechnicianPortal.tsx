@@ -5,7 +5,6 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../ty
 import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
-import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
 import { getVerifiedLocation, createManualLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import { notifyJobSealed } from '../lib/notificationService';
@@ -382,23 +381,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     });
   }, []);
 
-  // Helper to show styled prompt dialog - available for future use
-  const _showPrompt = useCallback((
-    title: string,
-    message: string,
-    onConfirm: (value: string) => void,
-    options?: { placeholder?: string; defaultValue?: string }
-  ) => {
-    setPromptInput(options?.defaultValue || '');
-    setDialog({
-      type: 'prompt',
-      title,
-      message,
-      promptPlaceholder: options?.placeholder,
-      onConfirm: () => onConfirm(promptInput)
-    });
-  }, [promptInput]);
-
   // Close dialog
   const closeDialog = useCallback(() => {
     setDialog({ type: null, title: '', message: '' });
@@ -434,6 +416,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [photoToDelete, job]);
 
   // Initialize state from job and draft once job is loaded
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- init-once-per-job: getDraftState/checklist are intentionally omitted to avoid re-init loops
   useEffect(() => {
     if (!job?.id) return;
 
@@ -479,6 +462,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [step, maxCompletedStep]);
 
   // Auto-focus on step change
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- focus should only trigger on step change, not on checklist updates
   useEffect(() => {
     const focusTimeout = setTimeout(() => {
       if (step === 1) {
@@ -515,6 +499,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   };
 
   // Auto-save progress: Save step to localStorage
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- clearDraftState closes over job?.id which is tracked via jobId
   useEffect(() => {
     if (job?.id && step < 5) {
       localStorage.setItem(`jobproof_progress_${job.id}`, step.toString());
@@ -525,6 +510,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [step, jobId]);
 
   // Auto-save draft state: Persist all form data on change
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- saveDraftState closes over job?.id which is tracked via jobId
   useEffect(() => {
     if (jobId && step < 5 && step > 0) {
       saveDraftState({
@@ -559,13 +545,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     };
     if (photos.length > 0) loadPhotosFromIndexedDB();
   }, [photos]);
-
-  // Offline-First Sync: Write to Local DB and Queue is handled by writeLocalDraft
-  const _triggerSync = useCallback(async (data: Job) => {
-    // Legacy compatibility: ensure data is queued
-    await queueAction('UPDATE_JOB', data);
-    setLocalSyncStatus('pending');
-  }, []);
 
   // Monitor connectivity for visual status only
   useEffect(() => {
@@ -1715,7 +1694,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     </p>
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
-                        {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
+                        {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">{'///'}</span>}
                         <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
                             locationStatus === 'capturing' ? `Acquiring Signal... ${gpsCountdown}s` :
@@ -2260,7 +2239,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               onChange={(e) => setPromptInput(e.target.value)}
               placeholder={dialog.promptPlaceholder}
               className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              autoFocus
             />
             <div className="flex gap-3">
               <ActionButton variant="secondary" onClick={closeDialog} fullWidth>
@@ -2298,7 +2276,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                   onChange={(e) => setManualLatInput(e.target.value)}
                   placeholder="e.g., 51.505"
                   className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
                 />
               </div>
               <div>

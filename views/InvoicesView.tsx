@@ -26,7 +26,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
               Invoicing Coming in V2
             </h2>
             <p className="text-slate-400 max-w-md mx-auto mb-6">
-              We're building a powerful invoicing system with automatic generation from sealed jobs,
+              We&apos;re building a powerful invoicing system with automatic generation from sealed jobs,
               payment tracking, and client portal integration.
             </p>
 

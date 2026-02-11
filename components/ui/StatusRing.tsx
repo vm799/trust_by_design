@@ -38,17 +38,9 @@ function getTextColorClass(percentage: number): string {
   return 'text-red-400';
 }
 
-function getBgGlowClass(percentage: number): string {
-  if (percentage >= 75) return 'emerald';
-  if (percentage >= 40) return 'amber';
-  return 'red';
-}
-
 const StatusRing: React.FC<StatusRingProps> = React.memo(({
   totalJobs,
   completedJobs,
-  activeJobs,
-  pendingJobs,
   className = '',
 }) => {
   const [showPercentage, setShowPercentage] = useState(false);
@@ -65,11 +57,11 @@ const StatusRing: React.FC<StatusRingProps> = React.memo(({
 
   const colorClass = useMemo(() => getColorClass(percentage), [percentage]);
   const textColorClass = useMemo(() => getTextColorClass(percentage), [percentage]);
-  const bgGlow = useMemo(() => getBgGlowClass(percentage), [percentage]);
 
   return (
     <div
-      role="figure"
+      role="button"
+      tabIndex={0}
       aria-label={`Job completion: ${percentage}% — ${completedJobs} of ${totalJobs} complete`}
       className={`relative inline-flex items-center justify-center cursor-pointer min-h-[44px] min-w-[44px] select-none ${className}`}
       onClick={() => setShowPercentage(prev => !prev)}

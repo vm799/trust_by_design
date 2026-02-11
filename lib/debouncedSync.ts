@@ -342,7 +342,7 @@ function emergencySavePendingUpdates(): void {
     console.log(`[DebouncedSync] Emergency saved ${pending.length} pending updates to queue`);
 
     // Clear pending updates since they're now queued
-    for (const [entityKey, p] of pendingUpdates) {
+    for (const [, p] of pendingUpdates) {
       if (p.timer) clearTimeout(p.timer);
     }
     pendingUpdates.clear();

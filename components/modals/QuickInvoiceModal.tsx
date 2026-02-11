@@ -24,7 +24,6 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import ModalBase from './ModalBase';
-import type { Job } from '../../types';
 
 interface QuickInvoiceModalProps {
   isOpen: boolean;
@@ -291,9 +290,9 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
           <div className="space-y-6">
             {/* Job Selection */}
             <div>
-              <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
                 Select Completed Job
-              </label>
+              </span>
               {completedJobs.length === 0 ? (
                 <div className="p-4 bg-slate-100 dark:bg-slate-700 rounded-lg text-center text-slate-600 dark:text-slate-400">
                   <p className="text-sm">No completed jobs available for invoicing</p>
@@ -345,12 +344,13 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
             {selectedJob && (
               <div className="space-y-4 bg-slate-50 dark:bg-slate-700 p-4 rounded-lg">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-2">
+                  <label htmlFor="invoice-parts-cost" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-2">
                     Parts Cost
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-600 dark:text-slate-400">$</span>
                     <input
+                      id="invoice-parts-cost"
                       type="number"
                       value={state.partsCost || ''}
                       onChange={e => handlePartsCostChange(e.target.value)}
@@ -371,12 +371,13 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-2">
+                  <label htmlFor="invoice-labor-cost" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-2">
                     Labor Cost
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-600 dark:text-slate-400">$</span>
                     <input
+                      id="invoice-labor-cost"
                       type="number"
                       value={state.laborCost || ''}
                       onChange={e => handleLaborCostChange(e.target.value)}
@@ -410,10 +411,11 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
             {/* Due Date */}
             {selectedJob && (
               <div>
-                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                <label htmlFor="invoice-due-date" className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
                   Due Date
                 </label>
                 <input
+                  id="invoice-due-date"
                   type="date"
                   value={state.dueDate}
                   onChange={e => handleDueDateChange(e.target.value)}

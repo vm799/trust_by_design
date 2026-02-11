@@ -38,7 +38,7 @@ interface AlertStackProps {
 }
 
 const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
-  const { jobs, technicians, isLoading } = useData();
+  const { jobs } = useData();
   const navigate = useNavigate();
 
   // Calculate alerts from real data

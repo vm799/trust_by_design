@@ -56,7 +56,7 @@ const ProofGapBar: React.FC<ProofGapBarProps> = React.memo(({
   className = '',
   onClick,
 }) => {
-  const { activeJobs, defensibleCount, total, percentage, status } = useMemo(() => {
+  const { defensibleCount, total, percentage, status } = useMemo(() => {
     const active = jobs.filter(j => ACTIVE_STATUSES.includes(j.status));
     const defensible = active.filter(isJobDefensible).length;
     const count = active.length;

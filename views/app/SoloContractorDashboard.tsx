@@ -186,7 +186,7 @@ const SoloContractorDashboard: React.FC = () => {
         </div>
       </Card>
     );
-  }, []);
+  }, [navigate]);
 
   // ========================================================================
   // RENDER: Queue job (compact, read-only)

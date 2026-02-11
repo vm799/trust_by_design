@@ -22,7 +22,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/theme';
-import { validateChecksum, parseHashParams } from '../lib/redirects';
 import { useHandshake } from '../hooks/useHandshake';
 import { HandshakeService } from '../lib/handshakeService';
 import { JobSwitcher } from '../components/JobSwitcher';
@@ -142,8 +141,7 @@ async function checkConnection(): Promise<boolean> {
 
     clearTimeout(timeout);
     return response.ok || response.status === 400; // 400 = auth required but reachable
-  } catch (error) {
-    console.log('[BunkerRun] Ping failed:', error);
+  } catch {
     return false;
   }
 }
@@ -163,13 +161,11 @@ async function relentlessSync(
   if (!isConnected) {
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerRun] No connection, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Waiting for connection... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
       return relentlessSync(job, onStatusChange, retryCount + 1);
     } else {
-      console.log('[BunkerRun] Max retries reached, will sync later');
       onStatusChange('failed', 'No connection - will sync when online');
       return false;
     }
@@ -187,7 +183,6 @@ async function relentlessSync(
     // Sync failed even with connection - retry
     if (retryCount < MAX_RETRIES) {
       const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
-      console.log(`[BunkerRun] Sync failed, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms`);
       onStatusChange('pending', `Retrying sync... (${retryCount + 1}/${MAX_RETRIES})`);
 
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -250,7 +245,6 @@ async function compressImage(dataUrl: string, maxSizeKB: number = 800): Promise<
 
 async function syncJobToCloud(job: RunJob): Promise<boolean> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn('[BunkerRun] No Supabase credentials');
     return false;
   }
 
@@ -290,7 +284,6 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
 
     if (response.ok) {
       await runDb.jobs.update(job.id, { syncStatus: 'synced' });
-      console.log('[BunkerRun] Synced:', job.id);
 
       // Trigger report generation if complete
       if (job.completedAt && job.managerEmail) {
@@ -322,13 +315,8 @@ function storeJobDetailsForSync(job: RunJob): void {
     if (job.clientEmail) {
       localStorage.setItem(STORAGE_KEYS.CLIENT_EMAIL, job.clientEmail);
     }
-    console.log('[BunkerRun] Stored job details for sync:', {
-      id: job.id,
-      managerEmail: job.managerEmail,
-      clientEmail: job.clientEmail,
-    });
-  } catch (error) {
-    console.warn('[BunkerRun] Failed to store job details:', error);
+  } catch {
+    // Non-critical: localStorage write failed
   }
 }
 
@@ -379,7 +367,7 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
         await runDb.jobs.update(job.id, { reportUrl: result.pdfUrl });
       }
     }
-  } catch (error) {
+  } catch {
     console.error('[BunkerRun] Report error:', error);
   }
 }
@@ -691,7 +679,7 @@ export default function BunkerRun() {
             return;
           }
         }
-      } catch (error) {
+      } catch {
         console.error('[BunkerRun] Fetch error:', error);
       }
     }
@@ -907,18 +895,19 @@ export default function BunkerRun() {
             </div>
             <h1 className="text-2xl font-bold mb-2">Link Missing Information</h1>
             <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
-              This link is missing some required data. Please enter the manager's email
-              to continue so we can send the report when you're done.
+              This link is missing some required data. Please enter the manager&apos;s email
+              to continue so we can send the report when you&apos;re done.
             </p>
           </div>
 
           {/* Email Input Form */}
           <form onSubmit={handleFallbackEmailSubmit} className={`${cardClasses} p-6 rounded-xl border space-y-4`}>
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
-                Manager's Email Address
+              <label htmlFor="bunker-fallback-email" className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+                Manager&apos;s Email Address
               </label>
               <input
+                id="bunker-fallback-email"
                 type="email"
                 value={fallbackEmailInput}
                 onChange={(e) => setFallbackEmailInput(e.target.value)}
@@ -928,7 +917,6 @@ export default function BunkerRun() {
                   ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                   : 'bg-slate-900 border-slate-600 text-white placeholder-slate-500'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                autoFocus
               />
               <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>
                 The completed job report will be sent to this email.
@@ -1164,9 +1152,9 @@ export default function BunkerRun() {
 
             {/* Pause Reason Selection */}
             <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+              <span className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
                 Why are you pausing?
-              </label>
+              </span>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'emergency', label: 'Emergency', icon: 'warning' },
@@ -1471,8 +1459,9 @@ function SignatureStep({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Your Name (Technician)</label>
+        <label htmlFor="bunker-tech-name" className="block text-sm font-medium text-slate-300 mb-2">Your Name (Technician)</label>
         <input
+          id="bunker-tech-name"
           type="text"
           value={techName}
           onChange={(e) => onTechNameChange(e.target.value)}
@@ -1482,8 +1471,9 @@ function SignatureStep({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Client Name *</label>
+        <label htmlFor="bunker-client-name" className="block text-sm font-medium text-slate-300 mb-2">Client Name *</label>
         <input
+          id="bunker-client-name"
           type="text"
           value={signerName}
           onChange={(e) => onSignerNameChange(e.target.value)}

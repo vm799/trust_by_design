@@ -33,8 +33,8 @@ interface AdminDashboardProps {
   clients?: { id: string; name: string }[];
   technicians?: Technician[];
   user: UserProfile | null;
-  showOnboarding: boolean;
-  onCloseOnboarding: () => void;
+  showOnboarding?: boolean;
+  onCloseOnboarding?: () => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -42,8 +42,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   clients = [],
   technicians = [],
   user,
-  showOnboarding,
-  onCloseOnboarding
+  showOnboarding: _showOnboarding,
+  onCloseOnboarding: _onCloseOnboarding
 }) => {
   const navigate = useNavigate();
   const { updateJob, deleteJob } = useData();

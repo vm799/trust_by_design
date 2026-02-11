@@ -678,7 +678,6 @@ const JobForm: React.FC = () => {
                 value={newClientName}
                 onChange={(e) => setNewClientName(e.target.value)}
                 placeholder="Company or person name"
-                autoFocus
                 className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddClient()}
               />
@@ -734,7 +733,6 @@ const JobForm: React.FC = () => {
                 value={newTechName}
                 onChange={(e) => setNewTechName(e.target.value)}
                 placeholder="Full name"
-                autoFocus
                 className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
               />

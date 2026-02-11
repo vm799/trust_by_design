@@ -138,9 +138,9 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
       <div className="space-y-6">
         {/* Format Selection */}
         <div>
-          <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          <span className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
             Export Format
-          </label>
+          </span>
           <div className="flex gap-3">
             {(['csv', 'json'] as const).map(format => (
               <button
@@ -160,9 +160,9 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
 
         {/* Filter Selection */}
         <div>
-          <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          <span className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
             Filter Options
-          </label>
+          </span>
           <div className="space-y-3">
             <button
               onClick={() => setFilterType('all')}
@@ -234,10 +234,11 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
               {filterType === 'dateRange' && (
                 <div className="mt-3 ml-4 space-y-3">
                   <div>
-                    <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                    <label htmlFor="audit-start-date" className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
                       Start Date
                     </label>
                     <input
+                      id="audit-start-date"
                       type="date"
                       value={startDate}
                       onChange={e => setStartDate(e.target.value)}
@@ -245,10 +246,11 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                    <label htmlFor="audit-end-date" className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
                       End Date
                     </label>
                     <input
+                      id="audit-end-date"
                       type="date"
                       value={endDate}
                       onChange={e => setEndDate(e.target.value)}

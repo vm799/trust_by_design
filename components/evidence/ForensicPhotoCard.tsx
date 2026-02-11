@@ -108,7 +108,6 @@ function truncateHash(hash: string, length = 12): string {
 }
 
 const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
-  id,
   url,
   type,
   timestamp,
@@ -280,7 +279,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
                 </span>
                 {displayW3W ? (
                   <span className="text-cyan-400">
-                    ///{displayW3W}
+                    {'///'}{displayW3W}
                     {w3wVerified && (
                       <span className="ml-2 text-emerald-400 text-[10px]">VERIFIED</span>
                     )}
@@ -308,7 +307,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
                 <div className="pt-2 mt-2 border-t border-white/10">
                   <p className="text-[10px] text-slate-500 uppercase mb-1">Chain of Custody</p>
                   {custody.map((event, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[10px]">
+                    <div key={`custody-${event.action}-${event.timestamp}`} className="flex items-center gap-2 text-[10px]">
                       <span className={`size-1.5 rounded-full ${
                         event.action === 'captured' ? 'bg-blue-400' :
                         event.action === 'sealed' ? 'bg-emerald-400' :

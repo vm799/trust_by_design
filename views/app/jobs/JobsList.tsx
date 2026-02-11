@@ -205,7 +205,7 @@ const JobsListSkeleton = React.memo(() => (
     <div className="bg-slate-900 border border-white/5 rounded-2xl p-2">
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-9 w-24 bg-slate-800 rounded-xl animate-pulse" />
+          <div key={`skeleton-tab-${i}`} className="h-9 w-24 bg-slate-800 rounded-xl animate-pulse" />
         ))}
       </div>
     </div>
@@ -215,7 +215,7 @@ const JobsListSkeleton = React.memo(() => (
     <div className="space-y-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
-          key={i}
+          key={`skeleton-jobcard-${i}`}
           className="bg-slate-900 border border-white/5 rounded-2xl p-4 animate-pulse"
         >
           <div className="flex items-start gap-4">

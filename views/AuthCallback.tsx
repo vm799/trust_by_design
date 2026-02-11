@@ -34,21 +34,17 @@ import { resumeIntentAndGetPath, getNavigationIntent } from '../lib/navigationIn
  */
 const extractTokensFromHash = (): { access_token?: string; refresh_token?: string } | null => {
   const fullHash = window.location.hash;
-  console.log('[AuthCallback] Full hash:', fullHash);
 
   // Look for the second # which indicates Supabase tokens
   const secondHashIndex = fullHash.indexOf('#', 1);
   if (secondHashIndex === -1) {
-    console.log('[AuthCallback] No second hash found - no embedded tokens');
     return null;
   }
 
   // Extract the token fragment after the second #
   const tokenFragment = fullHash.substring(secondHashIndex + 1);
-  console.log('[AuthCallback] Token fragment:', tokenFragment);
 
   if (!tokenFragment || !tokenFragment.includes('access_token=')) {
-    console.log('[AuthCallback] No access_token found in fragment');
     return null;
   }
 
@@ -58,7 +54,6 @@ const extractTokensFromHash = (): { access_token?: string; refresh_token?: strin
   const refresh_token = params.get('refresh_token');
 
   if (access_token) {
-    console.log('[AuthCallback] Tokens extracted successfully');
     return { access_token, refresh_token: refresh_token || undefined };
   }
 
@@ -92,8 +87,6 @@ const AuthCallback: React.FC = () => {
       return;
     }
 
-    console.log('[AuthCallback] Starting auth callback processing...');
-
     // Try to extract tokens from HashRouter URL immediately
     const tryTokenExtraction = async () => {
       if (hasAttemptedTokenExtraction.current || hasRedirected.current) return;
@@ -102,7 +95,6 @@ const AuthCallback: React.FC = () => {
       const tokens = extractTokensFromHash();
 
       if (tokens?.access_token) {
-        console.log('[AuthCallback] Attempting to set session from extracted tokens...');
 
         try {
           // Set session using the extracted tokens
@@ -122,7 +114,6 @@ const AuthCallback: React.FC = () => {
             const errMsg = sessionError.message?.toLowerCase() || '';
             if (errMsg.includes('rate') || errMsg.includes('too many') ||
                 errMsg.includes('security') || errMsg.includes('exceeded')) {
-              console.log('[AuthCallback] Rate limit detected, showing error');
               hasRedirected.current = true;
               setProcessing(false);
               setError(
@@ -135,7 +126,6 @@ const AuthCallback: React.FC = () => {
             // Token might be expired or invalid - navigate to dedicated expired view
             if (errMsg.includes('expired') || errMsg.includes('invalid') ||
                 errMsg.includes('already used') || errMsg.includes('not found')) {
-              console.log('[AuthCallback] Link expired/invalid, navigating to /auth/expired');
               hasRedirected.current = true;
               setProcessing(false);
               navigate('/auth/expired', { replace: true });
@@ -143,7 +133,6 @@ const AuthCallback: React.FC = () => {
             }
             // Other errors - let the listener handle it
           } else if (data.session) {
-            console.log('[AuthCallback] Session set successfully');
 
             // Don't create workspace here - let the user go through OAuthSetup
             // for a more personal experience where they can enter their name
@@ -154,7 +143,6 @@ const AuthCallback: React.FC = () => {
 
             // UX Flow Contract: Resume navigation intent if one exists
             const targetPath = resumeIntentAndGetPath();
-            console.log('[AuthCallback] Resuming intent, navigating to:', targetPath);
 
             // Clean up the URL hash to remove tokens
             window.history.replaceState(null, '', window.location.pathname + '#' + targetPath);
@@ -178,7 +166,6 @@ const AuthCallback: React.FC = () => {
 
     // Also subscribe to auth state changes as backup
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AuthCallback] Auth event:', event, 'Session:', !!session);
 
       // Prevent double redirect
       if (hasRedirected.current) return;
@@ -186,7 +173,6 @@ const AuthCallback: React.FC = () => {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
         // UX Flow Contract: Resume navigation intent if one exists
         const targetPath = resumeIntentAndGetPath();
-        console.log(`[AuthCallback] ${event} event received with session, navigating to:`, targetPath);
         hasRedirected.current = true;
         setProcessing(false);
         navigate(targetPath, { replace: true });
@@ -207,7 +193,6 @@ const AuthCallback: React.FC = () => {
         if (session && !hasRedirected.current) {
           // UX Flow Contract: Resume navigation intent if one exists
           const targetPath = resumeIntentAndGetPath();
-          console.log('[AuthCallback] Existing session found, navigating to:', targetPath);
           hasRedirected.current = true;
           setProcessing(false);
           navigate(targetPath, { replace: true });
@@ -229,7 +214,6 @@ const AuthCallback: React.FC = () => {
     if (!isLoading && isAuthenticated && !hasRedirected.current) {
       // UX Flow Contract: Resume navigation intent if one exists
       const targetPath = resumeIntentAndGetPath();
-      console.log('[AuthCallback] AuthContext confirmed auth, navigating to:', targetPath);
       hasRedirected.current = true;
       setProcessing(false);
       navigate(targetPath, { replace: true });
@@ -245,7 +229,6 @@ const AuthCallback: React.FC = () => {
         const hadTokens = window.location.hash.includes('access_token=');
         if (hadTokens) {
           // Token was present but failed - navigate to dedicated expired view
-          console.log('[AuthCallback] Timeout with tokens - link likely expired');
           hasRedirected.current = true;
           setProcessing(false);
           navigate('/auth/expired', { replace: true });

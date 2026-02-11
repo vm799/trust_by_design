@@ -220,7 +220,7 @@ const ManagerOnboarding: React.FC = () => {
                 Company Setup
               </h1>
               <p className="text-slate-400 text-sm">
-                Let's configure your workspace for field operations.
+                Let&apos;s configure your workspace for field operations.
               </p>
             </div>
 
@@ -374,7 +374,7 @@ const ManagerOnboarding: React.FC = () => {
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
               <p className="text-amber-400 text-xs font-medium flex items-start gap-2">
                 <span className="material-symbols-outlined text-lg shrink-0">info</span>
-                Technicians access jobs via magic links only. They don't need accounts or this app installed.
+                Technicians access jobs via magic links only. They don&apos;t need accounts or this app installed.
               </p>
             </div>
 

@@ -39,7 +39,6 @@ interface SearchFilters {
 
 const SEARCH_HISTORY_KEY = 'quicksearch_history';
 const MAX_HISTORY = 5;
-const SEARCH_DEBOUNCE_MS = 200;
 
 const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
   isOpen,

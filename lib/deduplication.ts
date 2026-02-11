@@ -134,7 +134,7 @@ export function checkClientDuplicate(
   newClient: { name: string; email?: string; phone?: string },
   existingClients: Entity[]
 ): DuplicateCheckResult {
-  return checkEntityDuplicate(newClient, existingClients, 'client');
+  return checkEntityDuplicate(newClient, existingClients);
 }
 
 /**
@@ -144,7 +144,7 @@ export function checkTechnicianDuplicate(
   newTech: { name: string; email?: string; phone?: string },
   existingTechs: Entity[]
 ): DuplicateCheckResult {
-  return checkEntityDuplicate(newTech, existingTechs, 'technician');
+  return checkEntityDuplicate(newTech, existingTechs);
 }
 
 /**
@@ -152,8 +152,7 @@ export function checkTechnicianDuplicate(
  */
 function checkEntityDuplicate(
   newEntity: { name: string; email?: string; phone?: string },
-  existingEntities: Entity[],
-  _entityType: string
+  existingEntities: Entity[]
 ): DuplicateCheckResult {
   const result: DuplicateCheckResult = {
     isDuplicate: false,
@@ -279,8 +278,7 @@ export function findDuplicateGroups(entities: Entity[]): Entity[][] {
 
       const check = checkEntityDuplicate(
         { name: entity.name, email: entity.email, phone: entity.phone },
-        [other],
-        'entity'
+        [other]
       );
 
       if (check.isDuplicate) {

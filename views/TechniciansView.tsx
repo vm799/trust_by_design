@@ -38,7 +38,7 @@ const TechniciansSkeleton = React.memo(() => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
-          key={i}
+          key={`skeleton-tech-${i}`}
           className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 animate-pulse"
         >
           {/* ID Badge and Status */}

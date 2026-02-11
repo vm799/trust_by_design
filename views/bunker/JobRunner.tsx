@@ -624,6 +624,7 @@ export default function JobRunner() {
   const [technicianName, setTechnicianName] = useState('');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const handleSyncRef = useRef<() => Promise<void>>();
 
   // Get job ID from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -735,7 +736,7 @@ export default function JobRunner() {
   // Auto-sync when online and job is pending
   useEffect(() => {
     if (state.isOnline && state.job?.syncStatus === 'pending') {
-      handleSync();
+      handleSyncRef.current?.();
     }
   }, [state.isOnline, state.job?.syncStatus]);
 
@@ -892,6 +893,7 @@ export default function JobRunner() {
     setState(s => ({ ...s, isSyncing: false }));
     setSyncMessage(null);
   };
+  handleSyncRef.current = handleSync;
 
   const goToStep = (step: WizardStep) => {
     updateJob({ currentStep: step });

@@ -383,7 +383,6 @@ const OAuthSetup: React.FC = () => {
                   className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
-                  autoFocus
                 />
               </div>
 
@@ -553,7 +552,6 @@ const OAuthSetup: React.FC = () => {
                   className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={workspaceName}
                   onChange={e => setWorkspaceName(e.target.value)}
-                  autoFocus
                 />
                 <p className="text-slate-500 text-xs">
                   Leave blank to use "{displayWorkspaceName}"

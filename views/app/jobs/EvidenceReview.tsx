@@ -213,7 +213,7 @@ const EvidenceReview: React.FC = () => {
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Location</p>
                   <p className="text-sm text-white font-medium">{job.address || 'N/A'}</p>
                   {job.w3w && (
-                    <p className="text-xs text-emerald-400 font-mono">///{job.w3w}</p>
+                    <p className="text-xs text-emerald-400 font-mono">{'///'}{job.w3w}</p>
                   )}
                 </div>
               </div>
@@ -598,7 +598,7 @@ const EvidenceReview: React.FC = () => {
                   {selectedPhoto.w3w ? (
                     <div>
                       <p className="text-xs text-emerald-400 font-mono">
-                        ///{selectedPhoto.w3w}
+                        {'///'}{selectedPhoto.w3w}
                       </p>
                       <p className={`text-[10px] flex items-center gap-1 ${
                         selectedPhoto.w3w_verified ? 'text-emerald-400' : 'text-amber-400'
@@ -793,7 +793,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({ photo, locked, onClick }) => {
               <p className="text-[9px] font-mono flex items-center gap-1">
                 <span className="material-symbols-outlined text-[10px] text-emerald-400">grid_3x3</span>
                 <span className={photo.w3w_verified ? 'text-emerald-400' : 'text-amber-400'}>
-                  ///{photo.w3w}
+                  {'///'}{photo.w3w}
                 </span>
               </p>
             )}

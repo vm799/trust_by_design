@@ -23,7 +23,6 @@
 
 import React, { useMemo } from 'react';
 import { Job, Technician } from '../../types';
-import { JOB_STATUS } from '../../lib/constants';
 
 // ============================================================================
 // TYPES
