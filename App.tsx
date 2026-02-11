@@ -18,6 +18,7 @@ const getSyncQueue = () => import('./lib/syncQueue');
 const getAuth = () => import('./lib/auth');
 const getOfflineSync = () => import('./lib/offline/sync');
 const getDbModule = () => import('./lib/db');
+const getStorageQuota = () => import('./lib/storageQuota');
 
 // REMEDIATION ITEM 13: Removed getSupabaseModule - supabase is statically imported
 // by auth.ts, db.ts, etc. so dynamic import provides no code splitting benefit.
@@ -178,14 +179,22 @@ const AppContent: React.FC = () => {
         const sync = await getOfflineSync();
         sync.pushQueue();
         sync.pullJobs(user.workspace.id);
+        sync.pullClients(user.workspace.id);
+        sync.pullTechnicians(user.workspace.id);
+        sync.retryOrphanPhotos();
       }
     };
+
+    // Request persistent storage to prevent Safari 7-day IndexedDB eviction
+    getStorageQuota().then(m => m.requestPersistentStorage()).catch(() => {});
 
     // Initial Pull (no throttle on mount)
     const initialPull = async () => {
       if (user?.workspace?.id) {
         const sync = await getOfflineSync();
         sync.pullJobs(user.workspace.id);
+        sync.pullClients(user.workspace.id);
+        sync.pullTechnicians(user.workspace.id);
         lastSyncTime = Date.now();
       }
     };

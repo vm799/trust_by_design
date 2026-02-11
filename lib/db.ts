@@ -100,13 +100,6 @@ export const initMockDatabase = async () => {
   });
 };
 
-export const resetMockDatabase = () => {
-  mockDatabase.jobs.clear();
-  mockDatabase.clients.clear();
-  mockDatabase.technicians.clear();
-  mockDatabase.magicLinks.clear();
-  MOCK_DB_ENABLED = false;
-};
 
 // Check if we should use mock database (for testing)
 const shouldUseMockDB = () => {
@@ -1373,52 +1366,6 @@ export const getMagicLinksForJob = (jobId: string): MagicLinkInfo[] => {
 };
 
 /**
- * Get detailed status of a magic link
- */
-export const getMagicLinkStatus = (token: string): DbResult<MagicLinkInfo> => {
-  let linkData = mockDatabase.magicLinks.get(token);
-
-  if (!linkData) {
-    try {
-      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
-      if (localLinks[token]) {
-        linkData = localLinks[token];
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
-
-  if (!linkData) {
-    return { success: false, error: 'Token not found' };
-  }
-
-  const now = new Date();
-  const expiresAt = new Date(linkData.expires_at);
-  let status: LinkStatus = 'active';
-
-  if (linkData.is_sealed) {
-    status = 'sealed';
-  } else if (now > expiresAt) {
-    status = 'expired';
-  }
-
-  return {
-    success: true,
-    data: {
-      token,
-      job_id: linkData.job_id,
-      workspace_id: linkData.workspace_id,
-      expires_at: linkData.expires_at,
-      status,
-      created_at: (linkData as any).created_at,
-      first_accessed_at: (linkData as any).first_accessed_at,
-      assigned_to_tech_id: (linkData as any).assigned_to_tech_id,
-    }
-  };
-};
-
-/**
  * Record that a magic link was accessed
  * Call this when a technician opens a job via magic link
  * Phase 11: Also updates Job.technicianLinkOpened flag for easy filtering
@@ -1638,47 +1585,6 @@ export const getLinksNeedingAttention = (): MagicLinkInfo[] => {
     const bTime = new Date(b.sent_at || b.created_at || 0).getTime();
     return aTime - bTime;
   });
-};
-
-/**
- * Flag a link for manager attention
- */
-export const flagLinkForAttention = (token: string, reason: string): DbResult<void> => {
-  let linkData = mockDatabase.magicLinks.get(token);
-
-  if (!linkData) {
-    try {
-      const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
-      if (localLinks[token]) {
-        linkData = localLinks[token];
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
-
-  if (!linkData) {
-    return { success: false, error: 'Token not found' };
-  }
-
-  const updatedData = {
-    ...linkData,
-    flagged_at: new Date().toISOString(),
-    flag_reason: reason,
-  };
-
-  mockDatabase.magicLinks.set(token, updatedData);
-
-  try {
-    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
-    localLinks[token] = updatedData;
-    localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
-  } catch (e) {
-    // Ignore
-  }
-
-  console.log(`[MagicLink] Flagged token ${token.substring(0, 8)}... for attention: ${reason}`);
-  return { success: true };
 };
 
 /**
@@ -2519,118 +2425,6 @@ export const notifyManagerOfTechJob = (
 
   console.log(`[Notification] Manager notified: ${notification.title}`);
   return notification;
-};
-
-/**
- * Get all unread tech job notifications for a workspace
- */
-export const getTechJobNotifications = (workspaceId: string, includeRead = false): TechJobNotification[] => {
-  const notifications: TechJobNotification[] = [];
-
-  // Load from localStorage
-  try {
-    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
-    storedNotifs.forEach((notif: TechJobNotification) => {
-      if (notif.workspace_id === workspaceId) {
-        if (includeRead || !notif.is_read) {
-          notifications.push(notif);
-          // Also add to in-memory map for consistency
-          techNotifications.set(notif.id, notif);
-        }
-      }
-    });
-  } catch (e) {
-    console.warn('Failed to load notifications from localStorage:', e);
-  }
-
-  // Also check in-memory (may have notifications not yet persisted)
-  techNotifications.forEach((notif) => {
-    if (notif.workspace_id === workspaceId) {
-      if ((includeRead || !notif.is_read) && !notifications.find(n => n.id === notif.id)) {
-        notifications.push(notif);
-      }
-    }
-  });
-
-  // Sort by created_at descending (newest first)
-  return notifications.sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-};
-
-/**
- * Mark a tech job notification as read
- */
-export const markTechNotificationRead = (notificationId: string): DbResult<void> => {
-  const notif = techNotifications.get(notificationId);
-
-  // Also check localStorage
-  try {
-    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
-    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
-    if (idx >= 0) {
-      storedNotifs[idx].is_read = true;
-      storedNotifs[idx].read_at = new Date().toISOString();
-      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
-
-      // Update in-memory too
-      if (notif) {
-        notif.is_read = true;
-        notif.read_at = storedNotifs[idx].read_at;
-      }
-
-      return { success: true };
-    }
-  } catch (e) {
-    console.warn('Failed to update notification in localStorage:', e);
-  }
-
-  if (!notif) {
-    return { success: false, error: 'Notification not found' };
-  }
-
-  notif.is_read = true;
-  notif.read_at = new Date().toISOString();
-  return { success: true };
-};
-
-/**
- * Take action on a tech job notification (approve, reject, reassign)
- */
-export const actionTechNotification = (
-  notificationId: string,
-  action: 'approved' | 'rejected' | 'reassigned',
-  actionBy: string
-): DbResult<void> => {
-  // Update in localStorage
-  try {
-    const storedNotifs = JSON.parse(localStorage.getItem('jobproof_tech_notifications') || '[]');
-    const idx = storedNotifs.findIndex((n: TechJobNotification) => n.id === notificationId);
-    if (idx >= 0) {
-      storedNotifs[idx].action_taken = action;
-      storedNotifs[idx].action_at = new Date().toISOString();
-      storedNotifs[idx].action_by = actionBy;
-      storedNotifs[idx].is_read = true;
-      storedNotifs[idx].read_at = storedNotifs[idx].read_at || new Date().toISOString();
-      localStorage.setItem('jobproof_tech_notifications', JSON.stringify(storedNotifs));
-
-      // Update in-memory
-      const notif = techNotifications.get(notificationId);
-      if (notif) {
-        notif.action_taken = action;
-        notif.action_at = storedNotifs[idx].action_at;
-        notif.action_by = actionBy;
-        notif.is_read = true;
-      }
-
-      console.log(`[Notification] Action ${action} taken on notification ${notificationId}`);
-      return { success: true };
-    }
-  } catch (e) {
-    console.warn('Failed to update notification action:', e);
-  }
-
-  return { success: false, error: 'Notification not found' };
 };
 
 /**

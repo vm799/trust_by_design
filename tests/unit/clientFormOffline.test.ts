@@ -7,6 +7,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Mock the Dexie database module
 vi.mock('../../lib/offline/db', () => {
@@ -139,5 +141,41 @@ describe('ClientForm - Offline Draft Persistence (CLAUDE.md Compliant)', () => {
     expect(typeof offlineDb.saveFormDraft).toBe('function');
     expect(typeof offlineDb.getFormDraft).toBe('function');
     expect(typeof offlineDb.clearFormDraft).toBe('function');
+  });
+});
+
+describe('ClientForm - Workspace-Scoped Draft Keys', () => {
+  const ROOT = path.resolve(__dirname, '../..');
+  const clientFormContent = fs.readFileSync(path.join(ROOT, 'views/app/clients/ClientForm.tsx'), 'utf-8');
+
+  it('should import useAuth for workspace scoping', () => {
+    expect(clientFormContent).toContain("import { useAuth } from '../../../lib/AuthContext'");
+  });
+
+  it('should derive workspaceId from useAuth', () => {
+    expect(clientFormContent).toContain('const { workspaceId } = useAuth()');
+  });
+
+  it('should create a workspace-scoped draft key', () => {
+    expect(clientFormContent).toMatch(/draftKey.*=.*workspaceId.*FORM_TYPE|draftKey.*=.*`\$\{FORM_TYPE\}_\$\{workspaceId\}`/);
+  });
+
+  it('should use draftKey (not bare FORM_TYPE) for saveFormDraft', () => {
+    expect(clientFormContent).toContain('saveFormDraft(draftKey,');
+  });
+
+  it('should use draftKey (not bare FORM_TYPE) for getFormDraft', () => {
+    expect(clientFormContent).toContain('getFormDraft(draftKey)');
+  });
+
+  it('should use draftKey (not bare FORM_TYPE) for clearFormDraft', () => {
+    expect(clientFormContent).toContain('clearFormDraft(draftKey)');
+  });
+
+  it('should NOT use bare FORM_TYPE in any draft function call', () => {
+    // FORM_TYPE should only appear in the const declaration and draftKey construction
+    expect(clientFormContent).not.toContain('saveFormDraft(FORM_TYPE');
+    expect(clientFormContent).not.toContain('getFormDraft(FORM_TYPE');
+    expect(clientFormContent).not.toContain('clearFormDraft(FORM_TYPE');
   });
 });
