@@ -180,7 +180,6 @@ export function isWorkspaceIsolatedStorageEnabled(): boolean {
 export function enableWorkspaceIsolatedStorage(): void {
     guardTestingAccess('enableWorkspaceIsolatedStorage');
     localStorage.setItem('jobproof_feature_workspace_isolated_storage', 'true');
-    console.log('[TestingControlPlane] Workspace-isolated storage ENABLED');
 }
 
 /**
@@ -190,7 +189,6 @@ export function enableWorkspaceIsolatedStorage(): void {
 export function disableWorkspaceIsolatedStorage(): void {
     guardTestingAccess('disableWorkspaceIsolatedStorage');
     localStorage.removeItem('jobproof_feature_workspace_isolated_storage');
-    console.log('[TestingControlPlane] Workspace-isolated storage DISABLED');
 }
 
 /**
@@ -251,14 +249,9 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
         errors: [],
     };
 
-    console.log('[TestingControlPlane] ========================================');
-    console.log('[TestingControlPlane] RESET WORKSPACE:', workspaceId);
-    console.log('[TestingControlPlane] Time:', new Date().toISOString());
-    console.log('[TestingControlPlane] ========================================');
 
     try {
         // Step 1: Delete IndexedDB records for this workspace
-        console.log('[TestingControlPlane] Step 1: Clearing IndexedDB for workspace...');
         try {
             const database = await getDatabase();
 
@@ -268,7 +261,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
                 .equals(workspaceId)
                 .delete();
             result.indexedDB.jobsDeleted = jobsDeleted;
-            console.log(`[TestingControlPlane] Deleted ${jobsDeleted} jobs`);
 
             // Delete clients for this workspace
             const clientsDeleted = await database.clients
@@ -276,7 +268,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
                 .equals(workspaceId)
                 .delete();
             result.indexedDB.clientsDeleted = clientsDeleted;
-            console.log(`[TestingControlPlane] Deleted ${clientsDeleted} clients`);
 
             // Delete technicians for this workspace
             const techniciansDeleted = await database.technicians
@@ -284,7 +275,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
                 .equals(workspaceId)
                 .delete();
             result.indexedDB.techniciansDeleted = techniciansDeleted;
-            console.log(`[TestingControlPlane] Deleted ${techniciansDeleted} technicians`);
 
             // Delete form drafts (these are keyed by formType, not workspaceId)
             // We need to check if workspace isolation is enabled and handle accordingly
@@ -299,7 +289,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
                     await database.formDrafts.delete(draft.formType);
                     result.indexedDB.formDraftsDeleted++;
                 }
-                console.log(`[TestingControlPlane] Deleted ${result.indexedDB.formDraftsDeleted} form drafts`);
             }
 
         } catch (error) {
@@ -309,7 +298,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
         }
 
         // Step 2: Delete workspace-prefixed localStorage keys
-        console.log('[TestingControlPlane] Step 2: Clearing localStorage for workspace...');
         try {
             const keysToDelete: string[] = [];
 
@@ -334,13 +322,11 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
 
             // Delete the keys
             for (const key of keysToDelete) {
-                console.log(`[TestingControlPlane] Removing localStorage key: ${key}`);
                 localStorage.removeItem(key);
             }
 
             result.localStorage.keysDeleted = keysToDelete.length;
             result.localStorage.keys = keysToDelete;
-            console.log(`[TestingControlPlane] Deleted ${keysToDelete.length} localStorage keys`);
 
         } catch (error) {
             const msg = `localStorage workspace clear: ${error instanceof Error ? error.message : String(error)}`;
@@ -357,14 +343,6 @@ async function resetWorkspace(workspaceId: string): Promise<WorkspaceResetResult
     result.errors = errors;
     result.success = errors.length === 0;
 
-    console.log('[TestingControlPlane] ========================================');
-    console.log('[TestingControlPlane] WORKSPACE RESET COMPLETE');
-    console.log('[TestingControlPlane] Success:', result.success);
-    console.log('[TestingControlPlane] Duration:', result.durationMs, 'ms');
-    console.log('[TestingControlPlane] IndexedDB:', result.indexedDB);
-    console.log('[TestingControlPlane] localStorage:', result.localStorage);
-    console.log('[TestingControlPlane] Errors:', result.errors);
-    console.log('[TestingControlPlane] ========================================');
 
     return result;
 }
@@ -476,21 +454,14 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         verified: false,
     };
 
-    console.log('[TestingControlPlane] ========================================');
-    console.log('[TestingControlPlane] RESET ALL - Starting atomic reset');
-    console.log('[TestingControlPlane] Build:', BUILD_INFO.commit);
-    console.log('[TestingControlPlane] Time:', new Date().toISOString());
-    console.log('[TestingControlPlane] ========================================');
 
     try {
         // Step 1: Close all Dexie connections FIRST
         // This is critical - deleteDatabase will be "blocked" if connections are open
-        console.log('[TestingControlPlane] Step 1: Closing Dexie connections...');
         await closeAllConnections();
         _resetDbInstance();
 
         // Step 2: Sign out Supabase (before clearing its localStorage keys)
-        console.log('[TestingControlPlane] Step 2: Signing out Supabase...');
         try {
             const supabaseResult = await withTimeout(
                 clearSupabaseSession(),
@@ -505,7 +476,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 3: Clear Service Worker and caches
-        console.log('[TestingControlPlane] Step 3: Clearing Service Worker...');
         try {
             const swResult = await withTimeout(
                 clearServiceWorker(),
@@ -521,7 +491,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 4: Delete IndexedDB
-        console.log('[TestingControlPlane] Step 4: Deleting IndexedDB...');
         try {
             const idbResult = await withTimeout(
                 clearIndexedDB(),
@@ -540,7 +509,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 5: Clear localStorage
-        console.log('[TestingControlPlane] Step 5: Clearing localStorage...');
         try {
             const keysBefore = Object.keys(localStorage).length;
             const lsResult = clearLocalStorage(true); // Nuclear clear
@@ -553,7 +521,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 6: Clear sessionStorage
-        console.log('[TestingControlPlane] Step 6: Clearing sessionStorage...');
         try {
             const ssResult = clearSessionStorage();
             result.layers.sessionStorage.cleared = ssResult;
@@ -564,7 +531,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 7: Clear cookies
-        console.log('[TestingControlPlane] Step 7: Clearing cookies...');
         try {
             const cookieResult = clearCookies();
             result.layers.cookies.cleared = cookieResult;
@@ -575,7 +541,6 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
         }
 
         // Step 8: Verify clean state
-        console.log('[TestingControlPlane] Step 8: Verifying clean state...');
         result.verified = await verifyCleanState();
 
     } catch (error) {
@@ -587,16 +552,8 @@ async function resetAll(autoReload = false): Promise<ResetResult> {
     result.errors = errors;
     result.success = errors.length === 0 && result.verified;
 
-    console.log('[TestingControlPlane] ========================================');
-    console.log('[TestingControlPlane] RESET COMPLETE');
-    console.log('[TestingControlPlane] Success:', result.success);
-    console.log('[TestingControlPlane] Verified:', result.verified);
-    console.log('[TestingControlPlane] Duration:', result.durationMs, 'ms');
-    console.log('[TestingControlPlane] Errors:', result.errors);
-    console.log('[TestingControlPlane] ========================================');
 
     if (autoReload) {
-        console.log('[TestingControlPlane] Auto-reload in 500ms...');
         setTimeout(() => {
             window.location.href = window.location.origin;
         }, 500);
@@ -751,7 +708,6 @@ async function verifyCleanState(): Promise<boolean> {
     if (!isClean) {
         console.warn('[TestingControlPlane] verifyCleanState FAILED:', issues);
     } else {
-        console.log('[TestingControlPlane] verifyCleanState PASSED - all layers clean');
     }
 
     return isClean;

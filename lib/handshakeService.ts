@@ -260,7 +260,6 @@ class HandshakeServiceClass {
       localStorage.setItem(STORAGE_KEYS.CONTEXT, JSON.stringify(lockedContext));
       localStorage.setItem(STORAGE_KEYS.LOCKED, 'true');
       localStorage.setItem(STORAGE_KEYS.CREATED_AT, String(lockedContext.createdAt));
-      console.log('[HandshakeService] Context committed and locked:', lockedContext.jobId);
     } catch (error) {
       console.error('[HandshakeService] Failed to commit context:', error);
     }
@@ -298,7 +297,6 @@ class HandshakeServiceClass {
     localStorage.removeItem(STORAGE_KEYS.CONTEXT);
     localStorage.removeItem(STORAGE_KEYS.LOCKED);
     localStorage.removeItem(STORAGE_KEYS.CREATED_AT);
-    console.log('[HandshakeService] Context cleared');
   }
 
   /**
@@ -321,7 +319,6 @@ class HandshakeServiceClass {
     localStorage.removeItem(STORAGE_KEYS.LOCKED);
     localStorage.removeItem(STORAGE_KEYS.CREATED_AT);
 
-    console.log('[HandshakeService] Force unlock executed:', unlockedJobId ? `Unlocked from job ${unlockedJobId}` : 'No job was locked');
 
     return unlockedJobId;
   }
@@ -355,7 +352,6 @@ class HandshakeServiceClass {
   pauseCurrentJob(reason?: PausedJobContext['pauseReason']): PausedJobContext | null {
     const existingContext = this.get();
     if (!existingContext || !existingContext.isLocked) {
-      console.log('[HandshakeService] No locked job to pause');
       return null;
     }
 
@@ -378,7 +374,6 @@ class HandshakeServiceClass {
 
     try {
       localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(filtered));
-      console.log('[HandshakeService] Job paused:', pausedJob.jobId, 'Reason:', reason);
     } catch (error) {
       console.error('[HandshakeService] Failed to save paused job:', error);
       return null;
@@ -401,7 +396,6 @@ class HandshakeServiceClass {
     const pausedJob = pausedJobs.find(p => p.jobId === jobId);
 
     if (!pausedJob) {
-      console.log('[HandshakeService] Job not found in paused list:', jobId);
       return null;
     }
 
@@ -431,7 +425,6 @@ class HandshakeServiceClass {
     const remaining = pausedJobs.filter(p => p.jobId !== jobId);
     try {
       localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(remaining));
-      console.log('[HandshakeService] Job resumed:', jobId);
     } catch (error) {
       console.error('[HandshakeService] Failed to update paused list:', error);
     }
@@ -466,7 +459,6 @@ class HandshakeServiceClass {
 
     try {
       localStorage.setItem(STORAGE_KEYS.PAUSED_JOBS, JSON.stringify(remaining));
-      console.log('[HandshakeService] Removed paused job:', jobId);
       return true;
     } catch (error) {
       console.error('[HandshakeService] Failed to remove paused job:', error);

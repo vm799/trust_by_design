@@ -84,7 +84,6 @@ export async function checkNetworkConnectivity(forceCheck = false): Promise<bool
 
     return isReachable;
   } catch (error) {
-    console.log('[NetworkStatus] Ping failed:', error);
 
     // Only notify if status actually changed
     const statusChanged = lastPingResult !== false;
@@ -139,12 +138,10 @@ function notifySubscribers(isOnline: boolean): void {
 export function startNetworkMonitoring(): () => void {
   // Listen to browser online/offline events
   const handleOnline = () => {
-    console.log('[NetworkStatus] Browser reports online - verifying with ping...');
     checkNetworkConnectivity(true);
   };
 
   const handleOffline = () => {
-    console.log('[NetworkStatus] Browser reports offline');
     lastPingResult = false;
     notifySubscribers(false);
   };

@@ -85,9 +85,6 @@ export async function cleanupIndexedDB(): Promise<CleanupStats> {
     if (orphanedMediaIds.length > 0) {
       await database.media.bulkDelete(orphanedMediaIds);
       stats.photosCleaned = orphanedMediaIds.length;
-      console.log(
-        `[Cleanup] Deleted ${orphanedMediaIds.length} orphaned photos (~${Math.round(stats.bytesFreed / 1024 / 1024)}MB)`
-      );
     }
 
     // STEP 5-6: Clean up expired form drafts
@@ -105,12 +102,7 @@ export async function cleanupIndexedDB(): Promise<CleanupStats> {
     if (expiredDraftKeys.length > 0) {
       await database.formDrafts.bulkDelete(expiredDraftKeys);
       stats.draftsCleaned = expiredDraftKeys.length;
-      console.log(`[Cleanup] Deleted ${expiredDraftKeys.length} expired form drafts`);
     }
-
-    console.log(
-      `[Cleanup] Cleanup complete: ${stats.photosCleaned} photos, ${stats.draftsCleaned} drafts, ~${Math.round(stats.bytesFreed / 1024 / 1024)}MB freed`
-    );
 
     return stats;
   } catch (error) {
@@ -128,7 +120,6 @@ export async function cleanupIndexedDB(): Promise<CleanupStats> {
  */
 export async function scheduleCleanup(): Promise<void> {
   try {
-    console.log('[Cleanup] Starting automatic cleanup scheduler');
 
     // Run cleanup immediately on app startup
     await cleanupIndexedDB();
@@ -136,7 +127,6 @@ export async function scheduleCleanup(): Promise<void> {
     // Schedule cleanup every 1 hour
     const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
     setInterval(async () => {
-      console.log('[Cleanup] Running scheduled hourly cleanup');
       await cleanupIndexedDB();
     }, CLEANUP_INTERVAL);
   } catch (error) {

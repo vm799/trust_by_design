@@ -465,7 +465,6 @@ async function attemptDataReduction(): Promise<boolean> {
     }
 
     localStorage.setItem('jobproof_sync_queue', JSON.stringify(queue));
-    console.log('[SyncRecovery] Marked items for compression');
 
     return true;
   } catch (e) {
@@ -556,7 +555,6 @@ export function scheduleRetry(
 
   const delay = calculateBackoffDelay(state.currentAttempt, config);
 
-  console.log(`[SyncRecovery] Scheduling retry in ${delay}ms (attempt ${state.currentAttempt + 1})`);
 
   updateSyncState({
     status: 'recovering',
@@ -568,7 +566,6 @@ export function scheduleRetry(
   }
 
   retryTimeout = window.setTimeout(async () => {
-    console.log('[SyncRecovery] Executing scheduled retry...');
     updateSyncState({ status: 'syncing' });
 
     try {
@@ -606,13 +603,11 @@ export function cancelRetry(): void {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[SyncRecovery] Back online, checking sync state...');
     const state = getSyncState();
 
     if (state.status === 'error' && state.lastError?.retryable) {
       // Reset attempt count on network recovery
       updateSyncState({ currentAttempt: 0 });
-      console.log('[SyncRecovery] Network restored, sync queue will process automatically');
     }
   });
 }

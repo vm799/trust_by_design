@@ -108,7 +108,6 @@ export async function safeSetItem(key: string, value: string): Promise<boolean> 
 export function safeRemoveItem(key: string): void {
   try {
     localStorage.removeItem(key);
-    console.log('[safeLocalStorage] Removed key:', key);
   } catch (err) {
     console.error('[safeLocalStorage] Error removing item:', err);
   }

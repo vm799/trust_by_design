@@ -141,7 +141,6 @@ export function captureNavigationIntent(intent: NavigationIntent): void {
 
   try {
     sessionStorage.setItem(INTENT_STORAGE_KEY, JSON.stringify(intent));
-    console.log('[NavigationIntent] Captured intent:', intent.path, intent.type);
   } catch (error) {
     // sessionStorage may fail in private browsing or when storage is full
     console.warn('[NavigationIntent] Failed to store intent:', error);
@@ -168,7 +167,6 @@ export function getNavigationIntent(): NavigationIntent | null {
 
     // Check expiration
     if (isIntentExpired(intent)) {
-      console.log('[NavigationIntent] Intent expired, clearing');
       clearNavigationIntent();
       return null;
     }
@@ -193,7 +191,6 @@ export function clearNavigationIntent(): void {
 
   try {
     sessionStorage.removeItem(INTENT_STORAGE_KEY);
-    console.log('[NavigationIntent] Cleared intent');
   } catch (error) {
     console.warn('[NavigationIntent] Failed to clear intent:', error);
   }
@@ -289,7 +286,6 @@ export function resumeIntentAndGetPath(): string {
 
   if (intent) {
     clearNavigationIntent();
-    console.log('[NavigationIntent] Resuming intent:', intent.path);
     return intent.path;
   }
 

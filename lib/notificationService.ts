@@ -108,7 +108,6 @@ export function queueNotification(
   queue.push(notification);
   saveQueue(queue);
 
-  console.log(`[NotificationService] Queued: ${type} - ${title}`);
 
   // Try to send immediately if online
   if (navigator.onLine) {
@@ -125,7 +124,6 @@ export async function processNotificationQueue(): Promise<void> {
   const queue = getQueue();
   if (queue.length === 0) return;
 
-  console.log(`[NotificationService] Processing ${queue.length} queued notifications...`);
 
   const processed: NotificationPayload[] = [];
   const failed: NotificationPayload[] = [];
@@ -184,7 +182,6 @@ export async function processNotificationQueue(): Promise<void> {
     console.error('[NotificationService] Failed to save sent notifications:', e);
   }
 
-  console.log(`[NotificationService] Processed ${processed.length}, failed ${failed.length}`);
 }
 
 /**
@@ -235,7 +232,6 @@ async function sendInAppNotification(notification: NotificationPayload): Promise
     }
   }
 
-  console.log(`[NotificationService] In-app notification sent: ${notification.title}`);
 }
 
 /**
@@ -446,12 +442,9 @@ function getUserThemePreference(): boolean {
  * Uses user's theme preference (dark/light mode) for email rendering.
  */
 async function sendEmailNotification(notification: NotificationPayload): Promise<void> {
-  console.log(`[NotificationService] Sending email to ${notification.recipientEmail}`);
-  console.log(`  Subject: ${notification.title}`);
 
   // Detect user's theme preference
   const prefersDarkMode = getUserThemePreference();
-  console.log(`[NotificationService] Using ${prefersDarkMode ? 'dark' : 'light'} mode email template`);
 
   // Try to send via Supabase Edge Function
   const supabase = getSupabase();
@@ -471,7 +464,6 @@ async function sendEmailNotification(notification: NotificationPayload): Promise
         console.error('[NotificationService] Edge function error:', error);
         // Fall through to localStorage backup
       } else if (data?.success) {
-        console.log(`[NotificationService] Email sent successfully: ${data.emailId}`);
         return; // Success - don't queue to localStorage
       } else {
         console.warn('[NotificationService] Email send failed:', data?.error);
@@ -495,7 +487,6 @@ async function sendEmailNotification(notification: NotificationPayload): Promise
       status: 'pending_retry'
     });
     localStorage.setItem('jobproof_email_requests', JSON.stringify(emailQueue.slice(-50)));
-    console.log('[NotificationService] Email queued for retry');
   } catch (e) {
     console.warn('[NotificationService] Failed to queue email request:', e);
   }
@@ -507,8 +498,6 @@ async function sendEmailNotification(notification: NotificationPayload): Promise
  * NOTE: Placeholder for SMS delivery via Twilio or similar
  */
 async function sendSmsNotification(notification: NotificationPayload): Promise<void> {
-  console.log(`[NotificationService] SMS HOOK: Would send SMS to ${notification.recipientPhone}`);
-  console.log(`  Message: ${notification.message}`);
 
   // In production, call Supabase Edge Function:
   // await supabase.functions.invoke('send-sms', {
@@ -522,9 +511,6 @@ async function sendSmsNotification(notification: NotificationPayload): Promise<v
  * NOTE: Placeholder for web push notifications
  */
 async function sendPushNotification(notification: NotificationPayload): Promise<void> {
-  console.log(`[NotificationService] PUSH HOOK: Would send push notification`);
-  console.log(`  Title: ${notification.title}`);
-  console.log(`  Body: ${notification.message}`);
 
   // In production, use Web Push API or Firebase Cloud Messaging
 }
@@ -681,7 +667,6 @@ export function notifySyncFailed(
 // Start processing queue when online status changes
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[NotificationService] Back online, processing queue...');
     processNotificationQueue();
   });
 }

@@ -238,7 +238,6 @@ export async function logAuditEvent(
       console.warn('[AuditLog] Background sync failed:', err);
     });
 
-    console.log(`[AuditLog] ${eventType} for job ${jobId}`, metadata);
 
     return { success: true, eventId };
   } catch (error) {

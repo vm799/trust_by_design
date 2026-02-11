@@ -163,7 +163,6 @@ export class JobProofDatabase extends Dexie {
 
         // Handle version change from other tabs
         this.on('versionchange', () => {
-            console.log('[DB] Version change detected from another tab, closing...');
             this.close();
             // Notify user or auto-reload
             if (typeof window !== 'undefined') {
@@ -189,7 +188,6 @@ export async function getDatabase(): Promise<JobProofDatabase> {
 
     try {
         await dbInstance.open();
-        console.log('[DB] Database opened successfully');
         return dbInstance;
     } catch (error: any) {
         // Handle UpgradeError - schema mismatch, need to delete and recreate
@@ -223,7 +221,6 @@ export async function getDatabase(): Promise<JobProofDatabase> {
  * Purge corrupted/outdated database and recreate fresh
  */
 async function purgeAndRecreateDatabase(): Promise<void> {
-    console.log('[DB] Purging legacy database...');
 
     // Close existing instance if open
     if (dbInstance) {
@@ -237,7 +234,6 @@ async function purgeAndRecreateDatabase(): Promise<void> {
     // Delete the database entirely
     try {
         await Dexie.delete(DB_NAME);
-        console.log('[DB] Legacy database deleted');
     } catch (e) {
         console.warn('[DB] Could not delete database:', e);
     }
@@ -252,7 +248,6 @@ async function purgeAndRecreateDatabase(): Promise<void> {
     // Create fresh instance
     dbInstance = new JobProofDatabase();
     await dbInstance.open();
-    console.log('[DB] Fresh database created successfully');
 
     // Store current schema version
     try {
@@ -273,7 +268,6 @@ export async function checkDatabaseHealth(): Promise<boolean> {
         const currentVersion = String(DB_SCHEMA_VERSION);
 
         if (storedVersion && storedVersion !== currentVersion) {
-            console.log(`[DB] Schema version mismatch: stored=${storedVersion}, current=${currentVersion}`);
             await purgeAndRecreateDatabase();
             return true;
         }
@@ -299,7 +293,6 @@ export async function checkDatabaseHealth(): Promise<boolean> {
  * Use when user needs a complete reset
  */
 export async function clearAllData(): Promise<void> {
-    console.log('[DB] Clearing all IndexedDB data...');
 
     if (dbInstance) {
         try {
@@ -313,7 +306,6 @@ export async function clearAllData(): Promise<void> {
     localStorage.removeItem('jobproof_db_version');
 
     dbInstance = null;
-    console.log('[DB] All data cleared');
 }
 
 /**
@@ -339,7 +331,6 @@ export async function closeAllConnections(): Promise<boolean> {
         try {
             dbInstance.close();
             dbInstance = null;
-            console.log('[DB] All connections closed');
             return true;
         } catch (error) {
             console.warn('[DB] Error closing connections:', error);
@@ -663,5 +654,4 @@ export async function incrementOrphanRecoveryAttempts(id: string): Promise<void>
 export async function clearAllOrphanPhotos(): Promise<void> {
     const database = await getDatabase();
     await database.orphanPhotos.clear();
-    console.log('[DB] All orphan photos cleared');
 }
