@@ -157,7 +157,6 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'UPDATE_AVAILABLE') {
-        console.log('[UpdateNotification] Update available:', event.data);
         setUpdateInfo({
           currentVersion: event.data.currentVersion,
           newVersion: event.data.newVersion,
@@ -193,11 +192,9 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
 
       // Don't auto-update if there's unsaved work
       if (hasUnsavedWork()) {
-        console.log('[UpdateNotification] Skipping auto-update: unsaved work detected');
         return;
       }
 
-      console.log('[UpdateNotification] Auto-updating during off-hours');
       applyUpdate();
     };
 

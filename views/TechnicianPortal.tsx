@@ -95,7 +95,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     setIsLoadingJob(false);
     setStep(0); // Start at job overview
 
-    console.log(`[TechnicianPortal] Quick job created: ${newJob.id}`);
   }, [onAddJob]);
 
   // Load job via token or legacy jobId
@@ -110,13 +109,11 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         // Priority: jobId from URL > token validation > local cache
         if (jobIdFromUrl && token) {
           // New flow: Deep-linking with jobId parameter
-          console.log(`[TechnicianPortal] Loading job via deep-link: jobId=${jobIdFromUrl}, token=${token}`);
 
           // 1. Try Local DB (Dexie) first
           const local = await getJobLocal(jobIdFromUrl);
           if (local) {
             loadedJob = local as Job;
-            console.log('[TechnicianPortal] Job loaded from local cache');
           }
 
           // 2. Load job via token RPC (validates AND returns full job, bypasses RLS)
@@ -137,7 +134,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 syncStatus: loadedJob.syncStatus || 'synced',
                 lastUpdated: Date.now()
               });
-              console.log('[TechnicianPortal] Job loaded from database via deep-link RPC');
             } else {
               // Determine error type from error message
               const errorMsg = result.error || 'Invalid or expired link';
@@ -153,7 +149,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           }
         } else if (token) {
           // Legacy flow: Token-only routing
-          console.log(`[TechnicianPortal] Loading job via token-only flow: token=${token}`);
 
           // 1. Try Local DB (Dexie) first
           if (jobId) {
@@ -175,7 +170,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             } else {
               // Token validation failed - check if it's actually a job ID (fallback for offline/legacy URLs)
               if (token.startsWith('JP-')) {
-                console.log('Token looks like a job ID, trying direct lookup...');
                 // Try local DB first
                 const local = await getJobLocal(token);
                 if (local) {
@@ -1028,7 +1022,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     let signatureHash: string | undefined;
     if (signatureData) {
       signatureHash = await calculateDataUrlHash(signatureData);
-      console.log('[Signature] Hash calculated:', signatureHash.substring(0, 16) + '...');
 
       // Log signature capture with hash for audit trail
       logSignatureCapture(
@@ -1083,7 +1076,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const unsyncedPhotos = getUnsyncedPhotos(photos);
 
       if (unsyncedPhotos.length > 0) {
-        console.log(`[Seal] Waiting for ${unsyncedPhotos.length} photos to sync before sealing...`);
 
         // Show sync modal
         const syncModal = createSyncStatusModal(unsyncedPhotos.length);
@@ -1119,7 +1111,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
           syncModal.close();
           setIsSyncing(false);
 
-          console.log('[Seal] All photos synced successfully. Proceeding with seal.');
         } catch (error) {
           console.error('[Seal] Sync timeout or error:', error);
           syncModal.close();
@@ -1165,7 +1156,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const isSelfEmployed = job.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
       if (isSelfEmployed) {
         const receipt = generateClientReceipt(sealedJob);
-        console.log(`[TechnicianPortal] Client receipt generated: ${receipt.id}`);
       }
 
       // Notify manager of sealed job via unified notification service

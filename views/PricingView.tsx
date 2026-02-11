@@ -237,7 +237,6 @@ const PriceCard = ({
         throw new Error('Service not configured');
       }
 
-      console.log('Initiating Stripe checkout:', { tier, billingPeriod, priceId: priceId.substring(0, 10) + '...' });
 
       const res = await fetch(
         `${supabaseUrl}/functions/v1/stripe-checkout`,
@@ -255,7 +254,6 @@ const PriceCard = ({
         }
       );
 
-      console.log('Stripe checkout response status:', res.status);
 
       if (!res.ok) {
         const errorText = await res.text();

@@ -414,10 +414,13 @@ export async function saveMediaLocal(id: string, jobId: string, data: string) {
     }
 }
 
-export async function getMediaLocal(id: string) {
+export async function getMediaLocal(id: string): Promise<string | null> {
     const database = await getDatabase();
     const record = await database.media.get(id);
-    return record?.data || null;
+    if (!record) return null;
+    // Handle both Dexie LocalMedia objects and legacy raw IDB string values
+    if (typeof record === 'string') return record;
+    return record.data || null;
 }
 
 export async function queueAction(type: OfflineAction['type'], payload: any) {
