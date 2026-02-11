@@ -178,6 +178,9 @@ const AppContent: React.FC = () => {
         const sync = await getOfflineSync();
         sync.pushQueue();
         sync.pullJobs(user.workspace.id);
+        sync.pullClients(user.workspace.id);
+        sync.pullTechnicians(user.workspace.id);
+        sync.retryOrphanPhotos();
       }
     };
 
@@ -186,6 +189,8 @@ const AppContent: React.FC = () => {
       if (user?.workspace?.id) {
         const sync = await getOfflineSync();
         sync.pullJobs(user.workspace.id);
+        sync.pullClients(user.workspace.id);
+        sync.pullTechnicians(user.workspace.id);
         lastSyncTime = Date.now();
       }
     };
