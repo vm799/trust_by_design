@@ -35,15 +35,18 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
     to={item.to}
     aria-current={active ? 'page' : undefined}
     className={`
-      flex flex-col items-center justify-center gap-0.5
+      relative flex flex-col items-center justify-center gap-0.5
       min-w-[56px] min-h-[48px] px-2 py-1.5
       rounded-xl transition-colors
       ${active
-        ? 'text-primary'
+        ? 'text-primary bg-primary/10'
         : 'text-slate-500 hover:text-slate-300'
       }
     `}
   >
+    {active && (
+      <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />
+    )}
     <span className={`material-symbols-outlined text-xl ${active ? 'font-bold' : ''}`}>
       {item.icon}
     </span>

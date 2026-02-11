@@ -11,10 +11,19 @@ import React from 'react';
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'outlined' | 'elevated' | 'interactive';
+  variant?: 'default' | 'outlined' | 'elevated' | 'interactive' | 'highlight';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   onClick?: () => void;
+  /** Accent color for highlight variant left border */
+  accentColor?: 'primary' | 'emerald' | 'amber' | 'red';
 }
+
+const ACCENT_COLORS = {
+  primary: 'border-l-primary',
+  emerald: 'border-l-emerald-500',
+  amber: 'border-l-amber-500',
+  red: 'border-l-red-500',
+} as const;
 
 const Card: React.FC<CardProps> = ({
   children,
@@ -22,15 +31,17 @@ const Card: React.FC<CardProps> = ({
   variant = 'default',
   padding = 'md',
   onClick,
+  accentColor,
 }) => {
   const baseClasses = 'rounded-2xl transition-all';
 
-  // Theme-aware variants: light mode uses white bg with dark text, dark mode uses slate bg with light text
+  // Theme-aware variants with enhanced dark mode contrast (border-white/[0.08])
   const variantClasses = {
-    default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 text-slate-900 dark:text-white',
+    default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white',
     outlined: 'bg-transparent border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white',
-    elevated: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 text-slate-900 dark:text-white',
-    interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 hover:border-slate-400 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer text-slate-900 dark:text-white',
+    elevated: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] shadow-xl shadow-slate-200/50 dark:shadow-black/30 text-slate-900 dark:text-white',
+    interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] hover:border-slate-400 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer text-slate-900 dark:text-white',
+    highlight: `bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.08] border-l-4 ${accentColor ? ACCENT_COLORS[accentColor] : ACCENT_COLORS.primary} text-slate-900 dark:text-white`,
   };
 
   const paddingClasses = {

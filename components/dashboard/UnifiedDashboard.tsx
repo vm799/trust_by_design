@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../lib/useDashboard';
 import { useAuth } from '../../lib/AuthContext';
@@ -35,6 +35,40 @@ import {
   bgOrb2Animate,
   bgOrb2Transition,
 } from '../../lib/animations';
+
+/**
+ * SectionHeader - Dashboard section header with optional "See All" drill-down link
+ */
+const SectionHeader: React.FC<{
+  title: string;
+  icon: string;
+  subtitle?: string;
+  seeAllRoute?: string;
+  seeAllLabel?: string;
+}> = React.memo(({ title, icon, subtitle, seeAllRoute, seeAllLabel = 'See All' }) => (
+  <div className="flex items-center justify-between mb-3">
+    <div className="flex items-center gap-2">
+      <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
+        <span className="material-symbols-outlined text-base text-primary">{icon}</span>
+      </div>
+      <div>
+        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wide">{title}</h3>
+        {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+      </div>
+    </div>
+    {seeAllRoute && (
+      <Link
+        to={seeAllRoute}
+        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors min-h-[44px] flex items-center gap-1"
+      >
+        {seeAllLabel}
+        <span className="material-symbols-outlined text-sm">chevron_right</span>
+      </Link>
+    )}
+  </div>
+));
+
+SectionHeader.displayName = 'SectionHeader';
 
 interface UnifiedDashboardProps {
   /** Dashboard role (auto-detected if not provided) */
@@ -179,7 +213,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
           </motion.section>
           {/* QUICK ACTIONS */}
           <motion.section variants={fadeInUp}>
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Actions</h3>
+            <SectionHeader title="Quick Actions" icon="bolt" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <QuickActionCard
                 id="action-new-job"
@@ -289,6 +323,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
       {/* QUICK STATS - Clickable overview cards with color-coded status */}
       {role === 'manager' && (
         <motion.section variants={fadeInUp}>
+          <SectionHeader title="Overview" icon="analytics" seeAllRoute="/admin/jobs" seeAllLabel="All Jobs" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <QuickActionCard
               id="stat-active"
@@ -330,7 +365,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
       {/* QUICK ACTIONS - Create new items */}
       {role === 'manager' && (
         <motion.section variants={fadeInUp}>
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Quick Actions</h3>
+          <SectionHeader title="Quick Actions" icon="bolt" />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <QuickActionCard
               id="action-new-job"

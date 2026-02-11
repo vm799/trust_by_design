@@ -5,6 +5,7 @@ import Layout from '../components/AppLayout';
 import { Client, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
 import { generateUUID } from '../lib/secureId';
+import { useData } from '../lib/DataContext';
 
 interface ClientsViewProps {
   user: UserProfile | null;
@@ -13,8 +14,70 @@ interface ClientsViewProps {
   onDelete: (id: string) => Promise<void>;
 }
 
+/**
+ * Skeleton loading placeholder for the clients grid.
+ * Renders 6 shimmer cards matching the client card layout.
+ */
+const ClientsSkeleton = React.memo(() => (
+  <div className="space-y-6">
+    {/* Header skeleton */}
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+      <div className="space-y-2">
+        <div className="h-8 w-48 bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-64 bg-slate-800 rounded animate-pulse" />
+      </div>
+      <div className="h-11 w-36 bg-slate-800 rounded-xl animate-pulse" />
+    </div>
+    {/* Search skeleton */}
+    <div className="h-11 w-full bg-slate-800 border-2 border-slate-700 rounded-xl animate-pulse" />
+    {/* Card grid skeleton */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 animate-pulse"
+        >
+          {/* ID Badge and Job Count */}
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <div className="h-2 w-14 bg-slate-800 rounded" />
+              <div className="h-3 w-16 bg-slate-800 rounded" />
+            </div>
+            <div className="text-right space-y-1">
+              <div className="h-2 w-16 bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-slate-800 rounded ml-auto" />
+            </div>
+          </div>
+          {/* Organization Name */}
+          <div className="space-y-2">
+            <div className="h-4 w-2/3 bg-slate-800 rounded" />
+            <div className="h-3 w-3/4 bg-slate-800 rounded" />
+          </div>
+          {/* Location placeholder */}
+          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+            <div className="flex items-start gap-2">
+              <div className="size-3 bg-slate-800 rounded-full shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 w-full bg-slate-800 rounded" />
+                <div className="h-3 w-2/3 bg-slate-800 rounded" />
+              </div>
+            </div>
+          </div>
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2">
+            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+));
+ClientsSkeleton.displayName = 'ClientsSkeleton';
+
 const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelete }) => {
   const navigate = useNavigate();
+  const { isLoading } = useData();
   const [showAdd, setShowAdd] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', email: '', address: '' });
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -60,6 +123,14 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
       c.address?.toLowerCase().includes(q)
     );
   }, [clients, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <Layout user={user}>
+        <ClientsSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout user={user}>

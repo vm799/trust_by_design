@@ -12,6 +12,7 @@ import React, { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
+import FloatingActionPanel from '../ui/FloatingActionPanel';
 import { useAuth } from '../../lib/AuthContext';
 import { OfflineIndicator } from '../OfflineIndicator';
 
@@ -103,6 +104,9 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           {children || <Outlet />}
         </main>
+
+        {/* Floating Action Panel - Context-sensitive CTA above bottom nav */}
+        <FloatingActionPanel />
 
         {/* Mobile Bottom Navigation */}
         <BottomNav className="lg:hidden" />
