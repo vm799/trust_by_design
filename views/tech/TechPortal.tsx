@@ -33,10 +33,20 @@ import { Job } from '../../types';
 import { JobProofLogo } from '../../components/branding/jobproof-logo';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/animations';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../../components/ui/PullToRefreshIndicator';
 
 const TechPortal: React.FC = () => {
   const { userId, session, userEmail } = useAuth();
-  const { jobs: allJobsData, clients: clientsData, isLoading } = useData();
+  const { jobs: allJobsData, clients: clientsData, isLoading, refresh } = useData();
+
+  // Pull-to-refresh gesture
+  const {
+    containerRef: pullRefreshRef,
+    isPulling,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({ onRefresh: refresh });
 
   // Get tech name for display
   const techName = session?.user?.user_metadata?.full_name || 'Technician';
@@ -114,7 +124,8 @@ const TechPortal: React.FC = () => {
       </header>
 
       {/* Content */}
-      <main className="flex-1 pb-20">
+      <main ref={pullRefreshRef} className="flex-1 pb-20">
+        <PullToRefreshIndicator progress={progress} isRefreshing={isRefreshing} isPulling={isPulling} />
         {isLoading ? (
           <div className="px-4 py-6 max-w-2xl mx-auto">
             <LoadingSkeleton variant="card" count={3} />

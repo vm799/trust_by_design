@@ -20,6 +20,7 @@ import Layout from '../components/AppLayout';
 import OnboardingTour from '../components/OnboardingTour';
 import { UnifiedDashboard } from '../components/dashboard';
 import { OfflineIndicator } from '../components/OfflineIndicator';
+import MetricCardRow from '../components/dashboard/MetricCardRow';
 import { Job, UserProfile } from '../types';
 
 interface ContractorDashboardProps {
@@ -52,6 +53,20 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
       return isMyJob && isActive;
     }).length;
   }, [jobs, user]);
+
+  // Metrics for contractor dashboard - derived from actual job data
+  const contractorMetrics = useMemo(() => {
+    if (!user?.id) return [];
+    const myJobs = jobs.filter(job => job.techId === user.id || job.technicianId === user.id);
+    const completed = myJobs.filter(j => j.status === 'Complete' || j.status === 'Submitted').length;
+    const pending = myJobs.filter(j => j.status === 'Pending' || j.status === 'Draft').length;
+    return [
+      { label: 'Active', value: activeJobCount, icon: 'play_circle', color: 'blue' as const, route: '/contractor/jobs?filter=active' },
+      { label: 'Pending', value: pending, icon: 'schedule', color: 'amber' as const },
+      { label: 'Completed', value: completed, icon: 'check_circle', color: 'emerald' as const },
+      { label: 'Total', value: myJobs.length, icon: 'analytics', color: 'slate' as const },
+    ];
+  }, [jobs, user, activeJobCount]);
 
   // Custom header for contractor role
   const dashboardHeader = useMemo(() => (
@@ -90,6 +105,11 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
       )}
 
       <div className="min-h-screen pb-32 max-w-2xl mx-auto px-4">
+        {/* Metric cards - derived from actual job data */}
+        {contractorMetrics.length > 0 && (
+          <MetricCardRow metrics={contractorMetrics} className="mb-6" />
+        )}
+
         {/* UnifiedDashboard - Single source of truth for all dashboard state */}
         <UnifiedDashboard
           role="solo_contractor"

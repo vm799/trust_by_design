@@ -12,7 +12,7 @@ import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
 import { Technician } from '../../../types';
-import { showToast } from '../../../lib/microInteractions';
+import { showToast, hapticFeedback } from '../../../lib/microInteractions';
 import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offline/db';
 
 // Form type identifier for Dexie storage
@@ -142,6 +142,7 @@ const TechnicianForm: React.FC = () => {
         const existingTech = technicians.find(t => t.id === id);
         if (existingTech) {
           updateTechnician({ ...existingTech, ...technicianData });
+          hapticFeedback('success');
           showToast('Technician updated!', 'success', 3000);
           navigate('/admin/technicians');
         } else {
@@ -155,6 +156,7 @@ const TechnicianForm: React.FC = () => {
           ...technicianData,
         };
         addTechnician(newTechnician);
+        hapticFeedback('success');
 
         // Clear draft after successful creation
         clearDraft();

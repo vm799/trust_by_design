@@ -35,6 +35,9 @@ import {
   JOB_STATUS,
   SYNC_STATUS,
 } from '../../../lib/constants';
+import { useSwipeAction } from '../../../hooks/useSwipeAction';
+import { usePullToRefresh } from '../../../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../../../components/ui/PullToRefreshIndicator';
 
 type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'archived' | 'sync_issues';
 
@@ -238,6 +241,120 @@ const JobsListSkeleton = React.memo(() => (
 ));
 JobsListSkeleton.displayName = 'JobsListSkeleton';
 
+/**
+ * MobileJobCard - Swipeable job card for mobile view
+ * Swipe right: Quick "View" action
+ * Swipe left: Quick "Delete" action (when deletable)
+ */
+const MobileJobCard = React.memo(({
+  job,
+  onNavigate,
+  onAction,
+}: {
+  job: Job;
+  onNavigate: (jobId: string) => void;
+  onAction: (action: JobAction, job: Job) => void;
+}) => {
+  const lifecycle = getJobLifecycle(job);
+
+  const isDeletable = !job.sealedAt && !job.isSealed && !job.invoiceId;
+
+  const {
+    elementRef,
+    offsetX,
+    reset,
+    isEnabled,
+  } = useSwipeAction({
+    rightActions: [{ label: 'View', icon: 'visibility', color: 'bg-primary', onAction: () => onNavigate(job.id) }],
+    leftActions: isDeletable ? [{ label: 'Delete', icon: 'delete', color: 'bg-red-500', onAction: () => onAction('delete', job) }] : [],
+    threshold: 80,
+  });
+
+  return (
+    <div ref={elementRef} className="relative overflow-hidden rounded-2xl">
+      {/* Swipe-behind actions */}
+      {isEnabled && offsetX !== 0 && (
+        <>
+          {offsetX > 0 && (
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 bg-primary rounded-l-2xl" style={{ width: Math.abs(offsetX) }}>
+              <span className="material-symbols-outlined text-white">visibility</span>
+            </div>
+          )}
+          {offsetX < 0 && isDeletable && (
+            <div className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 bg-red-500 rounded-r-2xl" style={{ width: Math.abs(offsetX) }}>
+              <span className="material-symbols-outlined text-white">delete</span>
+            </div>
+          )}
+        </>
+      )}
+      {/* Card content - slides with swipe */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => { reset(); onNavigate(job.id); }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reset(); onNavigate(job.id); } }}
+        className="w-full bg-slate-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 text-left transition-all group relative cursor-pointer"
+        style={isEnabled && offsetX !== 0 ? { transform: `translateX(${offsetX}px)`, transition: 'none' } : undefined}
+      >
+        <div className="flex items-start gap-4">
+          {/* Status Icon */}
+          <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${lifecycle.bgColor} ${lifecycle.borderColor} border`}>
+            <span className={`material-symbols-outlined ${lifecycle.color}`}>
+              {lifecycle.icon}
+            </span>
+          </div>
+
+          {/* Job Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 min-w-0">
+              <h4 className="font-bold text-white text-sm line-clamp-2 min-w-0 flex-1 group-hover:text-primary transition-colors">
+                {job.title}
+              </h4>
+              <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
+                {lifecycle.label}
+              </span>
+              <SyncDot status={job.syncStatus} />
+            </div>
+            <p className="text-xs text-slate-400 truncate mb-1">
+              {job.client}
+            </p>
+            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">person</span>
+                {job.technician}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">calendar_today</span>
+                {new Date(job.date).toLocaleDateString('en-AU', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+
+            {/* SLA Countdown */}
+            {!['Complete', 'Submitted', 'Archived', 'Cancelled'].includes(job.status) && job.date && (
+              <div className="mt-1.5">
+                <SLACountdown deadline={job.date} />
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <JobActionMenu
+                job={job}
+                onAction={onAction}
+                compact
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+MobileJobCard.displayName = 'MobileJobCard';
+
 const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -247,7 +364,16 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     updateJob: contextUpdateJob,
     deleteJob: contextDeleteJob,
     isLoading,
+    refresh,
   } = useData();
+
+  // Pull-to-refresh gesture
+  const {
+    containerRef: pullRefreshRef,
+    isPulling,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({ onRefresh: refresh });
 
   // Action state
   const [actionJob, setActionJob] = useState<Job | null>(null);
@@ -473,7 +599,8 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
   return (
     <Layout user={user}>
-      <div className="space-y-6 pb-20">
+      <div ref={pullRefreshRef} className="space-y-6 pb-20">
+        <PullToRefreshIndicator progress={progress} isRefreshing={isRefreshing} isPulling={isPulling} />
         {/* Header */}
         <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
@@ -571,74 +698,16 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
           </div>
         ) : (
           <>
-            {/* Mobile Cards */}
+            {/* Mobile Cards - Swipeable */}
             <div className="lg:hidden space-y-3">
-              {filteredJobs.map(job => {
-                const lifecycle = getJobLifecycle(job);
-                getSyncStatus(job);
-
-                return (
-                  <button
-                    key={job.id}
-                    onClick={() => navigate(`/admin/report/${job.id}`)}
-                    className="w-full bg-slate-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 text-left transition-all group"
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Status Icon */}
-                      <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${lifecycle.bgColor} ${lifecycle.borderColor} border`}>
-                        <span className={`material-symbols-outlined ${lifecycle.color}`}>
-                          {lifecycle.icon}
-                        </span>
-                      </div>
-
-                      {/* Job Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 min-w-0">
-                          <h4 className="font-bold text-white text-sm line-clamp-2 min-w-0 flex-1 group-hover:text-primary transition-colors">
-                            {job.title}
-                          </h4>
-                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
-                            {lifecycle.label}
-                          </span>
-                          <SyncDot status={job.syncStatus} />
-                        </div>
-                        <p className="text-xs text-slate-400 truncate mb-1">
-                          {job.client}
-                        </p>
-                        <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">person</span>
-                            {job.technician}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">calendar_today</span>
-                            {new Date(job.date).toLocaleDateString('en-AU', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
-                        </div>
-
-                        {/* SLA Countdown */}
-                        {!['Complete', 'Submitted', 'Archived', 'Cancelled'].includes(job.status) && job.date && (
-                          <div className="mt-1.5">
-                            <SLACountdown deadline={job.date} />
-                          </div>
-                        )}
-
-                        {/* Quick Actions */}
-                        <div className="mt-3 pt-3 border-t border-white/5">
-                          <JobActionMenu
-                            job={job}
-                            onAction={handleJobAction}
-                            compact
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+              {filteredJobs.map(job => (
+                <MobileJobCard
+                  key={job.id}
+                  job={job}
+                  onNavigate={(id) => navigate(`/admin/report/${id}`)}
+                  onAction={handleJobAction}
+                />
+              ))}
             </div>
 
             {/* Desktop Table - Virtualized */}

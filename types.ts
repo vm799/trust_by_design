@@ -138,6 +138,10 @@ export interface Job {
   clientEmail?: string; // Client email (optional)
   techEmail?: string; // Technician email (from magic link dispatch)
   source?: string; // Data source flag (e.g., 'bunker')
+
+  // Timestamps (database-managed)
+  createdAt?: string; // ISO timestamp when job was created
+  updatedAt?: string; // ISO timestamp when job was last updated
 }
 
 export interface InvoiceItem {
@@ -181,7 +185,7 @@ export interface Technician {
   name: string;
   email?: string;
   phone?: string;
-  status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised';
+  status: 'Available' | 'On Site' | 'Off Duty' | 'Authorised' | 'In Transit' | 'Offline';
   rating: number;
   jobsCompleted: number;
   specialty?: string;
