@@ -141,6 +141,7 @@ const JobDetail: React.FC = () => {
         ...job,
         technicianId: techId,
         technician: tech.name, // Update display name too
+        techEmail: tech.email, // Store email for TechPortal matching (tech table ID != auth UID)
       };
       contextUpdateJob(updatedJob);
       setShowAssignModal(false);

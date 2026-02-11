@@ -36,21 +36,31 @@ import { fadeInUp, staggerContainer, staggerContainerFast } from '../../lib/anim
 
 const TechPortal: React.FC = () => {
   const { userId, session, userEmail } = useAuth();
-  const { jobs: allJobsData, clients: clientsData, isLoading } = useData();
+  const { jobs: allJobsData, clients: clientsData, technicians, isLoading } = useData();
 
   // Get tech name for display
   const techName = session?.user?.user_metadata?.full_name || 'Technician';
 
+  // Find the current user's technician record by email
+  // Managers assign jobs using the technician table ID (not auth UID), so we need
+  // to look up our tech record to match by that ID too
+  const myTechRecord = useMemo(() =>
+    technicians.find(t => t.email && userEmail && t.email.toLowerCase() === userEmail.toLowerCase()),
+    [technicians, userEmail]
+  );
+
   // Filter jobs assigned to this technician ONLY
-  // SECURITY FIX: Match by UUID (techId/technicianId) OR by email (techEmail)
+  // SECURITY FIX: Match by auth UID, tech table ID (via email lookup), or email
   const myJobs = useMemo(() => {
     return allJobsData.filter(j =>
       j.technicianId === userId ||
       j.techId === userId ||
       j.techMetadata?.createdByTechId === userId ||
+      // Match by technician table ID (managers assign using tech table ID, not auth UID)
+      (myTechRecord && (j.technicianId === myTechRecord.id || j.techId === myTechRecord.id)) ||
       (userEmail && j.techEmail && j.techEmail.toLowerCase() === userEmail.toLowerCase())
     );
-  }, [allJobsData, userId, userEmail]);
+  }, [allJobsData, userId, userEmail, myTechRecord]);
 
   // Categorize by status: Assigned (pending), Started (in progress), Finished
   const { assignedJobs, startedJob, finishedJobs } = useMemo(() => {

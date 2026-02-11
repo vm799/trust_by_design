@@ -60,11 +60,21 @@ export const initMockDatabase = async () => {
   MOCK_DB_ENABLED = true;
 
   // Dynamic import - mock data only loaded in test context, not production
-  const { mockJobs } = await import('../tests/mocks/mockData');
+  const { mockJobs, mockClients, mockTechnicians } = await import('../tests/mocks/mockData');
 
   // Load mock jobs
   mockJobs.forEach(job => {
     mockDatabase.jobs.set(job.id, { ...job });
+  });
+
+  // Load mock clients
+  mockClients.forEach(client => {
+    mockDatabase.clients.set(client.id, { ...client });
+  });
+
+  // Load mock technicians
+  mockTechnicians.forEach(tech => {
+    mockDatabase.technicians.set(tech.id, { ...tech });
   });
 
   // Setup magic link tokens for testing
@@ -664,6 +674,14 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
         };
       }
       return { success: false, error: error.message };
+    }
+
+    // Also try to delete from bunker_jobs table (jobs may come from either table)
+    // DataContext merges both tables, so we need to clean up both
+    try {
+      await supabase.from('bunker_jobs').delete().eq('id', jobId);
+    } catch {
+      // Non-critical: bunker_jobs deletion is best-effort
     }
 
     // Invalidate cache if we have workspace_id
@@ -2075,10 +2093,8 @@ export const updateClient = async (clientId: string, updates: Partial<Client>): 
  */
 export const deleteClient = async (clientId: string): Promise<DbResult<void>> => {
   if (shouldUseMockDB()) {
-    const exists = mockDatabase.clients.has(clientId);
-    if (!exists) {
-      return { success: false, error: 'Client not found' };
-    }
+    // Delete if exists; if not in mock DB, treat as success
+    // (client may have been created locally and never persisted to server)
     mockDatabase.clients.delete(clientId);
     return { success: true };
   }
@@ -2135,10 +2151,9 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
     }
 
     if (count !== null && count !== undefined && count === 0) {
-      return {
-        success: false,
-        error: 'Client not found or already deleted'
-      };
+      // Client doesn't exist in Supabase - may have been created locally only.
+      // The deletion goal is achieved (client is not in the database), so return success.
+      return { success: true };
     }
 
     // Invalidate cache using pre-fetched workspace_id
@@ -2369,10 +2384,8 @@ export const updateTechnician = async (techId: string, updates: Partial<Technici
  */
 export const deleteTechnician = async (techId: string): Promise<DbResult<void>> => {
   if (shouldUseMockDB()) {
-    const exists = mockDatabase.technicians.has(techId);
-    if (!exists) {
-      return { success: false, error: 'Technician not found' };
-    }
+    // Delete if exists; if not in mock DB, treat as success
+    // (technician may have been created locally and never persisted to server)
     mockDatabase.technicians.delete(techId);
     return { success: true };
   }
@@ -2429,10 +2442,9 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
     }
 
     if (count !== null && count !== undefined && count === 0) {
-      return {
-        success: false,
-        error: 'Technician not found or already deleted'
-      };
+      // Technician doesn't exist in Supabase - may have been created locally only.
+      // The deletion goal is achieved (technician is not in the database), so return success.
+      return { success: true };
     }
 
     // Invalidate cache using pre-fetched workspace_id

@@ -16,7 +16,9 @@ export interface LocalJob extends Job {
 
 export interface OfflineAction {
     id?: number;
-    type: 'CREATE_JOB' | 'UPDATE_JOB' | 'UPLOAD_PHOTO' | 'SEAL_JOB';
+    type: 'CREATE_JOB' | 'UPDATE_JOB' | 'UPLOAD_PHOTO' | 'SEAL_JOB'
+        | 'CREATE_CLIENT' | 'UPDATE_CLIENT'
+        | 'CREATE_TECHNICIAN' | 'UPDATE_TECHNICIAN';
     payload: any;
     createdAt: number;
     synced: boolean;
