@@ -6,23 +6,17 @@
  * Phase 2.5: Client-first flow fix - handles returnTo for job creation wizard
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, ActionButton, LoadingSkeleton } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
 import { Technician } from '../../../types';
 import { showToast } from '../../../lib/microInteractions';
+import { saveFormDraft, getFormDraft, clearFormDraft } from '../../../lib/offline/db';
 
-// Draft storage key and expiry (8 hours)
-const DRAFT_KEY = 'jobproof_technician_draft';
-const DRAFT_EXPIRY_MS = 8 * 60 * 60 * 1000;
-
-interface DraftData {
-  formData: FormData;
-  savedAt: number;
-  editId?: string;
-}
+// Form type identifier for Dexie storage
+const FORM_TYPE = 'technician';
 
 interface FormData {
   name: string;
@@ -53,67 +47,43 @@ const TechnicianForm: React.FC = () => {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [, setDraftRestored] = useState(false);
-  const draftSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Load draft from localStorage on mount (only for new technicians)
+  // CLAUDE.md: Load draft from IndexedDB on mount (only for new technicians)
   useEffect(() => {
     if (isEdit) return; // Don't restore draft for edit mode
 
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const draft: DraftData = JSON.parse(savedDraft);
-        const now = Date.now();
-
-        // Check if draft is still valid (not expired and not for a different edit)
-        if (now - draft.savedAt < DRAFT_EXPIRY_MS && !draft.editId) {
-          setFormData(draft.formData);
+    const loadDraft = async () => {
+      try {
+        const draft = await getFormDraft(FORM_TYPE);
+        if (draft) {
+          setFormData(draft.data as unknown as FormData);
           setDraftRestored(true);
           showToast('Draft restored from previous session', 'info', 3000);
-        } else {
-          // Clear expired draft
-          localStorage.removeItem(DRAFT_KEY);
         }
+      } catch (e) {
+        console.warn('Failed to load draft from IndexedDB:', e);
       }
-    } catch (e) {
-      console.warn('Failed to load technician draft:', e);
-    }
+    };
+
+    loadDraft();
   }, [isEdit]);
 
-  // Auto-save draft on form changes (debounced 500ms)
+  // CLAUDE.md: "Dexie/IndexedDB draft saving (every keystroke)"
+  // No debounce - saves immediately on every change
   useEffect(() => {
     if (isEdit) return; // Don't save draft for edit mode
 
-    // Clear previous timer
-    if (draftSaveTimer.current) {
-      clearTimeout(draftSaveTimer.current);
-    }
-
     // Only save if form has content
     if (formData.name || formData.email || formData.phone || formData.specialty || formData.notes) {
-      draftSaveTimer.current = setTimeout(() => {
-        try {
-          const draft: DraftData = {
-            formData,
-            savedAt: Date.now(),
-          };
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-        } catch (e) {
-          console.warn('Failed to save technician draft:', e);
-        }
-      }, 500);
+      saveFormDraft(FORM_TYPE, formData as unknown as Record<string, unknown>).catch(e => {
+        console.warn('Failed to save draft to IndexedDB:', e);
+      });
     }
-
-    return () => {
-      if (draftSaveTimer.current) {
-        clearTimeout(draftSaveTimer.current);
-      }
-    };
   }, [formData, isEdit]);
 
-  // Clear draft after successful save
-  const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_KEY);
+  // CLAUDE.md: Clear draft after successful save
+  const clearDraft = useCallback(async () => {
+    await clearFormDraft(FORM_TYPE);
   }, []);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import Layout from '../components/AppLayout';
 import { Technician, UserProfile } from '../types';
 import { navigateToNextStep } from '../lib/onboarding';
 import { generateUUID } from '../lib/secureId';
+import { useData } from '../lib/DataContext';
 
 interface TechniciansViewProps {
   user: UserProfile | null;
@@ -13,8 +14,71 @@ interface TechniciansViewProps {
   onDelete: (id: string) => void;
 }
 
+/**
+ * Skeleton loading placeholder for the technicians grid.
+ * Renders 6 shimmer cards matching the technician card layout.
+ */
+const TechniciansSkeleton = React.memo(() => (
+  <div className="space-y-6">
+    {/* Header skeleton */}
+    <div className="flex justify-between items-end">
+      <div className="space-y-2">
+        <div className="h-8 w-40 bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-48 bg-slate-800 rounded animate-pulse" />
+      </div>
+      <div className="h-11 w-40 bg-slate-800 rounded-xl animate-pulse" />
+    </div>
+    {/* Search skeleton */}
+    <div className="h-11 w-full bg-slate-800 border-2 border-slate-700 rounded-xl animate-pulse" />
+    {/* Card grid skeleton */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 animate-pulse"
+        >
+          {/* ID Badge and Status */}
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <div className="h-2 w-12 bg-slate-800 rounded" />
+              <div className="h-3 w-16 bg-slate-800 rounded" />
+            </div>
+            <div className="h-6 w-16 bg-slate-800 rounded-full" />
+          </div>
+          {/* Avatar and Name */}
+          <div className="flex gap-3">
+            <div className="size-16 rounded-2xl bg-slate-800 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-2 pt-1">
+              <div className="h-4 w-2/3 bg-slate-800 rounded" />
+              <div className="h-3 w-3/4 bg-slate-800 rounded" />
+            </div>
+          </div>
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
+            <div className="space-y-1">
+              <div className="h-2 w-20 bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-slate-800 rounded" />
+            </div>
+            <div className="space-y-1">
+              <div className="h-2 w-12 bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-slate-800 rounded" />
+            </div>
+          </div>
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2">
+            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+));
+TechniciansSkeleton.displayName = 'TechniciansSkeleton';
+
 const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, onDelete }) => {
   const navigate = useNavigate();
+  const { isLoading } = useData();
   const [showAdd, setShowAdd] = useState(false);
   const [newTech, setNewTech] = useState({ name: '', email: '' });
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -62,6 +126,14 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
       t.status?.toLowerCase().includes(q)
     );
   }, [techs, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <Layout user={user}>
+        <TechniciansSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout user={user}>

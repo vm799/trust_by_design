@@ -24,6 +24,7 @@ import { useData } from '../../lib/DataContext';
 import { Job, Photo } from '../../types';
 import { EmptyState, LoadingSkeleton, ActionButton, ErrorState } from '../../components/ui';
 import SealingProgressModal, { SealingStatus } from '../../components/ui/SealingProgressModal';
+import ClientConfirmationCanvas from '../../components/ClientConfirmationCanvas';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, fadeInScale, stepSlide, stepSlideTransition, fadeOverlay, tapShrink } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
@@ -325,6 +326,37 @@ const TechEvidenceReview: React.FC = () => {
       setSubmitting(false);
     }
   }, [hasSignature, isConfirmed, job, contextUpdateJob, navigate, autoSealJob, completionNotes]);
+
+  const handleCanvasConfirmed = useCallback(async (signature: string, timestamp: string) => {
+    if (!job) return;
+
+    setSubmitting(true);
+    try {
+      celebrateSuccess();
+      hapticFeedback('success');
+
+      const updatedJob: Job = {
+        ...job,
+        clientConfirmation: {
+          signature,
+          timestamp,
+          confirmed: true,
+        },
+        completionNotes: completionNotes || undefined,
+        status: 'Submitted',
+      };
+
+      contextUpdateJob(updatedJob);
+
+      await autoSealJob(job.id);
+
+      navigate(`/tech/job/${job.id}`);
+    } catch (error) {
+      showToast('Failed to submit evidence. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [job, contextUpdateJob, navigate, autoSealJob, completionNotes]);
 
   // Group photos by type (case-insensitive matching for canonical PhotoType)
   const groupedPhotos = useMemo(() => {
@@ -707,137 +739,18 @@ const TechEvidenceReview: React.FC = () => {
                   )}
                 </motion.div>
               ) : (
-                /* Signature Pad */
-                <motion.div
-                  variants={fadeInScale}
-                  initial="hidden"
-                  animate="visible"
-                  className="bg-slate-900 border-2 border-emerald-500/30 rounded-2xl overflow-hidden"
-                >
-                  {/* Signature Header */}
-                  <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-emerald-950/30">
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-emerald-400">draw</span>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-white text-sm">
-                          {client?.name || 'Client'}, sign below
-                        </h3>
-                        <p className="text-xs text-slate-400">
-                          Use your finger or stylus
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowSignaturePad(false);
-                        clearSignature();
-                      }}
-                      aria-label="Close signature pad"
-                      className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                    >
-                      <span className="material-symbols-outlined">close</span>
-                    </button>
-                  </div>
-
-                  {/* Compact Statement Reminder */}
-                  <div className="px-4 py-3 bg-emerald-500/5 border-b border-emerald-500/10">
-                    <p className="text-sm text-emerald-300/80 leading-relaxed">
-                      &ldquo;{SATISFACTION_STATEMENT}&rdquo;
-                    </p>
-                  </div>
-
-                  {/* Canvas - 280px for comfortable signing */}
-                  <div className="p-4">
-                    <motion.div
-                      ref={containerRef}
-                      className="h-[280px] rounded-2xl overflow-hidden border-2 transition-all duration-500"
-                      style={{
-                        borderColor: hasSignature ? 'rgba(16, 185, 129, 0.5)' : 'rgba(16, 185, 129, 0.2)',
-                        boxShadow: hasSignature
-                          ? '0 0 30px rgba(16, 185, 129, 0.2), inset 0 0 30px rgba(16, 185, 129, 0.05)'
-                          : '0 0 15px rgba(16, 185, 129, 0.1)',
-                      }}
-                    >
-                      <canvas
-                        ref={canvasRef}
-                        onMouseDown={startDrawing}
-                        onMouseMove={draw}
-                        onMouseUp={stopDrawing}
-                        onMouseLeave={stopDrawing}
-                        onTouchStart={startDrawing}
-                        onTouchMove={draw}
-                        onTouchEnd={stopDrawing}
-                        className="w-full h-full cursor-crosshair touch-none"
-                      />
-                    </motion.div>
-
-                    {!hasSignature && (
-                      <p className="text-xs text-slate-500 text-center mt-3">
-                        Draw your signature above the line
-                      </p>
-                    )}
-
-                    {hasSignature && (
-                      <div className="flex justify-center mt-3">
-                        <button
-                          onClick={clearSignature}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors min-h-[44px]"
-                        >
-                          <span className="material-symbols-outlined text-sm">refresh</span>
-                          Clear and redo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Confirmation Checkbox */}
-                  <div className="px-4 pb-4">
-                    <label className="flex items-start gap-3.5 cursor-pointer p-4 rounded-xl bg-slate-800/50 border-2 transition-colors hover:border-emerald-700 min-h-[56px]"
-                      style={{
-                        borderColor: isConfirmed ? 'rgba(16, 185, 129, 0.4)' : 'rgba(51, 65, 85, 1)',
-                        backgroundColor: isConfirmed ? 'rgba(16, 185, 129, 0.05)' : undefined,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isConfirmed}
-                        onChange={(e) => setIsConfirmed(e.target.checked)}
-                        className="mt-0.5 w-7 h-7 rounded-lg accent-emerald-500 flex-shrink-0"
-                      />
-                      <span className="text-slate-200 leading-relaxed text-base">
-                        I confirm the statement above is true and authorize submission of this evidence.
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-                    <ActionButton
-                      variant="primary"
-                      icon="lock"
-                      onClick={handleSubmitWithSignature}
-                      disabled={!hasSignature || !isConfirmed}
-                      loading={submitting}
-                      fullWidth
-                      size="lg"
-                    >
-                      {submitting ? 'Sealing Evidence...' : 'Submit & Seal Evidence'}
-                    </ActionButton>
-
-                    {!hasSignature && (
-                      <p className="text-xs text-center text-slate-500 mt-2">
-                        Signature required to proceed
-                      </p>
-                    )}
-                    {hasSignature && !isConfirmed && (
-                      <p className="text-xs text-center text-amber-400 mt-2">
-                        Tick the confirmation box above
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
+                /* Client Confirmation Canvas - Full signature + attestation component */
+                <ClientConfirmationCanvas
+                  clientName={client?.name}
+                  onConfirmed={handleCanvasConfirmed}
+                  onCancel={() => {
+                    setShowSignaturePad(false);
+                    clearSignature();
+                  }}
+                  disabled={submitting}
+                  locationW3W={job.photos?.[0]?.w3w}
+                  photosSealed={totalPhotos}
+                />
               )}
             </motion.div>
           )}

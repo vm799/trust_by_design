@@ -184,6 +184,60 @@ const getSyncStatus = (job: Job) => {
   };
 };
 
+/**
+ * Skeleton loading placeholder for the jobs list.
+ * Renders 6 shimmer cards matching the mobile card layout structure.
+ */
+const JobsListSkeleton = React.memo(() => (
+  <div className="space-y-6 pb-20">
+    {/* Header skeleton */}
+    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+      <div className="space-y-2">
+        <div className="h-8 w-32 bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-20 bg-slate-800 rounded animate-pulse" />
+      </div>
+      <div className="h-12 w-32 bg-slate-800 rounded-2xl animate-pulse" />
+    </header>
+    {/* Filter tabs skeleton */}
+    <div className="bg-slate-900 border border-white/5 rounded-2xl p-2">
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-9 w-24 bg-slate-800 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+    {/* Search skeleton */}
+    <div className="h-12 w-full bg-slate-900 border border-white/5 rounded-2xl animate-pulse" />
+    {/* Card skeletons */}
+    <div className="space-y-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-slate-900 border border-white/5 rounded-2xl p-4 animate-pulse"
+        >
+          <div className="flex items-start gap-4">
+            {/* Status icon placeholder */}
+            <div className="size-12 rounded-xl bg-slate-800 shrink-0" />
+            {/* Content placeholders */}
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-3/4 bg-slate-800 rounded" />
+                <div className="size-3 bg-slate-800 rounded-full shrink-0" />
+              </div>
+              <div className="h-3 w-1/2 bg-slate-800 rounded" />
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-20 bg-slate-800 rounded" />
+                <div className="h-3 w-16 bg-slate-800 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+));
+JobsListSkeleton.displayName = 'JobsListSkeleton';
+
 const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -192,6 +246,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     technicians,
     updateJob: contextUpdateJob,
     deleteJob: contextDeleteJob,
+    isLoading,
   } = useData();
 
   // Action state
@@ -407,6 +462,14 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
     };
   }, []);
 
+
+  if (isLoading) {
+    return (
+      <Layout user={user}>
+        <JobsListSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout user={user}>
