@@ -650,12 +650,44 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
       return { success: false, error: 'Invalid job ID' };
     }
 
-    // Fetch job first to get workspace_id for cache invalidation
+    // Fetch job first to validate sealed/invoiced status and get workspace_id for cache invalidation
     const { data: jobData } = await supabase
-      .from('jobs')
-      .select('workspace_id')
+      .from('bunker_jobs')
+      .select('workspace_id, sealed_at, invoice_id')
       .eq('id', jobId)
       .single();
+
+    // Also check jobs table if not found in bunker_jobs
+    let sealedAt = jobData?.sealed_at;
+    let invoiceId = jobData?.invoice_id;
+    let workspaceId = jobData?.workspace_id;
+
+    if (!jobData) {
+      const { data: jobsTableData } = await supabase
+        .from('jobs')
+        .select('workspace_id, sealed_at, invoice_id')
+        .eq('id', jobId)
+        .single();
+      sealedAt = jobsTableData?.sealed_at;
+      invoiceId = jobsTableData?.invoice_id;
+      workspaceId = jobsTableData?.workspace_id;
+    }
+
+    // SECURITY: Prevent deletion of sealed jobs (evidence preserved)
+    if (sealedAt) {
+      return {
+        success: false,
+        error: 'Cannot delete a sealed job - evidence has been cryptographically preserved'
+      };
+    }
+
+    // SECURITY: Prevent deletion of invoiced jobs (delete invoice first)
+    if (invoiceId) {
+      return {
+        success: false,
+        error: 'Cannot delete a job with an invoice - delete the invoice first'
+      };
+    }
 
     const { error } = await supabase
       .from('jobs')
@@ -682,9 +714,9 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
     }
 
     // Invalidate cache if we have workspace_id
-    if (jobData?.workspace_id) {
-      requestCache.clearKey(generateCacheKey('getJobs', jobData.workspace_id));
-      requestCache.clearKey(generateCacheKey('getJob', jobId, jobData.workspace_id));
+    if (workspaceId) {
+      requestCache.clearKey(generateCacheKey('getJobs', workspaceId));
+      requestCache.clearKey(generateCacheKey('getJob', jobId, workspaceId));
     }
 
     return { success: true };
