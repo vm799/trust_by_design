@@ -124,9 +124,7 @@ export default defineConfig(({ mode }) => {
               'admin-jobs': [
                 './views/CreateJob.tsx',
                 './views/JobCreationWizard.tsx',
-                './views/app/jobs/JobsList.tsx'
-              ],
-              'admin-management': [
+                './views/app/jobs/JobsList.tsx',
                 './views/ClientsView.tsx',
                 './views/TechniciansView.tsx',
                 './views/TemplatesView.tsx',

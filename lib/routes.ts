@@ -1,37 +1,9 @@
 /**
  * Route Configuration
  *
- * Defines all application routes in a centralized location.
- *
- * Phase A: Foundation & App Shell
+ * Defines all application route paths and helpers.
+ * Lazy component imports live in App.tsx (code splitting).
  */
-
-import { lazy } from 'react';
-
-// Lazy load views for code splitting
-// Auth views
-export const OAuthSetup = lazy(() => import('../views/OAuthSetup'));
-export const CompleteOnboarding = lazy(() => import('../views/CompleteOnboarding'));
-
-// Main app views (active in App.tsx routes)
-export const ClientForm = lazy(() => import('../views/app/clients/ClientForm'));
-export const JobsList = lazy(() => import('../views/app/jobs/JobsList'));
-export const JobDetail = lazy(() => import('../views/app/jobs/JobDetail'));
-export const JobForm = lazy(() => import('../views/app/jobs/JobForm'));
-export const EvidenceReview = lazy(() => import('../views/app/jobs/EvidenceReview'));
-export const TechnicianForm = lazy(() => import('../views/app/technicians/TechnicianForm'));
-
-// Technician views
-export const TechPortal = lazy(() => import('../views/tech/TechPortal'));
-export const TechJobDetail = lazy(() => import('../views/tech/TechJobDetail'));
-export const EvidenceCapture = lazy(() => import('../views/tech/EvidenceCapture'));
-
-// Phase 15: Field Proof System
-export const TechProofScreen = lazy(() => import('../views/TechProofScreen'));
-
-// Active views (used in App.tsx)
-export const AdminDashboard = lazy(() => import('../views/AdminDashboard'));
-export const TechnicianPortal = lazy(() => import('../views/TechnicianPortal'));
 
 /**
  * Route path constants
