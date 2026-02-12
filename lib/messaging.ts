@@ -245,7 +245,6 @@ async function deliverMessage(
   // Update thread's last message
   updateThreadLastMessage(message.threadId, sentMessage);
 
-  console.log('[Messaging] Message delivered:', sentMessage.id);
   return sentMessage;
 }
 
@@ -294,7 +293,6 @@ export async function processMessageQueue(): Promise<{
     return { sent: 0, failed: 0 };
   }
 
-  console.log(`[Messaging] Processing ${queue.length} queued messages`);
 
   let sent = 0;
   let failed = 0;
@@ -335,7 +333,6 @@ export async function processMessageQueue(): Promise<{
   }
 
   saveMessageQueue(remainingQueue);
-  console.log(`[Messaging] Queue processed: ${sent} sent, ${failed} failed, ${remainingQueue.length} remaining`);
 
   return { sent, failed };
 }
@@ -654,7 +651,6 @@ export function createJobUpdateMessage(
 export function initializeMessaging(): void {
   // Process queue when coming online
   window.addEventListener('online', () => {
-    console.log('[Messaging] Online - processing message queue');
     processMessageQueue();
   });
 
@@ -663,7 +659,6 @@ export function initializeMessaging(): void {
     setTimeout(() => processMessageQueue(), 2000);
   }
 
-  console.log('[Messaging] Service initialized');
 }
 
 // ============================================================================

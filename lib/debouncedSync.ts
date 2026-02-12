@@ -339,7 +339,6 @@ function emergencySavePendingUpdates(): void {
 
     // Save synchronously (guaranteed to complete before unload)
     localStorage.setItem(queueKey, JSON.stringify(queue));
-    console.log(`[DebouncedSync] Emergency saved ${pending.length} pending updates to queue`);
 
     // Clear pending updates since they're now queued
     for (const [, p] of pendingUpdates) {
@@ -354,7 +353,6 @@ function emergencySavePendingUpdates(): void {
 // Auto-process offline queue when coming back online
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[DebouncedSync] Back online - processing queued updates...');
     processOfflineQueue();
   });
 
@@ -373,7 +371,6 @@ if (typeof window !== 'undefined') {
           // sendBeacon is designed for unload - browser queues for delivery
           // Note: This requires a server endpoint to receive the data
           // For now, we just log - data is safely in localStorage queue
-          console.log('[DebouncedSync] Would sendBeacon with:', pending.length, 'updates');
           // navigator.sendBeacon('/api/sync-flush', JSON.stringify(pending));
         } catch (e) {
           // sendBeacon failed, data is still safe in localStorage
@@ -388,7 +385,6 @@ if (typeof window !== 'undefined') {
     if (document.visibilityState === 'hidden') {
       // P0-4 FIX: ALWAYS emergency save first (sync, guaranteed)
       // Page can be killed immediately on iOS - don't risk async completion
-      console.log('[DebouncedSync] Page hidden - emergency save first, then async flush...');
       emergencySavePendingUpdates();
 
       // Async flush is a bonus - data is already safe in localStorage queue

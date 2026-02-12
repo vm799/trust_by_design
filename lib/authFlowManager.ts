@@ -205,7 +205,6 @@ class UserSubagent {
         return false;
       }
 
-      console.log('[UserSubagent] User created successfully:', authUser.id);
       return true;
     } catch (err) {
       console.error('[UserSubagent] Exception creating user:', err);
@@ -221,12 +220,10 @@ class UserSubagent {
     // First check if user exists
     const exists = await this.userExists(authUser.id);
     if (exists) {
-      console.log('[UserSubagent] User already exists:', authUser.id);
       return true;
     }
 
     // User doesn't exist, create it
-    console.log('[UserSubagent] User not found, creating:', authUser.id);
     return await this.createUser(authUser, workspaceName);
   }
 }
@@ -259,11 +256,6 @@ class WorkspaceSubagent {
         return null;
       }
 
-      // maybeSingle() returns null if no rows - user doesn't exist
-      if (!data) {
-        console.log('[WorkspaceSubagent] User profile not found:', userId);
-      }
-
       return data;
     } catch (err) {
       console.error('[WorkspaceSubagent] Exception fetching user profile:', err);
@@ -278,7 +270,6 @@ class WorkspaceSubagent {
    */
   async fetchWorkspace(workspaceId: string | null): Promise<any | null> {
     if (!workspaceId) {
-      console.log('[WorkspaceSubagent] No workspace_id provided');
       return null;
     }
 
@@ -296,11 +287,6 @@ class WorkspaceSubagent {
       if (error) {
         console.error('[WorkspaceSubagent] Error fetching workspace:', error);
         return null;
-      }
-
-      // maybeSingle() returns null if no rows - workspace doesn't exist
-      if (!data) {
-        console.log('[WorkspaceSubagent] Workspace not found:', workspaceId);
       }
 
       return data;
@@ -443,7 +429,6 @@ export class AuthFlowManager {
     // CRITICAL FIX: Deduplicate concurrent calls
     // If there's already an init in progress, return that promise
     if (this.initPromise) {
-      console.log('[AuthFlowManager] Returning existing init promise (deduplication)');
       return this.initPromise;
     }
 
@@ -463,7 +448,6 @@ export class AuthFlowManager {
    * Internal implementation of auth flow initialization
    */
   private async _doInitializeAuthFlow(): Promise<AuthFlowResult> {
-    console.log('[AuthFlowManager] Initializing auth flow...');
 
     // STEP 1: Get current auth session (AuthSubagent)
     const { session, error: sessionError } = await this.authSubagent.getSession();
@@ -481,7 +465,6 @@ export class AuthFlowManager {
 
     // No session = user not logged in (this is OK, not an error)
     if (!session || !session.user) {
-      console.log('[AuthFlowManager] No active session');
       this.clearCache();
       return {
         success: true,
@@ -491,7 +474,6 @@ export class AuthFlowManager {
     }
 
     const currentUserId = session.user.id;
-    console.log('[AuthFlowManager] Active session found for user:', currentUserId);
 
     // CRITICAL FIX: Check cache before making database calls
     // If same user and cache is fresh, return cached result with updated session
@@ -502,7 +484,6 @@ export class AuthFlowManager {
       this.cachedResult.user &&
       now - this.cacheTimestamp < this.CACHE_TTL
     ) {
-      console.log('[AuthFlowManager] Returning cached result for user:', currentUserId);
       // Return cached user but with fresh session (has updated tokens)
       return {
         ...this.cachedResult,
@@ -510,14 +491,12 @@ export class AuthFlowManager {
       };
     }
 
-    console.log('[AuthFlowManager] Cache miss or expired, fetching fresh profile');
 
     // STEP 2: Ensure user row exists in users table (UserSubagent)
     const userCreated = await this.userSubagent.ensureUserExists(session.user);
 
     if (!userCreated) {
       // User creation failed - this means we need workspace setup
-      console.log('[AuthFlowManager] User creation needed, redirect to setup');
       return {
         success: true,
         session,
@@ -532,7 +511,6 @@ export class AuthFlowManager {
     if (!userProfile) {
       // Profile fetch failed after user was created - this shouldn't happen
       // but we handle it gracefully by requiring setup
-      console.log('[AuthFlowManager] Profile fetch failed after user creation, needs setup');
       return {
         success: true,
         session,
@@ -544,7 +522,6 @@ export class AuthFlowManager {
     // STEP 4: Validate profile completeness
     if (!userProfile.workspace_id || !userProfile.workspace) {
       // User exists but workspace is missing - needs setup
-      console.log('[AuthFlowManager] User missing workspace, needs setup');
       return {
         success: true,
         session,
@@ -554,7 +531,6 @@ export class AuthFlowManager {
     }
 
     // SUCCESS: Complete profile loaded
-    console.log('[AuthFlowManager] Auth flow complete, user fully loaded');
 
     const result: AuthFlowResult = {
       success: true,
@@ -576,7 +552,6 @@ export class AuthFlowManager {
     this.lastUserId = userId;
     this.cachedResult = result;
     this.cacheTimestamp = Date.now();
-    console.log('[AuthFlowManager] Cache updated for user:', userId);
   }
 
   /**
@@ -619,7 +594,6 @@ export class AuthFlowManager {
         this.cachedResult &&
         this.cachedResult.user
       ) {
-        console.log('[AuthFlowManager] Token refresh detected, using cached profile');
         callback({
           ...this.cachedResult,
           session, // Fresh session with updated tokens
@@ -628,7 +602,6 @@ export class AuthFlowManager {
       }
 
       // Different user or no cache - run full flow
-      console.log('[AuthFlowManager] User changed or no cache, running full flow');
       const result = await this.initializeAuthFlow();
       callback(result);
     });
@@ -639,7 +612,6 @@ export class AuthFlowManager {
    * CRITICAL FIX: Clears cache to force fresh fetch
    */
   async refreshAuthFlow(): Promise<AuthFlowResult> {
-    console.log('[AuthFlowManager] Manual refresh requested, clearing cache');
     this.clearCache();
     return await this.initializeAuthFlow();
   }
@@ -648,7 +620,6 @@ export class AuthFlowManager {
    * Invalidate cache (call when user profile changes)
    */
   invalidateCache(): void {
-    console.log('[AuthFlowManager] Cache invalidated');
     this.clearCache();
   }
 }

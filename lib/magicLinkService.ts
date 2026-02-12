@@ -172,7 +172,6 @@ export async function createAndDeliverMagicLink(
   queue.push(delivery);
   saveDeliveryQueue(queue);
 
-  console.log(`[MagicLinkService] Created link for job ${jobId}, channels: ${finalConfig.channels.join(', ')}`);
 
   // Process queue if online
   if (navigator.onLine) {
@@ -220,7 +219,6 @@ async function storeToken(delivery: MagicLinkDelivery): Promise<void> {
           granted_to_email: delivery.config.recipientEmail,
         });
 
-        console.log(`[MagicLinkService] Token stored in Supabase`);
       } catch (e) {
         console.warn('[MagicLinkService] Failed to store token in Supabase:', e);
       }
@@ -235,7 +233,6 @@ export async function processDeliveryQueue(): Promise<void> {
   const queue = getDeliveryQueue();
   if (queue.length === 0) return;
 
-  console.log(`[MagicLinkService] Processing ${queue.length} pending deliveries...`);
 
   const processed: MagicLinkDelivery[] = [];
   const remaining: MagicLinkDelivery[] = [];
@@ -316,7 +313,6 @@ export async function processDeliveryQueue(): Promise<void> {
   // Update queue with remaining items
   saveDeliveryQueue(remaining);
 
-  console.log(`[MagicLinkService] Processed ${processed.length}, remaining ${remaining.length}`);
 }
 
 /**
@@ -505,7 +501,6 @@ function generateMagicLinkEmailHtml(delivery: MagicLinkDelivery): string {
  * Send link via email (Supabase Edge Function)
  */
 async function sendEmailDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
-  console.log(`[MagicLinkService] Sending email to ${delivery.config.recipientEmail}`);
 
   if (!delivery.config.recipientEmail) {
     console.error('[MagicLinkService] No recipient email provided');
@@ -531,7 +526,6 @@ async function sendEmailDelivery(delivery: MagicLinkDelivery): Promise<boolean> 
           console.error('[MagicLinkService] Edge function error:', error);
           // Fall through to localStorage backup
         } else if (data?.success) {
-          console.log(`[MagicLinkService] Email sent successfully: ${data.emailId}`);
           return true;
         } else {
           console.warn('[MagicLinkService] Email send failed:', data?.error);
@@ -557,7 +551,6 @@ async function sendEmailDelivery(delivery: MagicLinkDelivery): Promise<boolean> 
       status: 'pending_retry',
     });
     localStorage.setItem('jobproof_email_requests', JSON.stringify(emailRequests.slice(-50)));
-    console.log('[MagicLinkService] Email queued for retry');
   } catch (e) {
     console.warn('[MagicLinkService] Failed to queue email:', e);
   }
@@ -569,7 +562,6 @@ async function sendEmailDelivery(delivery: MagicLinkDelivery): Promise<boolean> 
  * Send link via SMS (Supabase Edge Function with Twilio)
  */
 async function sendSmsDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
-  console.log(`[MagicLinkService] SMS: Would send to ${delivery.config.recipientPhone}`);
 
   // Store SMS request for Supabase Edge Function
   if (isSupabaseAvailable()) {
@@ -609,7 +601,6 @@ async function sendSmsDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
  * Send link via push notification (Firebase)
  */
 async function sendPushDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
-  console.log(`[MagicLinkService] PUSH: Would send to ${delivery.technicianId}`);
 
   // Queue push notification (you implement Firebase integration)
   const pushRequests = JSON.parse(localStorage.getItem('jobproof_push_requests') || '[]');
@@ -630,7 +621,6 @@ async function sendPushDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
  * Send link via WhatsApp (Business API)
  */
 async function sendWhatsAppDelivery(delivery: MagicLinkDelivery): Promise<boolean> {
-  console.log(`[MagicLinkService] WHATSAPP: Would send to ${delivery.config.recipientPhone}`);
 
   // Queue WhatsApp message (you implement WhatsApp Business API)
   const waRequests = JSON.parse(localStorage.getItem('jobproof_whatsapp_requests') || '[]');
@@ -673,7 +663,6 @@ export function recordLinkOpened(token: string): void {
     localStorage.setItem('jobproof_magic_links', JSON.stringify(localLinks));
   }
 
-  console.log(`[MagicLinkService] Link opened: ${token}`);
 }
 
 /**
@@ -789,7 +778,6 @@ export async function regenerateLink(
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[MagicLinkService] Back online, processing delivery queue...');
     processDeliveryQueue();
   });
 }

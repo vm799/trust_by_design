@@ -55,7 +55,6 @@ export async function waitForPhotoSync(
         });
 
         if (allSynced) {
-          console.log(`✅ All ${photoIds.length} photos synced successfully`);
           resolve();
         } else {
           // Continue polling
@@ -164,7 +163,6 @@ export function showPersistentNotification(options: {
     }, 10000);
   }
 
-  console.log(`[Notification] ${type.toUpperCase()}: ${title} - ${message}`);
 }
 
 /**

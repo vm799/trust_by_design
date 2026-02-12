@@ -189,7 +189,6 @@ async function _pullJobsImpl(workspaceId: string) {
                         localTimestamp: localJob.lastUpdated,
                         serverTimestamp: serverJob.lastUpdated
                     });
-                    console.log(`[Sync] Preserved local job ${serverJob.id} (local: ${new Date(localJob.lastUpdated).toISOString()}, server: ${new Date(serverJob.lastUpdated).toISOString()})`);
                     continue;
                 }
 
@@ -225,18 +224,12 @@ async function _pullJobsImpl(workspaceId: string) {
             for (const orphanedJob of orphanedJobs) {
                 // CRITICAL: Preserve sealed jobs - they represent immutable evidence
                 if (orphanedJob.sealedAt || orphanedJob.isSealed) {
-                    console.log(`[Sync] PRESERVED sealed job ${orphanedJob.id} (immutable evidence)`);
                     continue;
                 }
 
                 // Safe to delete: not sealed
                 await database.jobs.delete(orphanedJob.id);
                 deletedOrphanIds.push(orphanedJob.id);
-                console.log(`[Sync] Deleted orphaned job ${orphanedJob.id} (${orphanedJob.title})`);
-            }
-
-            if (deletedOrphanIds.length > 0) {
-                console.log(`[Sync] Deleted ${deletedOrphanIds.length} orphaned jobs from IndexedDB:`, deletedOrphanIds);
             }
 
             // Apply updates
@@ -283,14 +276,12 @@ async function _pullJobsImpl(workspaceId: string) {
                     persistent: false,  // Auto-dismiss after 10s
                     actionLabel: 'View History',
                     onAction: () => {
-                        console.log('[Conflict History] User requested conflict history:', allConflicts);
                         // Future: Navigate to conflict history UI
                     }
                 });
             }
 
             const deletedCount = deletedOrphanIds?.length || 0;
-            console.log(`[Sync] Pulled ${serverJobs.length} jobs, updated ${jobsToUpdate.length}, deleted ${deletedCount} orphaned, conflicts: ${conflicts.length}`);
         }
     } catch (error) {
         console.error('[Sync] Pull failed:', error);
@@ -356,7 +347,6 @@ async function _pushQueueImpl() {
     const pending = await database.queue.where('synced').equals(0).toArray();
     if (pending.length === 0) return;
 
-    console.log(`[Sync] Processing ${pending.length} offline actions...`);
 
     for (const action of pending) {
         try {
@@ -617,7 +607,6 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
             return false;
         }
 
-        console.log(`[Sync] Photo ${payload.id} uploaded successfully to ${publicUrl}`);
 
         // Update photo in job (IndexedDB)
         const job = await database.jobs.get(payload.jobId);
@@ -635,7 +624,6 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                 lastUpdated: Date.now()
             });
 
-            console.log(`[Sync] Updated job ${payload.jobId} with public URL for photo ${payload.id}`);
 
             // Also update in Supabase
             const { error: updateError } = await supabase
@@ -654,7 +642,6 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
 
         // Clean up IndexedDB media record
         await database.media.delete(payload.id);
-        console.log(`[Sync] Cleaned up IndexedDB media: ${payload.id}`);
 
         // AUTO-SEAL: Check if all photos are synced and job should be sealed
         const updatedJob = await database.jobs.get(payload.jobId);
@@ -663,27 +650,14 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                 (p: Photo) => p.syncStatus === 'synced' && !p.isIndexedDBRef
             );
 
-            console.log(`[Auto-Seal] Job ${payload.jobId} status check:`, {
-                allPhotosUploaded,
-                jobStatus: updatedJob.status,
-                isSealed: !!updatedJob.sealedAt,
-                photoCount: updatedJob.photos.length
-            });
-
             if (allPhotosUploaded &&
                 updatedJob.status === 'Submitted' &&
                 !updatedJob.sealedAt) {
-                console.log(`[Auto-Seal] All photos synced for submitted job - auto-sealing job ${payload.jobId}...`);
 
                 try {
                     const sealResult = await sealEvidence(payload.jobId);
 
                     if (sealResult.success) {
-                        console.log(`[Auto-Seal] Successfully sealed job ${payload.jobId}`, {
-                            sealedAt: sealResult.sealedAt,
-                            evidenceHash: sealResult.evidenceHash
-                        });
-
                         // Update local job with seal data
                         await database.jobs.update(payload.jobId, {
                             sealedAt: sealResult.sealedAt,
@@ -693,7 +667,6 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                             lastUpdated: Date.now()
                         });
 
-                        console.log(`[Auto-Seal] Job ${payload.jobId} updated locally with seal data`);
                     } else {
                         console.error(`[Auto-Seal] Failed to seal job ${payload.jobId}:`, sealResult.error);
                         // Don't fail the photo upload if sealing fails - can retry later

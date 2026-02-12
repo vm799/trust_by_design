@@ -140,7 +140,6 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         onAction: () => {
           // P0-5 FIX: Navigate to job detail instead of doing nothing
           // User can see the affected job and potentially re-capture photos
-          console.log('[Orphan Recovery] Navigating to job:', job.id);
           window.location.hash = `#/app/jobs/${job.id}`;
         }
       });
@@ -214,7 +213,6 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         console.error(`Failed to batch sync ${uploadedPhotos.length} photos:`, photoError);
         throw new Error(`Photo batch sync failed: ${photoError.message}`);
       }
-      console.log(`✓ Batch synced ${uploadedPhotos.length} photos in single query`);
     }
 
     // 5. Batch upsert safety checklist (OPTIMIZED: single query instead of N queries)
@@ -236,7 +234,6 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
         console.error(`Failed to batch sync ${job.safetyChecklist.length} safety checks:`, checkError);
         throw new Error(`Safety checklist sync failed: ${checkError.message}`);
       }
-      console.log(`✓ Batch synced ${job.safetyChecklist.length} safety checks in single query`);
     }
 
     return true;
@@ -321,7 +318,6 @@ export const retryFailedSyncs = async (): Promise<void> => {
             persistent: true,
             actionLabel: 'View Details',
             onAction: () => {
-              console.log('User clicked view details for failed sync:', item.id);
               // Could navigate to a failed sync details page
             }
           });
@@ -397,7 +393,6 @@ export const startSyncWorker = (): void => {
 
   // Also retry on network reconnection
   window.addEventListener('online', () => {
-    console.log('🌐 Network reconnected - retrying failed syncs...');
     retryFailedSyncs();
   });
 };
@@ -470,5 +465,4 @@ export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
  */
 export const clearFailedSyncQueue = (): void => {
   localStorage.removeItem('jobproof_failed_sync_queue');
-  console.log('[Sync] Failed sync queue cleared');
 };

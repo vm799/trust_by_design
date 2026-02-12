@@ -117,7 +117,6 @@ export function logValidationResults(result: ValidationResult): void {
   }
 
   if (result.isValid && result.warnings.length === 0) {
-    console.log('✅ Environment configuration validated successfully.');
   }
 }
 
