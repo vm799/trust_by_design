@@ -12,8 +12,7 @@
  * - Gesture hooks (usePullToRefresh, useSwipeAction, useLongPress)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import React from 'react';
+import { describe, it, expect } from 'vitest';
 
 // ============================================================
 // 1. BottomNav Active Pill Indicator

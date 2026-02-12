@@ -112,7 +112,8 @@ const JobDetail: React.FC = () => {
   const canDelete = job && !job.sealedAt && !job.invoiceId;
 
   // Handle conflict resolution (Fix 3.3)
-  const handleResolveConflict = (resolution: 'local' | 'remote' | 'manual') => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleResolveConflict = (_resolution: 'local' | 'remote' | 'manual') => {
     // In a full implementation, this would:
     // 1. Save the resolution to IndexedDB syncConflicts table
     // 2. Apply the resolution (merge local/remote/manual)

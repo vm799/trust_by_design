@@ -4,13 +4,10 @@ import {
   processNotificationQueue,
   notifyJobSealed,
   notifyPhotosSynced,
-  notifyLinkOpened,
-  notifySyncFailed,
   getInAppNotifications,
   markNotificationRead,
   clearNotifications,
   type NotificationPayload,
-  type NotificationPriority,
 } from '../../lib/notificationService';
 
 // Mock Supabase

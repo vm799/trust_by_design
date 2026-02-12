@@ -15,7 +15,7 @@ import AlertStack from '../../../components/dashboard/AlertStack';
 import QuickWinsGrid from '../../../components/dashboard/QuickWinsGrid';
 import MetricsCard from '../../../components/dashboard/MetricsCard';
 import ActiveJobsTable from '../../../components/dashboard/ActiveJobsTable';
-import { Job, Technician, Client } from '../../../types';
+import { Job, Technician } from '../../../types';
 
 // ============================================================================
 // TEST DATA FACTORIES

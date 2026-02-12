@@ -11,12 +11,11 @@
  * Covers all roles: Manager, Solo Contractor, Technician
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import { DataContext } from '../../../lib/DataContext';
-import { Job, Technician, Client } from '../../../types';
+import { Job, Client } from '../../../types';
 import { isReportReady, canDeleteJob } from '../../../lib/statusHelpers';
 
 // ============================================================================
@@ -44,18 +43,6 @@ function createJob(overrides: Partial<Job> = {}): Job {
     safetyChecklist: [],
     ...overrides,
   } as Job;
-}
-
-function createTechnician(overrides: Partial<Technician> = {}): Technician {
-  return {
-    id: `tech-${Math.random().toString(36).slice(2, 8)}`,
-    name: 'Test Technician',
-    email: 'tech@test.com',
-    status: 'Available',
-    rating: 4,
-    jobsCompleted: 10,
-    ...overrides,
-  } as Technician;
 }
 
 function createClient(overrides: Partial<Client> = {}): Client {

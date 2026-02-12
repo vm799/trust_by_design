@@ -30,9 +30,6 @@ describe('Technician Invite - Job Not Found Fix', () => {
     // Simulates: technician loads job, parent re-renders, job should still be there
     const jobState: { id: string } | null = { id: 'JP-test-123' };
 
-    // Simulate parent re-render by creating new jobs array reference
-    const _newJobsArray: never[] = [];
-
     // Job state should NOT be affected by parent re-render
     expect(jobState).not.toBeNull();
     expect(jobState?.id).toBe('JP-test-123');

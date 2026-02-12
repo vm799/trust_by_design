@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { canSealJob, sealEvidence, verifyEvidence, enableMockSealing } from '@/lib/sealing';
 import { initMockDatabase } from '@/lib/db';
-import { mockJobs, createMockJob } from '../mocks/mockData';
+import { createMockJob } from '../mocks/mockData';
 import type { Job } from '@/types';
 
 describe('lib/sealing - Evidence Sealing Operations', () => {
@@ -316,6 +316,7 @@ describe('lib/sealing - Evidence Sealing Operations', () => {
 });
 
 // Helper function (would be imported from sealing.ts)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function validateMagicLink(token: string) {
   // This is mocked in the actual test
   return { success: false, error: 'Token invalidated after seal' };

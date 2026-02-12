@@ -5,16 +5,17 @@
  * Acts as a "Receipt" of their work.
  *
  * Features:
- * - Fetches completed jobs from Supabase
- * - Falls back to IndexedDB for offline viewing
+ * - Uses DataContext for centralized job data
+ * - Derives completed jobs via useMemo
  * - Shows before/after photos, signature, and sync status
+ * - Error state with retry via DataContext.refresh()
  *
- * @author Claude Code - End-to-End Recovery
+ * @author Claude Code - DataContext Migration
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Dexie, { type Table } from 'dexie';
+import { useData } from '../lib/DataContext';
 import { HandshakeService, type PausedJobContext } from '../lib/handshakeService';
 
 // ============================================================================
@@ -40,39 +41,39 @@ interface CompletedJob {
 const ARCHIVED_JOBS_KEY = 'jobproof_archived_jobs';
 
 // ============================================================================
-// DATABASE
-// ============================================================================
-
-class LogDatabase extends Dexie {
-  jobs!: Table<CompletedJob, string>;
-
-  constructor() {
-    super('BunkerRunDB');
-    this.version(1).stores({
-      jobs: 'id, syncStatus, lastUpdated'
-    });
-  }
-}
-
-const logDb = new LogDatabase();
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function JobLog() {
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<CompletedJob[]>([]);
+  const { jobs: allJobs, isLoading: dataLoading, error: dataError, refresh } = useData();
+
+  const jobs: CompletedJob[] = useMemo(() =>
+    allJobs
+      .filter(j => j.status === 'Complete' || j.status === 'Submitted')
+      .map(j => ({
+        id: j.id,
+        title: j.title || `Job ${j.id}`,
+        client: j.client || 'Client',
+        address: j.address,
+        completedAt: j.completedAt || j.date || new Date().toISOString(),
+        syncStatus: (j.syncStatus || 'synced') as 'pending' | 'synced' | 'failed',
+        beforePhotoUrl: j.photos?.[0]?.url,
+        afterPhotoUrl: j.photos?.[1]?.url,
+        signatureUrl: typeof j.signature === 'string' ? j.signature : undefined,
+        reportUrl: undefined,
+      }))
+      .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()),
+    [allJobs]
+  );
+
+  const isLoading = dataLoading;
+
   const [pausedJobs, setPausedJobs] = useState<PausedJobContext[]>([]);
   const [archivedJobIds, setArchivedJobIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'synced' | 'pending' | 'archived'>('all');
 
   useEffect(() => {
-    loadJobs();
     loadPausedJobs();
     loadArchivedJobs();
   }, []);
@@ -84,8 +85,8 @@ export default function JobLog() {
         const ids = JSON.parse(stored) as string[];
         setArchivedJobIds(new Set(ids));
       }
-    } catch (error) {
-      console.error('[JobLog] Failed to load archived jobs:', error);
+    } catch {
+      // Non-fatal: archived job IDs are UI state only
     }
   };
 
@@ -146,82 +147,6 @@ export default function JobLog() {
     return `${days}d ago`;
   };
 
-  const loadJobs = async () => {
-    setIsLoading(true);
-
-    try {
-      // Get local jobs from IndexedDB first
-      const localJobs = await logDb.jobs.toArray();
-      const localCompleted = localJobs.filter(j => j.completedAt);
-
-      // Try to fetch from Supabase
-      let cloudJobs: CompletedJob[] = [];
-      if (navigator.onLine && SUPABASE_URL && SUPABASE_ANON_KEY) {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/bunker_jobs?status=eq.Complete&order=completed_at.desc&limit=50`,
-          {
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          cloudJobs = data.map((j: Record<string, unknown>) => ({
-            id: j.id as string,
-            title: j.title as string || `Job ${j.id}`,
-            client: j.client as string || 'Client',
-            address: j.address as string,
-            completedAt: j.completed_at as string || j.last_updated as string,
-            // Jobs from Supabase ARE synced - they exist in the cloud
-            syncStatus: 'synced' as const,
-            beforePhotoUrl: j.before_photo_data as string,
-            afterPhotoUrl: j.after_photo_data as string,
-            signatureUrl: j.signature_data as string,
-            reportUrl: j.report_url as string,
-          }));
-        }
-      }
-
-      // Merge: Cloud jobs (synced) + Local-only jobs (pending)
-      const cloudJobIds = new Set(cloudJobs.map(j => j.id));
-
-      // Local jobs that are NOT in cloud are pending sync
-      const pendingJobs: CompletedJob[] = localCompleted
-        .filter(j => !cloudJobIds.has(j.id))
-        .map(j => ({ ...j, syncStatus: 'pending' as const }));
-
-      // Combine: synced cloud jobs + pending local jobs
-      const allJobs = [...cloudJobs, ...pendingJobs];
-
-      // Sort by completedAt descending
-      allJobs.sort((a, b) => {
-        const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-        const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      setJobs(allJobs);
-    } catch (error) {
-      console.error('[JobLog] Load error:', error);
-      // On error, just show local jobs as pending
-      try {
-        const localJobs = await logDb.jobs.toArray();
-        const completed = localJobs.filter(j => j.completedAt).map(j => ({
-          ...j,
-          syncStatus: 'pending' as const
-        }));
-        setJobs(completed);
-      } catch {
-        setJobs([]);
-      }
-    }
-
-    setIsLoading(false);
-  };
-
   const filteredJobs = jobs.filter(j => {
     const isArchived = archivedJobIds.has(j.id);
 
@@ -236,6 +161,23 @@ export default function JobLog() {
   });
 
   const archivedCount = jobs.filter(j => archivedJobIds.has(j.id)).length;
+
+  if (dataError) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <span className="material-symbols-outlined text-4xl text-red-400">error</span>
+          <p className="text-red-400">{dataError}</p>
+          <button
+            onClick={refresh}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium min-h-[44px]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

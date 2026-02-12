@@ -209,6 +209,7 @@ describe('TechEvidenceReview - Signature in Evidence Review Flow', () => {
     });
 
     it('should allow notes to be optional for submission', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const completionNotes = '';
       const hasSignature = true;
       const isConfirmed = true;

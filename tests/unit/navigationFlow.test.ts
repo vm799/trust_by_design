@@ -53,8 +53,6 @@ describe('Job Creation Navigation Flow', () => {
   it('navigation flow preserves job draft via localStorage', () => {
     // JobCreationWizard saves draft to localStorage
     // When user returns from ClientForm, draft is restored
-    const JOB_DRAFT_KEY = 'jobproof_job_draft';
-
     // Simulate saving draft before navigation
     const draft = {
       formData: {

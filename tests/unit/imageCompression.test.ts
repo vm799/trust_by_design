@@ -153,7 +153,7 @@ describe('imageCompression', () => {
       await compressImage('data:image/jpeg;base64,huge');
 
       // Canvas should have been created with capped dimensions
-      const canvas = document.createElement('canvas') as any;
+      document.createElement('canvas');
       // The resize logic should cap at 1200
       // Width 4000 > height 3000, so width = 1200, height = 1200 * (3000/4000) = 900
       // We verify drawImage was called

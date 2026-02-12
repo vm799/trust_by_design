@@ -128,6 +128,7 @@ test.describe('PHASE 1: Authentication & Workspace Flows', () => {
    * 7. Verify RPC call to create_workspace_with_owner succeeds
    * 8. Verify redirect to /admin
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test('Google OAuth Signup → Workspace Setup', async ({ page, context }) => {
     await page.goto(`${BASE_URL}/#/auth`);
 

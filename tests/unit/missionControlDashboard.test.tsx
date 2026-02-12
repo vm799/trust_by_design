@@ -80,6 +80,7 @@ vi.mock('../../components/ui', () => ({
   Card: ({ children, className, onClick }: any) => (
     <div className={className} onClick={onClick}>{children}</div>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ActionButton: ({ children, onClick, to, icon }: any) =>
     to ? <a href={to}>{children}</a> : <button onClick={onClick}>{children}</button>,
   LoadingSkeleton: () => <div data-testid="loading-skeleton">Loading...</div>,

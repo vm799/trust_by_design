@@ -208,7 +208,7 @@ describe('deriveDashboardState', () => {
 
     it('INV-6: idle technicians never in focus or queue', () => {
       const now = Date.now();
-      const oldTime = now - IDLE_THRESHOLD_MS - 1000; // Past idle threshold
+      void (now - IDLE_THRESHOLD_MS - 1000); // Past idle threshold
 
       const input = createTestInput({
         jobs: [], // No jobs = all techs idle

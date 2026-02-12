@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext, devices } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * WEEK 3 E2E VALIDATION SUITE - JOBPROOF
@@ -47,12 +47,6 @@ const TEST_TECHNICIAN = {
   email: 'tech@week3.com',
   phone: '+1-555-0002',
   specialty: 'Electrical',
-};
-
-// Archive strategy constants
-const ARCHIVE_THRESHOLDS = {
-  OLD_JOB_DAYS: 180, // Auto-archive after 180 days
-  SEALED_JOB_IMMEDIATE: true, // Sealed jobs archive immediately
 };
 
 // CSV export expected headers
@@ -328,30 +322,6 @@ function isValidSHA256(hash: string): boolean {
 }
 
 /**
- * Simulate network conditions
- */
-async function setNetworkCondition(
-  context: BrowserContext,
-  condition: 'offline' | '4g' | '3g' | '2g'
-) {
-  const conditions = {
-    offline: { offline: true },
-    '4g': { downloadThroughput: 5 * 1024 * 1024, uploadThroughput: 2.5 * 1024 * 1024, latency: 20 },
-    '3g': { downloadThroughput: 1.5 * 1024 * 1024, uploadThroughput: 750 * 1024, latency: 100 },
-    '2g': { downloadThroughput: 400 * 1024, uploadThroughput: 100 * 1024, latency: 400 },
-  };
-
-  if (condition === 'offline') {
-    await context.setOffline(true);
-  } else {
-    await context.setOffline(false);
-    // Throttle network (if supported by the test framework)
-    const throttle = conditions[condition as keyof typeof conditions] || conditions['4g'];
-    // Note: Direct network throttling requires additional setup
-  }
-}
-
-/**
  * Get current memory usage (approximate)
  */
 async function getMemoryUsage(page: Page): Promise<number> {
@@ -403,20 +373,6 @@ async function createOldJob(
   const result = await operation();
   const duration = performance.now() - start;
   return { result, duration };
-}
-
-/**
- * Simulate two browser contexts for cross-device testing
- */
-async function createDeviceContext(
-  browser: any,
-  name: string
-): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({
-    ...devices[name as keyof typeof devices],
-  });
-  const page = await context.newPage();
-  return { context, page };
 }
 
 /**
@@ -1031,7 +987,7 @@ test.describe('SYNC CONFLICTS (Fix 3.3)', () => {
     const conflictResolver = new ConflictResolverPage(page2);
 
     // Verify conflict banner is visible
-    let conflictCount = await conflictResolver.getConflictCount();
+    const conflictCount = await conflictResolver.getConflictCount();
     expect(conflictCount).toBeGreaterThan(0);
 
     // Resolve conflict
@@ -1084,7 +1040,7 @@ test.describe('SYNC CONFLICTS (Fix 3.3)', () => {
     const conflictResolver = new ConflictResolverPage(page2);
 
     // Verify conflict exists
-    let conflictCount = await conflictResolver.getConflictCount();
+    const conflictCount = await conflictResolver.getConflictCount();
     expect(conflictCount).toBeGreaterThan(0);
 
     // Refresh page
@@ -1172,6 +1128,7 @@ test.describe('CROSS-DEVICE SCENARIOS', () => {
     await pageA.close();
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test('CD-03: Device B modifies while A offline → conflict on reconnect', async ({ browser, context: mainContext }) => {
     test.setTimeout(120000);
 
@@ -1493,7 +1450,7 @@ test.describe('REGRESSION TESTS', () => {
     await page.getByLabel(/notes|description/i).fill('This is a draft');
 
     // Verify draft is saved
-    const draftExists = await page.evaluate(() => {
+    await page.evaluate(() => {
       const db = (window as any).jobProofDB || (window as any).db;
       return db ? Object.keys(localStorage).some((k) => k.includes('draft')) : false;
     });
@@ -1619,7 +1576,7 @@ test.describe('PERFORMANCE TESTS', () => {
     await page.waitForLoadState('networkidle');
 
     // Measure scroll performance
-    const metrics = await page.evaluate(() => {
+    await page.evaluate(() => {
       return {
         initialTime: performance.now(),
       };

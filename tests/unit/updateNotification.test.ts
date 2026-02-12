@@ -8,7 +8,7 @@
  * - Dismissal persistence
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // ============================================================
 // Service Worker Version Comparison Logic Tests

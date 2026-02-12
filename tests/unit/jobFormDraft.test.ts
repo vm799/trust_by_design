@@ -341,7 +341,7 @@ describe('JobForm Draft Migration (FIX 2.2)', () => {
 
   describe('Test 6: Migration from localStorage to IndexedDB', () => {
     it('migrates old localStorage draft on first load', async () => {
-      const { loadDraft, migrateDraftFromLocalStorage } = await importStorageUtils();
+      const { migrateDraftFromLocalStorage } = await importStorageUtils();
       const workspaceId = 'ws-migrate';
 
       // Simulate old localStorage draft (pre-migration format)

@@ -301,7 +301,7 @@ describe('QuickInvoiceModal', () => {
 
   describe('Invoice Creation', () => {
     it('prevents creation without selecting a job', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const job = createTestJob({ id: 'job-1', status: 'Complete' });
 
       render(

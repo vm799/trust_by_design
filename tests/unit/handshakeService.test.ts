@@ -8,7 +8,7 @@ vi.mock('@/lib/redirects', () => ({
 }));
 
 // Import mocked functions for test control
-import { generateChecksum, validateChecksum } from '@/lib/redirects';
+import { generateChecksum } from '@/lib/redirects';
 
 describe('lib/handshakeService - HandshakeService', () => {
   // Mock localStorage
