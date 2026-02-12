@@ -93,7 +93,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       content: (
         <div className="space-y-4 text-sm text-slate-300">
           <p className="leading-relaxed">
-            JobProof is built <span className="font-bold text-white">offline-first</span>. All your work is saved locally on your device in IndexedDB, then synced to the cloud when you're back online.
+            JobProof is built <span className="font-bold text-white">offline-first</span>. All your work is saved locally on your device in IndexedDB, then synced to the cloud when you&apos;re back online.
           </p>
           <div className="bg-slate-800 border border-white/5 rounded-xl p-4 space-y-2">
             <h5 className="font-black text-white uppercase text-xs">What works offline:</h5>
@@ -119,7 +119,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
             <p className="text-xs font-bold text-warning uppercase mb-1">Pro Tip</p>
             <p className="text-xs text-slate-300">
-              Your device will show an offline indicator when there's no connection. All changes will sync automatically when you're back online.
+              Your device will show an offline indicator when there&apos;s no connection. All changes will sync automatically when you&apos;re back online.
             </p>
           </div>
         </div>
@@ -229,11 +229,11 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                   <span className="material-symbols-outlined text-danger text-sm">photo_camera</span>
                 </div>
                 <div>
-                  <h5 className="font-black text-white text-xs uppercase mb-2">Photos won't upload</h5>
+                  <h5 className="font-black text-white text-xs uppercase mb-2">Photos won&apos;t upload</h5>
                   <ul className="space-y-1 text-xs text-slate-400">
-                    <li>• Check if you're offline (look for the offline indicator)</li>
+                    <li>• Check if you&apos;re offline (look for the offline indicator)</li>
                     <li>• Photos are saved locally and will sync when online</li>
-                    <li>• Try the "Retry Sync" button in the dashboard</li>
+                    <li>• Try the &quot;Retry Sync&quot; button in the dashboard</li>
                     <li>• If stuck, restart the app - your data is safe</li>
                   </ul>
                 </div>
@@ -280,7 +280,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                   <h5 className="font-black text-white text-xs uppercase mb-2">Signature pad issues</h5>
                   <ul className="space-y-1 text-xs text-slate-400">
                     <li>• Use your finger or stylus directly on the white area</li>
-                    <li>• Tap "Clear" if you need to start over</li>
+                    <li>• Tap &quot;Clear&quot; if you need to start over</li>
                     <li>• The pad works even without internet</li>
                     <li>• Sign slowly for better line quality</li>
                   </ul>
@@ -423,7 +423,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-lg mx-auto">
             <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Bookmark the App</p>
-              <p className="text-xs text-slate-300">Add JobProof to your home screen for quick access. On mobile, tap the share button and select "Add to Home Screen".</p>
+              <p className="text-xs text-slate-300">Add JobProof to your home screen for quick access. On mobile, tap the share button and select &quot;Add to Home Screen&quot;.</p>
             </div>
             <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Offline Ready</p>

@@ -743,12 +743,10 @@ async function _retryOrphanPhotosImpl() {
     if (orphans.length === 0) return;
 
     let recovered = 0;
-    let skipped = 0;
     let failed = 0;
 
     for (const orphan of orphans) {
         if (orphan.recoveryAttempts >= MAX_ORPHAN_RECOVERY_ATTEMPTS) {
-            skipped++;
             continue;
         }
 
@@ -758,8 +756,7 @@ async function _retryOrphanPhotosImpl() {
             // Check if local media data still exists in IndexedDB
             const dataUrl = await getMediaLocal(orphan.id);
             if (!dataUrl) {
-                // Binary data is gone — cannot recover, skip
-                skipped++;
+                // Binary data is gone — cannot recover
                 continue;
             }
 

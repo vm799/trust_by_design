@@ -212,7 +212,7 @@ Evidence is cryptographically sealed and verifiable.
               <div className="mt-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-3">
                 <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1">What3Words</p>
                 <p className="text-lg font-mono font-black text-white tracking-wide">
-                  ///{receipt.work_location_w3w.replace('///', '')}
+                  {'///'}{receipt.work_location_w3w.replace('///', '')}
                 </p>
               </div>
             )}

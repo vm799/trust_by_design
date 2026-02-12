@@ -26,7 +26,7 @@ import { EmptyState, LoadingSkeleton, ActionButton, ErrorState } from '../../com
 import SealingProgressModal, { SealingStatus } from '../../components/ui/SealingProgressModal';
 import ClientConfirmationCanvas from '../../components/ClientConfirmationCanvas';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
-import { fadeInUp, fadeInScale, stepSlide, stepSlideTransition, fadeOverlay, tapShrink } from '../../lib/animations';
+import { fadeInUp, stepSlide, stepSlideTransition, fadeOverlay, tapShrink } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
 import { celebrateSuccess, hapticFeedback, showToast } from '../../lib/microInteractions';
 
@@ -76,9 +76,8 @@ const TechEvidenceReview: React.FC = () => {
 
   // Signature state
   const [showSignaturePad, setShowSignaturePad] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignature, setHasSignature] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [, setHasSignature] = useState(false);
+  const [, setIsConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Auto-seal state
@@ -141,69 +140,6 @@ const TechEvidenceReview: React.FC = () => {
       ctx.lineWidth = 3;
     }
   }, [showSignaturePad]);
-
-  const getCoordinates = useCallback(
-    (e: React.MouseEvent | React.TouchEvent): { x: number; y: number } => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-
-      const rect = canvas.getBoundingClientRect();
-
-      if ('touches' in e) {
-        const touch = e.touches[0];
-        return {
-          x: touch.clientX - rect.left,
-          y: touch.clientY - rect.top,
-        };
-      }
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    },
-    []
-  );
-
-  const startDrawing = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      e.preventDefault();
-      setIsDrawing(true);
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx) {
-        const { x, y } = getCoordinates(e);
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      }
-    },
-    [getCoordinates]
-  );
-
-  const draw = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawing) return;
-      e.preventDefault();
-
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx) {
-        const { x, y } = getCoordinates(e);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        if (!hasSignature) {
-          setHasSignature(true);
-          hapticFeedback('light');
-        }
-      }
-    },
-    [isDrawing, getCoordinates, hasSignature]
-  );
-
-  const stopDrawing = useCallback(() => {
-    setIsDrawing(false);
-    const ctx = canvasRef.current?.getContext('2d');
-    if (ctx) {
-      ctx.closePath();
-    }
-  }, []);
 
   const clearSignature = useCallback(() => {
     const canvas = canvasRef.current;
@@ -292,40 +228,6 @@ const TechEvidenceReview: React.FC = () => {
       autoSealJob(job.id);
     }
   }, [job, autoSealJob]);
-
-  const handleSubmitWithSignature = useCallback(async () => {
-    if (!hasSignature || !isConfirmed || !canvasRef.current || !job) return;
-
-    setSubmitting(true);
-    try {
-      const signatureDataUrl = canvasRef.current.toDataURL('image/png');
-      const timestamp = new Date().toISOString();
-
-      celebrateSuccess();
-      hapticFeedback('success');
-
-      const updatedJob: Job = {
-        ...job,
-        clientConfirmation: {
-          signature: signatureDataUrl,
-          timestamp,
-          confirmed: true,
-        },
-        completionNotes: completionNotes || undefined,
-        status: 'Submitted',
-      };
-
-      contextUpdateJob(updatedJob);
-
-      await autoSealJob(job.id);
-
-      navigate(`/tech/job/${job.id}`);
-    } catch (error) {
-      showToast('Failed to submit evidence. Please try again.', 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  }, [hasSignature, isConfirmed, job, contextUpdateJob, navigate, autoSealJob, completionNotes]);
 
   const handleCanvasConfirmed = useCallback(async (signature: string, timestamp: string) => {
     if (!job) return;
@@ -838,7 +740,7 @@ const TechEvidenceReview: React.FC = () => {
               )}
               {selectedPhoto.w3w && (
                 <span className="text-xs text-emerald-400 font-mono">
-                  ///{selectedPhoto.w3w}
+                  {'///'}{selectedPhoto.w3w}
                 </span>
               )}
             </div>

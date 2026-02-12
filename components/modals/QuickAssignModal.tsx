@@ -23,7 +23,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import ModalBase from './ModalBase';
-import type { Job, Technician } from '../../types';
+import type { Job } from '../../types';
 
 interface QuickAssignModalProps {
   isOpen: boolean;
@@ -265,9 +265,9 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
         {/* Job Selector */}
         {showJobSelection && (
           <div>
-            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            <span className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
               Unassigned Jobs
-            </label>
+            </span>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {unassignedJobs.length === 0 ? (
                 <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">
@@ -341,9 +341,9 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
         {showTechnicianSelection && (
           <>
             <div>
-              <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white mb-3">
                 Select a Technician
-              </label>
+              </span>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {availableTechnicians.length === 0 ? (
                   <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">

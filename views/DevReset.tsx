@@ -41,7 +41,8 @@ const DevReset: React.FC = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<ResetResult | null>(null);
   const [layers, setLayers] = useState<LayerDisplayStatus[]>([]);
-  const [controlPlaneStatus, setControlPlaneStatus] = useState<LayerStatus | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- setter used by layer inspection
+  const [_controlPlaneStatus, setControlPlaneStatus] = useState<LayerStatus | null>(null);
   const [devModeEnabled, setDevModeEnabled] = useState(isDevMode());
 
   const buildInfo = getBuildInfo();
@@ -418,7 +419,7 @@ const DevReset: React.FC = () => {
                   {layer.details && layer.details.length > 0 && (
                     <ul className="mt-2 text-xs text-slate-500 space-y-0.5">
                       {layer.details.slice(0, 5).map((detail, i) => (
-                        <li key={i} className="font-mono truncate">
+                        <li key={`detail-${i}`} className="font-mono truncate">
                           {detail}
                         </li>
                       ))}
@@ -503,7 +504,7 @@ const DevReset: React.FC = () => {
                 <p className="font-medium">Errors:</p>
                 <ul className="list-disc list-inside">
                   {resetResult.errors.map((err, i) => (
-                    <li key={i}>{err}</li>
+                    <li key={`error-${i}`}>{err}</li>
                   ))}
                 </ul>
               </div>

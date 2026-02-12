@@ -217,7 +217,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
 
           {displayW3W ? (
             <div className="flex items-center gap-2">
-              <span className="text-cyan-400">///</span>
+              <span className="text-cyan-400">{'///'}</span>
               <span className="text-slate-300">{displayW3W}</span>
               {w3wVerified ? (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400">

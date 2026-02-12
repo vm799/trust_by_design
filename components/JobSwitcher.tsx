@@ -32,7 +32,7 @@ export const JobSwitcher = memo(function JobSwitcher({
   const [pausedJobs, setPausedJobs] = useState<PausedJobContext[]>([]);
   const [hasLockedJob, setHasLockedJob] = useState(false);
   const [showPauseDialog, setShowPauseDialog] = useState(false);
-  const [pendingResumeJobId, setPendingResumeJobId] = useState<string | null>(null);
+  const [, setPendingResumeJobId] = useState<string | null>(null);
 
   // Load paused jobs and check current lock status
   useEffect(() => {

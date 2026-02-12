@@ -223,7 +223,7 @@ const AuthView: React.FC = () => {
 
             <div className="pt-4 border-t border-white/5">
               <p className="text-slate-500 text-xs font-medium mb-3">
-                Didn't receive the email? Check your spam folder or try again.
+                Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
               <button
                 onClick={() => setSuccessMessage(null)}
@@ -378,10 +378,11 @@ const AuthView: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-password-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                 Email Address *
               </label>
               <input
+                id="auth-password-email"
                 required
                 type="email"
                 placeholder="test-manager@jobproof.pro"
@@ -392,10 +393,11 @@ const AuthView: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-password" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                 Password *
               </label>
               <input
+                id="auth-password"
                 required
                 type="password"
                 placeholder="Enter password"
@@ -432,15 +434,16 @@ const AuthView: React.FC = () => {
               <span className="material-symbols-outlined text-primary text-xl">magic_button</span>
               <div>
                 <p className="text-primary text-xs font-black uppercase">Passwordless Sign-In</p>
-                <p className="text-slate-400 text-[10px] font-medium">We'll send a secure link to your email</p>
+                <p className="text-slate-400 text-[10px] font-medium">We&apos;ll send a secure link to your email</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-magic-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                 Email Address *
               </label>
               <input
+                id="auth-magic-email"
                 ref={emailRef}
                 required
                 type="email"

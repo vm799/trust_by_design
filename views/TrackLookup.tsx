@@ -84,7 +84,6 @@ const TrackLookup: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Paste your magic link or token here"
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl py-4 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
-                autoFocus
               />
             </label>
 
@@ -128,7 +127,7 @@ const TrackLookup: React.FC = () => {
         {/* Footer Links */}
         <div className="text-center space-y-3">
           <p className="text-slate-300 text-sm">
-            Don't have a job link?
+            Don&apos;t have a job link?
           </p>
           <button
             onClick={() => navigate('/auth')}

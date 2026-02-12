@@ -409,9 +409,10 @@ const JobForm: React.FC = () => {
 
               {/* Priority Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
+                <label htmlFor="job-priority" className="block text-sm font-medium text-slate-300 mb-3">
                   Priority
                 </label>
+                <input id="job-priority" type="hidden" value={formData.priority} />
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -670,24 +671,25 @@ const JobForm: React.FC = () => {
         <Modal isOpen={showAddClient} onClose={() => setShowAddClient(false)} title="Quick Add Client" size="sm">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-client-name" className="block text-sm font-medium text-slate-300 mb-2">
                 Client Name <span className="text-red-400">*</span>
               </label>
               <input
+                id="new-client-name"
                 type="text"
                 value={newClientName}
                 onChange={(e) => setNewClientName(e.target.value)}
                 placeholder="Company or person name"
-                autoFocus
                 className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddClient()}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-client-email" className="block text-sm font-medium text-slate-300 mb-2">
                 Email (optional)
               </label>
               <input
+                id="new-client-email"
                 type="email"
                 value={newClientEmail}
                 onChange={(e) => setNewClientEmail(e.target.value)}
@@ -726,24 +728,25 @@ const JobForm: React.FC = () => {
         <Modal isOpen={showAddTech} onClose={() => setShowAddTech(false)} title="Quick Add Technician" size="sm">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-tech-name" className="block text-sm font-medium text-slate-300 mb-2">
                 Technician Name <span className="text-red-400">*</span>
               </label>
               <input
+                id="new-tech-name"
                 type="text"
                 value={newTechName}
                 onChange={(e) => setNewTechName(e.target.value)}
                 placeholder="Full name"
-                autoFocus
                 className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-tech-email" className="block text-sm font-medium text-slate-300 mb-2">
                 Email (optional)
               </label>
               <input
+                id="new-tech-email"
                 type="email"
                 value={newTechEmail}
                 onChange={(e) => setNewTechEmail(e.target.value)}

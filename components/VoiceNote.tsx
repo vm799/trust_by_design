@@ -226,7 +226,7 @@ const VoiceNote: React.FC<VoiceNoteProps> = ({
         <div className="flex items-center justify-center gap-1 h-8">
           {[...Array(12)].map((_, i) => (
             <div
-              key={i}
+              key={`visualizer-bar-${i}`}
               className={`w-1 bg-primary rounded-full transition-all ${state.isPaused ? 'h-2' : 'animate-pulse'}`}
               style={{
                 height: state.isPaused ? '8px' : `${Math.random() * 24 + 8}px`,
@@ -243,7 +243,9 @@ const VoiceNote: React.FC<VoiceNoteProps> = ({
           src={state.audioUrl}
           controls
           className="w-full h-10 rounded-lg"
-        />
+        >
+          <track kind="captions" />
+        </audio>
       )}
 
       {/* Controls */}

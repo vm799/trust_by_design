@@ -23,7 +23,8 @@
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "jsx-a11y/click-events-have-key-events": "warn",
-    "jsx-a11y/no-static-element-interactions": "warn"
+    "jsx-a11y/no-static-element-interactions": "warn",
+    "jsx-a11y/aria-role": ["error", { "ignoreNonDOM": true }]
   },
   "settings": {
     "react": {

@@ -111,7 +111,7 @@ const FocusStack: React.FC<FocusStackProps> = ({
     clients.find(c => c.id === job.clientId);
 
   // Categorize jobs into focus/queue/collapsed
-  const { focusJob, queueJobs, collapsedJobs, attentionLevels } = useMemo(() => {
+  const { focusJob, queueJobs, collapsedJobs } = useMemo(() => {
     const levels = new Map<string, AttentionLevel>();
 
     // Find focus job

@@ -122,6 +122,7 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
   }, []);
 
   // Cleanup on unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable; cleanup reads .current at unmount time
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {

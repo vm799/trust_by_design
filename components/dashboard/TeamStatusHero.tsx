@@ -16,7 +16,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
-import { designSystem } from '../../lib/designTokens';
 
 interface TeamStatusHeroProps {
   onTechnicianClick?: () => void;
@@ -81,7 +80,7 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
           <div className="h-6 w-48 bg-slate-300 dark:bg-slate-600 rounded mb-6" />
           <div className="grid grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-4 rounded-lg bg-white dark:bg-slate-700">
+              <div key={`skeleton-stat-${i}`} className="p-4 rounded-lg bg-white dark:bg-slate-700">
                 <div className="h-10 w-16 bg-slate-300 dark:bg-slate-600 rounded mb-2" />
                 <div className="h-4 w-24 bg-slate-300 dark:bg-slate-600 rounded" />
               </div>

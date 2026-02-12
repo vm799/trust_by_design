@@ -18,7 +18,6 @@ import {
   getLinkLifecycleSummary,
   acknowledgeLinkFlag,
   LINK_EXPIRATION,
-  LINK_ALERT_THRESHOLDS,
   type MagicLinkInfo,
   type LinkLifecycleStage
 } from '../lib/db';
@@ -435,7 +434,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                            <>
                               <div className="hidden sm:block size-1 bg-slate-200 rounded-full"></div>
                               <div className="flex items-center gap-1 w-full sm:w-auto">
-                                 <span className="text-red-500 font-black text-[9px] sm:text-[10px]">///</span>
+                                 <span className="text-red-500 font-black text-[9px] sm:text-[10px]">{'///'}</span>
                                  <p className="text-slate-900 font-black uppercase text-[9px] sm:text-[10px] tracking-widest">{job.w3w.replace('///', '')}</p>
                               </div>
                            </>
@@ -458,8 +457,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   {/* Mobile: Vertical timeline */}
                   <div className="flex flex-col sm:hidden gap-4">
                      <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${true ? 'bg-primary/10' : 'bg-slate-200'}`}>
-                           <span className={`material-symbols-outlined text-sm ${true ? 'text-primary' : 'text-slate-400'}`}>send</span>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary/10">
+                           <span className="material-symbols-outlined text-sm text-primary">send</span>
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-[10px] font-black text-slate-900 uppercase">Dispatched</p>
@@ -547,7 +546,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         {job.lat && (
                            <div className="border-t border-slate-200 pt-2 space-y-1">
                               <div className="flex items-center gap-1.5">
-                                 <span className="text-red-500 font-black text-[9px]">///</span>
+                                 <span className="text-red-500 font-black text-[9px]">{'///'}</span>
                                  <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-900 tracking-widest">{job.w3w?.replace('///', '')}</span>
                               </div>
                               <p className="text-slate-700 text-[8px] font-mono uppercase">GPS: {job.lat.toFixed(6)}, {job.lng?.toFixed(6)}</p>
@@ -651,7 +650,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                        <div className="flex flex-col gap-1">
                                           {/* W3W Location - Always show with verified/unverified status */}
                                           <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg px-2 py-1">
-                                             <span className="text-red-500 font-black text-[10px]">///</span>
+                                             <span className="text-red-500 font-black text-[10px]">{'///'}</span>
                                              {p.w3w ? (
                                                 <p className="text-slate-800 font-black uppercase text-[9px] tracking-wide">{p.w3w.replace('///', '')}</p>
                                              ) : (
@@ -1226,7 +1225,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <div className="space-y-1">
                            <p className="text-[10px] font-black text-warning uppercase tracking-widest">Important</p>
                            <p className="text-xs text-slate-300">
-                              Reassigning will revoke the current technician's access and generate a new link for the selected technician.
+                              Reassigning will revoke the current technician&apos;s access and generate a new link for the selected technician.
                            </p>
                         </div>
                      </div>
@@ -1284,7 +1283,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
    );
 };
 
-const TimelineStep = ({ label, time, status, icon, active = true }: any) => (
+const TimelineStep = ({ label, time, icon, active = true }: any) => (
    <div className={`flex flex-col items-center text-center space-y-2 ${active ? 'opacity-100' : 'opacity-20'}`}>
       <div className={`size-8 rounded-xl flex items-center justify-center ${active ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>
          <span className="material-symbols-outlined text-sm font-black">{icon}</span>

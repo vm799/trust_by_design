@@ -28,9 +28,11 @@ const getStorageQuota = () => import('./lib/storageQuota');
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test
 const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
 const ManagerFocusDashboard = lazy(() => import('./views/app/ManagerFocusDashboard'));
 const CreateJob = lazy(() => import('./views/CreateJob'));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test
 const ContractorDashboard = lazy(() => import('./views/ContractorDashboard'));
 const SoloContractorDashboard = lazy(() => import('./views/app/SoloContractorDashboard'));
 const TechnicianPortal = lazy(() => import('./views/TechnicianPortal'));
@@ -124,7 +126,7 @@ const AppContent: React.FC = () => {
   const hasCapuredIntent = useRef(false);
   useEffect(() => {
     if (!hasCapuredIntent.current) {
-      const intent = captureNavigationIntentFromUrl();
+      captureNavigationIntentFromUrl();
       // intent captured (intentionally silent)
       hasCapuredIntent.current = true;
     }

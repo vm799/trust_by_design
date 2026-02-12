@@ -87,7 +87,6 @@ const AuthCallback: React.FC = () => {
       return;
     }
 
-
     // Try to extract tokens from HashRouter URL immediately
     const tryTokenExtraction = async () => {
       if (hasAttemptedTokenExtraction.current || hasRedirected.current) return;

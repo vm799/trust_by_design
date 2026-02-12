@@ -28,7 +28,6 @@ import {
   FocusEntity,
   QueueItem,
   BackgroundSection,
-  BackgroundItem,
   SyncStatus,
   TechnicianWithAttention,
   InvariantValidation,
@@ -38,7 +37,7 @@ import {
   URGENT_PRIORITY,
 } from './dashboardState';
 import { Job, Client, Technician } from '../types';
-import { JOB_STATUS, SYNC_STATUS, isCompletedJobStatus, isActiveJobStatus } from './constants';
+import { JOB_STATUS, SYNC_STATUS } from './constants';
 
 // ============================================================================
 // MAIN DERIVATION FUNCTION
@@ -122,7 +121,7 @@ function deriveManagerDashboard(
   const queue = deriveQueueForManager(techWithJobs, urgentJobs, clients, usedIds);
 
   // ---- BACKGROUND ----
-  const background = deriveBackgroundForManager(techWithJobs, jobs, clients, usedIds);
+  const background = deriveBackgroundForManager(techWithJobs, jobs, clients);
 
   // ---- META ----
   const meta = buildMeta(jobs, technicians, now);
@@ -265,8 +264,7 @@ function deriveQueueForManager(
 function deriveBackgroundForManager(
   techWithJobs: TechnicianWithAttention[],
   jobs: Job[],
-  clients: Client[],
-  usedIds: Set<string>
+  clients: Client[]
 ): BackgroundSection[] {
   const background: BackgroundSection[] = [];
 
@@ -440,7 +438,7 @@ function deriveClientDashboard(
   usedIds: Set<string>,
   now: number
 ): DashboardState {
-  const { userId, jobs, clients, technicians } = input;
+  const { userId, jobs } = input;
 
   // Client sees jobs for their company only
   const clientJobs = jobs.filter(j => j.clientId === userId);

@@ -7,7 +7,7 @@
  * - Fallback to IndexedDB-only storage
  */
 
-import { getStorageQuota, formatBytes, type StorageQuotaInfo } from '../storageQuota';
+import { getStorageQuota, formatBytes } from '../storageQuota';
 
 // Warning callback type
 type QuotaExceededCallback = (info: { usage: number; quota: number; percent: number }) => void;

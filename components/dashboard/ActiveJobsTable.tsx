@@ -184,7 +184,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div key={`skeleton-job-${i}`} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
           ))}
         </div>
       ) : filteredJobs.length === 0 ? (

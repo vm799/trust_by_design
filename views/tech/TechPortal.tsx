@@ -38,7 +38,7 @@ import PullToRefreshIndicator from '../../components/ui/PullToRefreshIndicator';
 
 const TechPortal: React.FC = () => {
   const { userId, session, userEmail } = useAuth();
-  const { jobs: allJobsData, clients: clientsData, isLoading, refresh } = useData();
+  const { jobs: allJobsData, clients: clientsData, technicians, isLoading, refresh } = useData();
 
   // Pull-to-refresh gesture
   const {
@@ -47,7 +47,6 @@ const TechPortal: React.FC = () => {
     isRefreshing,
     progress,
   } = usePullToRefresh({ onRefresh: refresh });
-  const { jobs: allJobsData, clients: clientsData, technicians, isLoading } = useData();
 
   // Get tech name for display
   const techName = session?.user?.user_metadata?.full_name || 'Technician';

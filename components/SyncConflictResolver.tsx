@@ -62,7 +62,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
         <div className="flex-1">
           <h3 className="font-bold text-white text-lg">Sync Conflict Detected</h3>
           <p className="text-sm text-slate-400 mt-1">
-            Job "{conflict.local.title}" has been modified both locally and on the server.
+            Job &quot;{conflict.local.title}&quot; has been modified both locally and on the server.
             <br />
             Choose which version to keep:
           </p>

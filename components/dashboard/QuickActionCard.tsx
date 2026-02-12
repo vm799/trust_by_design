@@ -95,7 +95,6 @@ const STATUS_COLORS: Record<StatusColor, {
 };
 
 const QuickActionCard: React.FC<QuickActionCardProps> = ({
-  id,
   title,
   subtitle,
   icon,

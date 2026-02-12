@@ -25,7 +25,7 @@ import { motion } from 'framer-motion';
 import { ActionButton, Card, LoadingSkeleton, Tooltip } from '../components/ui';
 import { showToast } from '../lib/microInteractions';
 import { fadeInUp } from '../lib/animations';
-import { getVerifiedLocation, type VerifiedLocationResult } from '../lib/services/what3words';
+import { getVerifiedLocation } from '../lib/services/what3words';
 
 // Supabase client for RPC calls
 const getSupabaseClient = async () => {
@@ -612,7 +612,7 @@ const TechProofScreen: React.FC = () => {
           {/* Sign-off declaration text */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
             <p className="text-sm text-slate-300 leading-relaxed font-medium">
-              "I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements."
+              &quot;I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements.&quot;
             </p>
           </div>
 

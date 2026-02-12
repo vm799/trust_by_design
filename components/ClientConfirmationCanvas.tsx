@@ -220,7 +220,6 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         signatureImageRef.current = previousState;
 
         // Update UI state
-        const rect = container.getBoundingClientRect();
         const hasAnySignature = previousState.data.some((byte) => byte !== 0);
         setHasSignature(hasAnySignature);
         setCanUndo(undoStackRef.current.length > 0);

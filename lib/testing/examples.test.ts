@@ -9,7 +9,7 @@
  * @see generateTestData.ts for API reference
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   generateSmallDataset,
   generateMediumDataset,
@@ -232,7 +232,7 @@ describe('Test Data Generation - Sync Conflicts', () => {
 // ============================================================================
 
 describe('Test Data Generation - Feature Flags', () => {
-  let testWorkspaces: string[] = [];
+  const testWorkspaces: string[] = [];
 
   afterAll(async () => {
     // Cleanup all test workspaces

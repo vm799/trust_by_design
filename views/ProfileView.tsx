@@ -47,30 +47,33 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
            <section className="space-y-6 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Full Name</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 
-                      value={formData.name} 
+                    <label htmlFor="profile-full-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Full Name</label>
+                    <input
+                      id="profile-full-name"
+                      type="text"
+                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                      value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                     />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">System Role</label>
-                    <input 
-                      type="text" 
+                    <label htmlFor="profile-system-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">System Role</label>
+                    <input
+                      id="profile-system-role"
+                      type="text"
                       readOnly
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs" 
-                      value={formData.role} 
+                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs"
+                      value={formData.role}
                     />
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</label>
-                 <input 
-                   type="email" 
-                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none" 
-                   value={formData.email} 
+                 <label htmlFor="profile-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</label>
+                 <input
+                   id="profile-email"
+                   type="email"
+                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                   value={formData.email}
                    onChange={e => setFormData({...formData, email: e.target.value})}
                  />
               </div>

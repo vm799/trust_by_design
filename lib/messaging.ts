@@ -585,13 +585,6 @@ function notifyMessageSubscribers(message: Message): void {
   handlers?.forEach(handler => handler(message));
 }
 
-/**
- * Notify subscribers of thread update
- */
-function _notifyThreadSubscribers(thread: MessageThread): void {
-  threadSubscribers.forEach(handler => handler(thread));
-}
-
 // ============================================================================
 // SYSTEM MESSAGES
 // ============================================================================

@@ -35,7 +35,7 @@ describe('StatusRing Component', () => {
       render(
         <StatusRing totalJobs={10} completedJobs={7} activeJobs={2} pendingJobs={1} />
       );
-      const ring = screen.getByRole('figure');
+      const ring = screen.getByRole('button');
       expect(ring.getAttribute('aria-label')).toContain('70%');
     });
   });
@@ -71,7 +71,7 @@ describe('StatusRing Component', () => {
       render(
         <StatusRing totalJobs={10} completedJobs={7} activeJobs={2} pendingJobs={1} />
       );
-      const ring = screen.getByRole('figure');
+      const ring = screen.getByRole('button');
       fireEvent.click(ring);
       expect(screen.getByText('70%')).toBeTruthy();
     });
@@ -80,7 +80,7 @@ describe('StatusRing Component', () => {
       render(
         <StatusRing totalJobs={10} completedJobs={7} activeJobs={2} pendingJobs={1} />
       );
-      const ring = screen.getByRole('figure');
+      const ring = screen.getByRole('button');
       fireEvent.click(ring);
       fireEvent.click(ring);
       expect(screen.getByText('7')).toBeTruthy();
@@ -100,7 +100,7 @@ describe('StatusRing Component', () => {
       render(
         <StatusRing totalJobs={5} completedJobs={5} activeJobs={0} pendingJobs={0} />
       );
-      const ring = screen.getByRole('figure');
+      const ring = screen.getByRole('button');
       fireEvent.click(ring);
       expect(screen.getByText('100%')).toBeTruthy();
     });
@@ -118,7 +118,7 @@ describe('StatusRing Component', () => {
       const { container } = render(
         <StatusRing totalJobs={10} completedJobs={7} activeJobs={2} pendingJobs={1} />
       );
-      const ring = screen.getByRole('figure');
+      const ring = screen.getByRole('button');
       expect(ring.className).toContain('min-h-[44px]');
       expect(ring.className).toContain('min-w-[44px]');
     });

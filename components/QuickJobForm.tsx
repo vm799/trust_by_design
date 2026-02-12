@@ -70,11 +70,6 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
     setWorkMode(getTechnicianWorkMode());
   }, []);
 
-  // Auto-capture location on mount
-  useEffect(() => {
-    captureLocation();
-  }, []);
-
   const captureLocation = useCallback(() => {
     setLocationStatus('capturing');
     navigator.geolocation.getCurrentPosition(
@@ -105,6 +100,11 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
       { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
     );
   }, []);
+
+  // Auto-capture location on mount
+  useEffect(() => {
+    captureLocation();
+  }, [captureLocation]);
 
   const handleWorkModeChange = (mode: 'employed' | 'self_employed') => {
     setWorkMode(mode);
@@ -450,7 +450,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               <p className="text-[10px] font-black text-white uppercase tracking-widest">Location</p>
               {locationStatus === 'captured' ? (
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-red-500 font-black text-xs">///</span>
+                  <span className="text-red-500 font-black text-xs">{'///'}</span>
                   <span className="text-xs font-bold text-white">{w3w.replace('///', '')}</span>
                 </div>
               ) : locationStatus === 'capturing' ? (
@@ -472,16 +472,16 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
         {/* Job Title */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <label htmlFor="quick-job-title" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
             Job Title <span className="text-danger">*</span>
           </label>
           <input
+            id="quick-job-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Emergency Boiler Repair"
             className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-500 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
-            autoFocus
           />
         </div>
 
@@ -524,8 +524,9 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
         {/* Client Address */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Address</label>
+          <label htmlFor="quick-job-address" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Address</label>
           <input
+            id="quick-job-address"
             type="text"
             value={clientAddress}
             onChange={(e) => setClientAddress(e.target.value)}
@@ -536,8 +537,9 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
+          <label htmlFor="quick-job-description" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
           <textarea
+            id="quick-job-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description of work to be done..."
@@ -549,12 +551,13 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         {/* Price (optional, shown prominently in self-employed mode) */}
         {workMode === 'self_employed' && (
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <label htmlFor="quick-job-price" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Quote / Price <span className="text-slate-500">(for receipt)</span>
             </label>
             <div className="relative">
               <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">£</span>
               <input
+                id="quick-job-price"
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}

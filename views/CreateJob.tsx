@@ -5,7 +5,6 @@ import Layout from '../components/AppLayout';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
-import { getValidatedHandshakeUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 
 interface CreateJobProps {
@@ -543,8 +542,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Title *</label>
+              <label htmlFor="create-job-title" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Title *</label>
               <input
+                id="create-job-title"
                 ref={titleInputRef}
                 required
                 type="text"
@@ -556,14 +556,14 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   if (fieldErrors.title) setFieldErrors({ ...fieldErrors, title: false });
                 }}
                 onKeyDown={handleTitleKeyDown}
-                autoFocus
               />
               {fieldErrors.title && <span className="text-danger text-xs font-bold">Required field</span>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client *</label>
+                <label htmlFor="create-job-client" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client *</label>
                 <select
+                  id="create-job-client"
                   ref={clientSelectRef}
                   required
                   className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.clientId ? 'border-danger' : 'border-slate-700'}`}
@@ -577,8 +577,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 {fieldErrors.clientId && <span className="text-danger text-xs font-bold">Required field</span>}
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician *</label>
+                <label htmlFor="create-job-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician *</label>
                 <select
+                  id="create-job-technician"
                   ref={techSelectRef}
                   required
                   className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.techId ? 'border-danger' : 'border-slate-700'}`}
@@ -593,9 +594,10 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Address</label>
+              <label htmlFor="create-job-address" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Address</label>
               <div className="flex gap-2">
                 <input
+                  id="create-job-address"
                   ref={addressInputRef}
                   type="text"
                   className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
@@ -616,7 +618,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   </a>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">Leave blank to use client's registered address</p>
+              <p className="text-[10px] text-slate-400">Leave blank to use client&apos;s registered address</p>
             </div>
 
             {/* Urgent Job Toggle */}
@@ -669,19 +671,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Name *</label>
+                  <label htmlFor="new-client-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Name *</label>
                   <input
+                    id="new-client-name"
                     type="text"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="Client name"
                     value={newClientForm.name}
                     onChange={e => setNewClientForm({ ...newClientForm, name: e.target.value })}
-                    autoFocus
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email *</label>
+                  <label htmlFor="new-client-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email *</label>
                   <input
+                    id="new-client-email"
                     type="email"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="client@example.com"
@@ -690,8 +693,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Phone</label>
+                  <label htmlFor="new-client-phone" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Phone</label>
                   <input
+                    id="new-client-phone"
                     type="tel"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="(optional)"
@@ -700,8 +704,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Address *</label>
+                  <label htmlFor="new-client-address" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Address *</label>
                   <input
+                    id="new-client-address"
                     type="text"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="123 Main St, City"
@@ -760,19 +765,20 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Name *</label>
+                  <label htmlFor="new-tech-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Name *</label>
                   <input
+                    id="new-tech-name"
                     type="text"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="Technician name"
                     value={newTechnicianForm.name}
                     onChange={e => setNewTechnicianForm({ ...newTechnicianForm, name: e.target.value })}
-                    autoFocus
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email *</label>
+                  <label htmlFor="new-tech-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email *</label>
                   <input
+                    id="new-tech-email"
                     type="email"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="tech@example.com"
@@ -781,8 +787,9 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Phone</label>
+                  <label htmlFor="new-tech-phone" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Phone</label>
                   <input
+                    id="new-tech-phone"
                     type="tel"
                     className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="(optional)"
@@ -941,7 +948,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
                 <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 animate-in">
                   <p className="text-primary text-sm font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">lightbulb</span>
-                    Tip: On mobile, use your phone's native share button to send via WhatsApp, SMS, or email.
+                    Tip: On mobile, use your phone&apos;s native share button to send via WhatsApp, SMS, or email.
                   </p>
                 </div>
               )}

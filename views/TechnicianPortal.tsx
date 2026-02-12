@@ -5,7 +5,6 @@ import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../ty
 import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
-import { isSupabaseAvailable } from '../lib/supabase'; // Kept for connectivity check
 import { getVerifiedLocation, createManualLocationResult } from '../lib/services/what3words';
 import { waitForPhotoSync, getUnsyncedPhotos, createSyncStatusModal } from '../lib/utils/syncUtils';
 import { notifyJobSealed } from '../lib/notificationService';
@@ -376,23 +375,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     });
   }, []);
 
-  // Helper to show styled prompt dialog - available for future use
-  const _showPrompt = useCallback((
-    title: string,
-    message: string,
-    onConfirm: (value: string) => void,
-    options?: { placeholder?: string; defaultValue?: string }
-  ) => {
-    setPromptInput(options?.defaultValue || '');
-    setDialog({
-      type: 'prompt',
-      title,
-      message,
-      promptPlaceholder: options?.placeholder,
-      onConfirm: () => onConfirm(promptInput)
-    });
-  }, [promptInput]);
-
   // Close dialog
   const closeDialog = useCallback(() => {
     setDialog({ type: null, title: '', message: '' });
@@ -428,6 +410,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [photoToDelete, job]);
 
   // Initialize state from job and draft once job is loaded
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- init-once-per-job: getDraftState/checklist are intentionally omitted to avoid re-init loops
   useEffect(() => {
     if (!job?.id) return;
 
@@ -473,6 +456,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [step, maxCompletedStep]);
 
   // Auto-focus on step change
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- focus should only trigger on step change, not on checklist updates
   useEffect(() => {
     const focusTimeout = setTimeout(() => {
       if (step === 1) {
@@ -509,6 +493,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   };
 
   // Auto-save progress: Save step to localStorage
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- clearDraftState closes over job?.id which is tracked via jobId
   useEffect(() => {
     if (job?.id && step < 5) {
       localStorage.setItem(`jobproof_progress_${job.id}`, step.toString());
@@ -519,6 +504,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
   }, [step, jobId]);
 
   // Auto-save draft state: Persist all form data on change
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- saveDraftState closes over job?.id which is tracked via jobId
   useEffect(() => {
     if (jobId && step < 5 && step > 0) {
       saveDraftState({
@@ -553,13 +539,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     };
     if (photos.length > 0) loadPhotosFromIndexedDB();
   }, [photos]);
-
-  // Offline-First Sync: Write to Local DB and Queue is handled by writeLocalDraft
-  const _triggerSync = useCallback(async (data: Job) => {
-    // Legacy compatibility: ensure data is queued
-    await queueAction('UPDATE_JOB', data);
-    setLocalSyncStatus('pending');
-  }, []);
 
   // Monitor connectivity for visual status only
   useEffect(() => {
@@ -1705,7 +1684,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     </p>
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
-                        {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">///</span>}
+                        {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">{'///'}</span>}
                         <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
                             locationStatus === 'capturing' ? `Acquiring Signal... ${gpsCountdown}s` :
@@ -1975,8 +1954,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
+                <label htmlFor="tech-signer-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Signatory Identification</label>
                 <input
+                  id="tech-signer-name"
                   ref={signerNameRef}
                   type="text"
                   placeholder="Full Legal Name"
@@ -1986,8 +1966,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorisation Role</label>
+                <label htmlFor="tech-signer-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Authorisation Role</label>
                 <select
+                  id="tech-signer-role"
                   value={signerRole}
                   onChange={e => setSignerRole(e.target.value)}
                   className="w-full bg-slate-900 border-white/10 border rounded-3xl p-5 text-white outline-none focus:border-primary uppercase font-black text-[10px] appearance-none cursor-pointer"
@@ -2001,9 +1982,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
             {/* UX Flow Contract: Attestation checkbox - REQUIRED before sealing */}
             <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4">
-              <label className="flex items-start gap-4 cursor-pointer group">
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- htmlFor matches sr-only input */}
+              <label htmlFor="attestation-confirmed" className="flex items-start gap-4 cursor-pointer group">
+                <span className="sr-only">I confirm I am satisfied with the work completed</span>
                 <div className="relative flex-shrink-0 mt-0.5">
                   <input
+                    id="attestation-confirmed"
                     type="checkbox"
                     checked={attestationConfirmed}
                     onChange={(e) => setAttestationConfirmed(e.target.checked)}
@@ -2015,7 +1999,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     )}
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1" aria-hidden="true">
                   <p className="text-xs font-bold text-white leading-relaxed">
                     I confirm I am satisfied with the work completed
                   </p>
@@ -2250,7 +2234,6 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               onChange={(e) => setPromptInput(e.target.value)}
               placeholder={dialog.promptPlaceholder}
               className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              autoFocus
             />
             <div className="flex gap-3">
               <ActionButton variant="secondary" onClick={closeDialog} fullWidth>
@@ -2280,20 +2263,21 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Latitude</label>
+                <label htmlFor="manual-latitude" className="block text-xs text-slate-500 mb-1">Latitude</label>
                 <input
+                  id="manual-latitude"
                   type="number"
                   step="any"
                   value={manualLatInput}
                   onChange={(e) => setManualLatInput(e.target.value)}
                   placeholder="e.g., 51.505"
                   className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Longitude</label>
+                <label htmlFor="manual-longitude" className="block text-xs text-slate-500 mb-1">Longitude</label>
                 <input
+                  id="manual-longitude"
                   type="number"
                   step="any"
                   value={manualLngInput}
@@ -2343,7 +2327,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="grid gap-3">
                 <div className="bg-slate-800/50 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Working Offline?</p>
-                  <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you're back online. Keep working!</p>
+                  <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you&apos;re back online. Keep working!</p>
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Photo Tips</p>
@@ -2364,8 +2348,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </h3>
               <div className="space-y-2">
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
-                  <summary className="text-xs font-bold text-white">What if GPS doesn't work?</summary>
-                  <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as "unverified" in the report.</p>
+                  <summary className="text-xs font-bold text-white">What if GPS doesn&apos;t work?</summary>
+                  <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as &quot;unverified&quot; in the report.</p>
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">Can I go back and change something?</summary>
@@ -2376,7 +2360,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                   <p className="text-xs text-slate-400 mt-2">Sealing finalizes the evidence bundle for this job. The client and manager receive a professional report.</p>
                 </details>
                 <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
-                  <summary className="text-xs font-bold text-white">I see "Syncing" but nothing happens</summary>
+                  <summary className="text-xs font-bold text-white">I see &quot;Syncing&quot; but nothing happens</summary>
                   <p className="text-xs text-slate-400 mt-2">If sync seems stuck, your data is safe locally. Move to better signal area. Sync will auto-retry for up to 12 minutes.</p>
                 </details>
               </div>

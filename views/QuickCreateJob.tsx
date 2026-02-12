@@ -187,7 +187,7 @@ export default function QuickCreateJob() {
             <div className="inline-block p-4 bg-white rounded-lg mb-3">
               <QRCodeSVG value={createdJob.bunkerLink} size={128} level="M" />
             </div>
-            <p className="text-sm text-slate-400">Scan to open on technician's phone</p>
+            <p className="text-sm text-slate-400">Scan to open on technician&apos;s phone</p>
           </div>
 
           {/* Actions */}
@@ -248,10 +248,11 @@ export default function QuickCreateJob() {
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Job Details</h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-job-name" className="block text-sm font-medium text-slate-300 mb-2">
                 Job Name *
               </label>
               <input
+                id="qcj-job-name"
                 type="text"
                 value={formData.jobName}
                 onChange={(e) => handleInputChange('jobName', e.target.value)}
@@ -262,10 +263,11 @@ export default function QuickCreateJob() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-client-name" className="block text-sm font-medium text-slate-300 mb-2">
                 Client Name
               </label>
               <input
+                id="qcj-client-name"
                 type="text"
                 value={formData.clientName}
                 onChange={(e) => handleInputChange('clientName', e.target.value)}
@@ -275,10 +277,11 @@ export default function QuickCreateJob() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-address" className="block text-sm font-medium text-slate-300 mb-2">
                 Address
               </label>
               <input
+                id="qcj-address"
                 type="text"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
@@ -288,10 +291,11 @@ export default function QuickCreateJob() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-w3w" className="block text-sm font-medium text-slate-300 mb-2">
                 What3Words Location
               </label>
               <input
+                id="qcj-w3w"
                 type="text"
                 value={formData.w3w}
                 onChange={(e) => handleInputChange('w3w', e.target.value)}
@@ -309,10 +313,11 @@ export default function QuickCreateJob() {
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Report Delivery</h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-manager-email" className="block text-sm font-medium text-slate-300 mb-2">
                 Manager Email * (receives report)
               </label>
               <input
+                id="qcj-manager-email"
                 type="email"
                 value={formData.managerEmail}
                 onChange={(e) => handleInputChange('managerEmail', e.target.value)}
@@ -323,10 +328,11 @@ export default function QuickCreateJob() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="qcj-client-email" className="block text-sm font-medium text-slate-300 mb-2">
                 Client Email (optional - also receives report)
               </label>
               <input
+                id="qcj-client-email"
                 type="email"
                 value={formData.clientEmail}
                 onChange={(e) => handleInputChange('clientEmail', e.target.value)}
@@ -338,10 +344,11 @@ export default function QuickCreateJob() {
 
           {/* Notes */}
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="qcj-notes" className="block text-sm font-medium text-slate-300 mb-2">
               Notes for Technician
             </label>
             <textarea
+              id="qcj-notes"
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder="Any special instructions..."

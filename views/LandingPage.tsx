@@ -199,7 +199,7 @@ const LandingPage: React.FC = () => {
               ${isDark ? 'text-white' : 'text-slate-900'}
             `}
           >
-            End "He Said,<br />She Said"
+            End &quot;He Said,<br />She Said&quot;
             <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_auto]">
               {' '}Forever.
             </span>
@@ -308,10 +308,10 @@ const LandingPage: React.FC = () => {
             >
               <span className="material-symbols-outlined text-4xl text-red-500">chat_error</span>
               <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                "I Never Approved That"
+                &quot;I Never Approved That&quot;
               </h3>
               <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Client claims they didn't agree to the extra work. You have no proof. You eat the cost.
+                Client claims they didn&apos;t agree to the extra work. You have no proof. You eat the cost.
               </p>
             </motion.div>
 
@@ -330,7 +330,7 @@ const LandingPage: React.FC = () => {
             >
               <span className="material-symbols-outlined text-4xl text-red-500">schedule</span>
               <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                "You Were Only Here 2 Hours"
+                &quot;You Were Only Here 2 Hours&quot;
               </h3>
               <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 You spent 5 hours on site. Client disputes your invoice. Your word against theirs.
@@ -352,10 +352,10 @@ const LandingPage: React.FC = () => {
             >
               <span className="material-symbols-outlined text-4xl text-red-500">image_not_supported</span>
               <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                "That Damage Was Already There"
+                &quot;That Damage Was Already There&quot;
               </h3>
               <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Pre-existing damage blamed on your team. Without before photos, you're liable.
+                Pre-existing damage blamed on your team. Without before photos, you&apos;re liable.
               </p>
             </motion.div>
           </div>
@@ -498,7 +498,7 @@ const LandingPage: React.FC = () => {
             </h2>
             <p className={`text-base max-w-xl mx-auto ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               Average dispute costs contractors <strong>£800</strong>. JobProof Team costs <strong>£49/month</strong> (£588/year).
-              Save <em>one</em> dispute and you've covered <strong>36 months</strong> of protection.
+              Save <em>one</em> dispute and you&apos;ve covered <strong>36 months</strong> of protection.
             </p>
             <div className="flex justify-center gap-8 pt-2">
               <div className="text-center">
@@ -596,7 +596,7 @@ const LandingPage: React.FC = () => {
               Version 2.0 Roadmap
             </h2>
             <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              We're building the future of field service documentation
+              We&apos;re building the future of field service documentation
             </p>
           </motion.div>
 
@@ -1088,7 +1088,7 @@ const PriceCard = ({
       <ul className="space-y-2">
         {features.map((f, i) => (
           <li
-            key={i}
+            key={`feature-${i}`}
             className={`
               text-xs sm:text-sm flex items-center gap-2
               ${active ? 'text-white' : isDark ? 'text-slate-400' : 'text-slate-600'}

@@ -165,7 +165,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
             </div>
             <ul className="space-y-1">
               {blockers.map((blocker, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                <li key={`blocker-${i}`} className="flex items-center gap-2 text-sm text-slate-300">
                   <span className="material-symbols-outlined text-danger text-xs">close</span>
                   {blocker}
                 </li>

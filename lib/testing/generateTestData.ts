@@ -222,24 +222,6 @@ function generateSHA256Hash(input: string = ''): string {
 }
 
 /**
- * Generate an RSA signature (simulated for test data)
- * In production, this would be signed by the server's private key
- */
-function generateMockSignature(jobId: string): string {
-  const signableContent = `jobId:${jobId}|timestamp:${Date.now()}`;
-  return crypto.createHash('sha256').update(signableContent).digest('hex');
-}
-
-/**
- * Calculate job age in days from a date
- */
-function calculateJobAgeDays(date: Date | string): number {
-  const jobDate = typeof date === 'string' ? new Date(date) : date;
-  const now = new Date();
-  return Math.floor((now.getTime() - jobDate.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-/**
  * Generate a date N days ago
  */
 function daysAgo(days: number): string {

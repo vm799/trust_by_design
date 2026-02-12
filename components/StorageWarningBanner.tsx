@@ -79,7 +79,6 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
   if (!warning || isDismissed) return null;
 
   // 3-status color logic: Green (<70%), Yellow (70-90%), Red (>90%)
-  const isHealthy = warning.percent < 70;
   const isActionRequired = warning.percent >= 70 && warning.percent <= 90;
   const isCritical = warning.percent > 90;
 

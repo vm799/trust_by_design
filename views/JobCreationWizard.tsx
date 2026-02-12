@@ -3,7 +3,6 @@ import Layout from '../components/AppLayout';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
-import { getValidatedHandshakeUrl, getSecureOrigin } from '../lib/redirects';
 import { navigateToNextStep } from '../lib/onboarding';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
 
@@ -416,7 +415,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     let urlToCopy = magicLinkUrl;
     let tokenToTrack = magicLinkToken;
     if (!urlToCopy && createdJobId) {
-      console.warn('[JobCreationWizard] magicLinkUrl was not set, generating emergency local link');
       if (!user?.email) {
         showToast('Cannot copy link: Your email is not available. Please log in again.', 'error');
         return;
@@ -465,7 +463,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             {STEP_TITLES.map((title, idx) => (
-              <div key={idx} className="flex items-center flex-1">
+              <div key={`step-${title}`} className="flex items-center flex-1">
                 <div className="flex flex-col items-center">
                   <div
                     className={`size-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${
@@ -512,15 +510,16 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">work</span>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                  What's the job?
+                  What&apos;s the job?
                 </h3>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-job-title" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Job Title *
                 </label>
                 <input
+                  id="wizard-job-title"
                   ref={titleRef}
                   type="text"
                   required
@@ -532,9 +531,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Job Type *
-                </label>
+                </span>
                 <div className="grid grid-cols-3 gap-3">
                   {JOB_TYPES.map((type) => (
                     <button
@@ -558,9 +557,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
               {/* UAT Fix #5: Normal/Urgent buttons with distinct colors */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Priority
-                </label>
+                </span>
                 <div className="flex gap-4">
                   <button
                     type="button"
@@ -608,10 +607,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-job-address" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Job Address *
                 </label>
                 <input
+                  id="wizard-job-address"
                   ref={addressRef}
                   type="text"
                   required
@@ -623,10 +623,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-site-notes" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Site Notes (Optional)
                 </label>
                 <textarea
+                  id="wizard-site-notes"
                   value={formData.siteNotes}
                   onChange={(e) => setFormData({ ...formData, siteNotes: e.target.value })}
                   className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
@@ -684,10 +685,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Work Description *
                 </label>
                 <textarea
+                  id="wizard-work-description"
                   ref={descriptionRef}
                   required
                   value={formData.workDescription}
@@ -700,9 +702,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Safety Requirements
-                </label>
+                </span>
                 <div className="space-y-2">
                   {SAFETY_REQUIREMENTS.map((req) => (
                     <button
@@ -734,9 +736,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Required PPE
-                </label>
+                </span>
                 <div className="grid grid-cols-4 gap-2">
                   {PPE_OPTIONS.map((ppe) => (
                     <button
@@ -773,7 +775,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">person_add</span>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                  Who's doing the work?
+                  Who&apos;s doing the work?
                 </h3>
               </div>
 
@@ -817,10 +819,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Client *
                 </label>
                 <select
+                  id="wizard-client"
                   ref={clientRef}
                   required
                   value={formData.clientId}
@@ -845,10 +848,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   Technician *
                 </label>
                 <select
+                  id="wizard-technician"
                   required
                   value={formData.techId}
                   onChange={(e) => {
