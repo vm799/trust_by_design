@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Job } from '../types';
+import { hoverLiftSmall, tapScaleSubtle, pulseDot, transitionPulse, transitionPulseFast } from '../lib/animations';
 
 interface JobCardProps {
   job: Job;
@@ -189,10 +190,10 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={hoverLiftSmall}
+      whileTap={tapScaleSubtle}
       animate={shouldPulse ? pulseVariants[effectivePulseColor] : {}}
-      transition={shouldPulse ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : {}}
+      transition={shouldPulse ? transitionPulse : {}}
       className={`w-full rounded-2xl p-4 transition-all text-left group ${
         isUrgent
           ? 'bg-danger/5 border-2 border-danger/30 hover:border-danger/50'
@@ -229,8 +230,8 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
           {/* Pulsing status indicator dot */}
           {shouldPulse && (
             <motion.span
-              animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              animate={pulseDot}
+              transition={transitionPulseFast}
               className={`size-2 rounded-full ${
                 effectivePulseColor === 'green' ? 'bg-success' :
                 effectivePulseColor === 'blue' ? 'bg-primary' :

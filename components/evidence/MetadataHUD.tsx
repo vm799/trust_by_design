@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInDownSmall, scalePop, pulseOpacityFade, transitionPulse } from '../../lib/animations';
 
 interface MetadataHUDProps {
   /** GPS coordinates */
@@ -130,8 +131,8 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={fadeInDownSmall.initial}
+      animate={fadeInDownSmall.animate}
       className={`bg-slate-950/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden ${className}`}
     >
       {/* HUD Header */}
@@ -145,14 +146,14 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
         <AnimatePresence>
           {isOffline && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
+              initial={scalePop.hidden}
+              animate={scalePop.visible}
+              exit={scalePop.exit}
               className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20"
             >
               <motion.span
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                animate={pulseOpacityFade}
+                transition={transitionPulse}
                 className="material-symbols-outlined text-xs text-amber-400"
               >
                 shield

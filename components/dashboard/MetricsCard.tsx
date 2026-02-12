@@ -15,6 +15,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { fadeInScaleMetric, hoverScaleLift, transitionFast } from '../../lib/animations';
 
 interface MetricsCardProps {
   title: string;
@@ -53,10 +54,10 @@ const MetricsCard: React.FC<MetricsCardProps> = React.memo(({
 
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      whileHover={onClick ? { scale: 1.02, y: -4 } : undefined}
-      transition={{ duration: 0.2 }}
+      initial={fadeInScaleMetric.initial}
+      animate={fadeInScaleMetric.animate}
+      whileHover={onClick ? hoverScaleLift : undefined}
+      transition={transitionFast}
       onClick={onClick}
       disabled={!onClick}
       className={`

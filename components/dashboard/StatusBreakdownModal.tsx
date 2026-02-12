@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Job, Client, Technician, JobStatus } from '../../types';
 import { route, ROUTES } from '../../lib/routes';
 import { isReportReady, canDeleteJob } from '../../lib/statusHelpers';
+import { fadeOverlay, slideUpModal } from '../../lib/animations';
 
 interface StatusBreakdownModalProps {
   isOpen: boolean;
@@ -147,16 +148,16 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={fadeOverlay.hidden}
+          animate={fadeOverlay.visible}
+          exit={fadeOverlay.exit}
           className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
+            initial={slideUpModal.hidden}
+            animate={slideUpModal.visible}
+            exit={slideUpModal.exit}
             className="bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden border border-white/10"
             onClick={e => e.stopPropagation()}
           >

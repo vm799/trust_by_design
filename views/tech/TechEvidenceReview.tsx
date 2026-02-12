@@ -702,7 +702,12 @@ const TechEvidenceReview: React.FC = () => {
             animate="visible"
             exit="exit"
             className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Photo viewer"
             onClick={() => setSelectedPhoto(null)}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setSelectedPhoto(null); } }}
+            tabIndex={0}
           >
             {/* Close bar */}
             <div className="flex items-center justify-between px-4 py-3 bg-black/50">
@@ -723,7 +728,7 @@ const TechEvidenceReview: React.FC = () => {
             </div>
 
             {/* Photo */}
-            <div className="flex-1 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-1 flex items-center justify-center p-4" role="presentation" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <img
                 src={selectedPhoto.url || selectedPhoto.localPath}
                 alt="Evidence"
