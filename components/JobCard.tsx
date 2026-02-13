@@ -199,7 +199,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
           ? 'bg-danger/5 border-2 border-danger/30 hover:border-danger/50'
           : hasSyncIssue
           ? 'bg-danger/5 border-2 border-danger/20'
-          : `bg-slate-900 border border-white/5 hover:border-primary/30 ${lifecycle.glowClass}`
+          : `bg-slate-900 border border-white/15 hover:border-primary/30 ${lifecycle.glowClass}`
       }`}
     >
       {/* Urgent Priority Banner */}
@@ -246,7 +246,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       </div>
 
       {/* Client Info */}
-      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/5">
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/15">
         <span className="material-symbols-outlined text-slate-300 text-sm">business</span>
         <span className="text-xs text-slate-300 font-bold truncate">{job.client}</span>
       </div>
@@ -298,7 +298,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       )}
 
       {/* Sync Status */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/5">
+      <div className="flex items-center justify-between pt-3 border-t border-white/15">
         <div className="flex items-center gap-2">
           <span className={`
             material-symbols-outlined text-sm font-black

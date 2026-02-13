@@ -9,14 +9,14 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => (
 );
 
 export const MetricCardSkeleton: React.FC = () => (
-  <div className="bg-slate-900 border border-white/5 p-4 rounded-2xl">
+  <div className="bg-slate-900 border border-white/15 p-4 rounded-2xl">
     <Skeleton className="h-3 w-16 mb-3" />
     <Skeleton className="h-8 w-12" />
   </div>
 );
 
 export const JobCardSkeleton: React.FC = () => (
-  <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl space-y-4">
+  <div className="bg-slate-900 border border-white/15 p-6 rounded-2xl space-y-4">
     <div className="flex justify-between">
       <Skeleton className="h-5 w-32" />
       <Skeleton className="h-5 w-20" />
@@ -60,8 +60,8 @@ export const DashboardSkeleton: React.FC = () => (
     </div>
 
     {/* Table skeleton */}
-    <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] overflow-hidden">
-      <div className="px-8 py-6 border-b border-white/5">
+    <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] overflow-hidden">
+      <div className="px-8 py-6 border-b border-white/15">
         <Skeleton className="h-4 w-32" />
       </div>
       <table className="w-full">

@@ -48,14 +48,14 @@ const SignupSuccess: React.FC = () => {
         </div>
 
         {/* 3-Step Guide */}
-        <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+        <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6">
           <h2 className="text-xl font-black text-white uppercase tracking-tighter text-center">
             Next Steps
           </h2>
 
           <div className="space-y-4">
             {/* Step 1 */}
-            <div className="flex items-start gap-4 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
+            <div className="flex items-start gap-4 p-4 bg-slate-800 rounded-2xl border border-white/15">
               <div className="bg-primary size-10 rounded-xl flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-white text-xl">mail</span>
               </div>
@@ -70,7 +70,7 @@ const SignupSuccess: React.FC = () => {
             </div>
 
             {/* Step 2 */}
-            <div className="flex items-start gap-4 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
+            <div className="flex items-start gap-4 p-4 bg-slate-800 rounded-2xl border border-white/15">
               <div className="bg-primary size-10 rounded-xl flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-white text-xl">login</span>
               </div>
@@ -85,7 +85,7 @@ const SignupSuccess: React.FC = () => {
             </div>
 
             {/* Step 3 */}
-            <div className="flex items-start gap-4 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
+            <div className="flex items-start gap-4 p-4 bg-slate-800 rounded-2xl border border-white/15">
               <div className="bg-primary size-10 rounded-xl flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-white text-xl">rocket_launch</span>
               </div>

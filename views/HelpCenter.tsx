@@ -95,7 +95,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <p className="leading-relaxed">
             JobProof is built <span className="font-bold text-white">offline-first</span>. All your work is saved locally on your device in IndexedDB, then synced to the cloud when you&apos;re back online.
           </p>
-          <div className="bg-slate-800 border border-white/5 rounded-xl p-4 space-y-2">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-4 space-y-2">
             <h5 className="font-black text-white uppercase text-xs">What works offline:</h5>
             <ul className="space-y-1 text-xs">
               <li className="flex items-center gap-2">
@@ -136,7 +136,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
             JobProof uses a <span className="font-bold text-white">3-phase photo categorization</span> system to ensure comprehensive evidence capture:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-sm">photo_camera</span>
@@ -145,7 +145,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
               </div>
               <p className="text-xs text-slate-400">Initial site conditions, existing damage, baseline state</p>
             </div>
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-warning/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-warning text-sm">construction</span>
@@ -154,7 +154,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
               </div>
               <p className="text-xs text-slate-400">Work in progress, process photos, intermediate steps</p>
             </div>
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-success/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-success text-sm">check_circle</span>
@@ -223,7 +223,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
             Quick solutions to the most common issues:
           </p>
           <div className="space-y-4">
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-danger/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-danger text-sm">photo_camera</span>
@@ -239,7 +239,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-warning/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-warning text-sm">location_off</span>
@@ -255,7 +255,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-primary text-sm">link_off</span>
@@ -271,7 +271,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-success/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-success text-sm">draw</span>
@@ -391,7 +391,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
         )}
 
         {/* Operational FAQs */}
-        <section className="bg-slate-900 border border-white/5 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] space-y-8 shadow-2xl">
+        <section className="bg-slate-900 border border-white/15 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] space-y-8 shadow-2xl">
           <div className="space-y-2">
             <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tighter border-l-4 border-primary pl-4">Operational FAQs</h3>
             <p className="text-slate-400 text-sm pl-4">Click any question to expand the answer</p>
@@ -421,11 +421,11 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-lg mx-auto">
-            <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
+            <div className="bg-slate-900 border border-white/15 p-4 rounded-xl">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Bookmark the App</p>
               <p className="text-xs text-slate-300">Add JobProof to your home screen for quick access. On mobile, tap the share button and select &quot;Add to Home Screen&quot;.</p>
             </div>
-            <div className="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
+            <div className="bg-slate-900 border border-white/15 p-4 rounded-xl">
               <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Offline Ready</p>
               <p className="text-xs text-slate-300">Photos are saved locally first. Even without internet, your evidence is safe and will sync when you reconnect.</p>
             </div>
@@ -443,7 +443,7 @@ const HelpCard = ({ icon, title, desc, onClick, isExpanded }: any) => (
       bg-slate-900 border p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] space-y-4 transition-all text-left group shadow-xl w-full
       ${isExpanded
         ? 'border-primary/40 bg-primary/5'
-        : 'border-white/5 hover:border-primary/20'
+        : 'border-white/15 hover:border-primary/20'
       }
     `}
   >
@@ -474,7 +474,7 @@ const HelpCard = ({ icon, title, desc, onClick, isExpanded }: any) => (
 const ExpandableFAQItem = ({ q, a, isExpanded, onToggle }: any) => (
   <button
     onClick={onToggle}
-    className="w-full text-left bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-primary/20 rounded-xl p-4 sm:p-5 transition-all group"
+    className="w-full text-left bg-slate-800 hover:bg-slate-800 border border-white/15 hover:border-primary/20 rounded-xl p-4 sm:p-5 transition-all group"
   >
     <div className="flex items-start gap-3 sm:gap-4">
       <span className="material-symbols-outlined text-primary font-black flex-shrink-0">

@@ -166,7 +166,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Users & Roles</h3>
                </div>
                <div className="p-6 sm:p-10 space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className="size-10 bg-primary rounded-xl flex items-center justify-center font-black text-sm sm:text-base">
                           {user?.name?.[0] || user?.email?.[0] || 'A'}
@@ -195,7 +195,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                </div>
                <div className="p-6 sm:p-10 space-y-6">
                   {/* Current Plan */}
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className={`size-10 rounded-xl flex items-center justify-center font-black text-sm ${
                           subscription?.tier === 'agency' ? 'bg-amber-500' :
@@ -373,7 +373,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </div>
 
             {/* User Experience */}
-            <div className="bg-slate-900 border border-white/5 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl space-y-4">
+            <div className="bg-slate-900 border border-white/15 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl space-y-4">
                <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">User Experience</h3>
                <button
                   onClick={() => {
@@ -474,7 +474,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 const ToggleSetting = ({ label, active, onToggle }: { label: string, active: boolean, onToggle: () => void }) => (
   <button
     onClick={onToggle}
-    className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 border border-orange-500/20 hover:border-orange-500/40 rounded-xl transition-all group"
+    className="w-full flex items-center justify-between p-4 bg-slate-800 hover:bg-slate-800 border border-orange-500/20 hover:border-orange-500/40 rounded-xl transition-all group"
   >
     <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{label}</span>
     <div className={`w-11 h-6 rounded-full p-1 transition-all ${active ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-slate-700'}`}>

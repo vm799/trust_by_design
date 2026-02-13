@@ -262,7 +262,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
 
           {/* Bulk Actions */}
           {selectedJobs.size > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-slate-800/50 border border-white/10 rounded-xl animate-in">
+            <div className="flex items-center gap-2 p-3 bg-slate-800 border border-white/10 rounded-xl animate-in">
               <span className="text-xs font-bold text-slate-400 mr-2">
                 {selectedJobs.size} selected:
               </span>
@@ -358,7 +358,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
                           </button>
                           {showReassignDropdown === job.id && (
                             <div className="absolute z-50 top-full left-0 mt-1 w-48 bg-slate-800 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                              <div className="p-2 border-b border-white/5">
+                              <div className="p-2 border-b border-white/15">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Select Technician</p>
                               </div>
                               <div className="max-h-40 overflow-y-auto">
@@ -468,7 +468,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end pt-4 border-t border-white/5">
+          <div className="flex justify-end pt-4 border-t border-white/15">
             <ActionButton variant="secondary" onClick={onClose}>
               Close
             </ActionButton>

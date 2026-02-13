@@ -196,7 +196,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                   active:scale-[0.98]
                   ${option.primary
                     ? 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50'
-                    : 'bg-slate-900/50 border-white/10 hover:bg-slate-900 hover:border-white/20'
+                    : 'bg-slate-900 border-white/10 hover:bg-slate-900 hover:border-white/20'
                   }
                 `}
               >
@@ -235,7 +235,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                     <p className="text-sm text-slate-400 mt-1">
                       {option.description}
                     </p>
-                    <p className="text-xs text-slate-500 mt-2 border-t border-white/5 pt-2">
+                    <p className="text-xs text-slate-500 mt-2 border-t border-white/15 pt-2">
                       {option.examples}
                     </p>
                   </div>
@@ -253,7 +253,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
           {/* Quick Stats (Optional) */}
           {pendingJobsCount > 0 && (
-            <div className="bg-slate-900/50 border border-white/5 rounded-xl p-4">
+            <div className="bg-slate-900 border border-white/15 rounded-xl p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-400">Active jobs requiring attention</span>
                 <span className="text-white font-bold">{pendingJobsCount}</span>
@@ -264,7 +264,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
       </main>
 
       {/* Footer Navigation */}
-      <footer className="p-4 border-t border-white/5">
+      <footer className="p-4 border-t border-white/15">
         <div className="flex items-center justify-center gap-8 max-w-lg mx-auto">
           <button
             onClick={() => navigate('/admin')}

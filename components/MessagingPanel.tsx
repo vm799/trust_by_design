@@ -205,7 +205,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
             <button
               key={thread.id}
               onClick={() => handleSelectThread(thread)}
-              className="w-full p-4 border-b border-white/5 hover:bg-slate-800/50 transition-colors text-left"
+              className="w-full p-4 border-b border-white/15 hover:bg-slate-800 transition-colors text-left"
             >
               <div className="flex items-start gap-3">
                 {/* Avatar */}
@@ -310,7 +310,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                     msg.type === 'system'
-                      ? 'bg-slate-800/50 text-center w-full'
+                      ? 'bg-slate-800 text-center w-full'
                       : msg.senderId === userId
                       ? 'bg-primary text-white'
                       : 'bg-slate-800 text-white'

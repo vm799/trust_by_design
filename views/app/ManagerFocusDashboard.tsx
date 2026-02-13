@@ -52,7 +52,7 @@ const JOB_PILLS: JobPillConfig[] = [
     icon: 'schedule',
     statuses: ['Pending', 'Draft'],
     color: {
-      bg: 'bg-blue-500/10',
+      bg: 'bg-blue-500/20',
       border: 'border-blue-500/20',
       text: 'text-blue-400',
       activeBg: 'bg-blue-500/25',
@@ -278,7 +278,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
 
   const renderFocusJob = useCallback(({ job, client }: FocusJobRenderProps) => (
     <Link to={route(ROUTES.JOB_DETAIL, { id: job.id })}>
-      <Card className="bg-primary/5 dark:bg-primary/10 border-primary/30">
+      <Card className="bg-primary/5 dark:bg-primary/20 border-primary/30">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center">
             <span className="material-symbols-outlined text-primary">play_arrow</span>
@@ -288,7 +288,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
             <p className="font-medium text-slate-900 dark:text-white truncate">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </p>
-            <p className="text-sm text-slate-500 truncate">{client?.name}</p>
+            <p className="text-sm text-slate-400 truncate">{client?.name}</p>
           </div>
         </div>
       </Card>
@@ -304,7 +304,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </p>
-            <p className="text-xs text-slate-500 truncate">{client?.name}</p>
+            <p className="text-xs text-slate-400 truncate">{client?.name}</p>
           </div>
         </div>
       </Card>
@@ -314,7 +314,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
   const renderCollapsedJob = useCallback(({ job, client }: CollapsedJobRenderProps) => (
     <Link
       to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-      className="block py-1.5 px-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+      className="block py-1.5 px-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
     >
       {job.title || `Job #${job.id.slice(0, 6)}`}
       <span className="mx-1.5 opacity-50">•</span>
@@ -338,27 +338,27 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+        className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
         role="presentation"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/20">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary">engineering</span>
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white">{technician.name}</h3>
-              <p className="text-sm text-slate-500">{techJobs.length} total jobs</p>
+              <p className="text-sm text-slate-400">{techJobs.length} total jobs</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-[44px]"
           >
-            <span className="material-symbols-outlined text-slate-500">close</span>
+            <span className="material-symbols-outlined text-slate-400">close</span>
           </button>
         </div>
 
@@ -375,7 +375,7 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
             maxQueueSize={3}
             sortQueue={sortQueueJobs}
             emptyState={
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-slate-400">
                 <span className="material-symbols-outlined text-3xl mb-2">work_off</span>
                 <p>No active jobs</p>
               </div>
@@ -412,26 +412,26 @@ const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSite
       tabIndex={0}
     >
       <div
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden"
+        className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden"
         role="presentation"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/20">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <span className="material-symbols-outlined text-emerald-400">location_on</span>
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white">On-Site Technicians</h3>
-              <p className="text-sm text-slate-500">{onSiteTechs.length} currently working</p>
+              <p className="text-sm text-slate-400">{onSiteTechs.length} currently working</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-[44px]"
           >
-            <span className="material-symbols-outlined text-slate-500">close</span>
+            <span className="material-symbols-outlined text-slate-400">close</span>
           </button>
         </div>
         <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
@@ -441,7 +441,7 @@ const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSite
               className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
                 isOvertime
                   ? 'border-amber-500/30 bg-amber-500/5'
-                  : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50'
+                  : 'border-slate-200 dark:border-white/20 bg-slate-50 dark:bg-slate-800'
               }`}
             >
               <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
@@ -449,7 +449,7 @@ const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSite
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-900 dark:text-white truncate">{tech.name}</p>
-                <p className="text-xs text-slate-500 truncate">
+                <p className="text-xs text-slate-400 truncate">
                   {activeJob.title || `Job #${activeJob.id.slice(0, 6)}`}
                 </p>
                 {isOvertime && (
@@ -471,7 +471,7 @@ const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSite
             </div>
           ))}
           {onSiteTechs.length === 0 && (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-slate-400">
               <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
               <p className="text-sm">No technicians currently on-site</p>
             </div>
@@ -605,7 +605,7 @@ const ManagerFocusDashboard: React.FC = () => {
   return (
     <div className="overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header with clickable status chips */}
-      <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 lg:px-8 py-4 border-b border-white/15 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <StatusRing
             totalJobs={jobs.length}
@@ -651,6 +651,7 @@ const ManagerFocusDashboard: React.FC = () => {
         >
           {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
           <motion.section variants={fadeInUp}>
+            <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase mb-3">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
@@ -665,7 +666,7 @@ const ManagerFocusDashboard: React.FC = () => {
                   setSelectedJobForAssign(null);
                   setIsAssignModalOpen(true);
                 }}
-                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl border-2 border-primary/20 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Assign technician (Ctrl+A)"
               >
                 <span className="material-symbols-outlined text-lg">person_add</span>
@@ -700,6 +701,9 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* JOB STATUS PILLS - Color-coded filter system */}
           <motion.section variants={fadeInUp}>
+            <div className="border-b border-white/15 pb-4 mb-6">
+              <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Job Status</h2>
+            </div>
             <div className="flex flex-wrap gap-2">
               {JOB_PILLS.map(pill => {
                 const count = pillCounts[pill.key] || 0;
@@ -744,7 +748,7 @@ const ManagerFocusDashboard: React.FC = () => {
                         <Link
                           key={job.id}
                           to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-white/5 transition-colors"
+                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700/50 border border-white/15 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">
@@ -754,7 +758,7 @@ const ManagerFocusDashboard: React.FC = () => {
                               {client?.name || 'No client'} · {job.status}
                             </p>
                           </div>
-                          <span className="material-symbols-outlined text-slate-500 shrink-0 text-sm">chevron_right</span>
+                          <span className="material-symbols-outlined text-slate-400 shrink-0 text-sm">chevron_right</span>
                         </Link>
                       );
                     })}
@@ -767,7 +771,7 @@ const ManagerFocusDashboard: React.FC = () => {
                       </Link>
                     )}
                     {filteredJobs.length === 0 && (
-                      <div className="text-center py-4 text-slate-500 text-sm">
+                      <div className="text-center py-4 text-slate-400 text-sm">
                         No jobs in this category
                       </div>
                     )}
@@ -804,13 +808,13 @@ const ManagerFocusDashboard: React.FC = () => {
           {/* ATTENTION QUEUE - Critical exceptions only — hidden when no issues */}
           {attentionItems.length > 0 && (
             <motion.section variants={fadeInUp}>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
                 <div className="size-8 rounded-xl bg-red-500/20 flex items-center justify-center">
                   <span className="material-symbols-outlined text-red-400">priority_high</span>
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Needs Attention</h2>
-                  <p className="text-xs text-slate-400">
+                  <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Needs Attention</h2>
+                  <p className="text-xs text-slate-300">
                     {attentionItems.length} item{attentionItems.length !== 1 ? 's' : ''} requiring action
                   </p>
                 </div>
@@ -848,7 +852,7 @@ const ManagerFocusDashboard: React.FC = () => {
                         </p>
                         <p className="text-sm text-slate-400 truncate">{item.message}</p>
                       </div>
-                      <span className="material-symbols-outlined text-slate-500 shrink-0">chevron_right</span>
+                      <span className="material-symbols-outlined text-slate-400 shrink-0">chevron_right</span>
                     </div>
                   </Card>
                 ))}
@@ -858,13 +862,13 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* TECHNICIAN STATUS GRID - Categorized, mobile-first */}
           <motion.section variants={fadeInUp}>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
               <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary">group</span>
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Technicians</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Technicians</h2>
+                <p className="text-xs text-slate-300">
                   {technicians.length} team member{technicians.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -872,7 +876,7 @@ const ManagerFocusDashboard: React.FC = () => {
 
             {technicians.length === 0 ? (
               <Card className="text-center py-8">
-                <span className="material-symbols-outlined text-3xl text-slate-500 mb-2">group_off</span>
+                <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">group_off</span>
                 <p className="text-slate-400 text-sm mb-4">No technicians yet</p>
                 <ActionButton variant="secondary" to={ROUTES.TECHNICIAN_NEW} icon="person_add">
                   Add Technician

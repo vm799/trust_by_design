@@ -25,6 +25,16 @@ import { normalizeJobs, normalizeJobTechnicianId } from './utils/technicianIdNor
 import { getWorkspaceStorageKey } from './testingControlPlane';
 import { safeSetItem, safeRemoveItem } from './utils/safeLocalStorage';
 
+// Safe JSON parse: returns fallback on corrupted/truncated localStorage data
+function safeJsonParse<T>(json: string | null, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // REMEDIATION ITEM 5: Lazy load heavy db module (2,445 lines)
 // Dynamic import defers parsing until actually needed
 const getDbModule = () => import('./db');
@@ -127,7 +137,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [templates, setTemplates] = useState<JobTemplate[]>(() => {
     const saved = localStorage.getItem('jobproof_templates_v2');
-    return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
+    return saved ? safeJsonParse<JobTemplate[]>(saved, DEFAULT_TEMPLATES) : DEFAULT_TEMPLATES;
   });
 
   // Loading states
@@ -204,9 +214,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       const savedTemplates = localStorage.getItem(templatesKey);
 
       // Sprint 2 Task 2.6: Normalize technician IDs on load
-      if (savedJobs) setJobs(normalizeJobs(JSON.parse(savedJobs)));
-      if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
-      if (savedTemplates) setTemplates(JSON.parse(savedTemplates));
+      if (savedJobs) setJobs(normalizeJobs(safeJsonParse<Job[]>(savedJobs, [])));
+      if (savedInvoices) setInvoices(safeJsonParse<Invoice[]>(savedInvoices, []));
+      if (savedTemplates) setTemplates(safeJsonParse<JobTemplate[]>(savedTemplates, DEFAULT_TEMPLATES));
 
       // CLAUDE.md mandate: Try Dexie first for clients/technicians (offline-first)
       let clientsLoaded = false;
@@ -234,11 +244,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       // Fall back to localStorage if Dexie didn't have data
       if (!clientsLoaded) {
         const savedClients = localStorage.getItem(clientsKey);
-        if (savedClients) setClients(JSON.parse(savedClients));
+        if (savedClients) setClients(safeJsonParse<Client[]>(savedClients, []));
       }
       if (!techniciansLoaded) {
         const savedTechs = localStorage.getItem(techsKey);
-        if (savedTechs) setTechnicians(JSON.parse(savedTechs));
+        if (savedTechs) setTechnicians(safeJsonParse<Technician[]>(savedTechs, []));
       }
     } catch (err) {
       console.error('[DataContext] Failed to load from localStorage:', err);
@@ -271,7 +281,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, wsId);
         const saved = localStorage.getItem(jobsKey);
         // Sprint 2 Task 2.6: Normalize technician IDs on load
-        if (saved) setJobs(normalizeJobs(JSON.parse(saved)));
+        if (saved) setJobs(normalizeJobs(safeJsonParse<Job[]>(saved, [])));
       }
 
       if (clientsResult.success && clientsResult.data) {
@@ -301,11 +311,11 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
             setClients(dexieClients);
           } else {
             const saved = localStorage.getItem(clientsKey);
-            if (saved) setClients(JSON.parse(saved));
+            if (saved) setClients(safeJsonParse<Client[]>(saved, []));
           }
         } catch (dexieErr) {
           const saved = localStorage.getItem(clientsKey);
-          if (saved) setClients(JSON.parse(saved));
+          if (saved) setClients(safeJsonParse<Client[]>(saved, []));
         }
       }
 
@@ -334,17 +344,17 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
             setTechnicians(dexieTechs);
           } else {
             const saved = localStorage.getItem('jobproof_technicians_v2');
-            if (saved) setTechnicians(JSON.parse(saved));
+            if (saved) setTechnicians(safeJsonParse<Technician[]>(saved, []));
           }
         } catch (dexieErr) {
           const saved = localStorage.getItem('jobproof_technicians_v2');
-          if (saved) setTechnicians(JSON.parse(saved));
+          if (saved) setTechnicians(safeJsonParse<Technician[]>(saved, []));
         }
       }
 
       // Invoices still localStorage only
       const savedInvoices = localStorage.getItem('jobproof_invoices_v2');
-      if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
+      if (savedInvoices) setInvoices(safeJsonParse<Invoice[]>(savedInvoices, []));
 
       loadedWorkspaceRef.current = wsId;
     } catch (err) {
@@ -549,18 +559,22 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       const result = await dbModule.deleteJob(id);
 
       if (!result.success) {
-        // Restore to state if delete failed
+        const errorMessage = result.error || 'Failed to delete job';
+        // Restore to state if delete failed (prevent duplicates)
         if (originalJob) {
-          setJobs(prev => [...prev, originalJob]);
+          setJobs(prev => prev.some(j => j.id === id) ? prev : [...prev, originalJob]);
         }
-        throw new Error(result.error || 'Failed to delete job');
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (err) {
-      // Restore to state if error occurred
+      // Restore to state if network/unexpected error occurred (prevent duplicates)
       if (originalJob) {
-        setJobs(prev => [...prev, originalJob]);
+        setJobs(prev => prev.some(j => j.id === id) ? prev : [...prev, originalJob]);
       }
-      throw err instanceof Error ? err : new Error('Failed to delete job');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete job';
+      setError(errorMessage);
+      throw err instanceof Error ? err : new Error(errorMessage);
     }
   }, [jobs]);
 
@@ -637,20 +651,22 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       const result = await dbModule.deleteClient(id);
 
       if (!result.success) {
-        // Restore to state if delete failed
+        const errorMessage = result.error || 'Failed to delete client';
+        // Restore to state if delete failed (prevent duplicates)
         if (originalClient) {
-          setClients(prev => [...prev, originalClient]);
+          setClients(prev => prev.some(c => c.id === id) ? prev : [...prev, originalClient]);
         }
-        // Throw error so UI can catch and display it
-        throw new Error(result.error || 'Failed to delete client');
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (err) {
-      // Restore to state if error occurred
+      // Restore to state if network/unexpected error occurred (prevent duplicates)
       if (originalClient) {
-        setClients(prev => [...prev, originalClient]);
+        setClients(prev => prev.some(c => c.id === id) ? prev : [...prev, originalClient]);
       }
-      // Re-throw so calling component can handle
-      throw err instanceof Error ? err : new Error('Failed to delete client');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete client';
+      setError(errorMessage);
+      throw err instanceof Error ? err : new Error(errorMessage);
     }
   }, [clients]);
 
@@ -727,20 +743,22 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       const result = await dbModule.deleteTechnician(id);
 
       if (!result.success) {
-        // Restore to state if delete failed
+        const errorMessage = result.error || 'Failed to delete technician';
+        // Restore to state if delete failed (prevent duplicates)
         if (originalTechnician) {
-          setTechnicians(prev => [...prev, originalTechnician]);
+          setTechnicians(prev => prev.some(t => t.id === id) ? prev : [...prev, originalTechnician]);
         }
-        // Throw error so UI can catch and display it
-        throw new Error(result.error || 'Failed to delete technician');
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (err) {
-      // Restore to state if error occurred
+      // Restore to state if network/unexpected error occurred (prevent duplicates)
       if (originalTechnician) {
-        setTechnicians(prev => [...prev, originalTechnician]);
+        setTechnicians(prev => prev.some(t => t.id === id) ? prev : [...prev, originalTechnician]);
       }
-      // Re-throw so calling component can handle
-      throw err instanceof Error ? err : new Error('Failed to delete technician');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete technician';
+      setError(errorMessage);
+      throw err instanceof Error ? err : new Error(errorMessage);
     }
   }, [technicians]);
 

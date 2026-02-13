@@ -142,7 +142,7 @@ const LandingPage: React.FC = () => {
         className={`
           fixed w-full z-50 backdrop-blur-xl border-b transition-colors duration-500
           ${isDark
-            ? 'bg-slate-950/70 border-white/5'
+            ? 'bg-slate-950/70 border-white/15'
             : 'bg-white/70 border-slate-200/50'
           }
         `}
@@ -301,7 +301,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-6 rounded-xl border text-center space-y-3
                 ${isDark
-                  ? 'bg-slate-900/50 border-red-500/20'
+                  ? 'bg-slate-900 border-red-500/20'
                   : 'bg-white/50 border-red-200'
                 }
               `}
@@ -323,7 +323,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-6 rounded-xl border text-center space-y-3
                 ${isDark
-                  ? 'bg-slate-900/50 border-red-500/20'
+                  ? 'bg-slate-900 border-red-500/20'
                   : 'bg-white/50 border-red-200'
                 }
               `}
@@ -345,7 +345,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-6 rounded-xl border text-center space-y-3
                 ${isDark
-                  ? 'bg-slate-900/50 border-red-500/20'
+                  ? 'bg-slate-900 border-red-500/20'
                   : 'bg-white/50 border-red-200'
                 }
               `}
@@ -479,7 +479,7 @@ const LandingPage: React.FC = () => {
             className={`
               p-6 sm:p-8 rounded-2xl border text-center space-y-4
               ${isDark
-                ? 'bg-slate-900/50 border-emerald-500/30'
+                ? 'bg-slate-900 border-emerald-500/30'
                 : 'bg-white/80 border-emerald-200'
               }
             `}
@@ -609,7 +609,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-5 rounded-xl border text-center space-y-2
                 ${isDark
-                  ? 'bg-slate-900/50 border-primary/20'
+                  ? 'bg-slate-900 border-primary/20'
                   : 'bg-white/50 border-slate-200'
                 }
               `}
@@ -631,7 +631,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-5 rounded-xl border text-center space-y-2
                 ${isDark
-                  ? 'bg-slate-900/50 border-primary/20'
+                  ? 'bg-slate-900 border-primary/20'
                   : 'bg-white/50 border-slate-200'
                 }
               `}
@@ -653,7 +653,7 @@ const LandingPage: React.FC = () => {
               className={`
                 p-5 rounded-xl border text-center space-y-2
                 ${isDark
-                  ? 'bg-slate-900/50 border-primary/20'
+                  ? 'bg-slate-900 border-primary/20'
                   : 'bg-white/50 border-slate-200'
                 }
               `}
@@ -703,7 +703,7 @@ const LandingPage: React.FC = () => {
         className={`
           relative py-8 sm:py-12 px-4 sm:px-6 border-t backdrop-blur-sm
           ${isDark
-            ? 'border-white/5 bg-slate-950/50'
+            ? 'border-white/15 bg-slate-950/50'
             : 'border-slate-200/50 bg-white/50'
           }
         `}
@@ -754,7 +754,7 @@ const FeatureCard = ({
       text-center space-y-3 sm:space-y-4 p-6 sm:p-8 rounded-2xl
       backdrop-blur-xl border transition-all duration-300
       ${isDark
-        ? 'bg-slate-900/50 border-white/10 hover:bg-slate-900/70 hover:border-white/20'
+        ? 'bg-slate-900 border-white/10 hover:bg-slate-900/70 hover:border-white/20'
         : 'bg-white/50 border-slate-200/50 hover:bg-white/70 hover:border-slate-300/50 hover:shadow-xl'
       }
     `}
@@ -919,7 +919,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
               className={`
                 rounded-xl border overflow-hidden transition-all
                 ${isDark
-                  ? 'bg-slate-900/50 border-white/10 hover:border-white/20'
+                  ? 'bg-slate-900 border-white/10 hover:border-white/20'
                   : 'bg-white/50 border-slate-200/50 hover:border-slate-300'
                 }
               `}
@@ -1057,7 +1057,7 @@ const PriceCard = ({
       ${active
         ? 'bg-gradient-to-br from-primary to-indigo-600 border-primary md:scale-105 shadow-2xl shadow-primary/30'
         : isDark
-          ? 'bg-slate-900/50 border-white/10 backdrop-blur-xl hover:bg-slate-900/70'
+          ? 'bg-slate-900 border-white/10 backdrop-blur-xl hover:bg-slate-900/70'
           : 'bg-white/50 border-slate-200/50 backdrop-blur-xl hover:bg-white/70 hover:shadow-xl'
       }
     `}

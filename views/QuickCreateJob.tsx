@@ -154,7 +154,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Job ID */}
-          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
             <p className="text-xs text-slate-400 mb-1">JOB ID</p>
             <p className="text-lg font-mono font-bold text-white">{createdJob.id}</p>
           </div>
@@ -183,7 +183,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* QR Code */}
-          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 text-center">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center">
             <div className="inline-block p-4 bg-white rounded-lg mb-3">
               <QRCodeSVG value={createdJob.bunkerLink} size={128} level="M" />
             </div>
@@ -244,7 +244,7 @@ export default function QuickCreateJob() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Job Details */}
-          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Job Details</h2>
 
             <div>
@@ -309,7 +309,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Contact Details */}
-          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Report Delivery</h2>
 
             <div>
@@ -343,7 +343,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Notes */}
-          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
             <label htmlFor="qcj-notes" className="block text-sm font-medium text-slate-300 mb-2">
               Notes for Technician
             </label>

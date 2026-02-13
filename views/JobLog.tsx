@@ -293,7 +293,7 @@ export default function JobLog() {
 
         {/* Empty State */}
         {!isLoading && filteredJobs.length === 0 && (
-          <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
+          <div className="text-center py-12 bg-slate-800 rounded-xl border border-slate-700">
             <span className="text-4xl">📋</span>
             <h3 className="text-lg font-medium text-white mt-4">No Jobs Yet</h3>
             <p className="text-slate-400 mt-2">Complete your first job to see it here</p>
@@ -311,7 +311,7 @@ export default function JobLog() {
           {filteredJobs.map(job => (
             <div
               key={job.id}
-              className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden"
+              className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden"
             >
               {/* Header */}
               <div className="p-4 border-b border-slate-700">
@@ -370,7 +370,7 @@ export default function JobLog() {
               )}
 
               {/* Actions */}
-              <div className="p-3 bg-slate-900/50 flex gap-2">
+              <div className="p-3 bg-slate-900 flex gap-2">
                 <a
                   href={`/#/run/${job.id}`}
                   className="flex-1 py-2 text-center bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm"

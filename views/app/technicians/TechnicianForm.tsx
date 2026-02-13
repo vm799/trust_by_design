@@ -132,7 +132,7 @@ const TechnicianForm: React.FC = () => {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
-        status: 'Authorised',
+        status: 'Registered',
         rating: 0,
         jobsCompleted: 0,
       };
@@ -310,7 +310,7 @@ const TechnicianForm: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-white/5">
+              <div className="flex gap-3 pt-4 border-t border-white/15">
                 <ActionButton
                   variant="secondary"
                   onClick={() => navigate(-1)}

@@ -77,7 +77,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Mobile hamburger + context */}
-        <header className="h-14 lg:h-16 border-b border-white/5 flex items-center justify-between px-4 lg:px-8 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
+        <header className="h-14 lg:h-16 border-b border-white/15 flex items-center justify-between px-4 lg:px-8 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <button

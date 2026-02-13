@@ -378,7 +378,7 @@ const OAuthSetup: React.FC = () => {
                   id="oauth-full-name"
                   type="text"
                   placeholder="Your name"
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                 />
@@ -548,7 +548,7 @@ const OAuthSetup: React.FC = () => {
                   id="oauth-workspace-name"
                   type="text"
                   placeholder={`${firstName}'s Workspace`}
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={workspaceName}
                   onChange={e => setWorkspaceName(e.target.value)}
                 />
@@ -558,7 +558,7 @@ const OAuthSetup: React.FC = () => {
               </div>
 
               {/* Preview */}
-              <div className="bg-slate-800/50 border border-white/10 rounded-2xl p-4">
+              <div className="bg-slate-800 border border-white/10 rounded-2xl p-4">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Preview</p>
                 <div className="flex items-center gap-3">
                   <div className="size-12 bg-gradient-to-br from-primary to-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-xl">

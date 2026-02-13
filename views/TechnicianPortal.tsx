@@ -1250,18 +1250,18 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-white/5 shadow-2xl relative`}>
+          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-white/15 shadow-2xl relative`}>
             <span className={`material-symbols-outlined text-7xl font-black text-${config.colour}`}>{config.icon}</span>
           </div>
           <div className="space-y-3">
             <h2 className={`text-4xl font-black text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
             <p className="text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
-            <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 mt-4">
+            <div className="bg-slate-900 border border-white/15 rounded-2xl p-4 mt-4">
               <p className="text-xs text-primary font-bold uppercase tracking-wide">{config.action}</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 min-h-[48px] flex items-center justify-center gap-2"
@@ -1280,7 +1280,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/5 shadow-2xl relative">
+          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/15 shadow-2xl relative">
             <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
           </div>
           <div className="space-y-3">
@@ -1288,7 +1288,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
@@ -1362,7 +1362,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in px-4">
-          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/5 shadow-2xl relative animate-success-pop">
+          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/15 shadow-2xl relative animate-success-pop">
             <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
           <div className="space-y-3">
@@ -1382,7 +1382,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={handleEmailReport}
-                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
                 title="Send report via email"
               >
                 <span className="material-symbols-outlined text-primary text-xl">email</span>
@@ -1390,7 +1390,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </button>
               <button
                 onClick={handlePrintReport}
-                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
                 title="Print or save as PDF"
               >
                 <span className="material-symbols-outlined text-primary text-xl">print</span>
@@ -1398,7 +1398,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </button>
               <button
                 onClick={handleShareReport}
-                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/5"
+                className="py-3 bg-white/5 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
                 title="Share report link"
               >
                 <span className="material-symbols-outlined text-primary text-xl">share</span>
@@ -1424,7 +1424,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             />
           )}
 
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/5 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/5 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
       </Layout>
     );
@@ -1571,8 +1571,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <p className="text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
             </header>
 
-            <div className="bg-slate-900 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
-              <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
+            <div className="bg-slate-900 border border-white/15 rounded-[3rem] overflow-hidden shadow-2xl">
+              <div className="px-8 py-6 border-b border-white/15 bg-white/[0.02]">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Job Details</p>
               </div>
               <div className="p-8 space-y-6">
@@ -1594,7 +1594,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
                 <div className="space-y-2">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
-                  <div className="bg-slate-800 p-4 rounded-2xl border border-white/5">
+                  <div className="bg-slate-800 p-4 rounded-2xl border border-white/15">
                     <p className="text-sm font-medium text-white tracking-tight leading-relaxed">{job.address}</p>
                   </div>
                 </div>
@@ -1610,7 +1610,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8">
+            <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8">
               <div className="flex items-center gap-4 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">What You Need To Do</p>
@@ -1788,7 +1788,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     key={item.id}
                     ref={(el) => { checklistRefs.current[idx] = el; }}
                     onClick={() => handleChecklistToggle(idx)}
-                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/5 text-slate-300'}`}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/15 text-slate-300'}`}
                   >
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}
@@ -2325,15 +2325,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 Quick Tips
               </h3>
               <div className="grid gap-3">
-                <div className="bg-slate-800/50 p-4 rounded-xl">
+                <div className="bg-slate-800 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Working Offline?</p>
                   <p className="text-xs text-slate-400 mt-1">Your photos and data are saved locally and will sync automatically when you&apos;re back online. Keep working!</p>
                 </div>
-                <div className="bg-slate-800/50 p-4 rounded-xl">
+                <div className="bg-slate-800 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Photo Tips</p>
                   <p className="text-xs text-slate-400 mt-1">Take clear photos of work done. Use Before/During/After categories. Each photo is GPS-tagged and timestamped.</p>
                 </div>
-                <div className="bg-slate-800/50 p-4 rounded-xl">
+                <div className="bg-slate-800 p-4 rounded-xl">
                   <p className="text-xs font-bold text-white">Signature</p>
                   <p className="text-xs text-slate-400 mt-1">The client signs to confirm work was completed. Make sure they sign clearly for your records.</p>
                 </div>
@@ -2347,19 +2347,19 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 Common Questions
               </h3>
               <div className="space-y-2">
-                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                <details className="bg-slate-800 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">What if GPS doesn&apos;t work?</summary>
                   <p className="text-xs text-slate-400 mt-2">If GPS is blocked, you can enter coordinates manually. This will be flagged as &quot;unverified&quot; in the report.</p>
                 </details>
-                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                <details className="bg-slate-800 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">Can I go back and change something?</summary>
                   <p className="text-xs text-slate-400 mt-2">You can go back to previous steps until you sign. After signing, the evidence is locked for legal integrity.</p>
                 </details>
-                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                <details className="bg-slate-800 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">What happens when I seal the job?</summary>
                   <p className="text-xs text-slate-400 mt-2">Sealing finalizes the evidence bundle for this job. The client and manager receive a professional report.</p>
                 </details>
-                <details className="bg-slate-800/50 rounded-xl p-4 cursor-pointer group">
+                <details className="bg-slate-800 rounded-xl p-4 cursor-pointer group">
                   <summary className="text-xs font-bold text-white">I see &quot;Syncing&quot; but nothing happens</summary>
                   <p className="text-xs text-slate-400 mt-2">If sync seems stuck, your data is safe locally. Move to better signal area. Sync will auto-retry for up to 12 minutes.</p>
                 </details>
@@ -2394,7 +2394,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 className="w-full h-auto"
               />
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-4">
+            <div className="bg-slate-800 rounded-xl p-4">
               <p className="text-xs text-slate-400">
                 <span className="font-bold text-white">Signer:</span> {signerName} ({signerRole})
               </p>
@@ -2436,22 +2436,22 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </div>
 
             {/* Evidence Summary */}
-            <div className="bg-slate-800/50 rounded-xl p-4 space-y-3">
+            <div className="bg-slate-800 rounded-xl p-4 space-y-3">
               <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Evidence Summary</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-900/50 rounded-lg p-3">
+                <div className="bg-slate-900 rounded-lg p-3">
                   <p className="text-2xl font-black text-primary">{photos.length}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider">Photos</p>
                 </div>
-                <div className="bg-slate-900/50 rounded-lg p-3">
+                <div className="bg-slate-900 rounded-lg p-3">
                   <p className="text-2xl font-black text-success">✓</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider">Signature</p>
                 </div>
-                <div className="bg-slate-900/50 rounded-lg p-3">
+                <div className="bg-slate-900 rounded-lg p-3">
                   <p className="text-sm font-black text-white truncate">{signerName}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider">Signed By</p>
                 </div>
-                <div className="bg-slate-900/50 rounded-lg p-3">
+                <div className="bg-slate-900 rounded-lg p-3">
                   <p className="text-sm font-black text-white">{locationStatus === 'captured' ? '✓ GPS' : '—'}</p>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider">Location</p>
                 </div>
@@ -2459,7 +2459,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </div>
 
             {/* Security Info */}
-            <div className="flex items-start gap-3 bg-slate-800/50 rounded-xl p-4">
+            <div className="flex items-start gap-3 bg-slate-800 rounded-xl p-4">
               <span className="material-symbols-outlined text-primary text-xl">lock</span>
               <div>
                 <p className="text-xs font-bold text-white">RSA-2048 Cryptographic Seal</p>

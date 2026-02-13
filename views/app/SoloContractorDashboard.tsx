@@ -116,7 +116,7 @@ const SoloContractorDashboard: React.FC = () => {
   // ========================================================================
   const renderFocusJob = useCallback(({ job, client, onContinue }: FocusJobRenderProps) => {
     return (
-      <Card className="bg-primary/5 dark:bg-primary/10 border-primary/30">
+      <Card className="bg-primary/5 dark:bg-primary/20 border-primary/30">
         <div className="p-2">
           {/* Header with status */}
           <div className="flex items-center gap-3 mb-4">
@@ -145,7 +145,7 @@ const SoloContractorDashboard: React.FC = () => {
               </div>
             )}
             {job.lastUpdated && (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-slate-400">
                 <span className="material-symbols-outlined text-base">schedule</span>
                 <span>Last activity: {formatRelativeTime(job.lastUpdated)}</span>
               </div>
@@ -199,7 +199,7 @@ const SoloContractorDashboard: React.FC = () => {
           <div className="flex items-center gap-4">
             {/* Position */}
             <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{position}</span>
+              <span className="text-sm font-bold text-slate-400 dark:text-slate-400">{position}</span>
             </div>
 
             {/* Job info */}
@@ -207,7 +207,7 @@ const SoloContractorDashboard: React.FC = () => {
               <p className="font-medium text-slate-900 dark:text-white truncate">
                 {job.title || `Job #${job.id.slice(0, 6)}`}
               </p>
-              <p className="text-sm text-slate-500 truncate">{client?.name || 'Unknown'}</p>
+              <p className="text-sm text-slate-400 truncate">{client?.name || 'Unknown'}</p>
               {/* Compact evidence bar */}
               <div className="mt-1.5">
                 <EvidenceProgressBar job={job} compact />
@@ -219,7 +219,7 @@ const SoloContractorDashboard: React.FC = () => {
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {new Date(job.date).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 {new Date(job.date).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
               </p>
             </div>
@@ -236,7 +236,7 @@ const SoloContractorDashboard: React.FC = () => {
   const renderCollapsedJob = useCallback(({ job, client }: CollapsedJobRenderProps) => (
     <Link
       to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-      className="block py-2.5 px-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors"
+      className="block py-2.5 px-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
     >
       <div className="flex items-center justify-between">
         <span className="text-slate-600 dark:text-slate-400 truncate">
@@ -283,7 +283,7 @@ const SoloContractorDashboard: React.FC = () => {
     return (
       <PageContent>
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-          <div className="size-20 rounded-[2rem] bg-primary/10 flex items-center justify-center mb-6">
+          <div className="size-20 rounded-[2rem] bg-primary/20 flex items-center justify-center mb-6">
             <span className="material-symbols-outlined text-4xl text-primary">add_task</span>
           </div>
           <h3 className="text-xl font-bold text-white mb-2">Ready to work?</h3>
@@ -301,7 +301,7 @@ const SoloContractorDashboard: React.FC = () => {
   return (
     <div>
       {/* Header */}
-      <div className="px-4 lg:px-8 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 lg:px-8 py-4 border-b border-white/15 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-white">My Jobs</h1>
           {syncPending > 0 && (
@@ -336,10 +336,12 @@ const SoloContractorDashboard: React.FC = () => {
             sortQueue={sortQueueJobs}
             showCollapsed={true}
             queueHeader={
-              <h2 className="text-sm font-medium text-slate-400 mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">queue</span>
-                Up Next
-              </h2>
+              <div className="border-b border-white/15 pb-4 mb-6">
+                <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">queue</span>
+                  Up Next
+                </h2>
+              </div>
             }
             collapsedHeader="More jobs"
           />
@@ -348,13 +350,13 @@ const SoloContractorDashboard: React.FC = () => {
           {completedCount > 0 && (
             <motion.section
               variants={fadeInUp}
-              className="pt-4 border-t border-white/5"
+              className="pt-4 border-t border-white/15"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-500">check_circle</span>
-                  <span className="text-sm font-medium text-white">Completed</span>
-                  <span className="text-xs text-slate-400 font-bold">({completedCount})</span>
+                  <span className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Completed</span>
+                  <span className="text-xs text-slate-300 font-bold">({completedCount})</span>
                 </div>
                 <Link
                   to={`${ROUTES.JOBS}?status=review`}
@@ -433,10 +435,13 @@ const SoloContractorDashboard: React.FC = () => {
 
           {/* Contextual Actions: 3 max, 56px touch targets */}
           <motion.section variants={fadeInUp}>
+            <div className="border-b border-white/15 pb-4 mb-6">
+              <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Quick Actions</h2>
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <Link
                 to={ROUTES.JOB_CREATE}
-                className="min-h-[56px] px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Create new job"
               >
                 <span className="material-symbols-outlined text-lg">add_circle</span>

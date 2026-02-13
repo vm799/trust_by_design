@@ -146,7 +146,7 @@ const LinkExpiredView: React.FC<LinkExpiredViewProps> = ({
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               placeholder="Enter your email"
-              className="w-full min-h-[56px] px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full min-h-[56px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               aria-label="Email address"
             />
             {error && (
@@ -185,7 +185,7 @@ const LinkExpiredView: React.FC<LinkExpiredViewProps> = ({
             </button>
             <button
               onClick={handleGoHome}
-              className="flex-1 min-h-[44px] py-3 bg-slate-800/50 hover:bg-slate-700 text-slate-400 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+              className="flex-1 min-h-[44px] py-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
             >
               Home
             </button>

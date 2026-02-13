@@ -214,9 +214,9 @@ export const JobSwitcher = memo(function JobSwitcher({
                     {otherPausedJobs.map(job => (
                       <motion.div
                         key={job.jobId}
-                        initial={slideInLeftSmall.initial}
-                        animate={slideInLeftSmall.animate}
-                        className="p-4 rounded-2xl bg-slate-800/50 border border-white/5"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="p-4 rounded-2xl bg-slate-800 border border-white/15"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>

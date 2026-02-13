@@ -50,7 +50,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
   // Loading
   if (isLoading) {
     return (
-      <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 animate-pulse">
+      <div className="bg-slate-800 border border-white/15 rounded-2xl p-4 animate-pulse">
         <div className="h-4 bg-slate-700 rounded w-48 mb-2"></div>
         <div className="h-3 bg-slate-700 rounded w-32"></div>
       </div>
@@ -120,7 +120,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
           </div>
 
           {/* Seal Metadata */}
-          <div className="bg-slate-950/50 rounded-2xl p-5 space-y-3 border border-white/5">
+          <div className="bg-slate-950/50 rounded-2xl p-5 space-y-3 border border-white/15">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Evidence Hash</p>
@@ -134,7 +134,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-white/5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-white/15">
               <div>
                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Sealed At</p>
                 <p className="text-xs font-bold text-white">{formatSealDate(sealStatus?.sealedAt)}</p>
@@ -147,7 +147,7 @@ const SealBadge: React.FC<SealBadgeProps> = ({ jobId, variant = 'full' }) => {
 
             {/* Verification Details */}
             {verification?.verification && (
-              <div className="pt-3 border-t border-white/5">
+              <div className="pt-3 border-t border-white/15">
                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">Verification Status</p>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">

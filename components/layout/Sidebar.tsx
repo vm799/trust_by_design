@@ -57,9 +57,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`w-64 flex-col border-r border-white/5 bg-slate-950/50 ${className}`}>
+    <aside className={`w-64 flex-col border-r border-white/15 bg-slate-950/50 ${className}`}>
       {/* Logo */}
-      <div className="p-6 border-b border-white/5">
+      <div className="p-6 border-b border-white/15">
         <Link to="/app" onClick={handleClick}>
           <JobProofLogo variant="full" size="md" />
         </Link>
@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile Footer */}
-      <div className="p-4 border-t border-white/5">
+      <div className="p-4 border-t border-white/15">
         <Link
           to="/app/settings"
           onClick={handleClick}

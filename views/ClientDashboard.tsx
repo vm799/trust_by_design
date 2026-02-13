@@ -114,7 +114,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
   // Custom empty state for clients
   const emptyState = useMemo(() => (
-    <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 text-center">
+    <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 text-center">
       <span className="material-symbols-outlined text-4xl text-slate-600 mb-3">folder_open</span>
       <p className="text-slate-300 text-sm font-medium">No job history found.</p>
     </div>

@@ -66,14 +66,14 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
 
           {/* Show existing invoices if any (read-only) */}
           {invoices.length > 0 && (
-            <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden shadow-2xl opacity-60">
-              <div className="px-8 py-4 border-b border-white/5 bg-white/[0.02]">
+            <div className="bg-slate-900 border border-white/15 rounded-3xl overflow-hidden shadow-2xl opacity-60">
+              <div className="px-8 py-4 border-b border-white/15 bg-white/[0.02]">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Existing Invoices (Read Only)
                 </p>
               </div>
               <table className="w-full text-left">
-                <thead className="bg-slate-950/50 border-b border-white/5">
+                <thead className="bg-slate-950/50 border-b border-white/15">
                   <tr>
                     <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Invoice Ref</th>
                     <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Client / Job</th>
@@ -122,9 +122,9 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="bg-slate-900 border border-white/15 rounded-3xl overflow-hidden shadow-2xl">
           <table className="w-full text-left">
-            <thead className="bg-slate-950/50 border-b border-white/5">
+            <thead className="bg-slate-950/50 border-b border-white/15">
               <tr>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Invoice Ref</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-300">Client / Job</th>

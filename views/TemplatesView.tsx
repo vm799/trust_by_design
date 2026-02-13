@@ -33,7 +33,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {templates.map(tpl => (
-            <div key={tpl.id} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] space-y-6 hover:border-primary/30 transition-all group shadow-xl">
+            <div key={tpl.id} className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] space-y-6 hover:border-primary/30 transition-all group shadow-xl">
               <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                 <span className="material-symbols-outlined text-3xl font-black">assignment</span>
               </div>
@@ -41,7 +41,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">{tpl.name}</h3>
                 <p className="text-sm text-slate-300 leading-relaxed font-medium">{tpl.description}</p>
               </div>
-              <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+              <div className="pt-4 border-t border-white/15 flex justify-between items-center">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tpl.tasks} Data Points</span>
                 <button
                   onClick={() => navigate(`/admin/create?template=${tpl.id}&title=${encodeURIComponent(tpl.name)}`)}
@@ -58,7 +58,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
             onClick={() => navigate('/admin/create')}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin/create'); } }}
             aria-label="Create new template"
-            className="border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-8 gap-3 opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
+            className="border-2 border-dashed border-white/15 rounded-[2.5rem] flex flex-col items-center justify-center p-8 gap-3 opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
           >
             <span className="material-symbols-outlined text-4xl font-black">add</span>
             <span className="font-black text-xs uppercase tracking-widest">Create Template</span>

@@ -58,7 +58,7 @@ const ClientsSkeleton = React.memo(() => (
             <div className="h-3 w-3/4 bg-slate-800 rounded" />
           </div>
           {/* Location placeholder */}
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+          <div className="bg-white/5 rounded-2xl p-3 border border-white/15">
             <div className="flex items-start gap-2">
               <div className="size-3 bg-slate-800 rounded-full shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
@@ -122,7 +122,7 @@ const ClientCard = React.memo(({
       </div>
 
       {/* Location and Details */}
-      <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/5">
+      <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/15">
         <div className="flex items-start gap-2">
           <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
           <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
@@ -292,7 +292,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClients.length === 0 ? (
-            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/5 rounded-3xl text-center opacity-40">
+            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/15 rounded-3xl text-center opacity-40">
               <span className="material-symbols-outlined text-5xl mb-2 font-black">person_add</span>
               <p className="font-black uppercase tracking-widest text-[10px]">
                 {searchQuery ? 'No clients match your search.' : 'Registry is empty.'}

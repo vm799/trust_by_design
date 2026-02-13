@@ -74,7 +74,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
         {conflict.conflictFields.map((field) => (
           <div
             key={field}
-            className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-2"
+            className="bg-slate-800 border border-slate-700/50 rounded-lg p-4 space-y-2"
           >
             <div className="text-xs uppercase font-bold text-slate-400">
               {getFieldLabel(field)}
@@ -87,7 +87,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   <span className="material-symbols-outlined text-sm">smartphone</span>
                   This Device
                 </div>
-                <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
+                <div className="text-sm text-white font-mono bg-slate-900 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
                   {formatFieldValue((conflict.local as unknown as Record<string, unknown>)[field])}
                 </div>
               </div>
@@ -98,7 +98,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
                   <span className="material-symbols-outlined text-sm">cloud</span>
                   Server
                 </div>
-                <div className="text-sm text-white font-mono bg-slate-900/50 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
+                <div className="text-sm text-white font-mono bg-slate-900 rounded p-3 break-words whitespace-pre-wrap min-h-[40px] flex items-center">
                   {formatFieldValue((conflict.remote as unknown as Record<string, unknown>)[field])}
                 </div>
               </div>
@@ -157,7 +157,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
       </div>
 
       {/* Help Text */}
-      <div className="bg-slate-900/50 border border-slate-700/30 rounded-lg p-3 text-xs text-slate-400">
+      <div className="bg-slate-900 border border-slate-700/30 rounded-lg p-3 text-xs text-slate-400">
         <p className="flex items-start gap-2">
           <span className="material-symbols-outlined text-sm flex-shrink-0 mt-0.5">
             info

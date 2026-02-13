@@ -32,7 +32,7 @@ const JobItem: React.FC<JobItemProps> = ({ job, onClick }) => {
       onClick={onClick}
       className="
         w-full flex items-center gap-4 p-4 rounded-xl
-        bg-slate-50 dark:bg-slate-800/50
+        bg-slate-50 dark:bg-slate-800
         hover:bg-slate-100 dark:hover:bg-slate-800
         transition-colors text-left min-h-[56px]
       "

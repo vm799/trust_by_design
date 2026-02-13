@@ -391,11 +391,11 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
 
         {/* Certificate Details */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-3">
             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Sealed</p>
             <p className="text-sm font-bold text-white mt-1">{formatDate(job.sealedAt)}</p>
           </div>
-          <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-3">
             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Evidence</p>
             <p className="text-sm font-bold text-white mt-1">{photoCounts.total} photos + signature</p>
           </div>
@@ -418,7 +418,7 @@ const SealCertificate: React.FC<SealCertificateProps> = ({ job, isOpen, onClose 
         </div>
 
         {/* Hash */}
-        <div className="bg-slate-800/50 border border-white/5 rounded-xl p-4">
+        <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
           <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">Evidence Hash (SHA-256)</p>
           <p className="text-xs font-mono text-slate-100 break-all">{job.evidenceHash || 'N/A'}</p>
         </div>

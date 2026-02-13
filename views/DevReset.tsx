@@ -407,7 +407,7 @@ const DevReset: React.FC = () => {
             {layers.map((layer) => (
               <div
                 key={layer.name}
-                className="flex items-start justify-between p-3 bg-slate-800/50 rounded-lg"
+                className="flex items-start justify-between p-3 bg-slate-800 rounded-lg"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -553,7 +553,7 @@ const DevReset: React.FC = () => {
         </div>
 
         {/* Help Text */}
-        <div className="mt-8 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+        <div className="mt-8 p-4 bg-slate-900 rounded-xl border border-slate-800">
           <h3 className="font-semibold text-slate-300 mb-2">Why am I seeing old data?</h3>
           <div className="text-sm text-slate-400 space-y-2">
             <p>

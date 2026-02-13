@@ -342,7 +342,7 @@ const TechEvidenceReview: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/15 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => currentStep > 0 ? handlePrevStep() : navigate(`/tech/job/${job.id}`)}
@@ -519,7 +519,7 @@ const TechEvidenceReview: React.FC = () => {
                       px-3.5 py-2 rounded-xl text-sm font-medium transition-all min-h-[44px]
                       ${activeNotePrompt === prompt
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700'
+                        : 'bg-slate-800 text-slate-400 border border-white/15 hover:bg-slate-700'
                       }
                     `}
                   >
@@ -547,7 +547,7 @@ const TechEvidenceReview: React.FC = () => {
               </div>
 
               {/* Helpful tip */}
-              <div className="mt-4 flex items-start gap-2.5 bg-slate-900/50 border border-white/5 rounded-xl p-3">
+              <div className="mt-4 flex items-start gap-2.5 bg-slate-900 border border-white/15 rounded-xl p-3">
                 <span className="material-symbols-outlined text-sm text-amber-400 mt-0.5">lightbulb</span>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Good notes help with invoicing, dispute resolution, and follow-up scheduling. Include what was done, any problems discovered, and recommended next steps.

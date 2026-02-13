@@ -111,7 +111,7 @@ const TechPortal: React.FC = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
       {/* Minimal header */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/15 px-4 py-3">
         <div className="flex items-center justify-between">
           <JobProofLogo variant="full" size="sm" />
           <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ const TechPortal: React.FC = () => {
           >
             {/* Greeting */}
             <motion.div variants={fadeInUp} className="px-4 pt-6 max-w-2xl mx-auto">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back,</p>
+              <p className="text-sm text-slate-400 dark:text-slate-400">Welcome back,</p>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{techName}</h1>
             </motion.div>
 
@@ -178,7 +178,7 @@ const TechPortal: React.FC = () => {
             {/* ASSIGNED JOBS - Horizontal swimlane */}
             {assignedJobs.length > 0 && (
               <motion.section variants={fadeInUp} className="px-4 max-w-2xl mx-auto">
-                <h2 className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                <h2 className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-3">
                   <span className="material-symbols-outlined text-sm">assignment</span>
                   Assigned
                   <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px]">
@@ -199,9 +199,9 @@ const TechPortal: React.FC = () => {
 
             {/* FINISHED - Collapsed by default */}
             {finishedJobs.length > 0 && (
-              <motion.section variants={fadeInUp} className="px-4 pt-4 border-t border-slate-200 dark:border-white/5 max-w-2xl mx-auto">
+              <motion.section variants={fadeInUp} className="px-4 pt-4 border-t border-slate-200 dark:border-white/15 max-w-2xl mx-auto">
                 <details className="group">
-                  <summary className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 cursor-pointer list-none min-h-[44px]">
+                  <summary className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-3 cursor-pointer list-none min-h-[44px]">
                     <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">chevron_right</span>
                     <span className="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
                     Finished
@@ -382,7 +382,7 @@ const AssignedJobCard = React.memo(({
       <div className={`w-[280px] bg-white dark:bg-slate-900 rounded-2xl p-4 transition-all active:scale-[0.98] min-h-[140px] ${
         isUrgent
           ? 'border-2 border-red-500 animate-pulse shadow-lg shadow-red-500/20'
-          : 'border border-slate-200 dark:border-white/10 shadow-sm'
+          : 'border border-slate-200 dark:border-white/20 shadow-sm'
       }`}>
         {/* Header - priority badge */}
         {isUrgent && (
@@ -400,7 +400,7 @@ const AssignedJobCard = React.memo(({
           <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
             {client?.name || job.client || 'Client'}
           </p>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="material-symbols-outlined text-xs">schedule</span>
             {formattedTime}
           </div>
@@ -421,8 +421,8 @@ const AssignedJobCard = React.memo(({
         )}
 
         {/* Action indicator */}
-        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Tap to start</span>
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/15 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-400">Tap to start</span>
           <span className="material-symbols-outlined text-slate-400">chevron_right</span>
         </div>
       </div>
@@ -450,7 +450,7 @@ const FinishedJobCard = React.memo(({
 
   return (
     <Link to={`/tech/job/${job.id}`}>
-      <div className="bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-4 transition-all active:scale-[0.98] min-h-[56px] shadow-inner border border-slate-200 dark:border-white/5">
+      <div className="bg-slate-100/50 dark:bg-slate-900 rounded-xl p-4 transition-all active:scale-[0.98] min-h-[56px] shadow-inner border border-slate-200 dark:border-white/15">
         <div className="flex items-center gap-4">
           {/* Time */}
           <div className="min-w-[55px] text-right">
@@ -464,7 +464,7 @@ const FinishedJobCard = React.memo(({
 
           {/* Job info */}
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate text-slate-500">
+            <p className="font-medium truncate text-slate-400">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </p>
             <p className="text-xs text-slate-400 truncate">

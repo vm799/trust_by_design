@@ -187,7 +187,7 @@ const VoiceNote: React.FC<VoiceNoteProps> = ({
   // Not supported message
   if (!isSupported) {
     return (
-      <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+      <div className="bg-slate-800 rounded-xl p-4 text-center">
         <span className="material-symbols-outlined text-slate-500 text-2xl">mic_off</span>
         <p className="text-xs text-slate-500 mt-2">Voice notes not supported in this browser</p>
       </div>
