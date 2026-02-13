@@ -313,7 +313,6 @@ describe('Fix 3.1: Auto-Archive Sealed Jobs >180 Days', () => {
 
   it('should return empty array when no jobs to archive', async () => {
     const db = await getDatabase();
-    const now = new Date();
 
     // Create only recent sealed jobs
     const recentJob: Job = createMockJob({

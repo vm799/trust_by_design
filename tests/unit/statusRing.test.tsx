@@ -9,7 +9,7 @@
  * - Edge cases (empty jobs, all complete, all pending)
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StatusRing from '../../components/ui/StatusRing';
 
@@ -115,7 +115,7 @@ describe('StatusRing Component', () => {
 
   describe('accessibility', () => {
     it('should have minimum 44px touch target', () => {
-      const { container } = render(
+      render(
         <StatusRing totalJobs={10} completedJobs={7} activeJobs={2} pendingJobs={1} />
       );
       const ring = screen.getByRole('button');

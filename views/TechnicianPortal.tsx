@@ -1134,7 +1134,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       const techMetadata = job.techMetadata;
       const isSelfEmployed = job.selfEmployedMode || techMetadata?.creationOrigin === 'self_employed';
       if (isSelfEmployed) {
-        const receipt = generateClientReceipt(sealedJob);
+        generateClientReceipt(sealedJob);
       }
 
       // Notify manager of sealed job via unified notification service

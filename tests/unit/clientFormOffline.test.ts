@@ -23,6 +23,7 @@ vi.mock('../../lib/offline/db', () => {
         { name: 'media' },
         { name: 'formDrafts' }
       ],
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       table: (name: string) => ({
         put: async (data: { formType: string; data: unknown; savedAt: number }) => {
           drafts.set(data.formType, data as { formType: string; data: Record<string, unknown>; savedAt: number });

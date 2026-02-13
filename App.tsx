@@ -141,7 +141,6 @@ const AppContent: React.FC = () => {
     clients,
     technicians,
     invoices,
-    templates,
     addJob,
     updateJob,
     addClient,
@@ -637,7 +636,7 @@ const AppContent: React.FC = () => {
         {/* Legacy Job Creation (kept for backwards compatibility) */}
         <Route path="/admin/create-quick" element={isAuthenticated ? (
           <RouteErrorBoundary sectionName="Quick Job Creation" fallbackRoute="/admin">
-            <CreateJob onAddJob={addJob} user={user} clients={clients} technicians={technicians} templates={templates} />
+            <CreateJob user={user} />
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
         <Route path="/admin/clients" element={isAuthenticated ? (

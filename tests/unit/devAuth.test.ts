@@ -18,8 +18,6 @@ vi.mock('../../lib/devAuth', async () => {
 });
 
 describe('Dev Auth Configuration', () => {
-  const originalEnv = { ...import.meta.env };
-
   beforeEach(() => {
     // Reset env for each test
     Object.keys(mockEnv).forEach(key => delete mockEnv[key]);

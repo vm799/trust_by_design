@@ -321,6 +321,7 @@ describe('FocusStack Component', () => {
           jobs={[jobWithClient]}
           clients={mockClients}
           focusJobId="job-with-client"
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           renderFocusJob={({ job, client }) => (
             <div data-testid="focus-job">{client?.name}</div>
           )}

@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import JobsList from '../../../views/app/jobs/JobsList';
@@ -133,6 +133,7 @@ describe('JobsList Virtual Scrolling', () => {
       observe = vi.fn();
       unobserve = vi.fn();
       disconnect = vi.fn();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       constructor(callback: ResizeObserverCallback) {
         const instance = new ResizeObserverMock();
         resizeObserverInstances.push(instance);
@@ -219,7 +220,7 @@ describe('JobsList Virtual Scrolling', () => {
 
   describe('Edge Case 3: Keyboard Navigation', () => {
     it('should maintain keyboard accessibility with Tab key', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const jobs = generateMockJobs(10);
 
       const { container } = render(

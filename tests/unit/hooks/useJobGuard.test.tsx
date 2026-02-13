@@ -3,7 +3,6 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import React from 'react';
 import { useJobGuard, useJobCreationRedirect } from '../../../hooks/useJobGuard';
-import * as DataContext from '../../../lib/DataContext';
 import * as microInteractions from '../../../lib/microInteractions';
 
 // Mock react-router-dom

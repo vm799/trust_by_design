@@ -136,7 +136,7 @@ export const handlers = [
 
   // RPC endpoints
   http.post(`${SUPABASE_URL}/rest/v1/rpc/generate_job_access_token`, async ({ request }) => {
-    const body = await request.json() as any;
+    await request.json();
     return HttpResponse.json({
       token: 'mock-token-123',
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -184,10 +184,7 @@ export const handlers = [
   }),
 
   // Edge Functions
-  http.post(`${SUPABASE_URL}/functions/v1/seal-evidence`, async ({ request }) => {
-    const body = await request.json() as any;
-    const jobId = body.jobId;
-
+  http.post(`${SUPABASE_URL}/functions/v1/seal-evidence`, async () => {
     return HttpResponse.json({
       success: true,
       data: {
@@ -198,10 +195,7 @@ export const handlers = [
     });
   }),
 
-  http.post(`${SUPABASE_URL}/functions/v1/verify-evidence`, async ({ request }) => {
-    const body = await request.json() as any;
-    const jobId = body.jobId;
-
+  http.post(`${SUPABASE_URL}/functions/v1/verify-evidence`, async () => {
     return HttpResponse.json({
       success: true,
       data: {

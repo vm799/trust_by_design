@@ -9,7 +9,7 @@
  * @see /docs/DASHBOARD_IMPLEMENTATION_SPEC.md
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
@@ -25,7 +25,6 @@ import {
   FocusEntity,
   QueueItem,
   BackgroundSection,
-  BackgroundItem,
 } from '../../lib/dashboardState';
 
 // ============================================================================
@@ -239,7 +238,7 @@ describe('QueueList', () => {
     ];
     const onItemClick = vi.fn();
 
-    const { container } = renderWithRouter(<QueueList items={items} onItemClick={onItemClick} />);
+    renderWithRouter(<QueueList items={items} onItemClick={onItemClick} />);
 
     // QuickActionCard displays position as badge number
     // Find all elements containing position numbers

@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * E2E OFFLINE DATA SAFETY TESTS - Sprint 1 Task 1.7
@@ -333,6 +333,7 @@ test.describe('Offline Data Safety - Sprint 1', () => {
     expect(conflictCount).toBe(2);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test('ODS-05: IndexedDB data survives complete app restart', async ({ page, context }) => {
     test.setTimeout(90000);
 

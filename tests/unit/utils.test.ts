@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Job, Photo, SafetyCheck, JobStatus, SyncStatus, PhotoType } from '@/types';
+import type { Photo, SafetyCheck, JobStatus, SyncStatus, PhotoType } from '@/types';
 import { createMockJob } from '../mocks/mockData';
 
 /**
@@ -220,7 +220,7 @@ describe('Type Validation & Utilities', () => {
     describe('isValidPhoneNumber', () => {
       const isValidPhoneNumber = (phone: string): boolean => {
         // Basic validation for international format
-        const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+        const cleaned = phone.replace(/[\s\-()]/g, '');
         const phoneRegex = /^\+?[1-9]\d{7,14}$/; // Minimum 8 digits (including country code)
         return phoneRegex.test(cleaned);
       };

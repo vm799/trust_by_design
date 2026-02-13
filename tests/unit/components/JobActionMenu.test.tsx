@@ -4,7 +4,7 @@
  * Tests that contextual job actions are correctly computed
  * based on job lifecycle stage, seal state, and invoice state.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { getJobActions } from '../../../components/ui/JobActionMenu';
 import type { JobAction, JobActionConfig } from '../../../components/ui/JobActionMenu';
 import type { Job } from '../../../types';

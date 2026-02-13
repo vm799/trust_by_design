@@ -8,7 +8,7 @@
  * 4. Validation should STILL work because token is on job object
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // Manager's browser localStorage
 let managerLocalStorage: Record<string, string> = {};

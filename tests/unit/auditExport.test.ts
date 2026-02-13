@@ -7,7 +7,6 @@ import {
   filterJobsByStatus,
   filterJobsByDateRange,
   calculateSHA256HashSync,
-  verifySealSignature,
   type AuditRecord
 } from '@/lib/utils/auditExport';
 import { createMockJob } from '../mocks/mockData';

@@ -30,7 +30,6 @@ import SoloContractorDashboard from '../../views/app/SoloContractorDashboard';
 import ManagerFocusDashboard from '../../views/app/ManagerFocusDashboard';
 import QuickAssignModal from '../../components/modals/QuickAssignModal';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
-import QuickInvoiceModal from '../../components/modals/QuickInvoiceModal';
 import { Job, Technician } from '../../types';
 
 // ============================================================================
@@ -128,7 +127,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
       const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
-      const { container } = render(
+      render(
         <TestWrapper jobs={[job]} technicians={[technician]}>
           <SoloContractorDashboard />
         </TestWrapper>
@@ -143,7 +142,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('modal can be opened and closed with keyboard', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
@@ -163,7 +162,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
       );
 
       // Modal should open
-      let dialog = container.querySelector('[role="dialog"]');
+      const dialog = container.querySelector('[role="dialog"]');
       expect(dialog).toBeDefined();
     });
 
@@ -215,7 +214,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
       const job = createTestJob({ id: 'job-1', technicianId: undefined });
       const technician = createTestTechnician();
 
-      const { container } = render(
+      render(
         <TestWrapper jobs={[job]} technicians={[technician]}>
           <SoloContractorDashboard />
         </TestWrapper>
@@ -239,7 +238,7 @@ describe('Accessibility Audit - Phase 4 (WCAG 2.1 AA)', () => {
     });
 
     it('modal focus trap prevents tabbing outside', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const job = createTestJob({ id: 'job-1', status: 'Pending', technicianId: undefined });
       const technician = createTestTechnician();
 

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { detectConflicts, type SyncConflict } from '@/lib/offline/sync';
 import { getDatabase, _resetDbInstance } from '@/lib/offline/db';
 import { createMockJob } from '../mocks/mockData';
-import type { Job } from '@/types';
 
 describe('Fix 3.3: Sync Conflict Detection & Resolution', () => {
   beforeEach(async () => {
@@ -193,7 +192,7 @@ describe('Fix 3.3: Sync Conflict Detection & Resolution', () => {
 
   describe('Conflict Storage', () => {
     it('should save and retrieve conflicts from IndexedDB', async () => {
-      const db = await getDatabase();
+      await getDatabase();
 
       // Note: syncConflicts table will be added in v6 of db schema
       // This test verifies the storage interface works

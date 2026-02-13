@@ -1,28 +1,21 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../components/AppLayout';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Job, Client, Technician, JobTemplate, UserProfile } from '../types';
+import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { navigateToNextStep } from '../lib/onboarding';
+import { useData } from '../lib/DataContext';
 
 interface CreateJobProps {
-  onAddJob: (job: Job) => void;
   user: UserProfile | null;
-  clients: Client[];
-  technicians: Technician[];
-  templates: JobTemplate[];
-  onAddClient?: (client: Client) => void;
-  onAddTechnician?: (technician: Technician) => void;
 }
 
-const LOCAL_CLIENTS_KEY = 'trust_by_design_local_clients';
-const LOCAL_TECHNICIANS_KEY = 'trust_by_design_local_technicians';
-
-const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technicians, templates, onAddClient, onAddTechnician }) => {
+const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { clients, technicians, templates, addJob: contextAddJob, addClient: contextAddClient, addTechnician: contextAddTechnician } = useData();
 
   // Ref for auto-focusing the title input
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -51,25 +44,6 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   const [showAddTechnicianModal, setShowAddTechnicianModal] = useState(false);
   const [clientFormError, setClientFormError] = useState<string>('');
   const [technicianFormError, setTechnicianFormError] = useState<string>('');
-
-  // Local storage for clients/technicians when no callbacks provided
-  const [localClients, setLocalClients] = useState<Client[]>(() => {
-    try {
-      const stored = localStorage.getItem(LOCAL_CLIENTS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [localTechnicians, setLocalTechnicians] = useState<Technician[]>(() => {
-    try {
-      const stored = localStorage.getItem(LOCAL_TECHNICIANS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
 
   // New client form state
   const [newClientForm, setNewClientForm] = useState({
@@ -130,9 +104,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
     localStorage.removeItem(DRAFT_KEY);
   };
 
-  // Combine props with local storage
-  const allClients = [...clients, ...localClients];
-  const allTechnicians = [...technicians, ...localTechnicians];
+  const allClients = clients;
+  const allTechnicians = technicians;
 
   // Auto-focus title input on mount for better UX
   useEffect(() => {
@@ -196,14 +169,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       totalJobs: 0
     };
 
-    if (onAddClient) {
-      onAddClient(newClient);
-    } else {
-      // Store in localStorage
-      const updatedClients = [...localClients, newClient];
-      setLocalClients(updatedClients);
-      localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(updatedClients));
-    }
+    contextAddClient(newClient);
 
     // Auto-select the new client
     setFormData({ ...formData, clientId: newClient.id });
@@ -235,14 +201,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       jobsCompleted: 0
     };
 
-    if (onAddTechnician) {
-      onAddTechnician(newTechnician);
-    } else {
-      // Store in localStorage
-      const updatedTechnicians = [...localTechnicians, newTechnician];
-      setLocalTechnicians(updatedTechnicians);
-      localStorage.setItem(LOCAL_TECHNICIANS_KEY, JSON.stringify(updatedTechnicians));
-    }
+    contextAddTechnician(newTechnician);
 
     // Auto-select the new technician
     setFormData({ ...formData, techId: newTechnician.id });
@@ -377,12 +336,10 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
           const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
           existingJobs.unshift(localJob);
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-        } catch (e) {
-          console.error('[CreateJob] Failed to persist job to localStorage:', e);
-        }
+        } catch { /* localStorage write failed - non-critical */ }
 
         // Add to React state (will trigger debounced save later, but we already saved)
-        onAddJob(localJob);
+        contextAddJob(localJob);
         setCreatedJobId(newId);
 
         // Generate a proper magic link with token for local jobs
@@ -424,14 +381,13 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
         setMagicLinkToken(localMagicLink.token);
       }
 
-      // Also add to local state via onAddJob for immediate UI update
-      onAddJob(createdJob);
+      // Also add to local state via contextAddJob for immediate UI update
+      contextAddJob(createdJob);
 
       clearDraft();
       setShowConfirmModal(false);
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error('Failed to create job:', error);
+    } catch {
       setError('Failed to create job. Please try again.');
       setShowConfirmModal(false);
     } finally {
@@ -446,7 +402,6 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
       return { url: magicLinkUrl, token: magicLinkToken };
     }
     // If magic link isn't ready yet, return null - don't use stale state
-    console.warn('[CreateJob] magicLinkUrl not yet set - waiting for job creation to complete');
     return null;
   };
 
@@ -513,8 +468,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ onAddJob, user, clients, technici
   // Check if native share is available
   const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
-  const selectedClient = allClients.find(c => c.id === formData.clientId);
-  const selectedTech = allTechnicians.find(t => t.id === formData.techId);
+  const selectedClient = useMemo(() => allClients.find(c => c.id === formData.clientId), [allClients, formData.clientId]);
+  const selectedTech = useMemo(() => allTechnicians.find(t => t.id === formData.techId), [allTechnicians, formData.techId]);
 
   return (
     <Layout user={user}>

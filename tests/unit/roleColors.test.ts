@@ -169,7 +169,7 @@ describe('Role-Specific Color System', () => {
         'ContractorDashboard': 'solo-accent',
       };
 
-      Object.entries(componentRoleMap).forEach(([component, color]) => {
+      Object.values(componentRoleMap).forEach((color) => {
         expect(color).toBeTruthy();
       });
     });

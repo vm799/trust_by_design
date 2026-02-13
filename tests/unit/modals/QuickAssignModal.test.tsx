@@ -381,7 +381,7 @@ describe('QuickAssignModal', () => {
     });
 
     it('shows error message on assignment failure', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const job = createTestJob({ id: 'job-1' });
       const technician = createTestTechnician({ id: 'tech-1' });
 
@@ -459,7 +459,7 @@ describe('QuickAssignModal', () => {
     });
 
     it('supports Tab navigation through technicians', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       const job = createTestJob({ id: 'job-1' });
       const technicians = [
         createTestTechnician({ id: 'tech-1', name: 'Alice' }),

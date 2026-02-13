@@ -71,7 +71,7 @@ describe('BottomNav Component', () => {
 
   describe('active state', () => {
     it('should highlight Dashboard when on /admin', () => {
-      const { container } = renderWithRouter('/admin');
+      renderWithRouter('/admin');
       const dashLink = screen.getByText('Dashboard').closest('a');
       expect(dashLink?.className).toContain('text-primary');
     });

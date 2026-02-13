@@ -133,6 +133,7 @@ global.File = class MockFile {
 
 global.FileReader = class MockFileReader {
   result: string | ArrayBuffer | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   readAsDataURL = vi.fn(function (this: any, blob: Blob) {
     this.result = 'data:image/png;base64,mockbase64data';
     setTimeout(() => this.onload?.({ target: this }), 0);

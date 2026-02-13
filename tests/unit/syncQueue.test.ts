@@ -6,9 +6,7 @@ import {
   getSyncQueueStatus,
 } from '@/lib/syncQueue';
 import { createMockJob } from '../mocks/mockData';
-import type { Job } from '@/types';
 import * as supabase from '@/lib/supabase';
-import * as db from '@/db';
 
 describe('lib/syncQueue - Sync Queue Operations', () => {
   beforeEach(() => {
