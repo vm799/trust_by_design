@@ -46,7 +46,7 @@ const BackgroundCollapse: React.FC<BackgroundCollapseProps> = ({
       <summary className={`
         flex items-center gap-2 px-1 py-2
         cursor-pointer list-none
-        text-xs font-bold text-slate-500 dark:text-slate-400
+        text-xs font-bold text-slate-400 dark:text-slate-400
         uppercase tracking-widest
         hover:text-slate-700 dark:hover:text-slate-300
         transition-colors
@@ -115,7 +115,7 @@ const BackgroundItemRow: React.FC<BackgroundItemRowProps> = React.memo(({
       {item.subtitle && (
         <>
           <span className="text-slate-400 dark:text-slate-600">•</span>
-          <span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[120px]">
+          <span className="text-xs text-slate-400 dark:text-slate-400 truncate max-w-[120px]">
             {item.subtitle}
           </span>
         </>
@@ -159,7 +159,7 @@ const BackgroundItemRow: React.FC<BackgroundItemRowProps> = React.memo(({
       className={`
         flex items-center gap-2 py-2 px-3
         text-sm rounded-lg
-        text-slate-400 dark:text-slate-500
+        text-slate-400 dark:text-slate-400
       `}
     >
       {content}

@@ -173,7 +173,7 @@ const FocusStack: React.FC<FocusStackProps> = ({
       {queueJobs.length > 0 && (
         <motion.section variants={fadeInUp}>
           {queueHeader || (
-            <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-medium text-slate-400 dark:text-slate-400 mb-3 flex items-center gap-2">
               <span className="material-symbols-outlined text-sm">queue</span>
               Next Up ({queueJobs.length})
             </h2>
@@ -202,7 +202,7 @@ const FocusStack: React.FC<FocusStackProps> = ({
       {showCollapsed && collapsedJobs.length > 0 && renderCollapsedJob && (
         <motion.section variants={fadeInUp}>
           <details className="group">
-            <summary className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 py-2">
+            <summary className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-400 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 py-2">
               <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-90">
                 chevron_right
               </span>
@@ -263,7 +263,7 @@ export const DefaultFocusJobCard: React.FC<FocusJobRenderProps> = ({
           {client?.name || 'Unknown client'}
         </p>
         {job.status && (
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {job.status}
           </p>
         )}
@@ -294,7 +294,7 @@ export const DefaultQueueJobCard: React.FC<QueueJobRenderProps & { to?: string }
     <Card variant="interactive" padding="sm">
       <div className="flex items-center gap-3">
         {/* Position indicator */}
-        <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-medium text-slate-500 dark:text-slate-400 shrink-0">
+        <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-medium text-slate-400 dark:text-slate-400 shrink-0">
           {position}
         </div>
 
@@ -303,7 +303,7 @@ export const DefaultQueueJobCard: React.FC<QueueJobRenderProps & { to?: string }
           <p className="font-medium text-slate-900 dark:text-white truncate text-sm">
             {job.title || `Job #${job.id.slice(0, 6)}`}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <p className="text-xs text-slate-400 dark:text-slate-400 truncate">
             {client?.name || 'Unknown client'}
           </p>
         </div>
@@ -335,7 +335,7 @@ export const DefaultCollapsedJobCard: React.FC<CollapsedJobRenderProps & { to?: 
   to,
 }) => {
   const content = (
-    <div className="py-2 px-3 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+    <div className="py-2 px-3 text-sm text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
       <span className="font-medium">{job.title || `Job #${job.id.slice(0, 6)}`}</span>
       <span className="mx-2 opacity-50">•</span>
       <span>{client?.name || 'Unknown'}</span>

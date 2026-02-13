@@ -76,7 +76,7 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
   // Loading skeleton (no mock data)
   if (isLoading) {
     return (
-      <div className="rounded-xl border-2 border-slate-200 dark:border-slate-700 p-8 bg-slate-50 dark:bg-slate-800">
+      <div className="rounded-xl border-2 border-slate-200 dark:border-slate-600 p-8 bg-slate-50 dark:bg-slate-800">
         <div className="animate-pulse">
           <div className="h-6 w-48 bg-slate-300 dark:bg-slate-600 rounded mb-6" />
           <div className="grid grid-cols-3 gap-4">

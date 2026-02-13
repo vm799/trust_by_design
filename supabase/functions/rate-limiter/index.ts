@@ -110,7 +110,6 @@ function checkRateLimit(ip: string): {
 // Suspicious pattern detection
 function isSuspiciousRequest(req: Request): { suspicious: boolean; reason?: string } {
   const userAgent = req.headers.get('user-agent') || '';
-  const referer = req.headers.get('referer') || '';
 
   // Check for missing or suspicious user agents
   if (!userAgent || userAgent.length < 10) {

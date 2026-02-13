@@ -210,7 +210,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         </button>
 
         {/* Step counter */}
-        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
           Step {currentStep + 1} of {steps.length}
         </div>
 
@@ -262,7 +262,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
               className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98] ${
                 step.isCompleted || !step.actionLabel
                   ? 'bg-white text-slate-900 hover:bg-slate-100'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-800 text-slate-400 cursor-not-allowed'
               }`}
             >
               {currentStep === steps.length - 1 ? "Finish" : "Next"}
@@ -271,7 +271,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         </div>
 
         {/* Keyboard hints */}
-        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-500 pt-2 border-t border-white/15">
+        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-400 pt-2 border-t border-white/15">
           <span className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-[9px]">ESC</kbd> Skip
           </span>

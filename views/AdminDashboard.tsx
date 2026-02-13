@@ -104,7 +104,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Export Audit Trail button */}
         <button
           onClick={() => setShowExportModal(true)}
-          className="px-4 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 min-h-[44px]"
+          className="px-4 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white font-bold rounded-xl text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2 min-h-[44px]"
           title="Export audit trail as CSV or JSON"
         >
           <span className="material-symbols-outlined text-lg">download</span>
@@ -146,7 +146,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-slate-400">{jobs.length}</span>
-              <span className="material-symbols-outlined text-slate-500 text-sm">chevron_right</span>
+              <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
             </div>
           </button>
         )}

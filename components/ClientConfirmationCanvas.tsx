@@ -307,7 +307,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
             <h3 className="font-bold text-slate-900 dark:text-white">
               Client Confirmation
             </h3>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               {clientName}, please sign to confirm satisfaction
             </p>
           </div>
@@ -316,7 +316,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
           <button
             onClick={onCancel}
             disabled={disabled}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[44px] min-w-[44px]"
+            className="p-2 rounded-lg text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[44px] min-w-[44px]"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -387,7 +387,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         </div>
 
         {!hasSignature && (
-          <p className="text-xs text-slate-500 text-center mt-2">
+          <p className="text-xs text-slate-400 text-center mt-2">
             Sign above the line with your finger or stylus
           </p>
         )}
@@ -401,7 +401,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
               className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 ${
                 canUndo && !disabled
                   ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-                  : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'text-slate-400 dark:text-slate-400 cursor-not-allowed'
               }`}
             >
               <span className="material-symbols-outlined text-base">undo</span>
@@ -469,7 +469,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
         </motion.button>
 
         {!hasSignature && (
-          <p className="text-xs text-center text-slate-500 mt-2">
+          <p className="text-xs text-center text-slate-400 mt-2">
             Signature required
           </p>
         )}

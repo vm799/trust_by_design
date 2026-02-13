@@ -133,7 +133,7 @@ const TechnicianOnboarding: React.FC<TechnicianOnboardingProps> = ({
       <div className="absolute top-6 right-6">
         <button
           onClick={handleSkip}
-          className="text-xs text-slate-500 hover:text-white uppercase tracking-wide font-bold"
+          className="text-xs text-slate-400 hover:text-white uppercase tracking-wide font-bold"
         >
           Skip
         </button>
@@ -189,7 +189,7 @@ const TechnicianOnboarding: React.FC<TechnicianOnboardingProps> = ({
         </div>
 
         {/* Step Counter */}
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-slate-400">
           {currentStep + 1} of {ONBOARDING_STEPS.length}
         </p>
       </div>

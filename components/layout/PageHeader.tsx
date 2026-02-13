@@ -101,7 +101,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
               const variantClasses = {
                 primary: 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20',
-                secondary: 'bg-white/5 hover:bg-white/10 text-white border border-white/10',
+                secondary: 'bg-white/10 hover:bg-white/10 text-white border border-white/10',
                 danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20',
               };
 

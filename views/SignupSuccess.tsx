@@ -42,7 +42,7 @@ const SignupSuccess: React.FC = () => {
           <p className="text-slate-400 text-lg">
             Welcome to <span className="text-primary font-black">{workspaceName}</span>!
           </p>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-sm">
             We&apos;ve sent a verification email to <span className="text-white font-bold">{email}</span>
           </p>
         </div>
@@ -110,7 +110,7 @@ const SignupSuccess: React.FC = () => {
 
           {/* Secondary Action */}
           <div className="text-center">
-            <p className="text-slate-500 text-xs mb-2">Didn&apos;t receive the email?</p>
+            <p className="text-slate-400 text-xs mb-2">Didn&apos;t receive the email?</p>
             <button
               type="button"
               className="text-primary text-xs font-bold hover:underline uppercase tracking-wide"
@@ -140,7 +140,7 @@ const SignupSuccess: React.FC = () => {
 
         {/* Support Info */}
         <div className="text-center">
-          <p className="text-slate-500 text-xs">
+          <p className="text-slate-400 text-xs">
             Need help? Contact{' '}
             <a href="mailto:support@jobproof.pro" className="text-primary font-bold hover:underline">
               support@jobproof.pro

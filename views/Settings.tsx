@@ -151,7 +151,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     <input
                       id="settings-workspace-name"
                       type="text"
-                      className="w-full bg-slate-800 border-slate-700 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
+                      className="w-full bg-slate-800 border-slate-600 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
                       value={wsName}
                       onChange={e => setWsName(e.target.value)}
                       placeholder="Enter workspace name"
@@ -180,7 +180,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   </div>
                   <button
                     onClick={() => setShowInviteModal(true)}
-                    className="w-full py-4 border-2 border-dashed border-slate-700 hover:border-primary/50 rounded-2xl text-[10px] font-black uppercase text-slate-300 hover:text-primary transition-all flex items-center justify-center gap-2 group"
+                    className="w-full py-4 border-2 border-dashed border-slate-600 hover:border-primary/50 rounded-2xl text-[10px] font-black uppercase text-slate-300 hover:text-primary transition-all flex items-center justify-center gap-2 group"
                   >
                     <span className="material-symbols-outlined text-base group-hover:scale-110 transition-transform">person_add</span>
                     Invite Team Member
@@ -416,7 +416,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
       {/* Invite Team Member Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] max-w-md w-full shadow-2xl space-y-6 animate-in">
+          <div className="bg-slate-800 border border-white/15 p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] max-w-md w-full shadow-2xl space-y-6 animate-in">
             <div className="text-center space-y-2">
               <div className="size-14 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-primary text-3xl">person_add</span>
@@ -432,13 +432,13 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   id="invite-email"
                   type="email"
                   placeholder="teammate@example.com"
-                  className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="invite-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
-                <select id="invite-role" className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
+                <select id="invite-role" className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
                   <option>Admin</option>
                   <option>Manager</option>
                   <option>Technician</option>

@@ -477,7 +477,7 @@ const QuickInvoiceModal: React.FC<QuickInvoiceModalProps> = React.memo(({
                 transition-all duration-200
                 min-h-[44px]
                 ${!selectedJob || state.isCreating
-                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-emerald-600 dark:bg-emerald-600 text-white hover:bg-emerald-700 dark:hover:bg-emerald-700 active:scale-95'
                 }
               `}

@@ -43,7 +43,7 @@ const SelectPlan: React.FC = () => {
             {userEmail ? `Signed in as ${userEmail}` : 'Choose a plan to get started'}
           </p>
 
-          <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'} max-w-xl mx-auto`}>
+          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'} max-w-xl mx-auto`}>
             Start with our free Solo plan, or try Team or Agency free for 14 days.
             <br />
             <strong>No credit card required</strong> to start your trial.
@@ -59,7 +59,7 @@ const SelectPlan: React.FC = () => {
             to="/admin"
             className={`
               inline-flex items-center gap-2 text-sm font-medium
-              ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}
+              ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}
               transition-colors
             `}
           >

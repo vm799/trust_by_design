@@ -170,7 +170,7 @@ const TechnicianStatusGrid: React.FC<TechnicianStatusGridProps> = ({
                       {tech.jobsRemaining} pending
                     </span>
                   )}
-                  <span className="material-symbols-outlined text-xs text-slate-500 shrink-0">
+                  <span className="material-symbols-outlined text-xs text-slate-400 shrink-0">
                     chevron_right
                   </span>
                 </button>

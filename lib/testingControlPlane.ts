@@ -707,7 +707,6 @@ async function verifyCleanState(): Promise<boolean> {
 
     if (!isClean) {
         console.warn('[TestingControlPlane] verifyCleanState FAILED:', issues);
-    } else {
     }
 
     return isClean;

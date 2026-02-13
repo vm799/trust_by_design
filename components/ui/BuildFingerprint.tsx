@@ -192,7 +192,7 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
             ? 'bg-red-600 text-white animate-pulse'
             : 'bg-slate-800/90 text-slate-400 hover:bg-slate-700/90 hover:text-slate-300'
           }
-          backdrop-blur-sm border border-slate-700/50
+          backdrop-blur-sm border border-slate-600/50
         `}
         title="Build info (hold 5s to reset)"
       >
@@ -209,7 +209,7 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
               } ${swStatus.updateAvailable ? 'animate-pulse' : ''}`}
             />
             <span>{buildInfo.commit.slice(0, 7)}</span>
-            <span className="text-slate-500">v{buildInfo.schemaVersion}</span>
+            <span className="text-slate-400">v{buildInfo.schemaVersion}</span>
           </>
         )}
       </button>
@@ -221,31 +221,31 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
             absolute ${position.includes('bottom') ? 'bottom-full mb-2' : 'top-full mt-2'}
             ${position.includes('right') ? 'right-0' : 'left-0'}
             w-64 p-3 rounded-lg
-            bg-slate-800/95 backdrop-blur-sm border border-slate-700/50
+            bg-slate-800/95 backdrop-blur-sm border border-slate-600/50
             text-xs font-mono text-slate-300
             shadow-xl
           `}
         >
           <div className="space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
+            <div className="flex justify-between items-center border-b border-slate-600 pb-2 mb-2">
               <span className="font-semibold text-slate-200">Build Info</span>
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-slate-500 hover:text-slate-300"
+                className="text-slate-400 hover:text-slate-300"
               >
                 ✕
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-1">
-              <span className="text-slate-500">Commit:</span>
+              <span className="text-slate-400">Commit:</span>
               <span className="text-right">{buildInfo.commit}</span>
 
-              <span className="text-slate-500">Schema:</span>
+              <span className="text-slate-400">Schema:</span>
               <span className="text-right">v{buildInfo.schemaVersion}</span>
 
-              <span className="text-slate-500">SW:</span>
+              <span className="text-slate-400">SW:</span>
               <span className="text-right">
                 {swStatus.active ? (
                   <span className="text-green-400">
@@ -259,7 +259,7 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
                 )}
               </span>
 
-              <span className="text-slate-500">Mode:</span>
+              <span className="text-slate-400">Mode:</span>
               <span className="text-right">
                 {import.meta.env.DEV ? (
                   <span className="text-yellow-400">dev</span>
@@ -268,15 +268,15 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
                 )}
               </span>
 
-              <span className="text-slate-500">Built:</span>
+              <span className="text-slate-400">Built:</span>
               <span className="text-right text-[9px]">
                 {new Date(buildInfo.buildTime).toLocaleDateString()}
               </span>
             </div>
 
             {/* Reset instructions */}
-            <div className="mt-3 pt-2 border-t border-slate-700">
-              <p className="text-slate-500 text-[10px] leading-tight">
+            <div className="mt-3 pt-2 border-t border-slate-600">
+              <p className="text-slate-400 text-[10px] leading-tight">
                 Hold badge for 5s to trigger full reset
                 (clears all caches, IndexedDB, localStorage)
               </p>

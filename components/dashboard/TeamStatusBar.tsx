@@ -36,7 +36,7 @@ const StatusItem: React.FC<StatusItemProps> = ({ label, count, color, icon }) =>
       <span className="material-symbols-outlined text-lg">{icon}</span>
     </div>
     <span className="text-lg font-bold text-slate-900 dark:text-white">{count}</span>
-    <span className="text-xs text-slate-500 uppercase tracking-wide">{label}</span>
+    <span className="text-xs text-slate-400 uppercase tracking-wide">{label}</span>
   </div>
 );
 
@@ -56,7 +56,7 @@ const TeamStatusBar: React.FC = () => {
   const statusConfig: Record<TechWorkStatus, { label: string; color: string; icon: string }> = {
     idle: {
       label: 'Idle',
-      color: 'bg-slate-100 dark:bg-slate-800 text-slate-500',
+      color: 'bg-slate-100 dark:bg-slate-800 text-slate-400',
       icon: 'hourglass_empty',
     },
     active: {
@@ -85,7 +85,7 @@ const TeamStatusBar: React.FC = () => {
         <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">
           Team Status
         </h3>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-400">
           {technicians.length} technician{technicians.length !== 1 ? 's' : ''}
         </span>
       </div>

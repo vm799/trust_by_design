@@ -223,7 +223,7 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
               {metadata.map((item) => (
                 <span
                   key={item.label}
-                  className="text-xs text-slate-500"
+                  className="text-xs text-slate-400"
                 >
                   <span className="text-slate-600">{item.label}:</span>{' '}
                   <span className="text-slate-300 font-medium">{item.value}</span>

@@ -157,7 +157,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 {chainValid ? 'Valid' : 'Broken'}
               </div>
             )}
-            <span className="text-[10px] text-slate-500">{events.length} events</span>
+            <span className="text-[10px] text-slate-400">{events.length} events</span>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   {meta?.icon || 'info'}
                 </span>
                 <span className="flex-1 text-slate-300 truncate">{meta?.label || event.eventType}</span>
-                <span className="text-slate-500 text-[10px]">{ts.time}</span>
+                <span className="text-slate-400 text-[10px]">{ts.time}</span>
               </div>
             );
           })}
@@ -228,7 +228,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 {chainValid ? 'Chain Integrity Verified' : 'Chain Integrity Broken'}
               </div>
             )}
-            <span className="text-xs text-slate-500">{chainEventCount} events in chain</span>
+            <span className="text-xs text-slate-400">{chainEventCount} events in chain</span>
             {warningCount > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning/10 text-warning text-xs">
                 <span className="material-symbols-outlined text-xs">warning</span>
@@ -267,7 +267,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           {filteredEvents.length === 0 ? (
             <div className="text-center py-12">
               <span className="material-symbols-outlined text-4xl text-slate-600 mb-2">history</span>
-              <p className="text-slate-500 text-sm">No audit events found</p>
+              <p className="text-slate-400 text-sm">No audit events found</p>
             </div>
           ) : (
             filteredEvents.map((event, index) => {
@@ -311,7 +311,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                             {meta?.label || event.eventType}
                           </span>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-[10px] text-slate-500">{ts.date}</span>
+                            <span className="text-[10px] text-slate-400">{ts.date}</span>
                             <span className="text-[10px] text-slate-400 font-mono">{ts.time}</span>
                           </div>
                         </div>
@@ -334,7 +334,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                             {event.syncStatus}
                           </span>
                           {event.location?.lat && (
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-slate-400">
                               GPS: {event.location.lat.toFixed(4)}, {event.location.lng?.toFixed(4)}
                             </span>
                           )}
@@ -344,32 +344,32 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                         {isExpanded && (
                           <div className="mt-4 p-3 bg-slate-900 rounded-lg space-y-2">
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-500">Event ID:</span>
+                              <span className="text-slate-400">Event ID:</span>
                               <span className="text-slate-300 font-mono text-[10px]">{event.id}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-500">Event Hash:</span>
+                              <span className="text-slate-400">Event Hash:</span>
                               <span className="text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
                                 {event.eventHash.substring(0, 16)}...
                               </span>
                             </div>
                             {event.previousEventHash && (
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Previous Hash:</span>
+                                <span className="text-slate-400">Previous Hash:</span>
                                 <span className="text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
                                   {event.previousEventHash.substring(0, 16)}...
                                 </span>
                               </div>
                             )}
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-500">Device:</span>
+                              <span className="text-slate-400">Device:</span>
                               <span className="text-slate-300 text-[10px] truncate max-w-[200px]">
                                 {event.deviceInfo.platform}
                               </span>
                             </div>
                             {Object.keys(event.metadata).length > 0 && (
                               <div className="pt-2 border-t border-slate-800">
-                                <p className="text-[10px] text-slate-500 mb-1">Metadata:</p>
+                                <p className="text-[10px] text-slate-400 mb-1">Metadata:</p>
                                 <pre className="text-[10px] text-slate-400 font-mono overflow-x-auto">
                                   {JSON.stringify(event.metadata, null, 2)}
                                 </pre>
@@ -380,7 +380,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       </div>
 
                       {/* Expand indicator */}
-                      <span className={`material-symbols-outlined text-slate-500 transition-transform ${
+                      <span className={`material-symbols-outlined text-slate-400 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}>
                         expand_more
@@ -395,7 +395,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
         {/* Footer */}
         <div className="p-4 sm:p-6 border-t border-white/10 bg-slate-900">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-slate-400">
             <span>
               Showing {filteredEvents.length} of {events.length} events
             </span>

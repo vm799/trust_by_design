@@ -136,7 +136,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
       className={`bg-slate-950/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden ${className}`}
     >
       {/* HUD Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white/5 border-b border-white/10">
+      <div className="flex items-center justify-between px-3 py-2 bg-white/10 border-b border-white/10">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-sm text-primary">verified_user</span>
           <span className="text-xs font-bold text-white uppercase tracking-wider">Evidence Capture</span>
@@ -168,9 +168,9 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
       <div className="p-3 space-y-2 font-mono text-xs">
         {/* Timestamp Row */}
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-slate-500">schedule</span>
+          <span className="material-symbols-outlined text-sm text-slate-400">schedule</span>
           <span className="text-slate-300">{formattedTime}</span>
-          <span className="text-slate-500">UTC</span>
+          <span className="text-slate-400">UTC</span>
         </div>
 
         {/* GPS Row */}
@@ -211,7 +211,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
           <span className={`material-symbols-outlined text-sm ${
             displayW3W
               ? w3wVerified ? 'text-emerald-400' : 'text-amber-400'
-              : 'text-slate-500'
+              : 'text-slate-400'
           }`}>
             grid_3x3
           </span>
@@ -231,14 +231,14 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
               )}
             </div>
           ) : (
-            <span className="text-slate-500">W3W pending...</span>
+            <span className="text-slate-400">W3W pending...</span>
           )}
         </div>
 
         {/* Device ID Row (if provided) */}
         {deviceId && (
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-slate-500">smartphone</span>
+            <span className="material-symbols-outlined text-sm text-slate-400">smartphone</span>
             <span className="text-slate-400 truncate">{deviceId}</span>
           </div>
         )}

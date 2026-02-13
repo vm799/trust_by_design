@@ -94,7 +94,7 @@ const Modal: React.FC<ModalProps> = ({
             {showClose && (
               <button
                 onClick={onClose}
-                className="min-w-[48px] min-h-[48px] p-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors flex items-center justify-center"
+                className="min-w-[48px] min-h-[48px] p-3 text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors flex items-center justify-center"
                 aria-label="Close modal"
               >
                 <span className="material-symbols-outlined">close</span>

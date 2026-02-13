@@ -204,7 +204,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
                       className="h-full bg-gradient-to-r from-[#00FFCC] to-[#00CC99] shadow-[0_0_10px_rgba(0,255,204,0.6)]"
                     />
                   </div>
-                  <p className="text-xs text-slate-500 text-center mt-2">
+                  <p className="text-xs text-slate-400 text-center mt-2">
                     {Math.round(progress)}% Complete
                   </p>
                 </div>

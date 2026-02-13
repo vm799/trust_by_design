@@ -107,7 +107,7 @@ const StatusRing: React.FC<StatusRingProps> = React.memo(({
             <span className={`text-lg font-black leading-none ${textColorClass}`}>
               {completedJobs}
             </span>
-            <span className="text-[10px] text-slate-500 font-medium">
+            <span className="text-[10px] text-slate-400 font-medium">
               of {totalJobs}
             </span>
           </>

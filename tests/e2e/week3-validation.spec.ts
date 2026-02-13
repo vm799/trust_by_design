@@ -1048,8 +1048,8 @@ test.describe('SYNC CONFLICTS (Fix 3.3)', () => {
     await page2.waitForLoadState('networkidle');
 
     // Conflict should still be visible
-    conflictCount = await conflictResolver.getConflictCount();
-    expect(conflictCount).toBeGreaterThan(0);
+    const conflictCount2 = await conflictResolver.getConflictCount();
+    expect(conflictCount2).toBeGreaterThan(0);
 
     await context2.close();
   });

@@ -278,7 +278,7 @@ const CompleteOnboarding: React.FC = () => {
                                 required
                             />
                             {userEmail && (
-                                <p className="text-slate-500 text-xs mt-2">
+                                <p className="text-slate-400 text-xs mt-2">
                                     Signing in as {userEmail}
                                 </p>
                             )}

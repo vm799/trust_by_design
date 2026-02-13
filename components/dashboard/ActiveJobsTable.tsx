@@ -118,7 +118,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
       },
       default: {
         bg: 'bg-slate-50 dark:bg-slate-800',
-        border: 'border-slate-200 dark:border-slate-700',
+        border: 'border-slate-200 dark:border-slate-600',
         text: 'text-slate-900 dark:text-slate-100',
         badge: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
         icon: '→',
@@ -170,7 +170,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
             aria-label="Search jobs by ID or client name"
             className={`
               w-full pl-10 pr-4 py-3 rounded-lg min-h-[44px]
-              border border-slate-200 dark:border-slate-700
+              border border-slate-200 dark:border-slate-600
               bg-white dark:bg-slate-800
               text-slate-900 dark:text-white
               placeholder-slate-400 dark:placeholder-slate-500
@@ -190,10 +190,10 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
         </div>
       ) : filteredJobs.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 dark:bg-slate-800 rounded-lg">
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-slate-400 dark:text-slate-400 font-medium">
             No jobs found
           </p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-sm text-slate-400 dark:text-slate-400 mt-1">
             Try adjusting your search or filters
           </p>
         </div>

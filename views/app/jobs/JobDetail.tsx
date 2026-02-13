@@ -498,7 +498,7 @@ const JobDetail: React.FC = () => {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-slate-500">calendar_today</span>
+                  <span className="material-symbols-outlined text-slate-400">calendar_today</span>
                   <div>
                     <p className="text-white">
                       {new Date(job.date).toLocaleDateString('en-GB', {
@@ -508,16 +508,16 @@ const JobDetail: React.FC = () => {
                         day: 'numeric',
                       })}
                     </p>
-                    <p className="text-sm text-slate-500">Scheduled Date</p>
+                    <p className="text-sm text-slate-400">Scheduled Date</p>
                   </div>
                 </div>
 
                 {job.address && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-500">location_on</span>
+                    <span className="material-symbols-outlined text-slate-400">location_on</span>
                     <div className="flex-1">
                       <p className="text-white">{job.address}</p>
-                      <p className="text-sm text-slate-500">Location</p>
+                      <p className="text-sm text-slate-400">Location</p>
                       {/* Phase 9: Clickable map link */}
                       <button
                         onClick={() => {
@@ -535,20 +535,20 @@ const JobDetail: React.FC = () => {
 
                 {(job.description || job.notes) && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-500">description</span>
+                    <span className="material-symbols-outlined text-slate-400">description</span>
                     <div>
                       <p className="text-white">{job.description || job.notes}</p>
-                      <p className="text-sm text-slate-500">Description</p>
+                      <p className="text-sm text-slate-400">Description</p>
                     </div>
                   </div>
                 )}
 
                 {(job.total || job.price) && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-500">payments</span>
+                    <span className="material-symbols-outlined text-slate-400">payments</span>
                     <div>
                       <p className="text-white text-lg font-semibold">£{(job.total || job.price || 0).toFixed(2)}</p>
-                      <p className="text-sm text-slate-500">Total</p>
+                      <p className="text-sm text-slate-400">Total</p>
                     </div>
                   </div>
                 )}
@@ -598,7 +598,7 @@ const JobDetail: React.FC = () => {
               </h3>
               {client ? (
                 <Link to={route(ROUTES.CLIENT_DETAIL, { id: client.id })} className="block">
-                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-white/5 transition-colors active:scale-[0.98]">
+                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-white/10 transition-colors active:scale-[0.98]">
                     <div className="size-10 rounded-lg bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
                       <span className="text-primary font-bold">{client.name.charAt(0)}</span>
                     </div>
@@ -606,7 +606,7 @@ const JobDetail: React.FC = () => {
                       <p className="font-medium text-white truncate">{client.name}</p>
                       <p className="text-sm text-slate-400 truncate">{client.address || client.email}</p>
                     </div>
-                    <span className="material-symbols-outlined text-slate-500">chevron_right</span>
+                    <span className="material-symbols-outlined text-slate-400">chevron_right</span>
                   </div>
                 </Link>
               ) : (
@@ -690,7 +690,7 @@ const JobDetail: React.FC = () => {
                 key={tech.id}
                 onClick={() => handleAssignTech(tech.id)}
                 disabled={assigning}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
               >
                 <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                   <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>
@@ -757,7 +757,7 @@ const JobDetail: React.FC = () => {
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   expiryInfo.isExpired ? 'text-red-400' :
                   expiryInfo.isUrgent ? 'text-amber-400' :
-                  'text-slate-500'
+                  'text-slate-400'
                 }`}>
                   {expiryInfo.isUrgent && (
                     <span className="material-symbols-outlined text-sm">warning</span>

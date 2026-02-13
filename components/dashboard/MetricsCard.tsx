@@ -39,10 +39,10 @@ const MetricsCard: React.FC<MetricsCardProps> = React.memo(({
   isLoading = false,
 }) => {
   const getTrendColor = () => {
-    if (!trend) return 'text-slate-500 dark:text-slate-400';
+    if (!trend) return 'text-slate-400 dark:text-slate-400';
     if (trend.direction === 'up') return 'text-emerald-600 dark:text-emerald-400';
     if (trend.direction === 'down') return 'text-amber-600 dark:text-amber-400';
-    return 'text-slate-500 dark:text-slate-400';
+    return 'text-slate-400 dark:text-slate-400';
   };
 
   const getTrendIcon = () => {
@@ -62,7 +62,7 @@ const MetricsCard: React.FC<MetricsCardProps> = React.memo(({
       disabled={!onClick}
       className={`
         bg-white dark:bg-slate-800
-        border border-slate-200 dark:border-slate-700
+        border border-slate-200 dark:border-slate-600
         rounded-lg p-6
         transition-all duration-200
         ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-1' : 'cursor-default'}
@@ -75,12 +75,12 @@ const MetricsCard: React.FC<MetricsCardProps> = React.memo(({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         {icon && (
-          <span className={`material-symbols-outlined text-2xl text-slate-400 dark:text-slate-500`}>
+          <span className={`material-symbols-outlined text-2xl text-slate-400 dark:text-slate-400`}>
             {icon}
           </span>
         )}
         {onClick && (
-          <span className={`material-symbols-outlined text-lg text-slate-400 dark:text-slate-500`}>
+          <span className={`material-symbols-outlined text-lg text-slate-400 dark:text-slate-400`}>
             chevron_right
           </span>
         )}

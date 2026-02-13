@@ -61,7 +61,7 @@ const COLOR_MAP = {
   slate: {
     bg: 'bg-slate-500/10 dark:bg-slate-500/10',
     text: 'text-slate-600 dark:text-slate-400',
-    icon: 'bg-slate-500/20 text-slate-500',
+    icon: 'bg-slate-500/20 text-slate-400',
     border: 'border-slate-500/20',
   },
 } as const;
@@ -89,7 +89,7 @@ const MetricCardItem: React.FC<{ metric: MetricCard }> = React.memo(({ metric })
       <p className={`text-2xl font-extrabold ${colors.text} leading-none mb-1`}>
         {metric.value}
       </p>
-      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
         {metric.label}
       </p>
     </div>

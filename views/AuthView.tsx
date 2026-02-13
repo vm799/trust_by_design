@@ -222,7 +222,7 @@ const AuthView: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-white/15">
-              <p className="text-slate-500 text-xs font-medium mb-3">
+              <p className="text-slate-400 text-xs font-medium mb-3">
                 Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
               <button
@@ -298,7 +298,7 @@ const AuthView: React.FC = () => {
                   key={testUser.role}
                   onClick={() => handleDevLogin(testUser)}
                   disabled={loading}
-                  className="w-full py-4 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500/40 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
+                  className="w-full py-4 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-amber-500/40 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
                 >
                   {loading && devLoginRole === testUser.role ? (
                     <div className="size-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
@@ -314,7 +314,7 @@ const AuthView: React.FC = () => {
             </div>
 
             {testUsers.length === 0 && (
-              <p className="text-slate-500 text-xs text-center py-2">
+              <p className="text-slate-400 text-xs text-center py-2">
                 Set VITE_TEST_*_EMAIL and VITE_TEST_*_PASSWORD in .env.local
               </p>
             )}
@@ -386,7 +386,7 @@ const AuthView: React.FC = () => {
                 required
                 type="email"
                 placeholder="test-manager@jobproof.pro"
-                className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
@@ -401,7 +401,7 @@ const AuthView: React.FC = () => {
                 required
                 type="password"
                 placeholder="Enter password"
-                className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
@@ -449,12 +449,12 @@ const AuthView: React.FC = () => {
                 type="email"
                 pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                 placeholder="alex@company.com"
-                className="w-full bg-slate-800 border-slate-700 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 title="Enter a valid email address (e.g., name@domain.co.uk)"
               />
-              <p className="text-slate-500 text-[10px] font-medium">
+              <p className="text-slate-400 text-[10px] font-medium">
                 New users will have a workspace created automatically.
               </p>
             </div>

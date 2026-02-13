@@ -150,7 +150,7 @@ const getJobLifecycle = (job: Job) => {
     icon: 'edit_note',
     color: 'text-slate-400',
     bgColor: 'bg-slate-800',
-    borderColor: 'border-slate-700',
+    borderColor: 'border-slate-600',
   };
 };
 
@@ -750,7 +750,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                   return (
                     <div
                       key={job.id}
-                      className="hover:bg-white/5 transition-colors cursor-pointer group border-b border-white/15 flex items-center"
+                      className="hover:bg-white/10 transition-colors cursor-pointer group border-b border-white/15 flex items-center"
                       onClick={() => navigate(`/admin/report/${job.id}`)}
                       role="button"
                       tabIndex={0}
@@ -875,7 +875,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
               <button
                 key={tech.id}
                 onClick={() => handleAssignTech(tech.id)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left active:scale-[0.98] min-h-[44px]"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors text-left active:scale-[0.98] min-h-[44px]"
               >
                 <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                   <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>

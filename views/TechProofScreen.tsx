@@ -439,7 +439,7 @@ const TechProofScreen: React.FC = () => {
           </div>
           <h2 className="text-xl font-black text-white mb-2">Access Error</h2>
           <p className="text-slate-400 text-sm">{error}</p>
-          <p className="text-[10px] text-slate-500 mt-4">
+          <p className="text-[10px] text-slate-400 mt-4">
             Contact your manager for a new link
           </p>
         </Card>
@@ -459,7 +459,7 @@ const TechProofScreen: React.FC = () => {
           <p className="text-slate-400 text-sm mb-4">
             Your proof has been submitted and the manager has been notified.
           </p>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[10px] text-slate-400">
             Submitted: {new Date().toLocaleString()}
           </p>
         </Card>
@@ -500,7 +500,7 @@ const TechProofScreen: React.FC = () => {
             <span className="material-symbols-outlined text-warning text-sm">photo_camera</span>
             Before Photo
             <Tooltip content="Capture the job site BEFORE starting work. This proves the original condition and protects you from pre-existing damage claims." position="bottom">
-              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 
@@ -523,7 +523,7 @@ const TechProofScreen: React.FC = () => {
               onClick={() => handlePhotoCapture('before')}
               className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
             >
-              <span className="material-symbols-outlined text-2xl text-slate-500">add_a_photo</span>
+              <span className="material-symbols-outlined text-2xl text-slate-400">add_a_photo</span>
               <span className="text-sm text-slate-400 font-bold uppercase">Capture Before</span>
             </button>
           )}
@@ -532,7 +532,7 @@ const TechProofScreen: React.FC = () => {
             value={proofData.notesBefore}
             onChange={(e) => setProofData(prev => ({ ...prev, notesBefore: e.target.value }))}
             placeholder="Notes before work (optional)"
-            className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm resize-none"
+            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm resize-none"
             rows={2}
           />
         </Card>
@@ -556,7 +556,7 @@ const TechProofScreen: React.FC = () => {
             <span className="material-symbols-outlined text-success text-sm">photo_camera</span>
             After Photo
             <Tooltip content="Capture the completed work. GPS location is automatically recorded to prove you were on-site. This photo + before photo = undeniable proof of work done." position="bottom">
-              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 
@@ -585,7 +585,7 @@ const TechProofScreen: React.FC = () => {
               onClick={() => handlePhotoCapture('after')}
               className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
             >
-              <span className="material-symbols-outlined text-2xl text-slate-500">add_a_photo</span>
+              <span className="material-symbols-outlined text-2xl text-slate-400">add_a_photo</span>
               <span className="text-sm text-slate-400 font-bold uppercase">Capture After</span>
             </button>
           )}
@@ -594,7 +594,7 @@ const TechProofScreen: React.FC = () => {
             value={proofData.notesAfter}
             onChange={(e) => setProofData(prev => ({ ...prev, notesAfter: e.target.value }))}
             placeholder="Completion notes (optional)"
-            className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm resize-none"
+            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm resize-none"
             rows={2}
           />
         </Card>
@@ -605,12 +605,12 @@ const TechProofScreen: React.FC = () => {
             <span className="material-symbols-outlined text-accent text-sm">person</span>
             Client Sign-Off
             <Tooltip content="Client signature confirms they have reviewed and accepted the completed work." position="bottom">
-              <span className="material-symbols-outlined text-slate-500 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 
           {/* Sign-off declaration text */}
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
+          <div className="bg-slate-800 border border-slate-600 rounded-xl p-3">
             <p className="text-sm text-slate-300 leading-relaxed font-medium">
               &quot;I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements.&quot;
             </p>
@@ -621,7 +621,7 @@ const TechProofScreen: React.FC = () => {
             value={proofData.clientName}
             onChange={(e) => setProofData(prev => ({ ...prev, clientName: e.target.value }))}
             placeholder="Client's printed name"
-            className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm"
+            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm"
           />
 
           <SignaturePad
@@ -633,13 +633,13 @@ const TechProofScreen: React.FC = () => {
 
         {/* GPS & W3W Status */}
         <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400">
             <span className={`size-2 rounded-full ${proofData.gpsLat ? 'bg-success' : 'bg-warning animate-pulse'}`} />
             {proofData.gpsLat
               ? `GPS: ${proofData.gpsLat.toFixed(4)}, ${proofData.gpsLng?.toFixed(4)}`
               : 'Acquiring GPS...'}
             <Tooltip content="GPS coordinates prove you were physically at the job site. Combined with timestamps, this creates location-verified evidence that can't be faked." position="top">
-              <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+              <span className="material-symbols-outlined text-slate-400 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
             </Tooltip>
           </div>
           {proofData.w3w && (
@@ -660,7 +660,7 @@ const TechProofScreen: React.FC = () => {
             <span className="material-symbols-outlined text-primary text-sm">verified</span>
             <span>Evidence will be cryptographically sealed upon submission</span>
             <Tooltip content="Sealing creates a tamper-proof mathematical fingerprint of all your evidence. If photos or data are ever altered, the seal will break—proving the original evidence was genuine." position="top">
-              <span className="material-symbols-outlined text-slate-500 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+              <span className="material-symbols-outlined text-slate-400 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
             </Tooltip>
           </div>
           <ActionButton

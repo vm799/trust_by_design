@@ -281,7 +281,6 @@ async function _pullJobsImpl(workspaceId: string) {
                 });
             }
 
-            const deletedCount = deletedOrphanIds?.length || 0;
         }
     } catch (error) {
         console.error('[Sync] Pull failed:', error);

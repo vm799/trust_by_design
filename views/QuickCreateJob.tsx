@@ -154,7 +154,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Job ID */}
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
             <p className="text-xs text-slate-400 mb-1">JOB ID</p>
             <p className="text-lg font-mono font-bold text-white">{createdJob.id}</p>
           </div>
@@ -183,7 +183,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* QR Code */}
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 text-center">
             <div className="inline-block p-4 bg-white rounded-lg mb-3">
               <QRCodeSVG value={createdJob.bunkerLink} size={128} level="M" />
             </div>
@@ -209,7 +209,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+          <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-600/50">
             <h3 className="text-sm font-medium text-slate-300 mb-2">Next Steps:</h3>
             <ol className="text-sm text-slate-400 space-y-1 list-decimal list-inside">
               <li>Send this link to your technician</li>
@@ -244,7 +244,7 @@ export default function QuickCreateJob() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Job Details */}
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 space-y-4">
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Job Details</h2>
 
             <div>
@@ -302,14 +302,14 @@ export default function QuickCreateJob() {
                 placeholder="e.g., ///filled.count.soap"
                 className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Find your W3W at what3words.com
               </p>
             </div>
           </div>
 
           {/* Contact Details */}
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 space-y-4">
             <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wide">Report Delivery</h2>
 
             <div>
@@ -343,7 +343,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Notes */}
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600">
             <label htmlFor="qcj-notes" className="block text-sm font-medium text-slate-300 mb-2">
               Notes for Technician
             </label>
@@ -361,7 +361,7 @@ export default function QuickCreateJob() {
           <button
             type="submit"
             disabled={isSubmitting || !formData.jobName || !formData.managerEmail}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
+            className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-lg font-bold text-lg transition-colors btn-field"
           >
             {isSubmitting ? 'Creating...' : 'CREATE JOB & GET LINK'}
           </button>

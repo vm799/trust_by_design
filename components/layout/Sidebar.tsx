@@ -103,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Link
           to="/app/settings"
           onClick={handleClick}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors"
         >
           <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold">
             {userInitials}
@@ -133,7 +133,7 @@ const NavLink = memo<NavLinkProps>(({ to, icon, label, badge, active, onClick })
       flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
       ${active
         ? 'bg-primary/10 text-primary border border-primary/20'
-        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+        : 'text-slate-300 hover:bg-white/10 hover:text-white'
       }
     `}
   >

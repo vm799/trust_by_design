@@ -57,7 +57,7 @@ const PricingView: React.FC = () => {
               className={`px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
                 billingPeriod === 'monthly'
                   ? 'bg-primary text-white'
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                  : 'bg-white/10 text-slate-400 hover:bg-white/10'
               }`}
             >
               Monthly
@@ -67,7 +67,7 @@ const PricingView: React.FC = () => {
               className={`px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all relative ${
                 billingPeriod === 'annual'
                   ? 'bg-primary text-white'
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                  : 'bg-white/10 text-slate-400 hover:bg-white/10'
               }`}
             >
               Annual
@@ -125,7 +125,7 @@ const PricingView: React.FC = () => {
 
         {/* Trust Indicators */}
         <div className="text-center space-y-6 pt-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-500 text-xs font-medium tracking-widest">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-400 text-xs font-medium tracking-widest">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-emerald-500">verified</span>
               14-Day Free Trial
@@ -309,7 +309,7 @@ const PriceCard = ({
         <div>
           <h3
             className={`text-lg lg:text-xl font-bold tracking-tighter mb-2 ${
-              active ? 'text-white' : 'text-slate-500'
+              active ? 'text-white' : 'text-slate-400'
             }`}
           >
             {tier}
@@ -321,7 +321,7 @@ const PriceCard = ({
             {price > 0 && (
               <span
                 className={`text-sm font-bold ${
-                  active ? 'text-blue-100' : 'text-slate-500'
+                  active ? 'text-blue-100' : 'text-slate-400'
                 }`}
               >
                 /{billingPeriod === 'annual' ? 'mo' : 'mo'}
@@ -378,7 +378,7 @@ const PriceCard = ({
         className={`w-full py-4 lg:py-5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-widest mt-8 lg:mt-12 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
           active
             ? 'bg-white text-primary hover:bg-blue-50'
-            : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+            : 'bg-white/10 text-white hover:bg-white/10 border border-white/10'
         }`}
       >
         {loading ? (

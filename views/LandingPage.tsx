@@ -257,7 +257,7 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className={`text-xs sm:text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'}`}
+            className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}
           >
             No credit card required • 14-day free trial • Cancel anytime
           </motion.p>
@@ -503,17 +503,17 @@ const LandingPage: React.FC = () => {
             <div className="flex justify-center gap-8 pt-2">
               <div className="text-center">
                 <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£800</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Avg. Dispute Cost</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Avg. Dispute Cost</div>
               </div>
               <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>÷</div>
               <div className="text-center">
                 <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£49</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Monthly Cost</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Monthly Cost</div>
               </div>
               <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>=</div>
               <div className="text-center">
                 <div className="text-3xl sm:text-4xl font-black text-emerald-500">16×</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>ROI</div>
+                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>ROI</div>
               </div>
             </div>
           </motion.div>
@@ -713,7 +713,7 @@ const LandingPage: React.FC = () => {
           <div
             className={`
               flex items-center gap-4 sm:gap-6 text-xs sm:text-sm
-              ${isDark ? 'text-slate-500' : 'text-slate-500'}
+              ${isDark ? 'text-slate-400' : 'text-slate-400'}
             `}
           >
             <Link to="/pricing" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>
@@ -973,7 +973,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
                   className={`
                     material-symbols-outlined text-xl transition-transform shrink-0
                     ${openIndex === index ? 'rotate-180' : ''}
-                    ${isDark ? 'text-slate-400' : 'text-slate-500'}
+                    ${isDark ? 'text-slate-400' : 'text-slate-400'}
                   `}
                 >
                   expand_more
@@ -1072,7 +1072,7 @@ const PriceCard = ({
         <h3
           className={`
             text-xs sm:text-sm font-semibold tracking-widest
-            ${active ? 'text-white/80' : isDark ? 'text-slate-500' : 'text-slate-500'}
+            ${active ? 'text-white/80' : isDark ? 'text-slate-400' : 'text-slate-400'}
           `}
         >
           {tier}
@@ -1081,7 +1081,7 @@ const PriceCard = ({
           {price}
           <span className="text-base sm:text-lg font-normal">/mo</span>
         </p>
-        <p className={`text-xs sm:text-sm ${active ? 'text-white/80' : isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+        <p className={`text-xs sm:text-sm ${active ? 'text-white/80' : isDark ? 'text-slate-400' : 'text-slate-400'}`}>
           {desc}
         </p>
       </div>

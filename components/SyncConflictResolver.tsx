@@ -74,7 +74,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
         {conflict.conflictFields.map((field) => (
           <div
             key={field}
-            className="bg-slate-800 border border-slate-700/50 rounded-lg p-4 space-y-2"
+            className="bg-slate-800 border border-slate-600/50 rounded-lg p-4 space-y-2"
           >
             <div className="text-xs uppercase font-bold text-slate-400">
               {getFieldLabel(field)}
@@ -144,7 +144,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
         {/* Manual Resolution Option */}
         <button
           onClick={() => onResolve('manual')}
-          className="w-full flex items-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600/50 transition-all text-left active:scale-[0.98]"
+          className="w-full flex items-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/50 hover:border-slate-600/50 transition-all text-left active:scale-[0.98]"
         >
           <span className="material-symbols-outlined text-slate-400 text-lg flex-shrink-0">
             edit
@@ -157,7 +157,7 @@ export const SyncConflictResolver: React.FC<SyncConflictResolverProps> = ({
       </div>
 
       {/* Help Text */}
-      <div className="bg-slate-900 border border-slate-700/30 rounded-lg p-3 text-xs text-slate-400">
+      <div className="bg-slate-900 border border-slate-600/30 rounded-lg p-3 text-xs text-slate-400">
         <p className="flex items-start gap-2">
           <span className="material-symbols-outlined text-sm flex-shrink-0 mt-0.5">
             info

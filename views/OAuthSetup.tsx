@@ -378,7 +378,7 @@ const OAuthSetup: React.FC = () => {
                   id="oauth-full-name"
                   type="text"
                   placeholder="Your name"
-                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                 />
@@ -500,7 +500,7 @@ const OAuthSetup: React.FC = () => {
 
             <button
               onClick={() => setStep('name')}
-              className="w-full text-center text-slate-500 hover:text-white text-sm py-2 transition-colors"
+              className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
             >
               ← Back
             </button>
@@ -548,18 +548,18 @@ const OAuthSetup: React.FC = () => {
                   id="oauth-workspace-name"
                   type="text"
                   placeholder={`${firstName}'s Workspace`}
-                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-500 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={workspaceName}
                   onChange={e => setWorkspaceName(e.target.value)}
                 />
-                <p className="text-slate-500 text-xs">
+                <p className="text-slate-400 text-xs">
                   Leave blank to use &quot;{displayWorkspaceName}&quot;
                 </p>
               </div>
 
               {/* Preview */}
               <div className="bg-slate-800 border border-white/10 rounded-2xl p-4">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Preview</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Preview</p>
                 <div className="flex items-center gap-3">
                   <div className="size-12 bg-gradient-to-br from-primary to-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-xl">
                     {displayWorkspaceName.charAt(0).toUpperCase()}
@@ -591,7 +591,7 @@ const OAuthSetup: React.FC = () => {
 
             <button
               onClick={() => setStep('persona')}
-              className="w-full text-center text-slate-500 hover:text-white text-sm py-2 transition-colors"
+              className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
             >
               ← Back
             </button>
@@ -661,7 +661,7 @@ const OAuthSetup: React.FC = () => {
 
               <button
                 onClick={handleSkipInstall}
-                className="w-full text-center text-slate-500 hover:text-white text-sm py-2 transition-colors"
+                className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
               >
                 Maybe later
               </button>
@@ -677,7 +677,7 @@ const OAuthSetup: React.FC = () => {
         transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-0 right-0 flex justify-center z-10"
       >
-        <div className="flex items-center gap-4 text-xs text-slate-500">
+        <div className="flex items-center gap-4 text-xs text-slate-400">
           <span className="flex items-center gap-1">
             <span className="material-symbols-outlined text-emerald-400 text-sm">verified</span>
             14-day free trial

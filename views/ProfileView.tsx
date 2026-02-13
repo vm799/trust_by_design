@@ -28,7 +28,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
           <div className="flex items-start gap-4">
             <button
               onClick={() => navigate('/admin')}
-              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring lg:hidden mt-1"
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring lg:hidden mt-1"
               aria-label="Back to dashboard"
             >
               <span className="material-symbols-outlined">arrow_back</span>
@@ -51,7 +51,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                     <input
                       id="profile-full-name"
                       type="text"
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                      className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                     />
@@ -62,7 +62,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                       id="profile-system-role"
                       type="text"
                       readOnly
-                      className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs"
+                      className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs"
                       value={formData.role}
                     />
                  </div>
@@ -72,7 +72,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                  <input
                    id="profile-email"
                    type="email"
-                   className="w-full bg-slate-800 border-slate-700 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                   className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
                    value={formData.email}
                    onChange={e => setFormData({...formData, email: e.target.value})}
                  />

@@ -204,7 +204,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
             ${billingPeriod === 'monthly'
               ? 'bg-primary text-white'
               : isDark
-                ? 'bg-white/5 text-slate-400 hover:bg-white/10'
+                ? 'bg-white/10 text-slate-400 hover:bg-white/10'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }
           `}
@@ -218,7 +218,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
             ${billingPeriod === 'annual'
               ? 'bg-primary text-white'
               : isDark
-                ? 'bg-white/5 text-slate-400 hover:bg-white/10'
+                ? 'bg-white/10 text-slate-400 hover:bg-white/10'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }
           `}
@@ -286,7 +286,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
                 <div>
                   <h3 className={`
                     text-lg font-bold tracking-tight
-                    ${isPopular ? 'text-white/80' : isDark ? 'text-slate-400' : 'text-slate-500'}
+                    ${isPopular ? 'text-white/80' : isDark ? 'text-slate-400' : 'text-slate-400'}
                   `}>
                     {plan.name}
                   </h3>
@@ -309,7 +309,7 @@ export const PlanSelector: React.FC<PlanSelectorProps> = ({
                   {price > 0 && (
                     <span className={`
                       text-sm font-medium
-                      ${isPopular ? 'text-blue-200' : isDark ? 'text-slate-500' : 'text-slate-500'}
+                      ${isPopular ? 'text-blue-200' : isDark ? 'text-slate-400' : 'text-slate-400'}
                     `}>
                       /mo
                     </span>

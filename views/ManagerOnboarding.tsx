@@ -185,7 +185,7 @@ const ManagerOnboarding: React.FC = () => {
                       ? 'bg-success text-white'
                       : s === step
                       ? 'bg-primary text-white scale-110'
-                      : 'bg-slate-800 text-slate-500'
+                      : 'bg-slate-800 text-slate-400'
                   }`}
                 >
                   {s < step ? (
@@ -204,7 +204,7 @@ const ManagerOnboarding: React.FC = () => {
               </div>
             ))}
           </div>
-          <p className="text-center text-slate-500 text-xs font-medium tracking-widest">
+          <p className="text-center text-slate-400 text-xs font-medium tracking-widest">
             Step {step} of 3
           </p>
         </div>
@@ -237,7 +237,7 @@ const ManagerOnboarding: React.FC = () => {
                   required
                   value={companyData.companyName}
                   onChange={(e) => setCompanyData({ ...companyData, companyName: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white text-lg font-medium outline-none transition-all"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white text-lg font-medium outline-none transition-all"
                   placeholder="Your Company Ltd"
                 />
               </div>
@@ -251,7 +251,7 @@ const ManagerOnboarding: React.FC = () => {
                   id="onboarding-country"
                   value={companyData.country}
                   onChange={(e) => setCompanyData({ ...companyData, country: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.name}</option>
@@ -271,18 +271,18 @@ const ManagerOnboarding: React.FC = () => {
                       type="time"
                       value={companyData.workHoursStart}
                       onChange={(e) => setCompanyData({ ...companyData, workHoursStart: e.target.value })}
-                      className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                      className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">START</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">START</span>
                   </div>
                   <div className="relative">
                     <input
                       type="time"
                       value={companyData.workHoursEnd}
                       onChange={(e) => setCompanyData({ ...companyData, workHoursEnd: e.target.value })}
-                      className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                      className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">END</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">END</span>
                   </div>
                 </div>
               </div>
@@ -301,13 +301,13 @@ const ManagerOnboarding: React.FC = () => {
                       className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                         companyData.defaultSafetyRequirements.includes(safety.id)
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
                         companyData.defaultSafetyRequirements.includes(safety.id)
                           ? 'text-primary'
-                          : 'text-slate-500'
+                          : 'text-slate-400'
                       }`}>
                         {safety.icon}
                       </span>
@@ -354,7 +354,7 @@ const ManagerOnboarding: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border-t border-slate-700 pt-4 space-y-2">
+              <div className="border-t border-slate-600 pt-4 space-y-2">
                 <div className="flex items-center gap-2 text-slate-300 text-sm">
                   <span className="material-symbols-outlined text-success text-lg">check_circle</span>
                   Create and assign jobs to technicians

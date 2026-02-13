@@ -566,7 +566,7 @@ function SyncStatus({ isOnline, syncStatus, isSyncing, message }: SyncStatusProp
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-700">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-600">
       <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
       <span className="text-xs font-medium text-slate-300">{getStatusText()}</span>
     </div>
@@ -922,7 +922,7 @@ export default function JobRunner() {
         <p className="text-slate-400">Works offline. Your data is safe.</p>
       </div>
 
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
+      <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 space-y-4">
         <div>
           <label htmlFor="bunker-job-id" className="block text-sm font-medium text-slate-300 mb-2">
             Job ID *
@@ -963,7 +963,7 @@ export default function JobRunner() {
             placeholder="e.g., manager@company.com"
             className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             PDF report will be emailed here after sync completes
           </p>
         </div>
@@ -971,7 +971,7 @@ export default function JobRunner() {
         <button
           onClick={() => manualJobId.trim() && loadJob(manualJobId.trim())}
           disabled={!manualJobId.trim()}
-          className="w-full mt-2 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold text-lg transition-colors btn-field"
+          className="w-full mt-2 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-lg font-bold text-lg transition-colors btn-field"
         >
           START JOB
         </button>
@@ -999,7 +999,7 @@ export default function JobRunner() {
           <img
             src={state.job.beforePhoto.dataUrl}
             alt="Before"
-            className="w-full rounded-xl border border-slate-700"
+            className="w-full rounded-xl border border-slate-600"
           />
           <PhotoMeta photo={state.job.beforePhoto} />
           <div className="flex gap-3">
@@ -1042,7 +1042,7 @@ export default function JobRunner() {
           <img
             src={state.job.afterPhoto.dataUrl}
             alt="After"
-            className="w-full rounded-xl border border-slate-700"
+            className="w-full rounded-xl border border-slate-600"
           />
           <PhotoMeta photo={state.job.afterPhoto} />
           <div className="flex gap-3">
@@ -1094,7 +1094,7 @@ export default function JobRunner() {
           <img
             src={state.job.signature.dataUrl}
             alt="Signature"
-            className="w-full rounded-xl border border-slate-700 bg-white"
+            className="w-full rounded-xl border border-slate-600 bg-white"
           />
           <p className="text-center text-slate-400">
             Signed by: <span className="text-white font-medium">{state.job.signature.signerName}</span>
@@ -1163,7 +1163,7 @@ export default function JobRunner() {
             <img
               src={state.job.beforePhoto.dataUrl}
               alt="Before"
-              className="w-full rounded-lg border border-slate-700"
+              className="w-full rounded-lg border border-slate-600"
             />
           </div>
         )}
@@ -1173,14 +1173,14 @@ export default function JobRunner() {
             <img
               src={state.job.afterPhoto.dataUrl}
               alt="After"
-              className="w-full rounded-lg border border-slate-700"
+              className="w-full rounded-lg border border-slate-600"
             />
           </div>
         )}
       </div>
 
       {state.job?.signature && (
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
           <p className="text-xs text-slate-400 mb-2">CLIENT SIGNATURE</p>
           <img
             src={state.job.signature.dataUrl}
@@ -1193,7 +1193,7 @@ export default function JobRunner() {
         </div>
       )}
 
-      <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+      <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
         <h3 className="text-sm font-medium text-slate-300 mb-2">Job Details</h3>
         <p className="text-white font-medium">{state.job?.title}</p>
         <p className="text-slate-400 text-sm">{state.job?.client}</p>
@@ -1265,7 +1265,7 @@ export default function JobRunner() {
     return (
       <div className="min-h-screen bg-slate-950 text-white">
         {/* Navigation Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-600">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-slate-400">Job Complete</span>
             <a
@@ -1288,11 +1288,11 @@ export default function JobRunner() {
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 mb-6">
             <p className="text-xs text-slate-400">JOB</p>
             <p className="text-lg font-bold text-white">{state.job.title}</p>
             <p className="text-sm text-slate-400">{state.job.client}</p>
-            {state.job.address && <p className="text-sm text-slate-500">{state.job.address}</p>}
+            {state.job.address && <p className="text-sm text-slate-400">{state.job.address}</p>}
             {state.job.completedAt && (
               <p className="text-xs text-green-400 mt-2">
                 Completed: {new Date(state.job.completedAt).toLocaleString()}
@@ -1305,13 +1305,13 @@ export default function JobRunner() {
             {state.job.beforePhoto && (
               <div>
                 <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-                <img src={state.job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-700" />
+                <img src={state.job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
               </div>
             )}
             {state.job.afterPhoto && (
               <div>
                 <p className="text-xs text-slate-400 mb-1">AFTER</p>
-                <img src={state.job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-700" />
+                <img src={state.job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
               </div>
             )}
           </div>
@@ -1363,7 +1363,7 @@ export default function JobRunner() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Navigation Header with Job Log Link */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-700">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-600">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <span className="text-sm text-slate-400">Bunker Mode</span>
           <a

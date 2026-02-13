@@ -121,7 +121,7 @@ Evidence is cryptographically sealed and verifiable.
           <h1 className="text-xl font-black text-white uppercase tracking-tight">Client Receipt</h1>
           <button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -148,7 +148,7 @@ Evidence is cryptographically sealed and verifiable.
         </div>
         <button
           onClick={onClose}
-          className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          className="min-w-[44px] min-h-[44px] size-11 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
         >
           <span className="material-symbols-outlined">close</span>
         </button>
@@ -185,7 +185,7 @@ Evidence is cryptographically sealed and verifiable.
           </div>
 
           {/* Client Info */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+          <div className="bg-white/10 border border-white/10 rounded-2xl p-4 mb-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
             <p className="text-sm font-bold text-white">{receipt.client_name}</p>
             {receipt.client_address && (
@@ -203,7 +203,7 @@ Evidence is cryptographically sealed and verifiable.
           </div>
 
           {/* Location with Enhanced W3W Badge */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+          <div className="bg-white/10 border border-white/10 rounded-2xl p-4 mb-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
             <p className="text-sm font-bold text-white">{receipt.work_location}</p>
 
@@ -220,7 +220,7 @@ Evidence is cryptographically sealed and verifiable.
             {/* GPS Coordinates */}
             {job.lat && job.lng && (
               <div className="mt-2 pt-2 border-t border-white/10">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GPS Coordinates</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">GPS Coordinates</p>
                 <p className="text-xs font-mono text-slate-400">
                   {job.lat.toFixed(6)}, {job.lng.toFixed(6)}
                 </p>
@@ -237,14 +237,14 @@ Evidence is cryptographically sealed and verifiable.
                 <span className="text-slate-300">{receipt.photos_count} Photos</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-sm ${receipt.has_signature ? 'text-success' : 'text-slate-500'}`}>
+                <span className={`material-symbols-outlined text-sm ${receipt.has_signature ? 'text-success' : 'text-slate-400'}`}>
                   signature
                 </span>
                 <span className="text-slate-300">{receipt.has_signature ? 'Signed' : 'Unsigned'}</span>
               </div>
               {receipt.signer_name && (
                 <div className="col-span-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-500 text-sm">person</span>
+                  <span className="material-symbols-outlined text-slate-400 text-sm">person</span>
                   <span className="text-slate-300">{receipt.signer_name}</span>
                 </div>
               )}
@@ -274,7 +274,7 @@ Evidence is cryptographically sealed and verifiable.
                 </div>
                 {receipt.evidence_hash && (
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Evidence Hash</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Evidence Hash</p>
                     <p className="text-xs font-mono text-emerald-400/80 break-all leading-relaxed">
                       {receipt.evidence_hash}
                     </p>
@@ -293,13 +293,13 @@ Evidence is cryptographically sealed and verifiable.
                   £{receipt.amount.toFixed(2)}
                 </p>
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
+              <p className="text-[10px] text-slate-400 mt-1">Payment status: {receipt.payment_status || 'Pending'}</p>
             </div>
           )}
 
           {/* Verification Link */}
           <div className="border-t border-white/10 pt-4 mt-4 text-center">
-            <p className="text-[10px] text-slate-500 mb-2">Verify this receipt online</p>
+            <p className="text-[10px] text-slate-400 mb-2">Verify this receipt online</p>
             <p className="text-xs font-mono text-primary break-all">{getReportUrl(job.id)}</p>
           </div>
         </div>
@@ -316,7 +316,7 @@ Evidence is cryptographically sealed and verifiable.
         </button>
         <button
           onClick={handleCopyReceipt}
-          className="w-full py-4 bg-white/5 rounded-2xl font-bold text-slate-400 text-xs uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
+          className="w-full py-4 bg-white/10 rounded-2xl font-bold text-slate-400 text-xs uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
         >
           <span className="material-symbols-outlined text-sm">content_copy</span>
           Copy Receipt Text

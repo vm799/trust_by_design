@@ -179,7 +179,7 @@ const EvidenceReview: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Date */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Date</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Date</p>
                   <p className="text-sm text-white font-medium">
                     {new Date(job.date).toLocaleDateString('en-GB', {
                       weekday: 'long',
@@ -192,7 +192,7 @@ const EvidenceReview: React.FC = () => {
 
                 {/* Client */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Client</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
                   <p className="text-sm text-white font-medium">{client?.name || job.client || 'N/A'}</p>
                   {client?.email && (
                     <p className="text-xs text-slate-400">{client.email}</p>
@@ -201,7 +201,7 @@ const EvidenceReview: React.FC = () => {
 
                 {/* Technician */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Technician</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Technician</p>
                   <p className="text-sm text-white font-medium">{technician?.name || job.technician || 'N/A'}</p>
                   {technician?.email && (
                     <p className="text-xs text-slate-400">{technician.email}</p>
@@ -210,7 +210,7 @@ const EvidenceReview: React.FC = () => {
 
                 {/* Location */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Location</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</p>
                   <p className="text-sm text-white font-medium">{job.address || 'N/A'}</p>
                   {job.w3w && (
                     <p className="text-xs text-emerald-400 font-mono">{'///'}{job.w3w}</p>
@@ -221,7 +221,7 @@ const EvidenceReview: React.FC = () => {
               {/* Description */}
               {(job.description || job.notes) && (
                 <div className="mt-4 pt-4 border-t border-white/15">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Description</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Description</p>
                   <p className="text-sm text-slate-300">{job.description || job.notes}</p>
                 </div>
               )}
@@ -229,7 +229,7 @@ const EvidenceReview: React.FC = () => {
               {/* Amount */}
               {(job.total || job.price) && (
                 <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Amount</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
                   <p className="text-lg font-black text-white">£{(job.total || job.price || 0).toFixed(2)}</p>
                 </div>
               )}
@@ -431,7 +431,7 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Signature */}
                   <div>
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Signature</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Signature</p>
                     <div className={`rounded-xl p-4 border-2 ${
                       isSealed
                         ? 'bg-slate-900 border-emerald-500/20'
@@ -444,7 +444,7 @@ const EvidenceReview: React.FC = () => {
                           className="max-h-32 mx-auto"
                         />
                       ) : (
-                        <p className="text-center text-slate-500 text-sm py-4">No signature captured</p>
+                        <p className="text-center text-slate-400 text-sm py-4">No signature captured</p>
                       )}
                     </div>
                     {job.signerName && (
@@ -457,7 +457,7 @@ const EvidenceReview: React.FC = () => {
 
                   {/* Confirmation Details */}
                   <div className="space-y-3">
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Confirmation Details</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Confirmation Details</p>
 
                     {job.clientConfirmation?.confirmed && (
                       <div className="flex items-center gap-2 text-emerald-400">
@@ -468,7 +468,7 @@ const EvidenceReview: React.FC = () => {
 
                     {job.clientConfirmation?.timestamp && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-0.5">Signed At</p>
+                        <p className="text-xs text-slate-400 mb-0.5">Signed At</p>
                         <p className="text-sm text-white font-mono">
                           {new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB', {
                             day: 'numeric',
@@ -485,7 +485,7 @@ const EvidenceReview: React.FC = () => {
 
                     {job.signatureHash && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-0.5">Signature Hash</p>
+                        <p className="text-xs text-slate-400 mb-0.5">Signature Hash</p>
                         <p className="text-[10px] text-slate-300 font-mono break-all">
                           {job.signatureHash.slice(0, 32)}...
                         </p>
@@ -494,7 +494,7 @@ const EvidenceReview: React.FC = () => {
 
                     {job.completedAt && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-0.5">Job Completed</p>
+                        <p className="text-xs text-slate-400 mb-0.5">Job Completed</p>
                         <p className="text-sm text-white font-mono">
                           {new Date(job.completedAt).toLocaleString('en-GB', {
                             day: 'numeric',
@@ -518,7 +518,7 @@ const EvidenceReview: React.FC = () => {
           {/* ============================================================ */}
           <motion.div variants={fadeInUp}>
             <div className="text-center py-6 border-t border-white/15">
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">
                 Generated by JobProof
               </p>
               <p className="text-[9px] text-slate-600">
@@ -558,7 +558,7 @@ const EvidenceReview: React.FC = () => {
                 {/* Timestamp */}
                 {selectedPhoto.timestamp && (
                   <div>
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Captured</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Captured</p>
                     <p className="text-xs text-white font-mono">
                       {new Date(selectedPhoto.timestamp).toLocaleString('en-GB', {
                         day: '2-digit',
@@ -574,7 +574,7 @@ const EvidenceReview: React.FC = () => {
 
                 {/* GPS */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">GPS</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">GPS</p>
                   {(selectedPhoto.lat || selectedPhoto.location) ? (
                     <div>
                       <p className="text-xs text-emerald-400 font-mono">
@@ -588,13 +588,13 @@ const EvidenceReview: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-500">Not captured</p>
+                    <p className="text-xs text-slate-400">Not captured</p>
                   )}
                 </div>
 
                 {/* W3W */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">What3Words</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">What3Words</p>
                   {selectedPhoto.w3w ? (
                     <div>
                       <p className="text-xs text-emerald-400 font-mono">
@@ -610,19 +610,19 @@ const EvidenceReview: React.FC = () => {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-500">Not captured</p>
+                    <p className="text-xs text-slate-400">Not captured</p>
                   )}
                 </div>
 
                 {/* Integrity */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Integrity</p>
                   {(selectedPhoto.photo_hash || selectedPhoto.hash) ? (
                     <p className="text-[10px] text-emerald-400 font-mono break-all">
                       {(selectedPhoto.photo_hash || selectedPhoto.hash || '').slice(0, 16)}...
                     </p>
                   ) : (
-                    <p className="text-xs text-slate-500">No hash</p>
+                    <p className="text-xs text-slate-400">No hash</p>
                   )}
                 </div>
               </div>
@@ -683,9 +683,9 @@ const IntegrityMetric: React.FC<IntegrityMetricProps> = ({ label, value, total, 
   <div className="text-center p-3 bg-slate-800 rounded-xl">
     <span className={`material-symbols-outlined text-2xl ${color}`}>{icon}</span>
     <p className="text-lg font-black text-white mt-1">
-      {value}{total !== undefined && <span className="text-slate-500 text-sm">/{total}</span>}
+      {value}{total !== undefined && <span className="text-slate-400 text-sm">/{total}</span>}
     </p>
-    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
   </div>
 );
 
@@ -785,7 +785,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({ photo, locked, onClick }) => {
                 <span className="material-symbols-outlined text-[10px] text-emerald-400">location_on</span>
                 {(photo.lat || photo.location?.lat)?.toFixed(4)}, {(photo.lng || photo.location?.lng)?.toFixed(4)}
                 {(photo.gps_accuracy || photo.location?.accuracy) && (
-                  <span className="text-slate-500 ml-1">±{Math.round(photo.gps_accuracy || photo.location?.accuracy || 0)}m</span>
+                  <span className="text-slate-400 ml-1">±{Math.round(photo.gps_accuracy || photo.location?.accuracy || 0)}m</span>
                 )}
               </p>
             )}
@@ -802,19 +802,19 @@ const PhotoCard: React.FC<PhotoCardProps> = ({ photo, locked, onClick }) => {
 
         {/* Integrity indicators */}
         <div className="flex items-center gap-2 pt-1 border-t border-white/15">
-          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${hasGPS ? 'text-[#00FFCC]' : 'text-slate-500'}`}>
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${hasGPS ? 'text-[#00FFCC]' : 'text-slate-400'}`}>
             <span className="material-symbols-outlined text-[10px]">
               {hasGPS ? 'check_circle' : 'radio_button_unchecked'}
             </span>
             GPS
           </span>
-          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${hasW3W && photo.w3w_verified ? 'text-[#00FFCC]' : 'text-slate-500'}`}>
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${hasW3W && photo.w3w_verified ? 'text-[#00FFCC]' : 'text-slate-400'}`}>
             <span className="material-symbols-outlined text-[10px]">
               {hasW3W && photo.w3w_verified ? 'check_circle' : 'radio_button_unchecked'}
             </span>
             W3W
           </span>
-          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${locked ? 'text-[#00FFCC]' : 'text-slate-500'}`}>
+          <span className={`flex items-center gap-0.5 text-[9px] font-mono ${locked ? 'text-[#00FFCC]' : 'text-slate-400'}`}>
             <span className="material-symbols-outlined text-[10px]">
               {locked ? 'check_circle' : 'radio_button_unchecked'}
             </span>

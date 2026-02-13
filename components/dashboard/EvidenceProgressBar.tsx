@@ -122,14 +122,14 @@ const EvidenceProgressBar: React.FC<EvidenceProgressBarProps> = React.memo(({
             <span className={`material-symbols-outlined text-sm ${
               evidence.isDefensible
                 ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-slate-400 dark:text-slate-500'
+                : 'text-slate-400 dark:text-slate-400'
             }`}>
               {evidence.isDefensible ? 'verified_user' : 'shield'}
             </span>
             <span className={`text-xs font-medium ${
               evidence.isDefensible
                 ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-slate-500 dark:text-slate-400'
+                : 'text-slate-400 dark:text-slate-400'
             }`}>
               {evidence.completedCount === 0
                 ? 'No evidence'
@@ -142,7 +142,7 @@ const EvidenceProgressBar: React.FC<EvidenceProgressBarProps> = React.memo(({
           <span className={`text-xs font-bold tabular-nums ${
             evidence.isDefensible
               ? 'text-emerald-700 dark:text-emerald-300'
-              : 'text-slate-500 dark:text-slate-400'
+              : 'text-slate-400 dark:text-slate-400'
           }`}>
             {evidence.completedCount} / 3
           </span>

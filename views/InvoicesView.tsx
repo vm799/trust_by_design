@@ -32,17 +32,17 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
 
             {/* Feature Preview */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mt-8">
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <div className="bg-white/10 rounded-2xl p-4 border border-white/10">
                 <span className="material-symbols-outlined text-primary text-2xl mb-2">receipt_long</span>
                 <h3 className="text-sm font-black text-white uppercase tracking-tight">Auto-Generate</h3>
                 <p className="text-[10px] text-slate-400 mt-1">Create invoices directly from sealed jobs</p>
               </div>
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <div className="bg-white/10 rounded-2xl p-4 border border-white/10">
                 <span className="material-symbols-outlined text-primary text-2xl mb-2">payments</span>
                 <h3 className="text-sm font-black text-white uppercase tracking-tight">Payment Links</h3>
                 <p className="text-[10px] text-slate-400 mt-1">Send secure payment links to clients</p>
               </div>
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <div className="bg-white/10 rounded-2xl p-4 border border-white/10">
                 <span className="material-symbols-outlined text-primary text-2xl mb-2">analytics</span>
                 <h3 className="text-sm font-black text-white uppercase tracking-tight">Track Status</h3>
                 <p className="text-[10px] text-slate-400 mt-1">Monitor payment status in real-time</p>
@@ -51,7 +51,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
 
             {/* CTA */}
             <div className="mt-8 pt-6 border-t border-white/10">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
                 Want early access?
               </p>
               <a
@@ -83,7 +83,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                 </thead>
                 <tbody className="divide-y divide-white/5 text-slate-300">
                   {invoices.map(inv => (
-                    <tr key={inv.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={inv.id} className="hover:bg-white/10 transition-colors">
                       <td className="px-8 py-6 font-mono text-xs text-white uppercase">{inv.id}</td>
                       <td className="px-8 py-6">
                         <div className="font-bold text-white uppercase tracking-tight">{inv.clientName}</div>
@@ -95,7 +95,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                           inv.status === 'Paid' ? 'bg-success/10 text-success border-success/20' :
                           inv.status === 'Sent' ? 'bg-primary/10 text-primary border-primary/20' :
                           inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' :
-                          'bg-slate-800 text-slate-300 border-slate-700'
+                          'bg-slate-800 text-slate-300 border-slate-600'
                         }`}>
                           {inv.status}
                         </span>
@@ -142,7 +142,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                 </tr>
               ) : (
                 invoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-white/5 transition-colors group">
+                  <tr key={inv.id} className="hover:bg-white/10 transition-colors group">
                     <td className="px-8 py-6 font-mono text-xs text-white uppercase">{inv.id}</td>
                     <td className="px-8 py-6">
                       <div className="font-bold text-white uppercase tracking-tight">{inv.clientName}</div>
@@ -152,7 +152,7 @@ const InvoicesView: React.FC<InvoicesViewProps> = ({ user, invoices, updateStatu
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${inv.status === 'Paid' ? 'bg-success/10 text-success border-success/20' :
                           inv.status === 'Sent' ? 'bg-primary/10 text-primary border-primary/20' :
-                            inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-300 border-slate-700'
+                            inv.status === 'Overdue' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-slate-800 text-slate-300 border-slate-600'
                         }`}>
                         {inv.status}
                       </span>

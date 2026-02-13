@@ -354,17 +354,17 @@ const DevReset: React.FC = () => {
         <div className="bg-slate-900 rounded-xl p-4 mb-6 border border-slate-800">
           <h2 className="text-sm font-semibold text-slate-400 mb-3">Build Info</h2>
           <div className="grid grid-cols-2 gap-2 text-sm font-mono">
-            <span className="text-slate-500">Commit:</span>
+            <span className="text-slate-400">Commit:</span>
             <span className="text-slate-300">{buildInfo.commit}</span>
-            <span className="text-slate-500">Schema:</span>
+            <span className="text-slate-400">Schema:</span>
             <span className="text-slate-300">v{buildInfo.schemaVersion}</span>
-            <span className="text-slate-500">SW Version:</span>
+            <span className="text-slate-400">SW Version:</span>
             <span className="text-slate-300">{buildInfo.swVersion}</span>
-            <span className="text-slate-500">Built:</span>
+            <span className="text-slate-400">Built:</span>
             <span className="text-slate-300">
               {new Date(buildInfo.buildTime).toLocaleString()}
             </span>
-            <span className="text-slate-500">Mode:</span>
+            <span className="text-slate-400">Mode:</span>
             <span className="text-slate-300">
               {import.meta.env.DEV ? 'Development' : 'Production'}
             </span>
@@ -376,7 +376,7 @@ const DevReset: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-slate-300">Dev Mode</h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Shows build badge on all pages
               </p>
             </div>
@@ -417,7 +417,7 @@ const DevReset: React.FC = () => {
                     </span>
                   </div>
                   {layer.details && layer.details.length > 0 && (
-                    <ul className="mt-2 text-xs text-slate-500 space-y-0.5">
+                    <ul className="mt-2 text-xs text-slate-400 space-y-0.5">
                       {layer.details.slice(0, 5).map((detail, i) => (
                         <li key={`detail-${i}`} className="font-mono truncate">
                           {detail}
@@ -465,7 +465,7 @@ const DevReset: React.FC = () => {
                   ? '⚠ Reset Complete (Unverified)'
                   : '✗ Reset Failed'}
               </h3>
-              <span className="text-xs text-slate-500 font-mono">
+              <span className="text-xs text-slate-400 font-mono">
                 {resetResult.durationMs}ms
               </span>
             </div>
@@ -580,7 +580,7 @@ const DevReset: React.FC = () => {
                 <strong>Supabase Session</strong> - Auth tokens. Auto-refreshes.
               </li>
             </ul>
-            <p className="text-slate-500 mt-3">
+            <p className="text-slate-400 mt-3">
               Use &quot;Nuclear Reset&quot; to clear all layers and start fresh.
             </p>
           </div>

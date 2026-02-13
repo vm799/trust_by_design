@@ -347,7 +347,7 @@ const TechEvidenceReview: React.FC = () => {
           <button
             onClick={() => currentStep > 0 ? handlePrevStep() : navigate(`/tech/job/${job.id}`)}
             aria-label={currentStep > 0 ? 'Go to previous step' : 'Back to job details'}
-            className="p-2 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
+            className="p-2 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -355,7 +355,7 @@ const TechEvidenceReview: React.FC = () => {
             <h1 className="font-semibold text-white text-sm truncate">
               {COMPLETION_STEPS[currentStep].label}
             </h1>
-            <p className="text-xs text-slate-500 truncate">
+            <p className="text-xs text-slate-400 truncate">
               {job.title} {client ? `\u2022 ${client.name}` : ''}
             </p>
           </div>
@@ -539,7 +539,7 @@ const TechEvidenceReview: React.FC = () => {
                   }}
                   placeholder="Describe the work completed, any issues found, or important notes for the client and office..."
                   rows={8}
-                  className="w-full bg-slate-900 border-2 border-slate-700 focus:border-amber-500/50 rounded-2xl p-4 text-white text-base placeholder:text-slate-600 resize-none focus:outline-none transition-colors leading-relaxed"
+                  className="w-full bg-slate-900 border-2 border-slate-600 focus:border-amber-500/50 rounded-2xl p-4 text-white text-base placeholder:text-slate-600 resize-none focus:outline-none transition-colors leading-relaxed"
                 />
                 <div className="absolute bottom-3 right-3 text-xs text-slate-600">
                   {completionNotes.length > 0 ? `${completionNotes.length} chars` : 'Optional'}
