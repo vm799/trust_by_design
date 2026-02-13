@@ -132,7 +132,7 @@ const TechnicianForm: React.FC = () => {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
-        status: 'Authorised',
+        status: 'Registered',
         rating: 0,
         jobsCompleted: 0,
       };

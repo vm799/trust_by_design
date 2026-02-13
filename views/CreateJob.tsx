@@ -196,8 +196,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
       name: newTechnicianForm.name.trim(),
       email: newTechnicianForm.email.trim(),
       phone: newTechnicianForm.phone.trim() || undefined,
-      status: 'Available',
-      rating: 5,
+      status: 'Registered',
+      rating: 0,
       jobsCompleted: 0
     };
 
@@ -886,7 +886,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                 <div className="bg-success/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                   <span className="material-symbols-outlined text-success text-5xl font-black">check_circle</span>
                 </div>
-                <h3 id="success-modal-title" className="text-3xl font-black text-white tracking-tighter uppercase">Job Dispatched Successfully</h3>
+                <h3 id="success-modal-title" className="text-3xl font-black text-white tracking-tighter uppercase">Job Created</h3>
                 <p className="text-slate-400 text-sm font-medium">Job <span className="font-mono text-primary">{createdJobId}</span> created. Send the magic link below to your technician.</p>
               </div>
 

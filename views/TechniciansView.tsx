@@ -110,17 +110,21 @@ const TechCard = React.memo(({
           <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.15em] font-mono">Tech ID</p>
           <p className="text-xs font-black text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
         </div>
-        <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ml-2 ${
-          tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' :
-          tech.status === 'Available' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-          tech.status === 'On Site' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
-          tech.status === 'In Transit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-          tech.status === 'Off Duty' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
-          tech.status === 'Offline' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-          'bg-slate-700/50 text-slate-300 border-slate-600/30'
-        }`}>
-          {tech.status}
-        </span>
+        <div className="flex flex-col items-end ml-2">
+          <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ${
+            tech.status === 'Registered' ? 'bg-slate-600/20 text-slate-300 border-slate-500/30' :
+            tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' :
+            tech.status === 'Available' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+            tech.status === 'On Site' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+            tech.status === 'In Transit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+            tech.status === 'Off Duty' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+            tech.status === 'Offline' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+            'bg-slate-700/50 text-slate-300 border-slate-600/30'
+          }`}>
+            {tech.status}
+          </span>
+          <span className="text-[7px] text-slate-500 mt-0.5 tracking-wide">Status set manually</span>
+        </div>
       </div>
 
       {/* Avatar and Name */}
@@ -204,7 +208,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
       id: generateUUID(),
       name: newTech.name,
       email: newTech.email,
-      status: 'Authorised',
+      status: 'Registered',
       rating: 0,
       jobsCompleted: 0
     });

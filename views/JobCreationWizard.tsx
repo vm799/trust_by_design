@@ -14,7 +14,7 @@ import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInterac
  * 2. Job Location (address, site notes, map preview)
  * 3. Scope & Requirements (description, safety, PPE)
  * 4. Assign Contractor (name, email/phone)
- * 5. Review & Dispatch
+ * 5. Review & Create
  */
 
 interface JobCreationWizardProps {
@@ -78,7 +78,7 @@ const STEP_TITLES = [
   'Job Location',
   'Scope & Requirements',
   'Assign Contractor',
-  'Review & Dispatch',
+  'Review & Create',
 ];
 
 const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
@@ -900,7 +900,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               <div className="text-center space-y-2 mb-6">
                 <span className="material-symbols-outlined text-primary text-4xl">fact_check</span>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                  Review & Dispatch
+                  Review & Create
                 </h3>
               </div>
 
@@ -997,7 +997,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 ) : (
                   <>
                     <span className="material-symbols-outlined">send</span>
-                    Dispatch Job
+                    Create Job
                   </>
                 )}
               </button>
@@ -1013,7 +1013,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto animate-success-pop">
                   <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
                 </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Job Dispatched!</h3>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Job Created</h3>
                 <p className="text-slate-400 text-sm">
                   Magic link ready for <span className="text-white font-bold">{selectedTech?.name}</span>
                 </p>
