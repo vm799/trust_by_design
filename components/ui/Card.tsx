@@ -39,7 +39,7 @@ const Card: React.FC<CardProps> = ({
     default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 text-slate-900 dark:text-white',
     outlined: 'bg-transparent border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white',
     elevated: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 shadow-xl shadow-slate-200/50 dark:shadow-black/50 text-slate-900 dark:text-white',
-    interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 hover:border-slate-400 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer text-slate-900 dark:text-white',
+    interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 hover:border-slate-400 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-slate-900 dark:text-white',
     highlight: `bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 border-l-4 ${accentColor ? ACCENT_COLORS[accentColor] : ACCENT_COLORS.primary} text-slate-900 dark:text-white`,
   };
 

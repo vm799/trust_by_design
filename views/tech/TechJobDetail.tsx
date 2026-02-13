@@ -194,7 +194,7 @@ const TechJobDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 px-4 py-4">
+      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/15 px-4 py-4">
         <div className="flex items-center gap-4">
           <Link to="/tech" aria-label="Back to jobs list" className="p-1 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
             <span className="material-symbols-outlined">arrow_back</span>
@@ -252,7 +252,7 @@ const TechJobDetail: React.FC = () => {
               p-4 rounded-2xl flex items-center gap-4
               ${isSealed ? 'bg-emerald-500/10 border border-emerald-500/20' :
                 isActive ? 'bg-primary/10 border border-primary/20' :
-                'bg-slate-800 border border-white/5'}
+                'bg-slate-800 border border-white/15'}
             `}>
               <div className={`
                 size-12 rounded-xl flex items-center justify-center

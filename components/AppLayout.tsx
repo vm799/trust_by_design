@@ -19,7 +19,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
   if (!isAdmin) {
     return (
       <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary/30 transition-colors">
-        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 py-4 transition-colors">
+        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/15 px-4 py-4 transition-colors">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             <JobProofLogo variant="full" size="sm" showTagline={false} />
             <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 relative transition-colors">
       {/* Desktop Sidebar */}
-      <aside className="w-72 hidden lg:flex flex-col border-r border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors">
+      <aside className="w-72 hidden lg:flex flex-col border-r border-slate-200 dark:border-white/15 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors">
         <div className="p-8">
           <Link to="/home" className="group">
             <JobProofLogo variant="full" size="md" className="transition-transform group-hover:scale-105" />
@@ -58,8 +58,8 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
           <NavLink to="/admin/help" icon="help_center" label="Help Center" active={location.pathname === '/admin/help'} />
         </nav>
 
-        <div className="p-6 border-t border-white/5">
-          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}>
+        <div className="p-6 border-t border-white/15">
+          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-white/5 border-white/15 hover:bg-white/10'}`}>
             <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-black text-white">
               {user?.name?.[0] || 'U'}
             </div>
@@ -128,7 +128,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 overflow-y-auto relative text-slate-900 dark:text-slate-100 transition-colors">
-        <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 lg:px-12 bg-white/50 dark:bg-slate-950/50 backdrop-blur sticky top-0 z-40 transition-colors">
+        <header className="h-16 lg:h-20 border-b border-slate-200 dark:border-white/15 flex items-center justify-between px-6 lg:px-12 bg-white/50 dark:bg-slate-950/50 backdrop-blur sticky top-0 z-40 transition-colors">
           <div className="flex items-center gap-4">
             <button
               onClick={toggleMobileMenu}

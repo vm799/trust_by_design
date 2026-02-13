@@ -922,7 +922,7 @@ export default function JobRunner() {
         <p className="text-slate-400">Works offline. Your data is safe.</p>
       </div>
 
-      <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4">
+      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
         <div>
           <label htmlFor="bunker-job-id" className="block text-sm font-medium text-slate-300 mb-2">
             Job ID *
@@ -1180,7 +1180,7 @@ export default function JobRunner() {
       </div>
 
       {state.job?.signature && (
-        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <p className="text-xs text-slate-400 mb-2">CLIENT SIGNATURE</p>
           <img
             src={state.job.signature.dataUrl}
@@ -1193,7 +1193,7 @@ export default function JobRunner() {
         </div>
       )}
 
-      <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+      <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
         <h3 className="text-sm font-medium text-slate-300 mb-2">Job Details</h3>
         <p className="text-white font-medium">{state.job?.title}</p>
         <p className="text-slate-400 text-sm">{state.job?.client}</p>
@@ -1288,7 +1288,7 @@ export default function JobRunner() {
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-6">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
             <p className="text-xs text-slate-400">JOB</p>
             <p className="text-lg font-bold text-white">{state.job.title}</p>
             <p className="text-sm text-slate-400">{state.job.client}</p>

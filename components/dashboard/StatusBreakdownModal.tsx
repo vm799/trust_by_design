@@ -199,7 +199,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
                   return (
                     <div
                       key={job.id}
-                      className={`rounded-xl border ${config.borderColor} bg-slate-800/50 p-3`}
+                      className={`rounded-xl border ${config.borderColor} bg-slate-800 p-3`}
                     >
                       {/* Job info */}
                       <div className="flex items-start gap-3 mb-3">
@@ -287,7 +287,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
 
             {/* Footer with "View All" */}
             {filteredJobs.length > 0 && (
-              <div className="p-4 border-t border-white/5">
+              <div className="p-4 border-t border-white/15">
                 <Link
                   to={`${ROUTES.JOBS}?status=${encodeURIComponent(status.toLowerCase())}`}
                   className="block w-full text-center py-3 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium min-h-[44px] hover:bg-slate-700 transition-colors"

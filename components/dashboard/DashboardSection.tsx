@@ -65,7 +65,7 @@ const SECTION_COLORS: Record<SectionType, {
     icon: 'text-amber-600 dark:text-amber-400',
   },
   neutral: {
-    headerBg: 'bg-slate-100 dark:bg-slate-800/50',
+    headerBg: 'bg-slate-100 dark:bg-slate-800',
     headerText: 'text-slate-700 dark:text-slate-400',
     border: 'border-slate-200 dark:border-slate-700',
     badge: 'bg-slate-500 text-white',

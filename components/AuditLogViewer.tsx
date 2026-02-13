@@ -125,7 +125,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       case 'success': return 'bg-success/10';
       case 'warning': return 'bg-warning/10';
       case 'danger': return 'bg-danger/10';
-      default: return 'bg-slate-800/50';
+      default: return 'bg-slate-800';
     }
   };
 
@@ -239,7 +239,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         </div>
 
         {/* Filters */}
-        <div className="px-4 sm:px-6 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
+        <div className="px-4 sm:px-6 py-3 border-b border-white/15 flex gap-2 overflow-x-auto">
           {[
             { id: 'all', label: 'All' },
             { id: 'photos', label: 'Photos' },
@@ -288,7 +288,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                     className={`w-full text-left p-4 rounded-xl border transition-all ${
                       isExpanded
                         ? 'bg-slate-800 border-white/20'
-                        : `${getSeverityBg(meta?.severity || 'info')} border-white/5 hover:border-white/10`
+                        : `${getSeverityBg(meta?.severity || 'info')} border-white/15 hover:border-white/10`
                     }`}
                   >
                     <div className="flex items-start gap-4">

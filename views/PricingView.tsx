@@ -294,7 +294,7 @@ const PriceCard = ({
       className={`p-8 lg:p-12 rounded-[2rem] lg:rounded-[3.5rem] border transition-all flex flex-col relative ${
         active
           ? 'bg-primary border-primary shadow-2xl md:scale-105 z-10'
-          : 'bg-slate-900 border-white/5 hover:border-white/10'
+          : 'bg-slate-900 border-white/15 hover:border-white/10'
       }`}
     >
       {active && (

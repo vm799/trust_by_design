@@ -212,7 +212,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
 
               {/* Cryptographic Details Badge */}
               {(status === 'hashing' || status === 'signing') && (
-                <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 mb-4">
+                <div className="bg-slate-800 border border-white/15 rounded-xl p-3 mb-4">
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <span className="material-symbols-outlined text-base text-[#00FFCC]">
                       shield

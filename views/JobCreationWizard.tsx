@@ -501,7 +501,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
         {/* Step Content - Phase 2.5: Added keyboard navigation */}
         <div
-          className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+          className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-6 md:p-8 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all"
           onKeyDown={handleKeyDown}
         >
           {/* Step 1: Job Basics */}
@@ -543,7 +543,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                         formData.jobType === type.id
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-2xl ${
@@ -570,7 +570,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'normal'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">schedule</span>
@@ -585,7 +585,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'urgent'
                         ? 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
-                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-red-500/50 hover:text-red-400'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-red-500/50 hover:text-red-400'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">priority_high</span>
@@ -638,7 +638,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
               {/* UAT Fix #8: Location preview with clickable map link */}
               {formData.address && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       Location Preview
@@ -721,7 +721,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
                         formData.safetyRequirements.includes(req.id)
                           ? 'bg-amber-500/10 border-amber-500/50 text-white'
-                          : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                          : 'bg-slate-800 border-slate-700 text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -755,7 +755,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
                         formData.requiredPPE.includes(ppe.id)
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                          : 'bg-slate-800 border-slate-700 text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -876,7 +876,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               {selectedTech && (
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5 animate-in">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15 animate-in">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
                     Selected Technician
                   </p>
@@ -905,7 +905,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
               </div>
 
               <div className="space-y-4">
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Job Details</p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
@@ -925,7 +925,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
                   <p className="text-white text-sm">{formData.address}</p>
                   {formData.siteNotes && (
@@ -933,7 +933,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   )}
                 </div>
 
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignment</p>
                   <div className="flex justify-between">
                     <div>
@@ -947,7 +947,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Safety & PPE</p>
                   <div className="flex flex-wrap gap-2">
                     {formData.requiredPPE.map((ppe) => {
@@ -1019,7 +1019,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </p>
               </div>
 
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+              <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Magic Link</p>
                 <p className="text-xs font-mono text-white break-all bg-slate-950 p-3 rounded-lg">
                   {magicLinkUrl || 'Generating link...'}

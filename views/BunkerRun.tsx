@@ -391,7 +391,7 @@ export default function BunkerRun() {
 
   const cardClasses = isDaylight
     ? 'bg-white border-slate-300 shadow-md'
-    : 'bg-slate-800/50 border-slate-700';
+    : 'bg-slate-800 border-slate-700';
 
   const buttonPrimaryClasses = isDaylight
     ? 'bg-orange-500 hover:bg-orange-400 text-slate-900 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] font-bold'
@@ -1004,7 +1004,7 @@ export default function BunkerRun() {
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 mb-6">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
             <p className="text-xs text-slate-400">JOB</p>
             <p className="text-lg font-bold text-white">{job.title}</p>
             <p className="text-sm text-slate-400">{job.client}</p>
@@ -1488,7 +1488,7 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { jo
       </div>
 
       {job.signature && (
-        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <p className="text-xs text-slate-400 mb-2">SIGNATURE</p>
           <img src={job.signature.dataUrl} alt="Signature" className="w-full max-w-xs rounded-lg bg-white" />
           <p className="mt-2 text-sm text-slate-300">Signed by: {job.signature.signerName}</p>

@@ -92,7 +92,7 @@ export default function BunkerSuccess() {
 
         {/* Job Details Card */}
         {jobDetails.id && (
-          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 text-left space-y-3">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-left space-y-3">
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wide">Job ID</p>
               <p className="text-lg font-mono font-bold text-white">{jobDetails.id}</p>

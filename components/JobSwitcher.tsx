@@ -215,7 +215,7 @@ export const JobSwitcher = memo(function JobSwitcher({
                         key={job.jobId}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="p-4 rounded-2xl bg-slate-800/50 border border-white/5"
+                        className="p-4 rounded-2xl bg-slate-800 border border-white/15"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>

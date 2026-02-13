@@ -205,7 +205,7 @@ const GoEntryPoint: React.FC = () => {
 
         {/* Error Details for MISSING_PARAMS */}
         {state.error.type === 'MISSING_PARAMS' && (
-          <div className={`${isDark ? 'bg-slate-800/50' : 'bg-slate-100'} rounded-xl p-4`}>
+          <div className={`${isDark ? 'bg-slate-800' : 'bg-slate-100'} rounded-xl p-4`}>
             <p className={`text-xs font-medium tracking-widest mb-2 ${subtextClass}`}>
               Missing Information:
             </p>
@@ -223,7 +223,7 @@ const GoEntryPoint: React.FC = () => {
         )}
 
         {/* Help Section */}
-        <div className={`${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} rounded-xl p-4 border ${isDark ? 'border-white/5' : 'border-slate-200'}`}>
+        <div className={`${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} rounded-xl p-4 border ${isDark ? 'border-white/15' : 'border-slate-200'}`}>
           <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${subtextClass}`}>
             What to do:
           </p>

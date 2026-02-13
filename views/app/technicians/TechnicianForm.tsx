@@ -310,7 +310,7 @@ const TechnicianForm: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-white/5">
+              <div className="flex gap-3 pt-4 border-t border-white/15">
                 <ActionButton
                   variant="secondary"
                   onClick={() => navigate(-1)}

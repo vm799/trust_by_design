@@ -79,7 +79,7 @@ class RouteErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-6">
-          <div className="max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center">
+          <div className="max-w-md bg-slate-900 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center">
             {/* Icon */}
             <div className={`size-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
               isNetworkError ? 'bg-amber-500/10' : 'bg-danger/10'
@@ -105,7 +105,7 @@ class RouteErrorBoundary extends Component<Props, State> {
 
             {/* Error details (dev only) */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="bg-slate-800/50 rounded-xl p-3 mb-4 text-left overflow-auto max-h-32">
+              <div className="bg-slate-800 rounded-xl p-3 mb-4 text-left overflow-auto max-h-32">
                 <p className="text-xs font-mono text-red-400">
                   {this.state.error.name}: {this.state.error.message}
                 </p>

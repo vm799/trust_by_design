@@ -230,7 +230,7 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
 
             {/* Evidence Status (if job data available) */}
             {job && (
-              <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-white/5">
+              <div className="bg-slate-800 rounded-xl p-4 mb-4 border border-white/15">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
                   Evidence Status
                 </p>

@@ -176,19 +176,19 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-center">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
             <div className={`text-2xl font-black ${hasPhotos ? 'text-success' : 'text-slate-500'}`}>
               {job.photos.length}
             </div>
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Photos</div>
           </div>
-          <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-center">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
             <div className={`text-2xl font-black ${hasSignature ? 'text-success' : 'text-slate-500'}`}>
               {hasSignature ? '✓' : '—'}
             </div>
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Signature</div>
           </div>
-          <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-center">
+          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
             <div className={`text-2xl font-black ${isSealed ? 'text-success' : 'text-slate-500'}`}>
               {isSealed ? '✓' : '—'}
             </div>
@@ -197,7 +197,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
         </div>
 
         {/* Tech Link Status */}
-        <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
+        <div className="bg-slate-800 border border-white/15 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician Link</span>
             {getTimeSinceSent() && (
@@ -258,7 +258,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
 
         {/* Photo Evidence Preview */}
         {hasPhotos && (
-          <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
+          <div className="bg-slate-800 border border-white/15 rounded-2xl p-4">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">
               Evidence Preview ({job.photos.length} photos)
             </span>

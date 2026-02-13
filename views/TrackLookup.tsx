@@ -107,7 +107,7 @@ const TrackLookup: React.FC = () => {
         </form>
 
         {/* Help Text */}
-        <div className="bg-white/5 border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="bg-white/5 border border-white/15 rounded-2xl p-6 space-y-4">
           <div className="flex items-start gap-3">
             <span className="material-symbols-outlined text-primary flex-shrink-0">help_center</span>
             <div className="space-y-2 text-sm text-slate-300">

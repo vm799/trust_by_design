@@ -211,7 +211,7 @@ const ManagerOnboarding: React.FC = () => {
 
         {/* Step 1: Company Setup */}
         {step === 1 && (
-          <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-primary/10 size-16 rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
                 <span className="material-symbols-outlined text-primary text-4xl">business</span>
@@ -301,7 +301,7 @@ const ManagerOnboarding: React.FC = () => {
                       className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                         companyData.defaultSafetyRequirements.includes(safety.id)
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -330,7 +330,7 @@ const ManagerOnboarding: React.FC = () => {
 
         {/* Step 2: Role Confirmation */}
         {step === 2 && (
-          <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-success/10 size-16 rounded-2xl flex items-center justify-center mx-auto border border-success/20">
                 <span className="material-symbols-outlined text-success text-4xl">verified_user</span>
@@ -343,7 +343,7 @@ const ManagerOnboarding: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-slate-800/50 border-2 border-primary rounded-2xl p-6 space-y-4">
+            <div className="bg-slate-800 border-2 border-primary rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="bg-primary/20 size-14 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-3xl">manage_accounts</span>
@@ -408,7 +408,7 @@ const ManagerOnboarding: React.FC = () => {
 
         {/* Step 3: Create First Job CTA */}
         {step === 3 && (
-          <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-success/10 size-20 rounded-2xl flex items-center justify-center mx-auto border border-success/20">
                 <span className="material-symbols-outlined text-success text-5xl">rocket_launch</span>
@@ -422,7 +422,7 @@ const ManagerOnboarding: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-slate-800/50 rounded-2xl p-6 space-y-4 border border-white/5">
+            <div className="bg-slate-800 rounded-2xl p-6 space-y-4 border border-white/15">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">What happens next</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">

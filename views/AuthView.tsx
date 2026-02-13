@@ -182,7 +182,7 @@ const AuthView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <div className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3 text-left">
                 <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -221,7 +221,7 @@ const AuthView: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/5">
+            <div className="pt-4 border-t border-white/15">
               <p className="text-slate-500 text-xs font-medium mb-3">
                 Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
@@ -366,7 +366,7 @@ const AuthView: React.FC = () => {
         {/* PASSWORD SIGN IN FORM                      */}
         {/* ========================================= */}
         {showPasswordLogin && authMode === 'password' && (
-          <form onSubmit={handlePasswordSubmit} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <form onSubmit={handlePasswordSubmit} className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-center gap-3">
               <span className="material-symbols-outlined text-blue-400 text-xl">lock</span>
               <div>
@@ -428,7 +428,7 @@ const AuthView: React.FC = () => {
         {/* MAGIC LINK FORM (default / production)     */}
         {/* ========================================= */}
         {(authMode === 'magic_link' || !showPasswordLogin) && (
-          <form onSubmit={handleMagicLinkSubmit} className="bg-slate-900 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <form onSubmit={handleMagicLinkSubmit} className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             {/* Magic Link Badge */}
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
               <span className="material-symbols-outlined text-primary text-xl">magic_button</span>

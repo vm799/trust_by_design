@@ -359,7 +359,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
 
       {/* Sealing Explanation - Only show for awaiting_seal */}
       {type === 'awaiting_seal' && (
-        <div className="mt-3 pt-3 border-t border-white/5">
+        <div className="mt-3 pt-3 border-t border-white/15">
           <p className="text-[9px] text-slate-400">
             <span className="text-success font-bold">Why seal?</span> Sealing creates a tamper-proof cryptographic record.
             Once sealed, evidence cannot be modified, giving your clients confidence in the proof of work.

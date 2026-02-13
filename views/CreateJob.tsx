@@ -494,7 +494,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
           </div>
         )}
 
-        <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
+        <form onSubmit={handleFormSubmit} className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="create-job-title" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Job Title *</label>
@@ -577,7 +577,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
             </div>
 
             {/* Urgent Job Toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+            <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-warning">priority_high</span>
                 <div>
@@ -795,8 +795,8 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                     <span className="text-danger text-xs font-semibold tracking-widest">Urgent Job</span>
                   </div>
                 )}
-                <div className="bg-slate-800/50 rounded-3xl p-6 text-left space-y-4 border border-white/5">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                <div className="bg-slate-800 rounded-3xl p-6 text-left space-y-4 border border-white/15">
+                  <div className="flex justify-between items-center border-b border-white/15 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Service</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-white">{formData.title}</span>
@@ -810,7 +810,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                       </button>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                  <div className="flex justify-between items-center border-b border-white/15 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Target</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white uppercase">{selectedClient?.name}</span>
@@ -824,7 +824,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                       </button>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                  <div className="flex justify-between items-center border-b border-white/15 pb-2">
                     <span className="text-[10px] uppercase font-black text-slate-300">Technician</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white uppercase">{selectedTech?.name}</span>
@@ -909,18 +909,18 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <div className="md:col-span-2 bg-slate-800/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 border border-white/5">
+                <div className="md:col-span-2 bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 border border-white/15">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Technician Magic Link</p>
                     <span className="material-symbols-outlined text-primary text-sm font-black">link</span>
                   </div>
-                  <div className="bg-slate-950 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/5">
+                  <div className="bg-slate-950 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/15">
                     <p className="text-[10px] sm:text-xs font-mono text-white break-all">{getMagicLink()}</p>
                   </div>
                   <p className="text-[9px] text-slate-300 uppercase tracking-tight">This link provides browser-based access. No app installation required.</p>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/5 flex flex-col items-center justify-center space-y-3">
+                <div className="bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/15 flex flex-col items-center justify-center space-y-3">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">QR Code</p>
                   <div className="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl">
                     <QRCodeSVG value={getMagicLink()} size={128} level="M" />
@@ -955,7 +955,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 border-t border-white/5">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 border-t border-white/15">
                 <div className="text-center">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned To</p>
                   <p className="text-xs font-bold text-white uppercase">{selectedTech?.name}</p>

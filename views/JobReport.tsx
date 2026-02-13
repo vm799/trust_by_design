@@ -740,7 +740,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                      {/* Status Badge - Context-appropriate */}
                      {isSealed ? (
-                        <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/5 relative group overflow-hidden">
+                        <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/15 relative group overflow-hidden">
                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                            <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">verified</span>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Cryptographically Sealed</p>
@@ -790,7 +790,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
             {!publicView && (
                <aside className="w-full lg:w-80 space-y-6 no-print shrink-0">
-                  <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
+                  <div className="bg-slate-900 border border-white/15 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
 
                      {/* ============================================================ */}
                      {/* PRIORITY SECTION: Job Status & Blockers (ALWAYS AT TOP) */}
@@ -852,7 +852,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      {/* ============================================================ */}
                      {!isSealed && magicLinkInfo && (
                         <div className={`rounded-2xl p-4 border ${
-                           !techLinkOpened ? 'bg-danger/10 border-danger/30' : 'bg-slate-800/50 border-white/5'
+                           !techLinkOpened ? 'bg-danger/10 border-danger/30' : 'bg-slate-800 border-white/15'
                         }`}>
                            <div className="flex items-center justify-between mb-3">
                               <span className="text-[10px] font-black text-white uppercase tracking-widest">Tech Link</span>
@@ -944,7 +944,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                      {/* Magic Link Management Section */}
                      {job.status !== 'Submitted' && (
-                        <div className="pt-8 border-t border-white/5">
+                        <div className="pt-8 border-t border-white/15">
                            <button
                               onClick={() => setShowLinkManagement(!showLinkManagement)}
                               className="w-full flex items-center justify-between mb-4"
@@ -959,7 +959,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               <div className="space-y-4 animate-in">
                                  {/* Link Status */}
                                  {magicLinkInfo ? (
-                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 space-y-3">
+                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15 space-y-3">
                                        <div className="flex items-center justify-between">
                                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
                                           <span className={`text-[10px] font-black uppercase tracking-widest ${getLinkStatusColor(magicLinkInfo.status)}`}>
@@ -986,7 +986,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                        )}
                                     </div>
                                  ) : (
-                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5 text-center">
+                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15 text-center">
                                        <span className="material-symbols-outlined text-slate-500 text-2xl mb-2">link_off</span>
                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">No active link</p>
                                     </div>
@@ -994,7 +994,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                                  {/* Link Lifecycle Timeline */}
                                  {lifecycleSummary && (
-                                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15">
                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Link Lifecycle</p>
                                        <div className="flex items-center justify-between gap-1">
                                           {[
@@ -1147,7 +1147,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                      )}
 
-                     <div className="pt-8 border-t border-white/5">
+                     <div className="pt-8 border-t border-white/15">
                         <h3 className="text-[10px] font-black text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
                         <div className="space-y-3">
                            <StatusLine
@@ -1185,7 +1185,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      <QRCodeSVG value={getReportUrl(job.id)} size={192} level="M" />
                   </div>
 
-                  <div className="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+                  <div className="bg-slate-800 rounded-2xl p-4 border border-white/15">
                      <p className="text-xs font-mono text-white break-all text-center">{getReportUrl(job.id)}</p>
                   </div>
 
@@ -1239,7 +1239,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               key={tech.id}
                               onClick={() => handleReassignJob(tech.id, tech.name)}
                               disabled={linkActionLoading}
-                              className="w-full flex items-center gap-4 p-4 bg-slate-800/50 hover:bg-slate-800 border border-white/5 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
+                              className="w-full flex items-center gap-4 p-4 bg-slate-800 hover:bg-slate-800 border border-white/15 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
                            >
                               <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
                                  {tech.name[0]}

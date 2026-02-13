@@ -48,7 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   children,
 }) => {
   return (
-    <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-white/5 bg-slate-950/50">
+    <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-white/15 bg-slate-950/50">
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-2 text-sm mb-2">

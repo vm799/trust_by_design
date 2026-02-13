@@ -513,7 +513,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
                 ))}
                 <button
                   onClick={() => setShowClientList(false)}
-                  className="w-full text-center py-2 text-[10px] font-bold text-slate-400 border-t border-white/5"
+                  className="w-full text-center py-2 text-[10px] font-bold text-slate-400 border-t border-white/15"
                 >
                   Close
                 </button>

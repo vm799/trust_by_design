@@ -521,7 +521,7 @@ const TechProofScreen: React.FC = () => {
           ) : (
             <button
               onClick={() => handlePhotoCapture('before')}
-              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800/50 transition-colors"
+              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
             >
               <span className="material-symbols-outlined text-2xl text-slate-500">add_a_photo</span>
               <span className="text-sm text-slate-400 font-bold uppercase">Capture Before</span>
@@ -583,7 +583,7 @@ const TechProofScreen: React.FC = () => {
           ) : (
             <button
               onClick={() => handlePhotoCapture('after')}
-              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800/50 transition-colors"
+              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
             >
               <span className="material-symbols-outlined text-2xl text-slate-500">add_a_photo</span>
               <span className="text-sm text-slate-400 font-bold uppercase">Capture After</span>
@@ -610,7 +610,7 @@ const TechProofScreen: React.FC = () => {
           </h3>
 
           {/* Sign-off declaration text */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3">
             <p className="text-sm text-slate-300 leading-relaxed font-medium">
               &quot;I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements.&quot;
             </p>

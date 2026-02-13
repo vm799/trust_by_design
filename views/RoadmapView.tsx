@@ -11,7 +11,7 @@ const RoadmapView: React.FC = () => {
         </div>
 
         {/* Timeline Overview */}
-        <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+        <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Current Phase</h3>
           <div className="flex items-center gap-6">
             <div className="bg-primary/10 px-6 py-3 rounded-2xl border border-primary/20">
@@ -313,7 +313,7 @@ const RoadmapView: React.FC = () => {
         </section>
 
         {/* Milestones */}
-        <section className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+        <section className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Key Milestones</h3>
           <div className="space-y-4">
             <Milestone
@@ -404,7 +404,7 @@ const FeatureCard = ({ status, title, description, phase, timeline }: any) => {
 };
 
 const FutureFeatureCard = ({ title, description, icon }: any) => (
-  <div className="bg-slate-800/50 border border-white/5 p-6 rounded-2xl space-y-3 hover:border-primary/20 transition-all group">
+  <div className="bg-slate-800 border border-white/15 p-6 rounded-2xl space-y-3 hover:border-primary/20 transition-all group">
     <span className={`material-symbols-outlined text-slate-500 text-3xl font-black group-hover:text-primary transition-colors`}>
       {icon}
     </span>
@@ -417,7 +417,7 @@ const Milestone = ({ week, title, items, status }: any) => {
   const isActive = status === 'in-progress';
 
   return (
-    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/5'}`}>
+    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/15'}`}>
       <div className="flex items-start gap-4">
         <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${isActive ? 'bg-primary text-white' : 'bg-slate-800 text-slate-400'}`}>
           {week}

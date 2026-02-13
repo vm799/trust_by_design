@@ -371,7 +371,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 
         <div
           ref={containerRef}
-          className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50"
+          className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800"
         >
           <canvas
             ref={canvasRef}

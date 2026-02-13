@@ -264,7 +264,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
         </div>
 
         {/* Export Preview */}
-        <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               Export Preview

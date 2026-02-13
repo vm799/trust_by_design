@@ -435,17 +435,6 @@ export const secureCleanup = (): void => {
   // Clear all session storage (includes session entropy for encryption)
   sessionStorage.clear();
 
-  // Clear any in-memory caches in other modules
-  try {
-    // Clear auth flow manager cache if available
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { clearCache } = require('./authFlowManager');
-    if (typeof clearCache === 'function') {
-      clearCache();
-    }
-  } catch {
-    // Module may not be loaded
-  }
 };
 
 /**

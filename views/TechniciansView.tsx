@@ -319,7 +319,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTechs.length === 0 ? (
-            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/5 rounded-3xl text-center opacity-40">
+            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/15 rounded-3xl text-center opacity-40">
               <span className="material-symbols-outlined text-5xl mb-2 font-black">engineering</span>
               <p className="font-black uppercase tracking-widest text-[10px]">
                 {searchQuery ? 'No technicians match your search.' : 'No field workforce registered.'}

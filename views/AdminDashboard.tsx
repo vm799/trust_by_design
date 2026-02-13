@@ -138,7 +138,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {jobs.length > 0 && (
           <button
             onClick={() => navigate('/admin/jobs')}
-            className="w-full flex items-center justify-between p-4 mt-6 bg-slate-900 border border-white/5 rounded-xl hover:border-white/10 transition-all"
+            className="w-full flex items-center justify-between p-4 mt-6 bg-slate-900 border border-white/15 rounded-xl hover:border-white/10 transition-all"
           >
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-slate-400">list_alt</span>

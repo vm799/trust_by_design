@@ -185,7 +185,7 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
               {deletableJobs.map((job: Job) => (
                 <li
                   key={job.id}
-                  className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg hover:bg-slate-800/50 group"
+                  className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg hover:bg-slate-800 group"
                 >
                   <div className="flex-1 min-w-0">
                     <span className="text-xs text-slate-200 font-medium truncate block">

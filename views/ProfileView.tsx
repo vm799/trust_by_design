@@ -24,7 +24,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-12">
-        <div className="flex justify-between items-end border-b border-white/5 pb-8">
+        <div className="flex justify-between items-end border-b border-white/15 pb-8">
           <div className="flex items-start gap-4">
             <button
               onClick={() => navigate('/admin')}
@@ -44,7 +44,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-           <section className="space-y-6 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
+           <section className="space-y-6 bg-slate-900 p-8 rounded-[2.5rem] border border-white/15 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
                     <label htmlFor="profile-full-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Full Name</label>

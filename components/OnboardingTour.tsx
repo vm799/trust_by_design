@@ -271,7 +271,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, persona, co
         </div>
 
         {/* Keyboard hints */}
-        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-500 pt-2 border-t border-white/5">
+        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-500 pt-2 border-t border-white/15">
           <span className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-[9px]">ESC</kbd> Skip
           </span>
