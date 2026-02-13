@@ -87,7 +87,6 @@ export function logConflict(
   };
 
   // Log to console for dev visibility
-  console.log('[ConflictTelemetry]', conflictType, objectType, objectId, resolution, event.metadata);
 
   // Persist to localStorage for analysis
   try {
@@ -160,7 +159,6 @@ export function getConflictStats(): {
  */
 export function clearConflictLog(): void {
   localStorage.removeItem(CONFLICT_LOG_KEY);
-  console.log('[ConflictTelemetry] Log cleared');
 }
 
 /**

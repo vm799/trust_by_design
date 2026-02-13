@@ -21,6 +21,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
+import { fadeOverlay, fadeInScaleGrid, hoverScaleLift, transitionQuick } from '../../lib/animations';
 
 interface QuickWinCard {
   title: string;
@@ -153,8 +154,8 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
   return (
     <motion.div
       className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={fadeOverlay.hidden}
+      animate={fadeOverlay.visible}
       transition={{ staggerChildren: 0.1, delayChildren: 0.2 }}
     >
       {cards.map((card, index) => {
@@ -163,10 +164,10 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
         return (
           <motion.button
             key={card.title}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            whileHover={{ scale: 1.02, y: -4 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
+            initial={fadeInScaleGrid.initial}
+            animate={fadeInScaleGrid.animate}
+            whileHover={hoverScaleLift}
+            transition={{ ...transitionQuick, delay: index * 0.1 }}
             onClick={card.onAction}
             className={`
               ${colors.bg} ${colors.border} ${colors.hover}

@@ -97,19 +97,17 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
     { label: 'All Invoices', value: myInvoices.length, icon: 'receipt_long', color: 'slate' as const },
   ], [myJobsCount, completedJobsCount, pendingInvoices.length, myInvoices.length]);
 
-  // Custom header for client role
+  // Custom header for client role - clear hierarchy with border separator
   const dashboardHeader = useMemo(() => (
-    <header className="space-y-2 mb-6">
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/20 p-3 rounded-2xl">
-          <span className="material-symbols-outlined text-primary text-2xl font-black">domain</span>
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-tighter">My Account</h2>
-          <p className="text-slate-400 text-xs font-medium tracking-widest">
-            {myJobsCount} Jobs • {pendingInvoices.length} Pending Invoices
-          </p>
-        </div>
+    <header className="flex items-center gap-4 pb-6 mb-2 border-b border-white/5">
+      <div className="size-12 bg-primary/20 rounded-2xl flex items-center justify-center">
+        <span className="material-symbols-outlined text-primary text-xl font-black">domain</span>
+      </div>
+      <div>
+        <h1 className="text-2xl font-black text-white uppercase tracking-tighter">My Account</h1>
+        <p className="text-slate-400 text-xs font-medium tracking-widest mt-0.5">
+          {myJobsCount} Jobs &bull; {pendingInvoices.length} Pending Invoices
+        </p>
       </div>
     </header>
   ), [myJobsCount, pendingInvoices.length]);
@@ -124,7 +122,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
   return (
     <Layout user={user} isAdmin={false}>
-      <div className="space-y-8 pb-32 max-w-2xl mx-auto">
+      <div className="space-y-8 pb-32">
         {/* Header */}
         {dashboardHeader}
 

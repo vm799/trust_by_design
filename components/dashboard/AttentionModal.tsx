@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FocusEntity } from '../../lib/dashboardState';
 import { Job, Technician } from '../../types';
 import { showToast } from '../../lib/microInteractions';
+import { fadeOverlay, fadeInScaleUp, transitionSpringSnappy } from '../../lib/animations';
 
 interface AttentionModalProps {
   /** Focus entity to display */
@@ -177,17 +178,17 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={fadeOverlay.hidden}
+          animate={fadeOverlay.visible}
+          exit={fadeOverlay.exit}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm"
           onClick={onDismiss}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            initial={fadeInScaleUp.initial}
+            animate={fadeInScaleUp.animate}
+            exit={fadeInScaleUp.exit}
+            transition={transitionSpringSnappy}
             className={`bg-gradient-to-b ${styles.gradient} bg-slate-900 rounded-3xl p-6 max-w-md w-full border ${styles.border} shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
           >

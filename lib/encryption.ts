@@ -257,7 +257,6 @@ export function isSensitiveKey(key: string): boolean {
  * Migrate existing plaintext data to encrypted format
  */
 export async function migrateToEncrypted(): Promise<void> {
-  console.log('[Encryption] Starting migration of sensitive data...');
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -269,7 +268,6 @@ export async function migrateToEncrypted(): Promise<void> {
         try {
           const encrypted = await encrypt(value);
           localStorage.setItem(key, encrypted);
-          console.log(`[Encryption] Migrated: ${key}`);
         } catch (error) {
           console.warn(`[Encryption] Failed to migrate ${key}:`, error);
         }
@@ -277,5 +275,4 @@ export async function migrateToEncrypted(): Promise<void> {
     }
   }
 
-  console.log('[Encryption] Migration complete');
 }

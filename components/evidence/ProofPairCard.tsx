@@ -13,6 +13,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInUpSmall, pulseOpacityFade, pulseDot, transitionPulse, transitionPulseFast, collapseExpand } from '../../lib/animations';
 
 interface Photo {
   id?: string;
@@ -142,8 +143,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={fadeInUpSmall.initial}
+      animate={fadeInUpSmall.animate}
       className={`
         rounded-2xl overflow-hidden
         bg-[#121212] border-2 transition-all duration-300
@@ -206,8 +207,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
           ) : (
             <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-2">
               <motion.div
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                animate={pulseOpacityFade}
+                transition={transitionPulse}
                 className="size-12 rounded-full bg-amber-500/20 flex items-center justify-center"
               >
                 <span className="material-symbols-outlined text-2xl text-amber-400">photo_camera</span>
@@ -257,8 +258,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
           ) : (
             <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-2">
               <motion.div
-                animate={{ scale: [1, 1.1, 1], opacity: [1, 0.7, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                animate={pulseDot}
+                transition={transitionPulseFast}
                 className="size-12 rounded-full bg-red-500/20 flex items-center justify-center"
               >
                 <span className="material-symbols-outlined text-2xl text-red-400">warning</span>
@@ -300,9 +301,9 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
         <AnimatePresence>
           {showMetadata && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              initial={collapseExpand.hidden}
+              animate={collapseExpand.visible}
+              exit={collapseExpand.exit}
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-2 font-mono text-[10px]">

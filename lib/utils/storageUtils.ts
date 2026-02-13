@@ -197,7 +197,6 @@ export async function loadDraft(
     // Check expiry (8 hours)
     const age = Date.now() - draft.savedAt;
     if (age >= DRAFT_EXPIRY_MS) {
-      console.log('[storageUtils] Draft expired, removing');
       // Auto-cleanup expired draft
       await db.formDrafts.delete(isolatedKey);
       return null;
@@ -252,7 +251,6 @@ export async function migrateDraftFromLocalStorage(
     if (success) {
       // Migration successful - remove old localStorage draft
       localStorage.removeItem(oldKey);
-      console.log(`[storageUtils] Migrated ${formType} draft from localStorage to IndexedDB`);
     } else {
       console.warn('[storageUtils] Migration failed, keeping localStorage draft as fallback');
     }

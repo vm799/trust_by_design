@@ -11,7 +11,7 @@
 
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { fadeInUp, hoverLift, tapScale, transitionQuick } from '../../lib/animations';
+import { fadeInUp, hoverLift, tapScale, transitionQuick, pulseIndicatorLarge, transitionPulse, hoverScaleSlight, tapScaleSubtle } from '../../lib/animations';
 import SyncStatusBadge from './SyncStatusBadge';
 
 // =============================================================================
@@ -194,8 +194,8 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
           {/* Pulse indicator for critical/attention items */}
           {pulse && (
             <motion.span
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.4, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              animate={pulseIndicatorLarge}
+              transition={transitionPulse}
               className={`absolute -top-1 -right-1 size-3 rounded-full ${config.pulseColor}`}
               aria-hidden="true"
             />
@@ -243,8 +243,8 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
           {/* Primary action button - 44px+ height for accessibility */}
           <motion.button
             onClick={handleAction}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={hoverScaleSlight}
+            whileTap={tapScaleSubtle}
             className={`
               inline-flex items-center justify-center
               px-4 py-2.5

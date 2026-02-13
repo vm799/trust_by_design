@@ -920,7 +920,6 @@ export const cleanupExpiredMagicLinks = (): number => {
     // Only write back if we removed something
     if (removedCount > 0) {
       localStorage.setItem('jobproof_magic_links', JSON.stringify(validLinks));
-      console.log(`[MagicLink Cleanup] Removed ${removedCount} expired magic links`);
     }
 
     return removedCount;
@@ -994,7 +993,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       const jobs: Job[] = JSON.parse(storedJobs);
       const matchingJob = jobs.find(j => j.magicLinkToken === token);
       if (matchingJob) {
-        console.log(`[validateMagicLink] Found token on job ${matchingJob.id} via direct lookup`);
         // Create synthetic link data from job
         const syntheticLinkData = {
           job_id: matchingJob.id,
@@ -1034,7 +1032,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
           return { success: false, error: 'This job has been sealed and can no longer be modified.' };
         }
 
-        console.log(`[validateMagicLink] Validated token via RPC: job_id=${tokenData.job_id}`);
         return {
           success: true,
           data: {
@@ -1048,8 +1045,6 @@ export const validateMagicLink = async (token: string): Promise<DbResult<TokenVa
       // RPC returned empty result or error - token not found
       if (rpcError) {
         console.warn('[validateMagicLink] RPC error:', rpcError.message);
-      } else {
-        console.log('[validateMagicLink] Token not found via RPC');
       }
     } catch (error) {
       console.warn('[validateMagicLink] Supabase check failed:', error);
@@ -1178,7 +1173,6 @@ export const revokeMagicLink = (token: string): DbResult<void> => {
     console.warn('Failed to remove revoked token from localStorage:', e);
   }
 
-  console.log(`[MagicLink] Revoked token: ${token.substring(0, 8)}...`);
   return { success: true };
 };
 
@@ -1218,7 +1212,6 @@ export const revokeAllLinksForJob = (jobId: string): DbResult<{ revokedCount: nu
     console.warn('Failed to revoke tokens from localStorage:', e);
   }
 
-  console.log(`[MagicLink] Revoked ${revokedCount} links for job ${jobId}`);
   return { success: true, data: { revokedCount } };
 };
 
@@ -1282,7 +1275,6 @@ export const regenerateMagicLink = (
     console.warn('Failed to persist regenerated magic link:', e);
   }
 
-  console.log(`[MagicLink] Regenerated link for job ${jobId}: ${token.substring(0, 8)}...`);
   return {
     success: true,
     data: { token, url, expiresAt }
@@ -1332,7 +1324,6 @@ export const extendMagicLinkExpiration = (
     console.warn('Failed to update localStorage:', e);
   }
 
-  console.log(`[MagicLink] Extended token ${token.substring(0, 8)}... to ${newExpiresAt}`);
   return { success: true, data: { newExpiresAt } };
 };
 
@@ -1451,14 +1442,12 @@ export const recordMagicLinkAccess = (token: string): void => {
           jobs[jobIndex].technicianLinkOpened = true;
           jobs[jobIndex].technicianLinkOpenedAt = now;
           localStorage.setItem('jobproof_jobs_v2', JSON.stringify(jobs));
-          console.log(`[MagicLink] Updated job ${jobId} with technicianLinkOpened=true`);
         }
       } catch (e) {
         console.warn('[MagicLink] Failed to update job technicianLinkOpened flag:', e);
       }
     }
 
-    console.log(`[MagicLink] Recorded first access for token ${token.substring(0, 8)}...`);
   }
 };
 
@@ -1534,7 +1523,6 @@ export const updateLinkLifecycle = (
     console.warn('Failed to update localStorage:', e);
   }
 
-  console.log(`[MagicLink] Updated lifecycle to ${stage} for token ${token.substring(0, 8)}...`);
   return { success: true };
 };
 
@@ -1749,7 +1737,6 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
       if (localJob) {
         // Add to mockDatabase for faster future lookups
         mockDatabase.jobs.set(jobId, localJob);
-        console.log(`[getJobByToken] Found job ${jobId} in localStorage`);
         return { success: true, data: localJob };
       }
     }
@@ -1789,11 +1776,9 @@ export const getJobByToken = async (token: string): Promise<DbResult<Job>> => {
 
     if (!data || !data.is_valid) {
       const errorMsg = data?.error_message || 'Job not found';
-      console.log('[getJobByToken] RPC returned invalid/not found:', errorMsg);
       return { success: false, error: errorMsg };
     }
 
-    console.log(`[getJobByToken] Job loaded via RPC: ${data.job_id}`);
 
     // Map RPC response to Job type (simple invite system fields)
     const job: Job = {
@@ -2473,7 +2458,6 @@ export const notifyManagerOfTechJob = (
     console.warn('Failed to persist notification to localStorage:', e);
   }
 
-  console.log(`[Notification] Manager notified: ${notification.title}`);
   return notification;
 };
 
@@ -2570,7 +2554,6 @@ export const getTechnicianWorkMode = (): 'employed' | 'self_employed' => {
  */
 export const setTechnicianWorkMode = (mode: 'employed' | 'self_employed'): void => {
   localStorage.setItem('jobproof_work_mode', mode);
-  console.log(`[WorkMode] Set to ${mode}`);
 };
 
 // Note: Tests should call initMockDatabase() explicitly when needed

@@ -83,10 +83,6 @@ export async function scheduleArchive(db: JobProofDatabase): Promise<Job[]> {
       archivedJobs.push(archivedJob);
     }
 
-    console.log(
-      `[Archive] Archived ${archivedJobs.length} sealed jobs older than 180 days`
-    );
-
     return archivedJobs;
   } catch (error) {
     console.error('[Archive] Failed to archive jobs:', error);
@@ -143,7 +139,6 @@ export async function scheduleArchiveDaily(
       if (archived.length > 0) {
         // Record last run time
         localStorage.setItem(lastRunKey, String(Date.now()));
-        console.log(`[Archive] Daily cleanup completed: ${archived.length} jobs archived`);
       }
     } catch (error) {
       console.error('[Archive] Daily cleanup failed:', error);

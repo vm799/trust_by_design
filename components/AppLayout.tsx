@@ -20,14 +20,14 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
     return (
       <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary/30 transition-colors">
         <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/15 px-4 py-4 transition-colors">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+          <div className="flex items-center justify-between max-w-5xl mx-auto">
             <JobProofLogo variant="full" size="sm" showTagline={false} />
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Secure Evidence Capture</span>
             </div>
           </div>
         </header>
-        <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8 pb-32">
+        <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
           {children}
         </main>
       </div>

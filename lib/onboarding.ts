@@ -630,7 +630,6 @@ export const navigateToNextStep = (
     return;
   }
 
-  console.log(`[Guided Flow] Transitioning from ${currentAction} to ${currentStep.nextRoute}`);
 
   // Navigate to next route
   navigate(currentStep.nextRoute);

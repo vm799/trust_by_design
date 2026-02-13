@@ -124,7 +124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <Layout user={user}>
-      <div className="max-w-5xl mx-auto">
+      <div>
         {/* Email Verification Banner */}
         {!isEmailVerified && user && <EmailVerificationBanner user={user} />}
 

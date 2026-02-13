@@ -102,6 +102,8 @@ const TechCard = React.memo(({
   return (
     <div
       {...handlers}
+      role="group"
+      aria-label={`Technician: ${tech.name}`}
       className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
     >
       {/* ID Badge and Status */}
@@ -340,13 +342,22 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         {/* Confirm Delete Modal */}
         {confirmDeleteId && (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
           <div
             className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm delete technician"
             onClick={() => setConfirmDeleteId(null)}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setConfirmDeleteId(null); } }}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0}
           >
             <div
               className="bg-slate-900 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
+              role="presentation"
               onClick={e => e.stopPropagation()}
+              onKeyDown={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">
                 <div className="size-12 rounded-xl bg-red-500/20 flex items-center justify-center">

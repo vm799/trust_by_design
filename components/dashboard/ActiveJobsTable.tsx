@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
 import type { Job } from '../../types';
+import { fadeOverlay, fadeInUpSmall, hoverScaleShiftSmall, transitionFast } from '../../lib/animations';
 
 type JobFilter = 'all' | 'overdue' | 'in-progress' | 'ready-invoice';
 
@@ -200,9 +201,9 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
         <AnimatePresence>
           <motion.div
             className="space-y-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={fadeOverlay.hidden}
+            animate={fadeOverlay.visible}
+            exit={fadeOverlay.exit}
             transition={{ staggerChildren: 0.05 }}
           >
             {displayJobs.map((job, index) => {
@@ -213,11 +214,11 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
               return (
                 <motion.button
                   key={job.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={fadeInUpSmall.initial}
+                  animate={fadeInUpSmall.animate}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  whileHover={{ scale: 1.01, x: 4 }}
+                  transition={{ ...transitionFast, delay: index * 0.05 }}
+                  whileHover={hoverScaleShiftSmall}
                   onClick={() => {
                     onJobSelect?.(job);
                     navigate(`/admin/jobs/${job.id}`);

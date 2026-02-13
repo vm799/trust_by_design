@@ -286,7 +286,6 @@ export const signInWithMagicLink = async (
   // Record this request BEFORE making it
   magicLinkRequestCache.set(normalizedEmail, now);
 
-  console.log(`[Auth] Sending magic link to ${normalizedEmail}...`);
 
   // =========================================
   // Option A: Use Edge Function with rate limiting
@@ -303,7 +302,6 @@ export const signInWithMagicLink = async (
       if (invokeError) {
         console.error('[Auth] Edge Function invoke error:', invokeError);
         // Fall back to direct API call if Edge Function fails
-        console.log('[Auth] Falling back to direct Supabase Auth API...');
       } else if (data) {
         // Check for rate limit response from Edge Function
         if (data.error && data.code) {
@@ -321,8 +319,6 @@ export const signInWithMagicLink = async (
 
         // Success from Edge Function
         if (data.success) {
-          console.log(`[Auth] Magic link sent via Edge Function to ${normalizedEmail}`);
-          console.log(`[Auth] Rate limit remaining: email=${data.remaining?.email}, ip=${data.remaining?.ip}`);
           return { success: true };
         }
       }
@@ -357,7 +353,6 @@ export const signInWithMagicLink = async (
     return enhanceWithRateLimitInfo({ success: false, error });
   }
 
-  console.log(`[Auth] Magic link sent successfully to ${normalizedEmail}`);
   return { success: true };
 };
 
@@ -520,14 +515,12 @@ export const getUserProfile = async (userId: string) => {
   if (profileCache && profileCache.userId === userId) {
     const age = Date.now() - profileCache.timestamp;
     if (age < PROFILE_CACHE_TTL) {
-      console.log('[Auth] getUserProfile: returning cached profile (age:', Math.round(age / 1000), 's)');
       return profileCache.data;
     }
   }
 
   // CRITICAL FIX: Reuse in-flight promise to deduplicate concurrent requests
   if (profileFetchPromise) {
-    console.log('[Auth] getUserProfile: reusing in-flight request');
     return profileFetchPromise;
   }
 

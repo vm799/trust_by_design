@@ -328,13 +328,20 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${technician.name} job details`}
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') { onClose(); } }}
+      tabIndex={0}
     >
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+        role="presentation"
         onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/20">
@@ -393,13 +400,22 @@ interface TechPulseModalProps {
 const TechPulseModal: React.FC<TechPulseModalProps> = ({ isOpen, onClose, onSiteTechs }) => {
   if (!isOpen) return null;
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="On-site technicians"
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') { onClose(); } }}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
     >
       <div
         className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden"
+        role="presentation"
         onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/20">
           <div className="flex items-center gap-3">

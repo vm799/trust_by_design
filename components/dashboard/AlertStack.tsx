@@ -22,6 +22,7 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useData } from '../../lib/DataContext';
 import { useNavigate } from 'react-router-dom';
+import { fadeOverlay, slideInRightSmall, hoverScaleShift, transitionQuick } from '../../lib/animations';
 
 interface Alert {
   type: 'overdue' | 'unassigned' | 'ready_invoice';
@@ -147,9 +148,9 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
       <AnimatePresence>
         <motion.div
           className="space-y-3 mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={fadeOverlay.hidden}
+          animate={fadeOverlay.visible}
+          exit={fadeOverlay.exit}
           transition={{ staggerChildren: 0.1 }}
         >
         {alerts.map((alert, index) => {
@@ -158,11 +159,11 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
           return (
             <motion.button
               key={alert.type}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              whileHover={{ scale: 1.02, x: 5 }}
+              initial={slideInRightSmall.initial}
+              animate={slideInRightSmall.animate}
+              exit={slideInRightSmall.exit}
+              transition={{ ...transitionQuick, delay: index * 0.05 }}
+              whileHover={hoverScaleShift}
               onClick={alert.onAction}
             className={`
               w-full p-4 rounded-lg border-2
