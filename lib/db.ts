@@ -621,14 +621,14 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
     if (job.sealedAt) {
       return {
         success: false,
-        error: 'Cannot delete a sealed job - evidence has been cryptographically preserved'
+        error: 'This job has been sealed and cannot be deleted. Sealed evidence is permanently preserved.'
       };
     }
 
     if (job.invoiceId) {
       return {
         success: false,
-        error: 'Cannot delete a job with an invoice - delete the invoice first'
+        error: 'This job has an invoice. Please delete the invoice first.'
       };
     }
 
@@ -677,7 +677,7 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
     if (sealedAt) {
       return {
         success: false,
-        error: 'Cannot delete a sealed job - evidence has been cryptographically preserved'
+        error: 'This job has been sealed and cannot be deleted. Sealed evidence is permanently preserved.'
       };
     }
 
@@ -685,7 +685,7 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
     if (invoiceId) {
       return {
         success: false,
-        error: 'Cannot delete a job with an invoice - delete the invoice first'
+        error: 'This job has an invoice. Please delete the invoice first.'
       };
     }
 
@@ -699,7 +699,7 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
       if (error.message?.includes('invalid input syntax')) {
         return {
           success: false,
-          error: 'Invalid job ID format. The ID may be corrupted.'
+          error: 'Could not delete: invalid record ID. Please refresh and try again.'
         };
       }
       return { success: false, error: error.message };
@@ -1863,9 +1863,16 @@ const _getClientsImpl = async (workspaceId: string): Promise<DbResult<Client[]>>
 
   try {
     // Extract unique clients from bunker_jobs (clients table doesn't exist)
-    const { data, error } = await supabase
+    // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
+    let query = supabase
       .from('bunker_jobs')
-      .select('client, client_email')
+      .select('client, client_email');
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -2086,7 +2093,7 @@ export const deleteClient = async (clientId: string): Promise<DbResult<void>> =>
       if (error.message?.includes('invalid input syntax')) {
         return {
           success: false,
-          error: 'Invalid client ID format. The ID may be corrupted.'
+          error: 'Could not delete: invalid record ID. Please refresh and try again.'
         };
       }
       return { success: false, error: error.message };
@@ -2146,9 +2153,16 @@ const _getTechniciansImpl = async (workspaceId: string): Promise<DbResult<Techni
 
   try {
     // Extract unique technicians from bunker_jobs (technicians table doesn't exist)
-    const { data, error } = await supabase
+    // SECURITY FIX: Filter by workspace_id to prevent cross-workspace data leakage
+    let query = supabase
       .from('bunker_jobs')
-      .select('technician_name, manager_email')
+      .select('technician_name, manager_email');
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -2377,7 +2391,7 @@ export const deleteTechnician = async (techId: string): Promise<DbResult<void>> 
       if (error.message?.includes('invalid input syntax')) {
         return {
           success: false,
-          error: 'Invalid technician ID format. The ID may be corrupted.'
+          error: 'Could not delete: invalid record ID. Please refresh and try again.'
         };
       }
       return { success: false, error: error.message };

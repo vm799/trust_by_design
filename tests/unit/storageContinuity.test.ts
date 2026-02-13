@@ -243,12 +243,12 @@ describe('Storage Continuity - Symmetry check (all entities persist the same way
     const dbContent = readFile('lib/db.ts');
     // The Supabase path must fetch sealed_at and check it before deleting
     expect(dbContent).toContain("select('workspace_id, sealed_at, invoice_id')");
-    expect(dbContent).toMatch(/if \(sealedAt\)[\s\S]*?Cannot delete a sealed job/);
+    expect(dbContent).toMatch(/if \(sealedAt\)[\s\S]*?sealed and cannot be deleted/);
   });
 
   it('deleteJob Supabase path validates invoiceId before deletion', () => {
     const dbContent = readFile('lib/db.ts');
-    expect(dbContent).toMatch(/if \(invoiceId\)[\s\S]*?Cannot delete a job with an invoice/);
+    expect(dbContent).toMatch(/if \(invoiceId\)[\s\S]*?has an invoice/);
   });
 
   it('no add/update function should only use setState without backend persistence', () => {
