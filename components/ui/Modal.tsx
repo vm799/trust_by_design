@@ -62,7 +62,7 @@ const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in"
+        className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm animate-in fade-in"
         onClick={onClose}
       />
 
@@ -70,8 +70,8 @@ const Modal: React.FC<ModalProps> = ({
       <div
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl
-          shadow-2xl shadow-slate-300/50 dark:shadow-black/50
+          bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/20 rounded-2xl
+          shadow-2xl shadow-slate-300/50 dark:shadow-black/70
           animate-in zoom-in-95 fade-in
         `}
         role="dialog"
@@ -80,7 +80,7 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* Header */}
         {(title || showClose) && (
-          <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/5">
+          <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-white/15">
             <div>
               {title && (
                 <h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-white">

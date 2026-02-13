@@ -202,7 +202,7 @@ const JobsListSkeleton = React.memo(() => (
       <div className="h-12 w-32 bg-slate-800 rounded-2xl animate-pulse" />
     </header>
     {/* Filter tabs skeleton */}
-    <div className="bg-slate-900 border border-white/5 rounded-2xl p-2">
+    <div className="bg-slate-900 border border-white/15 rounded-2xl p-2">
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={`skeleton-tab-${i}`} className="h-9 w-24 bg-slate-800 rounded-xl animate-pulse" />
@@ -210,13 +210,13 @@ const JobsListSkeleton = React.memo(() => (
       </div>
     </div>
     {/* Search skeleton */}
-    <div className="h-12 w-full bg-slate-900 border border-white/5 rounded-2xl animate-pulse" />
+    <div className="h-12 w-full bg-slate-900 border border-white/15 rounded-2xl animate-pulse" />
     {/* Card skeletons */}
     <div className="space-y-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={`skeleton-jobcard-${i}`}
-          className="bg-slate-900 border border-white/5 rounded-2xl p-4 animate-pulse"
+          className="bg-slate-900 border border-white/15 rounded-2xl p-4 animate-pulse"
         >
           <div className="flex items-start gap-4">
             {/* Status icon placeholder */}
@@ -293,7 +293,7 @@ const MobileJobCard = React.memo(({
         tabIndex={0}
         onClick={() => { reset(); onNavigate(job.id); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reset(); onNavigate(job.id); } }}
-        className="w-full bg-slate-900 border border-white/5 hover:border-white/10 rounded-2xl p-4 text-left transition-all group relative cursor-pointer"
+        className="w-full bg-slate-900 border border-white/15 hover:border-white/20 rounded-2xl p-4 text-left transition-all group relative cursor-pointer"
         style={isEnabled && offsetX !== 0 ? { transform: `translateX(${offsetX}px)`, transition: 'none' } : undefined}
       >
         <div className="flex items-start gap-4">
@@ -318,7 +318,7 @@ const MobileJobCard = React.memo(({
             <p className="text-xs text-slate-400 truncate mb-1">
               {job.client}
             </p>
-            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+            <div className="flex items-center gap-3 text-[10px] text-slate-400">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs">person</span>
                 {job.technician}
@@ -340,7 +340,7 @@ const MobileJobCard = React.memo(({
             )}
 
             {/* Quick Actions */}
-            <div className="mt-3 pt-3 border-t border-white/5">
+            <div className="mt-3 pt-3 border-t border-white/15">
               <JobActionMenu
                 job={job}
                 onAction={onAction}
@@ -630,7 +630,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-2">
+        <div className="bg-slate-900 border border-white/15 rounded-2xl p-2">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(tab => (
               <button
@@ -639,8 +639,8 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 className={`
                   flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all
                   ${currentFilter === tab.value
-                    ? 'bg-slate-800 text-white border border-white/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}
+                    ? 'bg-slate-800 text-white border border-white/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'}
                 `}
               >
                 <span className={`material-symbols-outlined text-sm ${currentFilter === tab.value ? tab.color : ''}`}>
@@ -649,7 +649,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 <span>{tab.label}</span>
                 <span className={`
                   ml-1 px-2 py-0.5 rounded-md text-[10px] font-black
-                  ${currentFilter === tab.value ? 'bg-white/10 text-white' : 'bg-slate-800 text-slate-500'}
+                  ${currentFilter === tab.value ? 'bg-white/10 text-white' : 'bg-slate-800 text-slate-400'}
                 `}>
                   {filterCounts[tab.value]}
                 </span>
@@ -660,7 +660,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
         {/* Search Input */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
             search
           </span>
           <input
@@ -668,12 +668,12 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             placeholder="Search by job title, client, technician, or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-slate-900 border border-white/5 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 text-sm"
+            className="w-full pl-12 pr-4 py-4 bg-slate-900 border border-white/15 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 text-sm"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
             >
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
@@ -682,7 +682,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
         {/* Empty State */}
         {filteredJobs.length === 0 ? (
-          <div className="bg-slate-900 border border-white/5 rounded-2xl">
+          <div className="bg-slate-900 border border-white/15 rounded-2xl">
             <EmptyState
               icon={searchQuery ? 'search_off' : 'inbox'}
               title={searchQuery ? 'No Jobs Found' : 'No Jobs'}
@@ -714,18 +714,18 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             {/* Desktop Table - Virtualized */}
             <div
               ref={containerRef}
-              className="hidden lg:block bg-slate-900 border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl"
+              className="hidden lg:block bg-slate-900 border border-white/15 rounded-[2rem] overflow-hidden shadow-2xl"
               style={{ height: 'auto', minHeight: `${containerHeight + HEADER_HEIGHT}px` }}
               data-testid="virtualized-list"
             >
-              <div className="px-8 py-5 border-b border-white/5 bg-white/[0.02]">
+              <div className="px-8 py-5 border-b border-white/15 bg-white/[0.02]">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                   {currentFilter === 'all' ? 'All Jobs' : filterTabs.find(t => t.value === currentFilter)?.label}
                 </h3>
               </div>
 
               {/* Table Header */}
-              <div className="bg-slate-950/50 border-b border-white/5">
+              <div className="bg-slate-950/50 border-b border-white/15">
                 <div className="flex items-center h-[60px]">
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Job</div>
                   <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Client</div>
@@ -750,7 +750,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                   return (
                     <div
                       key={job.id}
-                      className="hover:bg-white/5 transition-colors cursor-pointer group border-b border-white/5 flex items-center"
+                      className="hover:bg-white/5 transition-colors cursor-pointer group border-b border-white/15 flex items-center"
                       onClick={() => navigate(`/admin/report/${job.id}`)}
                       role="button"
                       tabIndex={0}
@@ -776,7 +776,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                       <div className="px-8 py-5 flex-1">
                         <div className="text-sm text-white font-bold">{job.client}</div>
                         {job.address && (
-                          <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                          <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
                             {job.address.split(',')[0]}
                           </div>
                         )}
@@ -811,7 +811,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                             day: 'numeric',
                           })}
                         </div>
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-slate-400">
                           {new Date(job.date).toLocaleTimeString('en-AU', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -866,7 +866,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
       >
         {technicians.length === 0 ? (
           <div className="text-center py-8">
-            <span className="material-symbols-outlined text-3xl text-slate-500 mb-2">engineering</span>
+            <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">engineering</span>
             <p className="text-slate-400 text-sm">No technicians yet</p>
           </div>
         ) : (
