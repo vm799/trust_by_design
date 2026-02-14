@@ -337,7 +337,7 @@ const SoloContractorDashboard: React.FC = () => {
             showCollapsed={true}
             queueHeader={
               <div className="border-b border-white/15 pb-4 mb-6">
-                <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">queue</span>
                   Up Next
                 </h2>
@@ -355,7 +355,7 @@ const SoloContractorDashboard: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-500">check_circle</span>
-                  <span className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Completed</span>
+                  <span className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Completed</span>
                   <span className="text-xs text-slate-300 font-bold">({completedCount})</span>
                 </div>
                 <Link
@@ -436,7 +436,7 @@ const SoloContractorDashboard: React.FC = () => {
           {/* Contextual Actions: 3 max, 56px touch targets */}
           <motion.section variants={fadeInUp}>
             <div className="border-b border-white/15 pb-4 mb-6">
-              <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Quick Actions</h2>
+              <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Quick Actions</h2>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <Link

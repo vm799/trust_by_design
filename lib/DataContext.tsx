@@ -480,33 +480,36 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   const addJob = useCallback(async (job: Job) => {
     const normalizedJob = normalizeJobTechnicianId(job);
 
+    // Ensure workspaceId is present for Dexie queryability (matches addClient/addTechnician pattern)
+    const jobWithWorkspace = { ...normalizedJob, workspaceId: normalizedJob.workspaceId || workspaceId || '' };
+
     // Optimistic update: Always succeeds locally
-    setJobs(prev => [normalizedJob, ...prev]);
+    setJobs(prev => [jobWithWorkspace, ...prev]);
 
     // Persist to backend (non-blocking for UI)
     try {
       if (navigator.onLine && workspaceId) {
         const dbModule = await getDbModule();
-        const result = await dbModule.createJob(normalizedJob, workspaceId);
+        const result = await dbModule.createJob(jobWithWorkspace, workspaceId);
         if (!result.success) {
           // Backend rejected - queue for later sync
           const offlineDb = await getOfflineDbModule();
-          await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-          await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+          await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('CREATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
         }
       } else {
         // Offline - save to Dexie and queue for sync when online
         const offlineDb = await getOfflineDbModule();
-        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-        await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+        await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
       }
     } catch {
       // Non-blocking: Data is safe in React state + localStorage (debounced save)
       // Queue for later sync on next opportunity
       try {
         const offlineDb = await getOfflineDbModule();
-        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-        await offlineDb.queueAction('CREATE_JOB', normalizedJob);
+        await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('CREATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
       } catch {
         // Last resort: data is in React state and will be saved to localStorage
       }
@@ -517,29 +520,32 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     // Sprint 2 Task 2.6: Normalize technician IDs on mutation
     const normalizedJob = normalizeJobTechnicianId(updatedJob);
 
+    // Ensure workspaceId is present for Dexie queryability (matches addClient/addTechnician pattern)
+    const jobWithWorkspace = { ...normalizedJob, workspaceId: normalizedJob.workspaceId || workspaceId || '' };
+
     // Optimistic update: Always succeeds locally
-    setJobs(prev => prev.map(j => j.id === normalizedJob.id ? normalizedJob : j));
+    setJobs(prev => prev.map(j => j.id === jobWithWorkspace.id ? jobWithWorkspace : j));
 
     // Persist to backend (non-blocking for UI)
     try {
       if (navigator.onLine && workspaceId) {
         const dbModule = await getDbModule();
-        const result = await dbModule.updateJob(normalizedJob.id, normalizedJob);
+        const result = await dbModule.updateJob(jobWithWorkspace.id, jobWithWorkspace);
         if (!result.success) {
           const offlineDb = await getOfflineDbModule();
-          await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-          await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+          await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+          await offlineDb.queueAction('UPDATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
         }
       } else {
         const offlineDb = await getOfflineDbModule();
-        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-        await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+        await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
       }
     } catch {
       try {
         const offlineDb = await getOfflineDbModule();
-        await offlineDb.saveJobLocal({ ...normalizedJob, syncStatus: 'pending' as const, lastUpdated: Date.now() });
-        await offlineDb.queueAction('UPDATE_JOB', normalizedJob);
+        await offlineDb.saveJobLocal({ ...jobWithWorkspace, syncStatus: 'pending' as const, lastUpdated: Date.now() });
+        await offlineDb.queueAction('UPDATE_JOB', { ...jobWithWorkspace, workspaceId: workspaceId || '' });
       } catch {
         // Data is in React state and will be saved to localStorage
       }

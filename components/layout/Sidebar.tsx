@@ -16,6 +16,7 @@ interface SidebarProps {
   userInitials: string;
   userEmail: string;
   onNavigate?: () => void;
+  onLogout?: () => void;
 }
 
 interface NavItem {
@@ -41,7 +42,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   className = '',
   userInitials,
   userEmail,
-  onNavigate
+  onNavigate,
+  onLogout
 }) => {
   const location = useLocation();
 
@@ -68,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 py-2">
-          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <span className="text-xs font-bold text-blue-400/70 uppercase tracking-widest">
             Management
           </span>
         </div>
@@ -83,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
 
         <div className="px-3 py-2 mt-6">
-          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <span className="text-xs font-bold text-blue-400/70 uppercase tracking-widest">
             Settings
           </span>
         </div>
@@ -99,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile Footer */}
-      <div className="p-4 border-t border-white/15">
+      <div className="p-4 border-t border-white/15 space-y-2">
         <Link
           to="/app/settings"
           onClick={handleClick}
@@ -113,6 +115,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             <p className="text-xs text-slate-300">Manage account</p>
           </div>
         </Link>
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all min-h-[44px]"
+          >
+            <span className="material-symbols-outlined text-xl">logout</span>
+            <span className="text-sm font-medium">Sign Out</span>
+          </button>
+        )}
       </div>
     </aside>
   );
