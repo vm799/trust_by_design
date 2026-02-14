@@ -19,6 +19,7 @@ import { Job, Client, Technician, JobPriority } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
 import { safeSaveDraft, loadDraft, clearDraft, migrateDraftFromLocalStorage } from '../../../lib/utils/storageUtils';
 import { JOB_STATUS, SYNC_STATUS } from '../../../lib/constants';
+import { toast } from '../../../lib/toast';
 import { hapticConfirm, hapticWarning } from '../../../lib/haptics';
 
 interface FormData {
@@ -304,7 +305,7 @@ const JobForm: React.FC = () => {
     } catch (error) {
       console.error('Failed to save job:', error);
       hapticWarning();
-      alert('Failed to save job. Please try again.');
+      toast.error('Failed to save job. Please try again.');
     } finally {
       setSaving(false);
     }

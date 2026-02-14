@@ -17,6 +17,7 @@ import { motion } from 'framer-motion';
 import { fadeInUp } from '../lib/animations';
 import { showSuccessCheckmark } from '../lib/microInteractions';
 import { useCanvasTheme } from '../hooks/useCanvasTheme';
+import { hapticSuccess } from '../lib/haptics';
 
 interface ClientConfirmationCanvasProps {
   clientName?: string;
@@ -272,6 +273,9 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
       const timestamp = new Date().toISOString();
 
+      // Haptic confirmation for signature submit
+      hapticSuccess();
+
       // Show success checkmark animation (Notion-style)
       const cleanup = showSuccessCheckmark(containerRef.current);
 
@@ -371,7 +375,7 @@ const ClientConfirmationCanvas: React.FC<ClientConfirmationCanvasProps> = ({
 
         <div
           ref={containerRef}
-          className="h-[200px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800"
+          className="h-[280px] rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800"
         >
           <canvas
             ref={canvasRef}

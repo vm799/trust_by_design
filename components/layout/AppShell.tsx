@@ -103,8 +103,8 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <OfflineIndicator />
 
             {/* Notifications */}
-            <button className="p-2 text-slate-400 hover:text-white transition-colors relative">
-              <span className="material-symbols-outlined">notifications</span>
+            <button className="p-2 text-slate-400 hover:text-white transition-colors relative" aria-label="Notifications">
+              <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
               {/* Notification badge - show when there are unread */}
               {/* <span className="absolute top-1 right-1 size-2 bg-primary rounded-full" /> */}
             </button>

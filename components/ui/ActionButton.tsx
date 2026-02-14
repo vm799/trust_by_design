@@ -90,16 +90,16 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   const content = (
     <>
       {loading && (
-        <span className={`material-symbols-outlined animate-spin ${iconSizes[size]}`}>
+        <span className={`material-symbols-outlined animate-spin ${iconSizes[size]}`} aria-hidden="true">
           progress_activity
         </span>
       )}
       {!loading && icon && iconPosition === 'left' && (
-        <span className={`material-symbols-outlined ${iconSizes[size]}`}>{icon}</span>
+        <span className={`material-symbols-outlined ${iconSizes[size]}`} aria-hidden="true">{icon}</span>
       )}
       {children}
       {!loading && icon && iconPosition === 'right' && (
-        <span className={`material-symbols-outlined ${iconSizes[size]}`}>{icon}</span>
+        <span className={`material-symbols-outlined ${iconSizes[size]}`} aria-hidden="true">{icon}</span>
       )}
     </>
   );

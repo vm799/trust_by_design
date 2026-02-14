@@ -22,6 +22,7 @@ import SyncConflictResolver from '../../../components/SyncConflictResolver';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
 import { sealEvidence } from '../../../lib/sealing';
 import { isFeatureEnabled } from '../../../lib/featureFlags';
+import { toast } from '../../../lib/toast';
 
 const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -132,7 +133,7 @@ const JobDetail: React.FC = () => {
     // Validate technician exists
     const tech = technicians.find(t => t.id === techId);
     if (!tech) {
-      alert('Technician not found. Please try again.');
+      toast.error('Technician not found. Please try again.');
       return;
     }
 
@@ -149,7 +150,7 @@ const JobDetail: React.FC = () => {
       setShowAssignModal(false);
     } catch (error) {
       console.error('Failed to assign technician:', error);
-      alert('Failed to assign technician. Please try again.');
+      toast.error('Failed to assign technician. Please try again.');
     } finally {
       setAssigning(false);
     }
@@ -163,7 +164,7 @@ const JobDetail: React.FC = () => {
     try {
       // deliveryEmail is required for validated handshake URLs
       if (!userEmail) {
-        alert('Cannot generate link: Your email is not available. Please log in again.');
+        toast.error('Cannot generate link: Your email is not available. Please log in again.');
         setGeneratingLink(false);
         return;
       }
@@ -182,7 +183,7 @@ const JobDetail: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to generate magic link:', error);
-      alert('Failed to generate link. Please try again.');
+      toast.error('Failed to generate link. Please try again.');
     } finally {
       setGeneratingLink(false);
     }

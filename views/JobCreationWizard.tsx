@@ -5,6 +5,7 @@ import { Job, Client, Technician, UserProfile } from '../types';
 import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { navigateToNextStep } from '../lib/onboarding';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
+import { toast } from '../lib/toast';
 
 /**
  * Job Creation Wizard - UX Spec Compliant
@@ -270,7 +271,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     try {
       const workspaceId = user?.workspace?.id;
       if (!workspaceId) {
-        alert('Workspace not found. Please try logging in again.');
+        toast.error('Workspace not found. Please try logging in again.');
         setIsCreating(false);
         return;
       }

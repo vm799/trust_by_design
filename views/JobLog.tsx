@@ -17,6 +17,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../lib/DataContext';
 import { HandshakeService, type PausedJobContext } from '../lib/handshakeService';
+import { toast } from '../lib/toast';
 
 // ============================================================================
 // TYPES
@@ -113,7 +114,7 @@ export default function JobLog() {
     // Check if another job is currently locked
     const currentContext = HandshakeService.get();
     if (currentContext?.isLocked) {
-      alert('You have another job in progress. Please complete or pause it first.');
+      toast.warning('You have another job in progress. Please complete or pause it first.');
       return;
     }
 
@@ -123,7 +124,7 @@ export default function JobLog() {
       // Navigate to the job
       navigate(`/run/${jobId}`);
     } else {
-      alert('Failed to resume job. Please try again.');
+      toast.error('Failed to resume job. Please try again.');
     }
   };
 

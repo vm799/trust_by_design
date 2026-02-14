@@ -4,6 +4,7 @@ import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { PersonaType, PERSONA_STEPS } from '../lib/onboarding';
 import PersonaCard from '../components/PersonaCard';
+import { toast } from '../lib/toast';
 
 /**
  * Complete Onboarding - Name Capture + Persona Selection View
@@ -125,7 +126,7 @@ const CompleteOnboarding: React.FC = () => {
             setStep('persona');
         } catch (err) {
             console.error('Failed to save name:', err);
-            alert('Failed to save name. Please try again.');
+            toast.error('Failed to save name. Please try again.');
         } finally {
             setSavingName(false);
         }
@@ -227,7 +228,7 @@ const CompleteOnboarding: React.FC = () => {
             }
         } catch (err) {
             console.error('Persona selection failed:', err);
-            alert(err instanceof Error ? err.message : 'Failed to select persona');
+            toast.error(err instanceof Error ? err.message : 'Failed to select persona');
             setSelecting(false);
         }
     };

@@ -24,6 +24,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/theme';
 import { useHandshake } from '../hooks/useHandshake';
 import { HandshakeService } from '../lib/handshakeService';
+import { toast } from '../lib/toast';
 import { JobSwitcher } from '../components/JobSwitcher';
 import { sealEvidence } from '../lib/sealing';
 
@@ -723,7 +724,7 @@ export default function BunkerRun() {
 
   const handleSignatureSave = (dataUrl: string) => {
     if (!signerName.trim()) {
-      alert('Please enter the signer name');
+      toast.warning('Please enter the signer name');
       return;
     }
 

@@ -290,6 +290,7 @@ const EvidenceCapture: React.FC = () => {
       contextUpdateJob(updatedJob);
 
       // FIX 2.3: Show photo saved confirmation (green checkmark, auto-dismiss after 2s)
+      hapticSuccess();
       setPhotoSaveStatus('saved');
 
       // Auto-dismiss after 2 seconds

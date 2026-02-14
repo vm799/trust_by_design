@@ -19,6 +19,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Dexie, { type Table } from 'dexie';
 import { compressImage } from '../../lib/imageCompression';
+import { toast } from '../../lib/toast';
 
 // ============================================================================
 // TYPES - Self-contained, no external dependencies
@@ -837,7 +838,7 @@ export default function JobRunner() {
 
   const handleSignatureSave = (dataUrl: string) => {
     if (!signerName.trim()) {
-      alert('Please enter the signer name');
+      toast.warning('Please enter the signer name');
       return;
     }
 
