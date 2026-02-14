@@ -391,7 +391,7 @@ export default function BunkerRun() {
 
   const cardClasses = isDaylight
     ? 'bg-white border-slate-300 shadow-md'
-    : 'bg-slate-800 border-slate-700';
+    : 'bg-slate-800 border-slate-600';
 
   const buttonPrimaryClasses = isDaylight
     ? 'bg-orange-500 hover:bg-orange-400 text-slate-900 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] font-bold'
@@ -889,7 +889,7 @@ export default function BunkerRun() {
                   : 'bg-slate-900 border-slate-600 text-white placeholder-slate-500'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
-              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>
                 The completed job report will be sent to this email.
               </p>
             </div>
@@ -910,7 +910,7 @@ export default function BunkerRun() {
                 // Allow skipping but warn that report delivery may fail
                 setShowEmailFallback(false);
               }}
-              className={`text-sm ${isDaylight ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 hover:text-white'} transition-colors`}
+              className={`text-sm ${isDaylight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'} transition-colors`}
             >
               Skip (report may not be delivered)
             </button>
@@ -919,7 +919,7 @@ export default function BunkerRun() {
           {/* Job Info */}
           {job && (
             <div className={`${cardClasses} p-4 rounded-xl border`}>
-              <p className={`text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>JOB</p>
+              <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>JOB</p>
               <p className="text-lg font-bold">{job.title}</p>
               <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
             </div>
@@ -981,7 +981,7 @@ export default function BunkerRun() {
     return (
       <div className={`min-h-screen ${themeClasses}`}>
         {/* Navigation Header */}
-        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
+        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
             <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Complete</span>
             <a
@@ -1004,11 +1004,11 @@ export default function BunkerRun() {
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 mb-6">
             <p className="text-xs text-slate-400">JOB</p>
             <p className="text-lg font-bold text-white">{job.title}</p>
             <p className="text-sm text-slate-400">{job.client}</p>
-            {job.address && <p className="text-sm text-slate-500">{job.address}</p>}
+            {job.address && <p className="text-sm text-slate-400">{job.address}</p>}
             {job.completedAt && (
               <p className="text-xs text-green-400 mt-2">
                 Completed: {new Date(job.completedAt).toLocaleString()}
@@ -1021,13 +1021,13 @@ export default function BunkerRun() {
             {job.beforePhoto && (
               <div>
                 <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-                <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-700" />
+                <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
               </div>
             )}
             {job.afterPhoto && (
               <div>
                 <p className="text-xs text-slate-400 mb-1">AFTER</p>
-                <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-700" />
+                <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
               </div>
             )}
           </div>
@@ -1081,7 +1081,7 @@ export default function BunkerRun() {
   return (
     <div className={`min-h-screen ${themeClasses}`}>
       {/* Navigation Header with Pause and Job Log */}
-      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-700'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
           <div className="flex items-center gap-2">
@@ -1110,7 +1110,7 @@ export default function BunkerRun() {
       {/* Pause Job Modal */}
       {showPauseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-700'}`}>
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-600'}`}>
             <div className="text-center mb-6">
               <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-500/20'}`}>
                 <span className="material-symbols-outlined text-3xl text-amber-500">pause_circle</span>
@@ -1143,7 +1143,7 @@ export default function BunkerRun() {
                           : 'bg-amber-500/20 border-amber-500 text-amber-400'
                         : isDaylight
                           ? 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
-                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg mb-1">{option.icon}</span>
@@ -1184,10 +1184,10 @@ export default function BunkerRun() {
 
         {/* Job Info Header */}
         <div className={`mt-4 mb-6 p-4 rounded-xl border ${cardClasses}`}>
-          <p className={`text-xs ${isDaylight ? 'text-slate-500' : 'text-slate-400'}`}>JOB</p>
+          <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>JOB</p>
           <p className="text-lg font-bold">{job.title}</p>
           <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
-          {job.address && <p className={`text-sm ${isDaylight ? 'text-slate-500' : 'text-slate-500'}`}>{job.address}</p>}
+          {job.address && <p className={`text-sm ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>{job.address}</p>}
         </div>
 
         {/* Wizard Steps */}
@@ -1281,7 +1281,7 @@ function StatusIndicator({ isOnline, syncStatus, isSyncing, message }: { isOnlin
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-700">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-600">
       <div className={`w-3 h-3 rounded-full ${getColor()}`} />
       <span className="text-xs font-medium text-slate-300">{getText()}</span>
     </div>
@@ -1356,7 +1356,7 @@ function PhotoStep({
         <Camera onCapture={onCapture} onCancel={onCancelCamera} />
       ) : photo ? (
         <div className="space-y-4">
-          <img src={photo.dataUrl} alt={title} className="w-full rounded-xl border border-slate-700" />
+          <img src={photo.dataUrl} alt={title} className="w-full rounded-xl border border-slate-600" />
           <PhotoMeta photo={photo} />
           <div className="flex gap-3">
             {canGoBack && (
@@ -1409,7 +1409,7 @@ function SignatureStep({
           </div>
           <h2 className="text-xl font-bold text-white">Signature Captured</h2>
         </div>
-        <img src={signature.dataUrl} alt="Signature" className="w-full rounded-xl border border-slate-700 bg-white" />
+        <img src={signature.dataUrl} alt="Signature" className="w-full rounded-xl border border-slate-600 bg-white" />
         <p className="text-center text-slate-400">Signed by: <span className="text-white font-medium">{signature.signerName}</span></p>
         <div className="flex gap-3">
           <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">← Back</button>
@@ -1476,19 +1476,19 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { jo
         {job.beforePhoto && (
           <div>
             <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-            <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-700" />
+            <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
           </div>
         )}
         {job.afterPhoto && (
           <div>
             <p className="text-xs text-slate-400 mb-1">AFTER</p>
-            <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-700" />
+            <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
           </div>
         )}
       </div>
 
       {job.signature && (
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
           <p className="text-xs text-slate-400 mb-2">SIGNATURE</p>
           <img src={job.signature.dataUrl} alt="Signature" className="w-full max-w-xs rounded-lg bg-white" />
           <p className="mt-2 text-sm text-slate-300">Signed by: {job.signature.signerName}</p>

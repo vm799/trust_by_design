@@ -124,8 +124,8 @@ class ErrorBoundary extends Component<Props, State> {
                 </p>
                 {error.stack && (
                   <details className="mt-2">
-                    <summary className="text-slate-500 text-[10px] cursor-pointer">Stack trace</summary>
-                    <pre className="text-slate-500 text-[10px] mt-1 whitespace-pre-wrap break-all max-h-32 overflow-auto">
+                    <summary className="text-slate-400 text-[10px] cursor-pointer">Stack trace</summary>
+                    <pre className="text-slate-400 text-[10px] mt-1 whitespace-pre-wrap break-all max-h-32 overflow-auto">
                       {error.stack}
                     </pre>
                   </details>

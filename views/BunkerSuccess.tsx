@@ -92,7 +92,7 @@ export default function BunkerSuccess() {
 
         {/* Job Details Card */}
         {jobDetails.id && (
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-left space-y-3">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 text-left space-y-3">
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wide">Job ID</p>
               <p className="text-lg font-mono font-bold text-white">{jobDetails.id}</p>
@@ -135,7 +135,7 @@ export default function BunkerSuccess() {
         </div>
 
         {/* Next Steps */}
-        <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+        <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-600/50">
           <h3 className="text-sm font-medium text-slate-300 mb-2">What happens next?</h3>
           <ul className="text-sm text-slate-400 space-y-1 text-left list-disc list-inside">
             <li>Manager reviews the evidence</li>
@@ -161,7 +161,7 @@ export default function BunkerSuccess() {
         </div>
 
         {/* Footer */}
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-400">
           Your evidence is securely stored and tamper-proof
         </p>
       </div>

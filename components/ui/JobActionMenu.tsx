@@ -311,7 +311,7 @@ const variantStyles: Record<string, string> = {
   secondary: 'bg-slate-700 hover:bg-slate-600 text-white',
   danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20',
   warning: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20',
-  ghost: 'bg-white/5 hover:bg-white/10 text-slate-300',
+  ghost: 'bg-white/10 hover:bg-white/10 text-slate-300',
 };
 
 const JobActionMenu: React.FC<JobActionMenuProps> = ({

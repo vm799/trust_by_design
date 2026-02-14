@@ -498,11 +498,7 @@ async function sendEmailNotification(notification: NotificationPayload): Promise
  * NOTE: Placeholder for SMS delivery via Twilio or similar
  */
 async function sendSmsNotification(notification: NotificationPayload): Promise<void> {
-
-  // In production, call Supabase Edge Function:
-  // await supabase.functions.invoke('send-sms', {
-  //   body: { to: notification.recipientPhone, message: notification.message }
-  // });
+  void notification;
 }
 
 /**
@@ -511,8 +507,7 @@ async function sendSmsNotification(notification: NotificationPayload): Promise<v
  * NOTE: Placeholder for web push notifications
  */
 async function sendPushNotification(notification: NotificationPayload): Promise<void> {
-
-  // In production, use Web Push API or Firebase Cloud Messaging
+  void notification;
 }
 
 /**

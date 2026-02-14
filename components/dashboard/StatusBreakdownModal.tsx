@@ -186,7 +186,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
             {/* Job list */}
             <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
               {filteredJobs.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-slate-400">
                   <span className="material-symbols-outlined text-3xl mb-2">inbox</span>
                   <p className="text-sm">No {status.toLowerCase()} jobs</p>
                 </div>

@@ -127,7 +127,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/admin')}
-              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring"
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring"
               aria-label="Back to dashboard"
             >
               <span className="material-symbols-outlined">arrow_back</span>
@@ -139,7 +139,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
           </div>
           <button
             onClick={() => navigate('/admin/profile')}
-            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring"
+            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring"
             aria-label="Profile settings"
           >
             <span className="material-symbols-outlined">account_circle</span>
@@ -204,7 +204,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                   {/* Icon */}
                   <div className={`
                     size-14 rounded-2xl flex items-center justify-center flex-shrink-0
-                    ${option.primary ? 'bg-primary/20' : 'bg-white/5'}
+                    ${option.primary ? 'bg-primary/20' : 'bg-white/10'}
                   `}>
                     <span className={`
                       material-symbols-outlined text-3xl
@@ -235,7 +235,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                     <p className="text-sm text-slate-400 mt-1">
                       {option.description}
                     </p>
-                    <p className="text-xs text-slate-500 mt-2 border-t border-white/15 pt-2">
+                    <p className="text-xs text-slate-400 mt-2 border-t border-white/15 pt-2">
                       {option.examples}
                     </p>
                   </div>
@@ -243,7 +243,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
                 {/* Keyboard Shortcut Hint */}
                 <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <kbd className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded font-mono">
+                  <kbd className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono">
                     {option.shortcut}
                   </kbd>
                 </div>
@@ -268,21 +268,21 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
         <div className="flex items-center justify-center gap-8 max-w-lg mx-auto">
           <button
             onClick={() => navigate('/admin')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">person</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
           </button>
           <button
             onClick={() => navigate('/admin')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">settings</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Settings</span>
           </button>
           <button
             onClick={() => navigate('/home')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">help</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Help</span>

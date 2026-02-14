@@ -260,7 +260,7 @@ export default function JobLog() {
                       <p className="text-sm text-amber-400/80">
                         {formatPauseReason(pausedJob.pauseReason)}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-slate-400 mt-1">
                         Paused {formatTimeSince(pausedJob.pausedAt)}
                       </p>
                     </div>
@@ -293,7 +293,7 @@ export default function JobLog() {
 
         {/* Empty State */}
         {!isLoading && filteredJobs.length === 0 && (
-          <div className="text-center py-12 bg-slate-800 rounded-xl border border-slate-700">
+          <div className="text-center py-12 bg-slate-800 rounded-xl border border-slate-600">
             <span className="text-4xl">📋</span>
             <h3 className="text-lg font-medium text-white mt-4">No Jobs Yet</h3>
             <p className="text-slate-400 mt-2">Complete your first job to see it here</p>
@@ -311,16 +311,16 @@ export default function JobLog() {
           {filteredJobs.map(job => (
             <div
               key={job.id}
-              className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden"
+              className="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden"
             >
               {/* Header */}
-              <div className="p-4 border-b border-slate-700">
+              <div className="p-4 border-b border-slate-600">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-white">{job.title}</h3>
                     <p className="text-sm text-slate-400">{job.client}</p>
                     {job.address && (
-                      <p className="text-xs text-slate-500 mt-1">{job.address}</p>
+                      <p className="text-xs text-slate-400 mt-1">{job.address}</p>
                     )}
                   </div>
                   <div className={`px-2 py-1 rounded text-xs font-medium ${
@@ -334,7 +334,7 @@ export default function JobLog() {
                      job.syncStatus === 'failed' ? '✗ Failed' : '⏳ Pending'}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   Completed: {formatDate(job.completedAt)}
                 </p>
               </div>

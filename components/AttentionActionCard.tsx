@@ -229,7 +229,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
     <div className={`${style.bg} border ${style.border} rounded-2xl p-4 transition-all`}>
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
-        <div className={`size-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0`}>
+        <div className={`size-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0`}>
           <span className={`material-symbols-outlined text-xl ${style.iconColor}`}>{style.icon}</span>
         </div>
         <div className="flex-1 min-w-0">
@@ -239,7 +239,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
           <p className="text-[10px] text-slate-400 mt-0.5">
             {style.title} - {style.subtitle}
           </p>
-          <p className="text-[10px] text-slate-500 mt-1">
+          <p className="text-[10px] text-slate-400 mt-1">
             Tech: <span className="text-slate-300">{technician?.name || job.technician || 'Unassigned'}</span>
             {client && <span> | Client: {client.name}</span>}
           </p>
@@ -282,7 +282,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
                 </button>
                 <button
                   onClick={handleCall}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >
                   <span className="material-symbols-outlined text-xs">call</span>
                   Call
@@ -293,7 +293,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             {technician?.email && (
               <button
                 onClick={handleEmail}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
               >
                 <span className="material-symbols-outlined text-xs">mail</span>
                 Email
@@ -315,7 +315,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             </button>
             <button
               onClick={() => onNavigate?.(`/admin/report/${job.id}`)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <span className="material-symbols-outlined text-xs">visibility</span>
               Review
@@ -348,7 +348,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             )}
             <button
               onClick={() => onNavigate?.(`/admin/report/${job.id}`)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <span className="material-symbols-outlined text-xs">visibility</span>
               View

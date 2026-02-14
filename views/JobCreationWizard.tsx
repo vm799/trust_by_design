@@ -471,7 +471,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                         ? 'bg-success text-white'
                         : idx + 1 === step
                         ? 'bg-primary text-white ring-4 ring-primary/20'
-                        : 'bg-slate-800 text-slate-500'
+                        : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     {idx + 1 < step ? (
@@ -481,7 +481,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     )}
                   </div>
                   <span className={`text-[9px] font-bold uppercase tracking-wider mt-2 hidden md:block ${
-                    idx + 1 === step ? 'text-white' : 'text-slate-500'
+                    idx + 1 === step ? 'text-white' : 'text-slate-400'
                   }`}>
                     {title}
                   </span>
@@ -525,7 +525,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white text-lg outline-none transition-all"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white text-lg outline-none transition-all"
                   placeholder="e.g., Boiler Service - Unit 4B"
                 />
               </div>
@@ -543,7 +543,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                         formData.jobType === type.id
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-2xl ${
@@ -570,7 +570,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'normal'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">schedule</span>
@@ -585,7 +585,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'urgent'
                         ? 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-red-500/50 hover:text-red-400'
+                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-red-500/50 hover:text-red-400'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">priority_high</span>
@@ -617,7 +617,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
                   placeholder="123 Industrial Estate, London, UK"
                 />
               </div>
@@ -630,7 +630,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   id="wizard-site-notes"
                   value={formData.siteNotes}
                   onChange={(e) => setFormData({ ...formData, siteNotes: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
                   rows={3}
                   placeholder="Gate code, access instructions, parking info..."
                 />
@@ -694,11 +694,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                   required
                   value={formData.workDescription}
                   onChange={(e) => setFormData({ ...formData, workDescription: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
+                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
                   rows={4}
                   placeholder="• Check boiler pressure&#10;• Inspect flue&#10;• Test safety valve"
                 />
-                <p className="text-[10px] text-slate-500">Use bullet points for clarity</p>
+                <p className="text-[10px] text-slate-400">Use bullet points for clarity</p>
               </div>
 
               <div className="space-y-3">
@@ -721,11 +721,11 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
                         formData.safetyRequirements.includes(req.id)
                           ? 'bg-amber-500/10 border-amber-500/50 text-white'
-                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                          : 'bg-slate-800 border-slate-600 text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
-                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-500'
+                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-400'
                       }`}>
                         {formData.safetyRequirements.includes(req.id) ? 'check_box' : 'check_box_outline_blank'}
                       </span>
@@ -755,7 +755,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                       className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
                         formData.requiredPPE.includes(ppe.id)
                           ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                          : 'bg-slate-800 border-slate-600 text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -836,7 +836,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     }
                   }}
                   className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
-                    clients.length === 0 ? 'border-warning/50' : 'border-slate-700 focus:border-primary'
+                    clients.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
                   <option value="">Select Client...</option>
@@ -864,7 +864,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     }
                   }}
                   className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
-                    technicians.length === 0 ? 'border-warning/50' : 'border-slate-700 focus:border-primary'
+                    technicians.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
                   <option value="">Select Technician...</option>
@@ -1008,7 +1008,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
         {/* Success Modal - UAT Fix #11, #13 */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
-            <div className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] max-w-lg w-full shadow-2xl space-y-6">
+            <div className="bg-slate-800 border border-white/15 p-8 rounded-[2.5rem] max-w-lg w-full shadow-2xl space-y-6">
               <div className="text-center space-y-3">
                 <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto animate-success-pop">
                   <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
@@ -1077,14 +1077,14 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     onClick={() => {
                       if (magicLinkToken) markLinkAsSent(magicLinkToken, 'email');
                     }}
-                    className="py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                    className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
                   >
                     <span className="material-symbols-outlined text-sm">email</span>
                     Email
                   </a>
                   <button
                     onClick={copyMagicLink}
-                    className="py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                    className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
                   >
                     <span className="material-symbols-outlined text-sm">content_copy</span>
                     Copy

@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HandshakeService, type PausedJobContext } from '../lib/handshakeService';
 import ConfirmDialog from './ui/ConfirmDialog';
-import { scaleInOut, fadeOverlay, slideUpDrawer, transitionSpringSnappy, slideInLeftSmall } from '../lib/animations';
+import { scaleInOut, fadeOverlay, slideUpDrawer, transitionSpringSnappy } from '../lib/animations';
 
 interface JobSwitcherProps {
   currentJobId?: string;
@@ -202,7 +202,7 @@ export const JobSwitcher = memo(function JobSwitcher({
                 {/* Paused Jobs List */}
                 {otherPausedJobs.length === 0 ? (
                   <div className="text-center py-8">
-                    <span className="material-symbols-outlined text-4xl text-slate-500 mb-2">
+                    <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">
                       done_all
                     </span>
                     <p className="text-sm text-slate-400">
@@ -226,7 +226,7 @@ export const JobSwitcher = memo(function JobSwitcher({
                             <p className="text-xs text-amber-400/80">
                               {formatPauseReason(job.pauseReason)}
                             </p>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-slate-400 mt-1">
                               {formatTimeSince(job.pausedAt)}
                             </p>
                           </div>

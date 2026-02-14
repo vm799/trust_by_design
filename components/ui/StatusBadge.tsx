@@ -58,8 +58,8 @@ interface StatusConfig {
 const defaultConfig: StatusConfig = {
   label: 'Unknown',
   icon: 'help_outline',
-  color: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  dotColor: 'bg-gray-400',
+  color: 'bg-gray-500/20 text-gray-300 border-gray-500/40',
+  dotColor: 'bg-gray-300',
 };
 
 const statusConfig: Record<string, StatusConfig> = {
@@ -67,168 +67,168 @@ const statusConfig: Record<string, StatusConfig> = {
   draft: {
     label: 'Draft',
     icon: 'edit_note',
-    color: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    dotColor: 'bg-gray-400',
+    color: 'bg-gray-500/20 text-gray-300 border-gray-500/40',
+    dotColor: 'bg-gray-300',
   },
   Draft: {
     label: 'Draft',
     icon: 'edit_note',
-    color: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    dotColor: 'bg-gray-400',
+    color: 'bg-gray-500/20 text-gray-300 border-gray-500/40',
+    dotColor: 'bg-gray-300',
   },
 
   // === Pending / Waiting ===
   pending: {
     label: 'Pending',
     icon: 'schedule',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    dotColor: 'bg-amber-400',
+    color: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    dotColor: 'bg-amber-300',
   },
   Pending: {
     label: 'Pending',
     icon: 'schedule',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    dotColor: 'bg-amber-400',
+    color: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    dotColor: 'bg-amber-300',
   },
 
   // === Assigned (derived UI status) ===
   assigned: {
     label: 'Tech Assigned',
     icon: 'person',
-    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    dotColor: 'bg-indigo-400',
+    color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+    dotColor: 'bg-indigo-300',
   },
 
   // === Sent / Link Sent (derived UI status) ===
   sent: {
     label: 'Link Sent',
     icon: 'mark_email_read',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    dotColor: 'bg-blue-400',
+    color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    dotColor: 'bg-blue-300',
   },
 
   // === In Progress / Active ===
   active: {
     label: 'In Progress',
     icon: 'pending',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    dotColor: 'bg-blue-400',
+    color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    dotColor: 'bg-blue-300',
   },
   'In Progress': {
     label: 'In Progress',
     icon: 'pending',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    dotColor: 'bg-blue-400',
+    color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    dotColor: 'bg-blue-300',
   },
 
   // === Complete ===
   completed: {
     label: 'Completed',
     icon: 'task_alt',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    dotColor: 'bg-emerald-400',
+    color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    dotColor: 'bg-emerald-300',
   },
   Complete: {
     label: 'Complete',
     icon: 'task_alt',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    dotColor: 'bg-emerald-400',
+    color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    dotColor: 'bg-emerald-300',
   },
 
   // === Submitted (for review) ===
   Submitted: {
     label: 'Submitted',
     icon: 'send',
-    color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-    dotColor: 'bg-teal-400',
+    color: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+    dotColor: 'bg-teal-300',
   },
   review: {
     label: 'Review',
     icon: 'rate_review',
-    color: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    dotColor: 'bg-purple-400',
+    color: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+    dotColor: 'bg-purple-300',
   },
 
   // === Paused ===
   Paused: {
     label: 'Paused',
     icon: 'pause_circle',
-    color: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-    dotColor: 'bg-orange-400',
+    color: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
+    dotColor: 'bg-orange-300',
   },
 
   // === Cancelled ===
   cancelled: {
     label: 'Cancelled',
     icon: 'cancel',
-    color: 'bg-red-500/10 text-red-400 border-red-500/20',
-    dotColor: 'bg-red-400',
+    color: 'bg-red-500/20 text-red-300 border-red-500/40',
+    dotColor: 'bg-red-300',
   },
   Cancelled: {
     label: 'Cancelled',
     icon: 'cancel',
-    color: 'bg-red-500/10 text-red-400 border-red-500/20',
-    dotColor: 'bg-red-400',
+    color: 'bg-red-500/20 text-red-300 border-red-500/40',
+    dotColor: 'bg-red-300',
   },
 
   // === Archived ===
   archived: {
     label: 'Archived',
     icon: 'archive',
-    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    dotColor: 'bg-slate-400',
+    color: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
+    dotColor: 'bg-slate-300',
   },
   Archived: {
     label: 'Archived',
     icon: 'archive',
-    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    dotColor: 'bg-slate-400',
+    color: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
+    dotColor: 'bg-slate-300',
   },
 
   // === Sealed (evidence locked) ===
   sealed: {
     label: 'Sealed',
     icon: 'verified',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    dotColor: 'bg-emerald-400',
+    color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    dotColor: 'bg-emerald-300',
   },
 
   // === Invoice statuses ===
   invoiced: {
     label: 'Invoiced',
     icon: 'receipt',
-    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-    dotColor: 'bg-cyan-400',
+    color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+    dotColor: 'bg-cyan-300',
   },
   paid: {
     label: 'Paid',
     icon: 'check_circle',
-    color: 'bg-green-500/10 text-green-400 border-green-500/20',
-    dotColor: 'bg-green-400',
+    color: 'bg-green-500/20 text-green-300 border-green-500/40',
+    dotColor: 'bg-green-300',
   },
   Sent: {
     label: 'Sent',
     icon: 'mark_email_read',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    dotColor: 'bg-blue-400',
+    color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    dotColor: 'bg-blue-300',
   },
   Paid: {
     label: 'Paid',
     icon: 'check_circle',
-    color: 'bg-green-500/10 text-green-400 border-green-500/20',
-    dotColor: 'bg-green-400',
+    color: 'bg-green-500/20 text-green-300 border-green-500/40',
+    dotColor: 'bg-green-300',
   },
   overdue: {
     label: 'Overdue',
     icon: 'warning',
-    color: 'bg-red-500/10 text-red-400 border-red-500/20',
-    dotColor: 'bg-red-400',
+    color: 'bg-red-500/20 text-red-300 border-red-500/40',
+    dotColor: 'bg-red-300',
   },
   Overdue: {
     label: 'Overdue',
     icon: 'warning',
-    color: 'bg-red-500/10 text-red-400 border-red-500/20',
-    dotColor: 'bg-red-400',
+    color: 'bg-red-500/20 text-red-300 border-red-500/40',
+    dotColor: 'bg-red-300',
   },
 };
 

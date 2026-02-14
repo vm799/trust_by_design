@@ -40,7 +40,7 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
       rounded-xl transition-colors
       ${active
         ? 'text-primary bg-primary/10'
-        : 'text-slate-500 hover:text-slate-300'
+        : 'text-slate-400 hover:text-slate-300'
       }
     `}
   >
@@ -109,7 +109,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
               add
             </span>
           </Link>
-          <span className="text-[10px] font-medium text-slate-500 mt-0.5 leading-tight">
+          <span className="text-[10px] font-medium text-slate-400 mt-0.5 leading-tight">
             New
           </span>
         </div>

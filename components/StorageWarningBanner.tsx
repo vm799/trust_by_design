@@ -109,7 +109,7 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
           {Math.round(warning.percent)}% Used
         </span>
 
-        <span className="text-xs text-slate-500 hidden sm:inline">
+        <span className="text-xs text-slate-400 hidden sm:inline">
           {warning.usage >= 1024 * 1024 * 1024
             ? `${(warning.usage / (1024 * 1024 * 1024)).toFixed(1)}GB`
             : `${(warning.usage / (1024 * 1024)).toFixed(1)}MB`
@@ -150,7 +150,7 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
               handleDismiss();
             }
           }}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white transition-colors"
           aria-label="Dismiss storage warning"
         >
           <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -163,21 +163,21 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
       {isExpanded && (
         <div
           id="storage-panel"
-          className="bg-slate-900/95 border-t border-slate-700/50 px-4 py-3 max-h-64 overflow-y-auto"
+          className="bg-slate-900/95 border-t border-slate-600/50 px-4 py-3 max-h-64 overflow-y-auto"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
               Free up space — delete old jobs
             </h3>
             {deletableJobs.length > 0 && (
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-slate-400">
                 {deletableJobs.length} deletable job{deletableJobs.length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
           {deletableJobs.length === 0 ? (
-            <p className="text-xs text-slate-500 py-2">
+            <p className="text-xs text-slate-400 py-2">
               No deletable jobs found. Sealed and invoiced jobs cannot be removed.
             </p>
           ) : (
@@ -191,7 +191,7 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
                     <span className="text-xs text-slate-200 font-medium truncate block">
                       {job.title || job.id.slice(0, 8)}
                     </span>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-slate-400">
                       {job.status} · {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'No date'}
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export const StorageWarningBanner: React.FC = React.memo(() => {
                     type="button"
                     onClick={() => handleDeleteJob(job.id)}
                     disabled={deletingId === job.id}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-red-400 transition-colors disabled:opacity-50"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors disabled:opacity-50"
                     aria-label={`Delete job ${job.title || job.id.slice(0, 8)}`}
                   >
                     {deletingId === job.id ? (

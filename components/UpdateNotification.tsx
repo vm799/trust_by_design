@@ -247,7 +247,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
           className="
             bg-white/95 dark:bg-slate-800/95
             backdrop-blur-md
-            border border-slate-200 dark:border-slate-700/50
+            border border-slate-200 dark:border-slate-600/50
             rounded-xl shadow-2xl
             overflow-hidden
           "
@@ -287,7 +287,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   A new version of JobProof is ready to install.
                 </p>
-                <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-slate-500">
+                <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-slate-400">
                   <span>{displayCurrentVersion.slice(0, 7)}</span>
                   <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -345,7 +345,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = memo(({
 
             {/* Paid user auto-update hint */}
             {isPaidUser(session) && (
-              <p className="mt-3 text-[10px] text-slate-500 dark:text-slate-500 text-center">
+              <p className="mt-3 text-[10px] text-slate-400 dark:text-slate-400 text-center">
                 Pro tip: Updates install automatically during off-hours (2-5 AM)
               </p>
             )}

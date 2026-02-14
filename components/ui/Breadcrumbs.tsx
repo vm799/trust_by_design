@@ -89,7 +89,7 @@ const Breadcrumbs = memo<BreadcrumbsProps>(({
                     transition-colors duration-150
                     ${isDark
                       ? 'text-slate-400 hover:text-white hover:bg-slate-800'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
                     }
                   `}
                 >
@@ -110,7 +110,7 @@ const Breadcrumbs = memo<BreadcrumbsProps>(({
                         : 'text-slate-900 font-medium'
                       : isDark
                         ? 'text-slate-400'
-                        : 'text-slate-500'
+                        : 'text-slate-400'
                     }
                   `}
                   aria-current={isLast ? 'page' : undefined}

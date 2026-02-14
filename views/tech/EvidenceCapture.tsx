@@ -489,7 +489,7 @@ const EvidenceCapture: React.FC = () => {
 
           {/* Photo Type Selector */}
           <div className="bg-slate-950 px-4 py-3 border-t border-white/10">
-            <p className="text-xs text-slate-500 text-center mb-2">Photo Type</p>
+            <p className="text-xs text-slate-400 text-center mb-2">Photo Type</p>
             <div className="flex justify-center gap-2">
               {(['before', 'during', 'after'] as PhotoType[]).map((type) => (
                 <button

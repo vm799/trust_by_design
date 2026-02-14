@@ -264,7 +264,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
         {/* Results */}
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {results.length === 0 ? (
-            <div className="p-4 text-center text-slate-500 dark:text-slate-400">
+            <div className="p-4 text-center text-slate-400 dark:text-slate-400">
               {filters.query ? 'No jobs found matching your search' : 'Enter a search term'}
             </div>
           ) : (
@@ -293,7 +293,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
                       <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                         {job.client}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                      <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">
                         {job.address}
                       </p>
                     </div>
@@ -306,7 +306,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
                         {job.status}
                       </span>
                       {job.technician && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-slate-400 dark:text-slate-400">
                           {job.technician}
                         </span>
                       )}
@@ -320,7 +320,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
 
         {/* Search History */}
         {!filters.query && searchHistory.length > 0 && results.length === 0 && (
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 uppercase">
               Recent Searches
             </p>
@@ -345,7 +345,7 @@ const QuickSearchModal: React.FC<QuickSearchModalProps> = React.memo(({
         )}
 
         {/* Help Text */}
-        <div id="search-description" className="text-xs text-slate-500 dark:text-slate-400 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div id="search-description" className="text-xs text-slate-400 dark:text-slate-400 mt-4 pt-4 border-t border-slate-200 dark:border-slate-600">
           <p className="mb-1"><strong>Navigation:</strong> ↑↓ arrows to select, Enter to open</p>
           <p><strong>Keyboard shortcut:</strong> Ctrl+K or Cmd+K to open this search</p>
         </div>

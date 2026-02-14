@@ -86,10 +86,10 @@ const ProofGapBar: React.FC<ProofGapBarProps> = React.memo(({
         className={`p-4 rounded-xl ${colors.bg} ${className}`}
       >
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-lg text-slate-400 dark:text-slate-500">
+          <span className="material-symbols-outlined text-lg text-slate-400 dark:text-slate-400">
             verified_user
           </span>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-slate-400 dark:text-slate-400">
             No active jobs
           </span>
         </div>

@@ -259,7 +259,7 @@ const RoadmapView: React.FC = () => {
         {/* Future Features */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-slate-500 text-3xl font-black">rocket_launch</span>
+            <span className="material-symbols-outlined text-slate-400 text-3xl font-black">rocket_launch</span>
             <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Future Features</h3>
             <span className="bg-slate-800 text-slate-400 px-3 py-1 rounded-full text-xs font-black uppercase">Post-Beta</span>
           </div>
@@ -396,7 +396,7 @@ const FeatureCard = ({ status, title, description, phase, timeline }: any) => {
       {phase && (
         <div className="flex items-center gap-2 text-[10px] font-black uppercase">
           <span className={`${c.text}`}>{phase}</span>
-          {timeline && <span className="text-slate-500">• {timeline}</span>}
+          {timeline && <span className="text-slate-400">• {timeline}</span>}
         </div>
       )}
     </div>
@@ -405,11 +405,11 @@ const FeatureCard = ({ status, title, description, phase, timeline }: any) => {
 
 const FutureFeatureCard = ({ title, description, icon }: any) => (
   <div className="bg-slate-800 border border-white/15 p-6 rounded-2xl space-y-3 hover:border-primary/20 transition-all group">
-    <span className={`material-symbols-outlined text-slate-500 text-3xl font-black group-hover:text-primary transition-colors`}>
+    <span className={`material-symbols-outlined text-slate-400 text-3xl font-black group-hover:text-primary transition-colors`}>
       {icon}
     </span>
     <h4 className="text-white font-black uppercase tracking-tight text-sm">{title}</h4>
-    <p className="text-slate-500 text-xs leading-relaxed">{description}</p>
+    <p className="text-slate-400 text-xs leading-relaxed">{description}</p>
   </div>
 );
 
@@ -417,7 +417,7 @@ const Milestone = ({ week, title, items, status }: any) => {
   const isActive = status === 'in-progress';
 
   return (
-    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/15'}`}>
+    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-white/10 border-white/15'}`}>
       <div className="flex items-start gap-4">
         <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${isActive ? 'bg-primary text-white' : 'bg-slate-800 text-slate-400'}`}>
           {week}

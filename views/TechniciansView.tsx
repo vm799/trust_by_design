@@ -33,7 +33,7 @@ const TechniciansSkeleton = React.memo(() => (
       <div className="h-11 w-40 bg-slate-800 rounded-xl animate-pulse" />
     </div>
     {/* Search skeleton */}
-    <div className="h-11 w-full bg-slate-800 border-2 border-slate-700 rounded-xl animate-pulse" />
+    <div className="h-11 w-full bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
     {/* Card grid skeleton */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -58,7 +58,7 @@ const TechniciansSkeleton = React.memo(() => (
             </div>
           </div>
           {/* Stats Row */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-600/50">
             <div className="space-y-1">
               <div className="h-2 w-20 bg-slate-800 rounded" />
               <div className="h-5 w-8 bg-slate-800 rounded" />
@@ -125,7 +125,7 @@ const TechCard = React.memo(({
           }`}>
             {tech.status}
           </span>
-          <span className="text-[7px] text-slate-500 mt-0.5 tracking-wide">Status set manually</span>
+          <span className="text-[7px] text-slate-400 mt-0.5 tracking-wide">Status set manually</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ const TechCard = React.memo(({
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-600/50">
         <div className="space-y-0.5">
           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Jobs Completed</p>
           <p className="text-lg font-black text-white">{tech.jobsCompleted || 0}</p>
@@ -298,7 +298,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             aria-label="Search technicians"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-700 focus:border-blue-500/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-500"
+            className="w-full bg-slate-800 border-2 border-slate-600 focus:border-blue-500/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
@@ -313,8 +313,8 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
-            <input required placeholder="Technician Name" aria-label="Technician Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
-            <input required type="email" placeholder="Technician Email" aria-label="Technician Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
+            <input required placeholder="Technician Name" aria-label="Technician Name" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
+            <input required type="email" placeholder="Technician Email" aria-label="Technician Email" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
             <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Add Technician</button>
           </form>
         )}

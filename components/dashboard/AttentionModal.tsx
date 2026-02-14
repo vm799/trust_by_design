@@ -213,7 +213,7 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
               </div>
               <button
                 onClick={onDismiss}
-                className="size-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="size-10 rounded-xl bg-white/10 hover:bg-white/10 flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined text-slate-400">close</span>
               </button>
@@ -240,19 +240,19 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
                     <p className={`text-2xl font-bold ${job.photos.length > 0 ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.photos.length}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Photos</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Photos</p>
                   </div>
                   <div className="text-center">
                     <p className={`text-2xl font-bold ${job.signature ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.signature ? '\u2713' : '\u2014'}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Signed</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Signed</p>
                   </div>
                   <div className="text-center">
                     <p className={`text-2xl font-bold ${job.sealedAt ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.sealedAt ? '\u2713' : '\u2014'}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Sealed</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Sealed</p>
                   </div>
                 </div>
               </div>

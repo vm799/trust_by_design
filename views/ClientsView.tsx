@@ -33,7 +33,7 @@ const ClientsSkeleton = React.memo(() => (
       <div className="h-11 w-36 bg-slate-800 rounded-xl animate-pulse" />
     </div>
     {/* Search skeleton */}
-    <div className="h-11 w-full bg-slate-800 border-2 border-slate-700 rounded-xl animate-pulse" />
+    <div className="h-11 w-full bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
     {/* Card grid skeleton */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -58,7 +58,7 @@ const ClientsSkeleton = React.memo(() => (
             <div className="h-3 w-3/4 bg-slate-800 rounded" />
           </div>
           {/* Location placeholder */}
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/15">
+          <div className="bg-white/10 rounded-2xl p-3 border border-white/15">
             <div className="flex items-start gap-2">
               <div className="size-3 bg-slate-800 rounded-full shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
@@ -122,7 +122,7 @@ const ClientCard = React.memo(({
       </div>
 
       {/* Location and Details */}
-      <div className="bg-white/5 rounded-2xl p-3 space-y-1 border border-white/15">
+      <div className="bg-white/10 rounded-2xl p-3 space-y-1 border border-white/15">
         <div className="flex items-start gap-2">
           <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
           <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
@@ -268,7 +268,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             aria-label="Search clients"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-700 focus:border-primary/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-500"
+            className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
@@ -283,9 +283,9 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
-            <input required placeholder="Client Name" aria-label="Client Name" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
-            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-slate-800 border-slate-700 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
+            <input required placeholder="Client Name" aria-label="Client Name" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
             <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
           </form>
         )}
@@ -318,7 +318,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             onClick={() => setConfirmDeleteId(null)}
           >
             <div
-              className="bg-slate-900 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
+              className="bg-slate-800 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">

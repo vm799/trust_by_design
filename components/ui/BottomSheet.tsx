@@ -124,7 +124,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
                 {subtitle && (
-                  <p className="text-sm text-slate-500">{subtitle}</p>
+                  <p className="text-sm text-slate-400">{subtitle}</p>
                 )}
               </div>
               <button

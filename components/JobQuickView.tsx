@@ -177,19 +177,19 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${hasPhotos ? 'text-success' : 'text-slate-500'}`}>
+            <div className={`text-2xl font-black ${hasPhotos ? 'text-success' : 'text-slate-400'}`}>
               {job.photos.length}
             </div>
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Photos</div>
           </div>
           <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${hasSignature ? 'text-success' : 'text-slate-500'}`}>
+            <div className={`text-2xl font-black ${hasSignature ? 'text-success' : 'text-slate-400'}`}>
               {hasSignature ? '✓' : '—'}
             </div>
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Signature</div>
           </div>
           <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${isSealed ? 'text-success' : 'text-slate-500'}`}>
+            <div className={`text-2xl font-black ${isSealed ? 'text-success' : 'text-slate-400'}`}>
               {isSealed ? '✓' : '—'}
             </div>
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Sealed</div>
@@ -201,7 +201,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician Link</span>
             {getTimeSinceSent() && (
-              <span className="text-[10px] text-slate-500">Sent {getTimeSinceSent()}</span>
+              <span className="text-[10px] text-slate-400">Sent {getTimeSinceSent()}</span>
             )}
           </div>
 
@@ -272,7 +272,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
                     <img src={photo.url} className="w-full h-full object-cover" alt="Evidence" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className="material-symbols-outlined text-slate-500 text-lg">image</span>
+                      <span className="material-symbols-outlined text-slate-400 text-lg">image</span>
                     </div>
                   )}
                 </div>

@@ -29,8 +29,8 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       className={`
         group relative p-8 rounded-3xl border-2 transition-all text-left
         ${disabled
-          ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed'
-          : 'bg-slate-900 border-slate-700 hover:border-primary hover:bg-slate-800 cursor-pointer active:scale-95'
+          ? 'bg-slate-800 border-slate-600 opacity-50 cursor-not-allowed'
+          : 'bg-slate-900 border-slate-600 hover:border-primary hover:bg-slate-800 cursor-pointer active:scale-95'
         }
       `}
     >

@@ -477,7 +477,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/admin')}
-            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 press-spring lg:hidden"
+            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring lg:hidden"
             aria-label="Back to dashboard"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -503,7 +503,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                 ref={titleInputRef}
                 required
                 type="text"
-                className={`w-full bg-slate-800 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none border-2 transition-colors ${fieldErrors.title ? 'border-danger' : 'border-slate-700'}`}
+                className={`w-full bg-slate-800 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none border-2 transition-colors ${fieldErrors.title ? 'border-danger' : 'border-slate-600'}`}
                 placeholder="e.g. Asset Inspection - Unit 4B"
                 value={formData.title}
                 onChange={e => {
@@ -521,7 +521,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   id="create-job-client"
                   ref={clientSelectRef}
                   required
-                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.clientId ? 'border-danger' : 'border-slate-700'}`}
+                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.clientId ? 'border-danger' : 'border-slate-600'}`}
                   value={formData.clientId}
                   onChange={handleClientChange}
                 >
@@ -537,7 +537,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   id="create-job-technician"
                   ref={techSelectRef}
                   required
-                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.techId ? 'border-danger' : 'border-slate-700'}`}
+                  className={`bg-slate-800 rounded-xl py-3.5 px-5 text-white outline-none border-2 transition-colors ${fieldErrors.techId ? 'border-danger' : 'border-slate-600'}`}
                   value={formData.techId}
                   onChange={handleTechChange}
                 >
@@ -555,7 +555,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   id="create-job-address"
                   ref={addressInputRef}
                   type="text"
-                  className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                  className="flex-1 bg-slate-800 border-2 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                   placeholder="Defaults to Client Registry address"
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
@@ -577,7 +577,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
             </div>
 
             {/* Urgent Job Toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700">
+            <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-600">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-warning">priority_high</span>
                 <div>
@@ -606,7 +606,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
               role="dialog"
               aria-modal="true"
               aria-labelledby="add-client-modal-title"
-              className="bg-slate-900 border border-white/10 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6"
+              className="bg-slate-800 border border-white/15 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6"
             >
               <div className="text-center space-y-4">
                 <div className="bg-primary/20 size-16 rounded-[2rem] flex items-center justify-center mx-auto">
@@ -630,7 +630,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-client-name"
                     type="text"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="Client name"
                     value={newClientForm.name}
                     onChange={e => setNewClientForm({ ...newClientForm, name: e.target.value })}
@@ -641,7 +641,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-client-email"
                     type="email"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="client@example.com"
                     value={newClientForm.email}
                     onChange={e => setNewClientForm({ ...newClientForm, email: e.target.value })}
@@ -652,7 +652,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-client-phone"
                     type="tel"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="(optional)"
                     value={newClientForm.phone}
                     onChange={e => setNewClientForm({ ...newClientForm, phone: e.target.value })}
@@ -663,7 +663,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-client-address"
                     type="text"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="123 Main St, City"
                     value={newClientForm.address}
                     onChange={e => setNewClientForm({ ...newClientForm, address: e.target.value })}
@@ -700,7 +700,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
               role="dialog"
               aria-modal="true"
               aria-labelledby="add-technician-modal-title"
-              className="bg-slate-900 border border-white/10 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6"
+              className="bg-slate-800 border border-white/15 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6"
             >
               <div className="text-center space-y-4">
                 <div className="bg-primary/20 size-16 rounded-[2rem] flex items-center justify-center mx-auto">
@@ -724,7 +724,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-tech-name"
                     type="text"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="Technician name"
                     value={newTechnicianForm.name}
                     onChange={e => setNewTechnicianForm({ ...newTechnicianForm, name: e.target.value })}
@@ -735,7 +735,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-tech-email"
                     type="email"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="tech@example.com"
                     value={newTechnicianForm.email}
                     onChange={e => setNewTechnicianForm({ ...newTechnicianForm, email: e.target.value })}
@@ -746,7 +746,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   <input
                     id="new-tech-phone"
                     type="tel"
-                    className="w-full bg-slate-800 border-slate-700 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
+                    className="w-full bg-slate-800 border-slate-600 rounded-xl py-3.5 px-5 text-white focus:ring-primary outline-none"
                     placeholder="(optional)"
                     value={newTechnicianForm.phone}
                     onChange={e => setNewTechnicianForm({ ...newTechnicianForm, phone: e.target.value })}
@@ -782,7 +782,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
               role="dialog"
               aria-modal="true"
               aria-labelledby="confirm-modal-title"
-              className="bg-slate-900 border border-white/10 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-8"
+              className="bg-slate-800 border border-white/15 p-6 md:p-8 lg:p-12 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-8"
             >
               <div className="text-center space-y-4">
                 <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
@@ -880,7 +880,7 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
               role="dialog"
               aria-modal="true"
               aria-labelledby="success-modal-title"
-              className="bg-slate-900 border border-white/10 p-4 sm:p-6 md:p-8 lg:p-12 rounded-2xl sm:rounded-[3.5rem] max-w-2xl w-full shadow-2xl space-y-6 sm:space-y-8 my-4"
+              className="bg-slate-800 border border-white/15 p-4 sm:p-6 md:p-8 lg:p-12 rounded-2xl sm:rounded-[3.5rem] max-w-2xl w-full shadow-2xl space-y-6 sm:space-y-8 my-4"
             >
               <div className="text-center space-y-4">
                 <div className="bg-success/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
@@ -942,13 +942,13 @@ const CreateJob: React.FC<CreateJobProps> = ({ user }) => {
                   </button>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={copyMagicLink} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs" aria-label="Copy to clipboard">
+                  <button onClick={copyMagicLink} className="py-4 bg-white/10 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs" aria-label="Copy to clipboard">
                     <span className="material-symbols-outlined text-sm" aria-hidden="true">content_copy</span>
                     Copy
                   </button>
                   <button onClick={() => {
                     navigateToNextStep('CREATE_JOB', user?.persona, navigate);
-                  }} className="py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs">
+                  }} className="py-4 bg-white/10 hover:bg-white/10 text-white font-black uppercase tracking-widest transition-all rounded-2xl border border-white/10 flex items-center justify-center gap-2 press-spring text-xs">
                     <span className="material-symbols-outlined text-sm" aria-hidden="true">dashboard</span>
                     Dashboard
                   </button>

@@ -125,7 +125,7 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
     icon: 'edit_note',
     color: 'text-slate-400',
     bgColor: 'bg-slate-800',
-    borderColor: 'border-slate-700',
+    borderColor: 'border-slate-600',
     pulseColor: 'none',
     glowClass: '',
   };

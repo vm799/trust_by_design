@@ -116,8 +116,6 @@ export function logValidationResults(result: ValidationResult): void {
     result.warnings.forEach(warning => console.warn(`   • ${warning}`));
   }
 
-  if (result.isValid && result.warnings.length === 0) {
-  }
 }
 
 /**

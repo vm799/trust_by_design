@@ -198,7 +198,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
         {threads.length === 0 ? (
           <div className="p-8 text-center">
             <span className="material-symbols-outlined text-4xl text-slate-600 mb-2">chat_bubble_outline</span>
-            <p className="text-xs text-slate-500">No conversations yet</p>
+            <p className="text-xs text-slate-400">No conversations yet</p>
           </div>
         ) : (
           threads.map(thread => (
@@ -224,13 +224,13 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
                       {thread.type === 'job' ? thread.jobTitle : thread.participants.find(p => p.id !== userId)?.name}
                     </p>
                     {thread.lastMessage && (
-                      <span className="text-xs text-slate-500 flex-shrink-0">
+                      <span className="text-xs text-slate-400 flex-shrink-0">
                         {formatMessageTime(thread.lastMessage.createdAt)}
                       </span>
                     )}
                   </div>
                   {thread.type === 'job' && thread.clientName && (
-                    <p className="text-xs text-slate-500 truncate">{thread.clientName}</p>
+                    <p className="text-xs text-slate-400 truncate">{thread.clientName}</p>
                   )}
                   {thread.lastMessage && (
                     <p className="text-xs text-slate-400 truncate mt-1">
@@ -275,7 +275,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
               {selectedThread.type === 'job' ? selectedThread.jobTitle : otherParticipant?.name}
             </p>
             {selectedThread.type === 'job' && (
-              <p className="text-xs text-slate-500">Job conversation</p>
+              <p className="text-xs text-slate-400">Job conversation</p>
             )}
           </div>
           <button
@@ -299,7 +299,7 @@ const MessagingPanel: React.FC<MessagingPanelProps> = ({
           {messages.length === 0 ? (
             <div className="text-center py-8">
               <span className="material-symbols-outlined text-4xl text-slate-600 mb-2">forum</span>
-              <p className="text-xs text-slate-500">Start the conversation</p>
+              <p className="text-xs text-slate-400">Start the conversation</p>
             </div>
           ) : (
             messages.map(msg => (

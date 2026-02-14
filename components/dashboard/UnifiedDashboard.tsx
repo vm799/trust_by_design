@@ -53,7 +53,7 @@ const SectionHeader: React.FC<{
       </div>
       <div>
         <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wide">{title}</h3>
-        {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
       </div>
     </div>
     {seeAllRoute && (
@@ -474,14 +474,14 @@ const OfflineBanner: React.FC<{
     `}
   >
     <div className="flex items-center gap-3">
-      <span className={`material-symbols-outlined text-xl ${isStale ? 'text-amber-500' : 'text-slate-500'}`}>
+      <span className={`material-symbols-outlined text-xl ${isStale ? 'text-amber-500' : 'text-slate-400'}`}>
         {isOffline ? 'cloud_off' : 'sync_problem'}
       </span>
       <div>
         <p className={`text-sm font-bold ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
           {isOffline ? 'Offline Mode' : 'Data may be outdated'}
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-400">
           {isStale
             ? 'Last synced more than 5 minutes ago'
             : 'Working with cached data'
@@ -541,7 +541,7 @@ const SyncSummaryBanner: React.FC<{
               : `${pending} job${pending !== 1 ? 's' : ''} pending sync`
             }
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             {hasFailed
               ? 'Data may be lost - retry recommended'
               : 'Changes will sync when online'

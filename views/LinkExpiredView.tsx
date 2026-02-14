@@ -97,7 +97,7 @@ const LinkExpiredView: React.FC<LinkExpiredViewProps> = ({
               Check your inbox for a new sign-in link.
             </p>
             {jobId && (
-              <p className="text-slate-500 text-xs mt-2">
+              <p className="text-slate-400 text-xs mt-2">
                 You will be taken to Job #{jobId} after signing in.
               </p>
             )}
@@ -146,7 +146,7 @@ const LinkExpiredView: React.FC<LinkExpiredViewProps> = ({
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               placeholder="Enter your email"
-              className="w-full min-h-[56px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full min-h-[56px] px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               aria-label="Email address"
             />
             {error && (
@@ -193,7 +193,7 @@ const LinkExpiredView: React.FC<LinkExpiredViewProps> = ({
         </div>
 
         {/* Help text */}
-        <p className="text-slate-500 text-xs">
+        <p className="text-slate-400 text-xs">
           Links expire after 1 hour for security. Each link can only be used once.
         </p>
       </motion.div>

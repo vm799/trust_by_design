@@ -83,7 +83,7 @@ const TrackLookup: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Paste your magic link or token here"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl py-4 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl py-4 px-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
               />
             </label>
 
@@ -107,7 +107,7 @@ const TrackLookup: React.FC = () => {
         </form>
 
         {/* Help Text */}
-        <div className="bg-white/5 border border-white/15 rounded-2xl p-6 space-y-4">
+        <div className="bg-white/10 border border-white/15 rounded-2xl p-6 space-y-4">
           <div className="flex items-start gap-3">
             <span className="material-symbols-outlined text-primary flex-shrink-0">help_center</span>
             <div className="space-y-2 text-sm text-slate-300">

@@ -259,7 +259,7 @@ const TechnicianForm: React.FC = () => {
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                 )}
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-400">
                   Used to send job assignments and magic links
                 </p>
               </div>

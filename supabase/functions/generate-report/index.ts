@@ -67,7 +67,7 @@ serve(async (req) => {
     let jobSource = '';
 
     // Try bunker_jobs first (has inline photo data)
-    const { data: bunkerJob, error: bunkerError } = await supabase
+    const { data: bunkerJob } = await supabase
       .from('bunker_jobs')
       .select('*')
       .eq('id', jobId)
@@ -78,7 +78,7 @@ serve(async (req) => {
       jobSource = 'bunker_jobs';
     } else {
       // Try main jobs table with photos
-      const { data: mainJob, error: mainError } = await supabase
+      const { data: mainJob } = await supabase
         .from('jobs')
         .select(`
           *,
@@ -911,7 +911,7 @@ serve(async (req) => {
 
     const fileName = `reports/${job.id}_${Date.now()}.pdf`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('job-reports')
       .upload(fileName, pdfBytes, {
         contentType: 'application/pdf',

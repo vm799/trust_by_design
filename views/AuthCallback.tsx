@@ -260,7 +260,7 @@ const AuthCallback: React.FC = () => {
             </h1>
             <p className="text-slate-400 text-sm">{error}</p>
             {hasJobIntent && (
-              <p className="text-slate-500 text-xs mt-2">
+              <p className="text-slate-400 text-xs mt-2">
                 You were trying to access Job #{storedIntent.jobId}
               </p>
             )}

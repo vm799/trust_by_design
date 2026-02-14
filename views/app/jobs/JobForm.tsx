@@ -619,7 +619,7 @@ const JobForm: React.FC = () => {
                   Total Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">£</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">£</span>
                   <input
                     id="total"
                     type="text"

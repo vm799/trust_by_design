@@ -52,7 +52,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       shadow-lg shadow-primary/20
     `,
     secondary: `
-      bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10
+      bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10
       text-slate-900 dark:text-white
       border border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20
     `,
@@ -61,7 +61,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       border border-red-500/20 hover:border-red-500/30
     `,
     ghost: `
-      bg-transparent hover:bg-slate-100 dark:hover:bg-white/5
+      bg-transparent hover:bg-slate-100 dark:hover:bg-white/10
       text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white
     `,
   };

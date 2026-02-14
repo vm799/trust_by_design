@@ -183,7 +183,7 @@ const QueueList: React.FC<QueueListProps> = ({
  * QueueHeader - Section header for queue list
  */
 const QueueHeader: React.FC<{ count: number }> = React.memo(({ count }) => (
-  <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1 mb-2">
+  <h2 className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1 mb-2">
     <span className="material-symbols-outlined text-sm">queue</span>
     Next Up
     <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px]">
@@ -314,7 +314,7 @@ const COLOUR_CONFIG: Record<StatusColor, {
     container: 'bg-slate-50 dark:bg-slate-800',
     iconBg: 'bg-slate-500/20',
     icon: 'text-slate-600 dark:text-slate-400',
-    border: 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600',
+    border: 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600',
     badge: 'bg-slate-500 text-white',
   },
 };

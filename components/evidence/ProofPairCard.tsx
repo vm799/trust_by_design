@@ -154,7 +154,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
       `}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-white/10 border-b border-white/10">
         <div className="flex items-center gap-3 min-w-0">
           <div className={`size-8 rounded-lg ${config.bg} flex items-center justify-center shrink-0`}>
             <span className={`material-symbols-outlined text-lg ${config.color}`}>
@@ -214,7 +214,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 <span className="material-symbols-outlined text-2xl text-amber-400">photo_camera</span>
               </motion.div>
               <p className="text-xs text-amber-400 font-bold">MISSING</p>
-              <p className="text-[10px] text-slate-500">Before photo</p>
+              <p className="text-[10px] text-slate-400">Before photo</p>
             </div>
           )}
         </div>
@@ -265,7 +265,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 <span className="material-symbols-outlined text-2xl text-red-400">warning</span>
               </motion.div>
               <p className="text-xs text-red-400 font-bold">MISSING</p>
-              <p className="text-[10px] text-slate-500">After photo</p>
+              <p className="text-[10px] text-slate-400">After photo</p>
             </div>
           )}
         </div>
@@ -313,7 +313,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                     <span className="material-symbols-outlined text-xs text-emerald-400">gps_fixed</span>
                     <span className="text-slate-300">GPS: {formatCoords(beforePhoto.location)}</span>
                     {beforePhoto.location.accuracy && (
-                      <span className="text-slate-500">({Math.round(beforePhoto.location.accuracy)}m)</span>
+                      <span className="text-slate-400">({Math.round(beforePhoto.location.accuracy)}m)</span>
                     )}
                   </div>
                 )}
@@ -335,7 +335,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 {/* Device */}
                 {deviceId && (
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-xs text-slate-500">smartphone</span>
+                    <span className="material-symbols-outlined text-xs text-slate-400">smartphone</span>
                     <span className="text-slate-400">Device: {deviceId}</span>
                   </div>
                 )}
@@ -355,7 +355,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
               className={`
                 flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2
                 ${missingBefore || missingAfter
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
                   : 'bg-[#00FFCC]/20 text-[#00FFCC] hover:bg-[#00FFCC]/30 transition-colors'
                 }
               `}

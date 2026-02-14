@@ -174,7 +174,7 @@ export const ModalBase: React.FC<ModalBaseProps> = React.memo(({
               aria-describedby={description ? 'modal-description' : undefined}
             >
               {/* Header */}
-              <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-600 flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h2
                     id="modal-title"
@@ -197,7 +197,7 @@ export const ModalBase: React.FC<ModalBaseProps> = React.memo(({
                   onClick={handleClose}
                   className="
                     p-2 rounded-lg
-                    text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200
+                    text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200
                     hover:bg-slate-100 dark:hover:bg-slate-700
                     transition-colors duration-200
                     focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800

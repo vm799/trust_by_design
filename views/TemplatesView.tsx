@@ -25,7 +25,7 @@ const TemplatesView: React.FC<TemplatesViewProps> = ({ user }) => {
           </div>
           <button
             onClick={() => navigate('/admin/create')}
-            className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+            className="px-6 py-3 bg-white/10 border border-white/10 hover:bg-white/10 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
           >
             New Template
           </button>

@@ -203,7 +203,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
               <p className={`text-xs font-medium ${
                 card.trendColor === 'green' ? `${colors.accent}` :
                 card.trendColor === 'amber' ? 'text-amber-600 dark:text-amber-400' :
-                'text-slate-500 dark:text-slate-400'
+                'text-slate-400 dark:text-slate-400'
               }`}>
                 {card.trendColor === 'green' ? '↑ ' : card.trendColor === 'amber' ? '↓ ' : '→ '}
                 {card.trend}

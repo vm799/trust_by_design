@@ -149,7 +149,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                 className={`px-4 py-2 rounded-lg font-medium transition-all min-h-[44px] ${
                   exportFormat === format
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600'
                 }`}
               >
                 {format.toUpperCase()}
@@ -169,7 +169,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
               className={`w-full px-4 py-3 rounded-lg font-medium transition-all min-h-[44px] flex items-center gap-2 ${
                 filterType === 'all'
                   ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >
               <span className="material-symbols-outlined">apps</span>
@@ -181,7 +181,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
               className={`w-full px-4 py-3 rounded-lg font-medium transition-all min-h-[44px] flex items-center gap-2 ${
                 filterType === 'sealed'
                   ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >
               <span className="material-symbols-outlined">verified</span>
@@ -194,7 +194,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                 className={`w-full px-4 py-3 rounded-lg font-medium transition-all min-h-[44px] flex items-center gap-2 ${
                   filterType === 'status'
                     ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
                 }`}
               >
                 <span className="material-symbols-outlined">label</span>
@@ -206,7 +206,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                   <select
                     value={selectedStatus}
                     onChange={e => setSelectedStatus(e.target.value as JobStatus)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white"
                   >
                     {JOB_STATUSES.map(status => (
                       <option key={status} value={status}>
@@ -224,7 +224,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                 className={`w-full px-4 py-3 rounded-lg font-medium transition-all min-h-[44px] flex items-center gap-2 ${
                   filterType === 'dateRange'
                     ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
                 }`}
               >
                 <span className="material-symbols-outlined">calendar_month</span>
@@ -242,7 +242,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                       type="date"
                       value={startDate}
                       onChange={e => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
@@ -254,7 +254,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
                       type="date"
                       value={endDate}
                       onChange={e => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({ isOpen, onClose, jo
         </div>
 
         {/* Export Preview */}
-        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               Export Preview

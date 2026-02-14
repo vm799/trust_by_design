@@ -462,7 +462,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-[10px] font-black text-slate-900 uppercase">Dispatched</p>
-                           <p className="text-[9px] text-slate-500">{timelineEvents.created ? `${timelineEvents.created.date} • ${timelineEvents.created.time}` : job.date}</p>
+                           <p className="text-[9px] text-slate-400">{timelineEvents.created ? `${timelineEvents.created.date} • ${timelineEvents.created.time}` : job.date}</p>
                         </div>
                      </div>
                      <div className="flex items-start gap-3">
@@ -471,7 +471,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-[10px] font-black text-slate-900 uppercase">Capture</p>
-                           <p className="text-[9px] text-slate-500">{timelineEvents.firstCapture ? `${timelineEvents.firstCapture.date} • ${job.photos.length} items` : 'Pending'}</p>
+                           <p className="text-[9px] text-slate-400">{timelineEvents.firstCapture ? `${timelineEvents.firstCapture.date} • ${job.photos.length} items` : 'Pending'}</p>
                         </div>
                      </div>
                      <div className="flex items-start gap-3">
@@ -480,7 +480,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-[10px] font-black text-slate-900 uppercase">Sealed</p>
-                           <p className="text-[9px] text-slate-500">{timelineEvents.sealed ? `${timelineEvents.sealed.date} • ${timelineEvents.sealed.time}` : 'Pending'}</p>
+                           <p className="text-[9px] text-slate-400">{timelineEvents.sealed ? `${timelineEvents.sealed.date} • ${timelineEvents.sealed.time}` : 'Pending'}</p>
                         </div>
                      </div>
                      <div className="flex items-start gap-3">
@@ -489,7 +489,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-[10px] font-black text-slate-900 uppercase">Verified</p>
-                           <p className="text-[9px] text-slate-500">{timelineEvents.verified ? `${timelineEvents.verified.date} • ${timelineEvents.verified.time}` : 'Pending'}</p>
+                           <p className="text-[9px] text-slate-400">{timelineEvents.verified ? `${timelineEvents.verified.date} • ${timelineEvents.verified.time}` : 'Pending'}</p>
                         </div>
                      </div>
                   </div>
@@ -574,9 +574,9 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                            <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                  <span className="material-symbols-outlined text-warning text-sm font-black">location_off</span>
-                                 <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-tight">No geo-metadata captured</p>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">No geo-metadata captured</p>
                               </div>
-                              <p className="text-[8px] text-slate-500 italic pl-6">
+                              <p className="text-[8px] text-slate-400 italic pl-6">
                                  (Location data not available for this job)
                               </p>
                            </div>
@@ -606,9 +606,9 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                            <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                  <span className="material-symbols-outlined text-warning text-sm font-black">lock_open</span>
-                                 <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-tight">Not yet verified</p>
+                                 <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-tight">Not yet verified</p>
                               </div>
-                              <p className="text-[8px] text-slate-500 italic pl-6">
+                              <p className="text-[8px] text-slate-400 italic pl-6">
                                  (No technician link sent or accessed)
                               </p>
                            </div>
@@ -667,8 +667,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                           {/* Photo SHA-256 fingerprint for evidence integrity */}
                                           {(p as any).photo_hash && (
                                              <div className="flex items-center gap-1 mt-1 pt-1 border-t border-slate-200 px-2">
-                                                <span className="material-symbols-outlined text-[9px] text-slate-500">fingerprint</span>
-                                                <p className="text-[7px] font-mono text-slate-500 uppercase tracking-tight" title={(p as any).photo_hash}>
+                                                <span className="material-symbols-outlined text-[9px] text-slate-400">fingerprint</span>
+                                                <p className="text-[7px] font-mono text-slate-400 uppercase tracking-tight" title={(p as any).photo_hash}>
                                                    SHA256: {(p as any).photo_hash.substring(0, 12)}...
                                                 </p>
                                              </div>
@@ -686,7 +686,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                {/* Operational Narrative - Only show if notes exist OR job is sealed */}
                {(job.notes || isSealed) && (
                   <div className="space-y-4 pt-4 relative z-10">
-                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operational Narrative</h3>
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Narrative</h3>
                      <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 text-slate-800 font-medium leading-relaxed text-sm uppercase tracking-tight shadow-inner">
                         {job.notes || (isSealed ? "Work completed as per standard protocol." : "")}
                      </div>
@@ -697,7 +697,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                {(hasPhotos || isSealed) && (
                   <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-end gap-12 relative z-10">
                      <div className="flex-1 w-full space-y-4">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Attestation & Binding</h3>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attestation & Binding</h3>
                         {signatureDataUrl ? (
                            <div className="h-44 w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-center p-8 shadow-inner relative group">
                               <img src={signatureDataUrl} alt="Signature" className="max-h-full max-w-full opacity-90 contrast-125" />
@@ -767,7 +767,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   <div className="pt-12 border-t border-slate-100 relative z-10">
                      <div className="bg-slate-100 rounded-[2.5rem] p-12 text-center">
                         <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">hourglass_empty</span>
-                        <h3 className="text-xl font-black text-slate-500 uppercase tracking-tight mb-2">No Evidence Captured Yet</h3>
+                        <h3 className="text-xl font-black text-slate-400 uppercase tracking-tight mb-2">No Evidence Captured Yet</h3>
                         <p className="text-sm text-slate-400 max-w-md mx-auto">
                            {!techLinkSent
                               ? "Generate and send a technician link to begin evidence collection."
@@ -877,7 +877,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     return (
                                        <React.Fragment key={stage}>
                                           <div className={`size-6 rounded-lg flex items-center justify-center ${
-                                             isComplete ? 'bg-success/20 text-success' : 'bg-slate-700 text-slate-500'
+                                             isComplete ? 'bg-success/20 text-success' : 'bg-slate-700 text-slate-400'
                                           }`}>
                                              <span className="material-symbols-outlined text-[10px]">
                                                 {stage === 'sent' ? 'send' : stage === 'opened' ? 'visibility' : stage === 'job_started' ? 'photo_camera' : 'verified'}
@@ -913,7 +913,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               </button>
                            )}
                            {isSealed && (
-                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
+                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/10 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
                                  <span className="material-symbols-outlined text-sm font-black">receipt_long</span>
                                  Client Receipt
                                  {isSelfEmployedJob && (
@@ -928,7 +928,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <span className="material-symbols-outlined text-sm font-black">print</span>
                                     Print / Export PDF
                                  </button>
-                                 <button onClick={() => setShowShareModal(true)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
+                                 <button onClick={() => setShowShareModal(true)} className="w-full bg-white/10 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
                                     <span className="material-symbols-outlined text-sm font-black">share</span>
                                     Share Evidence Link
                                  </button>
@@ -987,7 +987,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     </div>
                                  ) : (
                                     <div className="bg-slate-800 rounded-2xl p-4 border border-white/15 text-center">
-                                       <span className="material-symbols-outlined text-slate-500 text-2xl mb-2">link_off</span>
+                                       <span className="material-symbols-outlined text-slate-400 text-2xl mb-2">link_off</span>
                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">No active link</p>
                                     </div>
                                  )}
@@ -1014,7 +1014,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                                             ? isCurrent
                                                                ? 'bg-primary text-white'
                                                                : 'bg-success/20 text-success'
-                                                            : 'bg-slate-700 text-slate-500'
+                                                            : 'bg-slate-700 text-slate-400'
                                                       }`}>
                                                          <span className="material-symbols-outlined text-xs">{item.icon}</span>
                                                       </div>
@@ -1088,7 +1088,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <button
                                        onClick={handleRegenerateLink}
                                        disabled={linkActionLoading}
-                                       className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                       className="w-full py-3 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                        <span className="material-symbols-outlined text-xs">refresh</span>
                                        {magicLinkInfo ? 'Regenerate Link' : 'Generate New Link'}
@@ -1101,21 +1101,21 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.SHORT)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +24h
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.STANDARD)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +7 days
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.EXTENDED)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +30 days
                                              </button>
@@ -1173,7 +1173,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          </div>
          {showShareModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowShareModal(false)}>
-               <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-slate-800 border border-white/15 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-primary/20 size-16 rounded-[2.5rem] flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-primary text-4xl font-black">share</span>
@@ -1197,7 +1197,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <span className="material-symbols-outlined text-sm font-black">content_copy</span>
                         Copy Link
                      </button>
-                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
+                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
                         Close
                      </button>
                   </div>
@@ -1208,7 +1208,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          {/* Reassign Technician Modal */}
          {showReassignModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowReassignModal(false)}>
-               <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-slate-800 border border-white/15 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-warning/20 size-14 rounded-2xl flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-warning text-3xl font-black">swap_horiz</span>
@@ -1248,13 +1248,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                  <p className="text-sm font-black text-white uppercase tracking-tight">{tech.name}</p>
                                  <p className="text-[10px] text-slate-400 uppercase tracking-widest">{tech.status}</p>
                               </div>
-                              <span className="material-symbols-outlined text-slate-500 group-hover:text-primary text-lg transition-colors">
+                              <span className="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg transition-colors">
                                  arrow_forward
                               </span>
                            </button>
                         ))}
                         {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').length === 0 && (
-                           <div className="text-center py-8 text-slate-500">
+                           <div className="text-center py-8 text-slate-400">
                               <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
                               <p className="text-xs uppercase tracking-widest">No available technicians</p>
                            </div>
@@ -1264,7 +1264,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                   <button
                      onClick={() => setShowReassignModal(false)}
-                     className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
+                     className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
                   >
                      Cancel
                   </button>

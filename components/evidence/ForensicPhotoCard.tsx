@@ -232,7 +232,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
               <span
                 key={check.key}
                 className={`flex items-center gap-0.5 text-[9px] font-mono ${
-                  check.verified ? 'text-sealed-glow' : 'text-slate-500'
+                  check.verified ? 'text-sealed-glow' : 'text-slate-400'
                 }`}
               >
                 <span className="material-symbols-outlined text-[10px]">
@@ -257,24 +257,24 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
             <div className="space-y-2 font-mono text-xs">
               {/* GPS */}
               <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-sm ${location ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`material-symbols-outlined text-sm ${location ? 'text-emerald-400' : 'text-slate-400'}`}>
                   gps_fixed
                 </span>
                 {location ? (
                   <span className="text-slate-300">
                     {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     {location.accuracy && (
-                      <span className="text-slate-500 ml-2">({Math.round(location.accuracy)}m)</span>
+                      <span className="text-slate-400 ml-2">({Math.round(location.accuracy)}m)</span>
                     )}
                   </span>
                 ) : (
-                  <span className="text-slate-500">No GPS data</span>
+                  <span className="text-slate-400">No GPS data</span>
                 )}
               </div>
 
               {/* W3W */}
               <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-sm ${displayW3W && w3wVerified ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`material-symbols-outlined text-sm ${displayW3W && w3wVerified ? 'text-emerald-400' : 'text-slate-400'}`}>
                   grid_3x3
                 </span>
                 {displayW3W ? (
@@ -285,14 +285,14 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
                     )}
                   </span>
                 ) : (
-                  <span className="text-slate-500">No W3W address</span>
+                  <span className="text-slate-400">No W3W address</span>
                 )}
               </div>
 
               {/* Hash */}
               {hash && (
                 <div className="flex items-center gap-2">
-                  <span className={`material-symbols-outlined text-sm ${hashVerified ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  <span className={`material-symbols-outlined text-sm ${hashVerified ? 'text-emerald-400' : 'text-slate-400'}`}>
                     fingerprint
                   </span>
                   <span className="text-slate-400">{truncateHash(hash)}</span>
@@ -305,7 +305,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
               {/* Chain of custody */}
               {custody.length > 0 && (
                 <div className="pt-2 mt-2 border-t border-white/10">
-                  <p className="text-[10px] text-slate-500 uppercase mb-1">Chain of Custody</p>
+                  <p className="text-[10px] text-slate-400 uppercase mb-1">Chain of Custody</p>
                   {custody.map((event) => (
                     <div key={`custody-${event.action}-${event.timestamp}`} className="flex items-center gap-2 text-[10px]">
                       <span className={`size-1.5 rounded-full ${

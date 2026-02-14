@@ -270,7 +270,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
             </span>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {unassignedJobs.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">
+                <p className="text-slate-400 dark:text-slate-400 text-sm text-center py-4">
                   No unassigned jobs available
                 </p>
               ) : (
@@ -286,7 +286,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
                       transition-all duration-200
                       ${state.selectedJobId === job.id
                         ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
                       }
                       cursor-pointer
                     `}
@@ -328,7 +328,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
                 min-h-[44px]
                 ${state.selectedJobId
                   ? 'bg-primary text-white hover:bg-primary-dark'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-400 cursor-not-allowed'
                 }
               `}
             >
@@ -346,7 +346,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
               </span>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {availableTechnicians.length === 0 ? (
-                  <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">
+                  <p className="text-slate-400 dark:text-slate-400 text-sm text-center py-4">
                     No technicians available
                   </p>
                 ) : (
@@ -363,7 +363,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
                         transition-all duration-200
                         ${state.selectedTechId === tech.id
                           ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-600'
                         }
                         ${!canAssign ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                       `}
@@ -431,7 +431,7 @@ const QuickAssignModal: React.FC<QuickAssignModalProps> = React.memo(({
                   min-h-[44px]
                   ${state.selectedTechId && !state.isAssigning
                     ? 'bg-primary text-white hover:bg-primary-dark'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-400 cursor-not-allowed'
                   }
                 `}
               >

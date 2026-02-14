@@ -203,7 +203,7 @@ const TechJobDetail: React.FC = () => {
             <h1 className="font-medium text-white truncate">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </h1>
-            <p className="text-xs text-slate-500">{client?.name}</p>
+            <p className="text-xs text-slate-400">{client?.name}</p>
           </div>
           <OfflineIndicator />
         </div>
@@ -315,10 +315,10 @@ const TechJobDetail: React.FC = () => {
               <div className="space-y-4">
                 {/* Date & Time */}
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-500">schedule</span>
+                  <span className="material-symbols-outlined text-slate-400">schedule</span>
                   <div>
                     <p className="text-white">{formatDateUTC(job.date)}</p>
-                    <p className="text-sm text-slate-500">{formatTimeUTC(job.date)}</p>
+                    <p className="text-sm text-slate-400">{formatTimeUTC(job.date)}</p>
                   </div>
                 </div>
 
@@ -327,21 +327,21 @@ const TechJobDetail: React.FC = () => {
                   <button
                     onClick={openMaps}
                     aria-label="Open address in Google Maps"
-                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-white/5 transition-colors text-left min-h-[44px]"
+                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-white/10 transition-colors text-left min-h-[44px]"
                   >
                     <span className="material-symbols-outlined text-primary">location_on</span>
                     <div className="flex-1">
                       <p className="text-white">{job.address}</p>
                       <p className="text-sm text-primary">Open in Maps</p>
                     </div>
-                    <span className="material-symbols-outlined text-slate-500">open_in_new</span>
+                    <span className="material-symbols-outlined text-slate-400">open_in_new</span>
                   </button>
                 )}
 
                 {/* Description */}
                 {job.description && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-500">description</span>
+                    <span className="material-symbols-outlined text-slate-400">description</span>
                     <p className="text-white">{job.description}</p>
                   </div>
                 )}
@@ -355,7 +355,7 @@ const TechJobDetail: React.FC = () => {
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
                 Evidence
               </h3>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 {photos.length} photo{photos.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -388,7 +388,7 @@ const TechJobDetail: React.FC = () => {
                   <div className="w-1 h-4 rounded-full bg-blue-500" />
                   <h4 className="font-medium text-white">Before</h4>
                 </div>
-                <span className={`text-xs ${beforePhotos.length > 0 ? 'text-blue-400' : 'text-slate-500'}`}>
+                <span className={`text-xs ${beforePhotos.length > 0 ? 'text-blue-400' : 'text-slate-400'}`}>
                   {beforePhotos.length} captured
                 </span>
               </div>
@@ -405,7 +405,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No before photos captured yet</p>
+                <p className="text-sm text-slate-400">No before photos captured yet</p>
               )}
             </Card>
 
@@ -416,7 +416,7 @@ const TechJobDetail: React.FC = () => {
                   <div className="w-1 h-4 rounded-full bg-amber-500" />
                   <h4 className="font-medium text-white">During</h4>
                 </div>
-                <span className={`text-xs ${duringPhotos.length > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                <span className={`text-xs ${duringPhotos.length > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
                   {duringPhotos.length} captured
                 </span>
               </div>
@@ -433,7 +433,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No during photos captured yet</p>
+                <p className="text-sm text-slate-400">No during photos captured yet</p>
               )}
             </Card>
 
@@ -444,7 +444,7 @@ const TechJobDetail: React.FC = () => {
                   <div className="w-1 h-4 rounded-full bg-emerald-500" />
                   <h4 className="font-medium text-white">After</h4>
                 </div>
-                <span className={`text-xs ${afterPhotos.length > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`text-xs ${afterPhotos.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {afterPhotos.length} captured
                 </span>
               </div>
@@ -461,7 +461,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No after photos captured yet</p>
+                <p className="text-sm text-slate-400">No after photos captured yet</p>
               )}
             </Card>
           </motion.section>
@@ -541,7 +541,7 @@ const TechJobDetail: React.FC = () => {
           ) : null}
         </div>
         {isActive && !canComplete && (
-          <p className="text-xs text-slate-500 text-center mt-2">
+          <p className="text-xs text-slate-400 text-center mt-2">
             Capture at least 1 before and 1 after photo to review
           </p>
         )}

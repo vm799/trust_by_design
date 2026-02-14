@@ -368,7 +368,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
                                     <button
                                       key={t.id}
                                       onClick={() => handleReassignJob(job, t.id)}
-                                      className="w-full px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                                      className="w-full px-3 py-2 text-left hover:bg-white/10 transition-colors"
                                     >
                                       <p className="text-sm text-white font-medium">{t.name}</p>
                                       {t.phone && (
@@ -434,7 +434,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
                                 message: `Permanently delete "${job.title}"? This cannot be undone.`,
                               });
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-danger border border-slate-700 rounded-lg text-[10px] font-bold uppercase transition-all"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-danger border border-slate-600 rounded-lg text-[10px] font-bold uppercase transition-all"
                           >
                             <span className="material-symbols-outlined text-xs">delete</span>
                             Delete
@@ -505,7 +505,7 @@ const UnopenedLinksActionCenter: React.FC<UnopenedLinksActionCenterProps> = ({
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation (optional)"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm"
                 />
               </div>
             ) : (

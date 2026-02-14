@@ -84,7 +84,7 @@ const Tooltip: React.FC<TooltipProps> = ({
         // High contrast based on theme
         return isDark
           ? 'bg-white text-slate-900 border-slate-200 shadow-white/20'
-          : 'bg-slate-900 text-white border-slate-700 shadow-slate-900/40';
+          : 'bg-slate-900 text-white border-slate-600 shadow-slate-900/40';
     }
   };
 
