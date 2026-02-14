@@ -651,7 +651,7 @@ const ManagerFocusDashboard: React.FC = () => {
         >
           {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
           <motion.section variants={fadeInUp}>
-            <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase mb-3">Quick Actions</h2>
+            <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase mb-3">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
@@ -702,7 +702,7 @@ const ManagerFocusDashboard: React.FC = () => {
           {/* JOB STATUS PILLS - Color-coded filter system */}
           <motion.section variants={fadeInUp}>
             <div className="border-b border-white/15 pb-4 mb-6">
-              <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Job Status</h2>
+              <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Job Status</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {JOB_PILLS.map(pill => {
@@ -813,7 +813,7 @@ const ManagerFocusDashboard: React.FC = () => {
                   <span className="material-symbols-outlined text-red-400">priority_high</span>
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Needs Attention</h2>
+                  <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Needs Attention</h2>
                   <p className="text-xs text-slate-300">
                     {attentionItems.length} item{attentionItems.length !== 1 ? 's' : ''} requiring action
                   </p>
@@ -867,7 +867,7 @@ const ManagerFocusDashboard: React.FC = () => {
                 <span className="material-symbols-outlined text-primary">group</span>
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Technicians</h2>
+                <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Technicians</h2>
                 <p className="text-xs text-slate-300">
                   {technicians.length} team member{technicians.length !== 1 ? 's' : ''}
                 </p>

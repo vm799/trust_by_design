@@ -684,7 +684,18 @@ const TechEvidenceReview: React.FC = () => {
               >
                 {currentStep === 0 ? 'Continue to Notes' : 'Continue to Signing'}
               </ActionButton>
-            ) : null}
+            ) : (
+              <ActionButton
+                variant="primary"
+                icon="draw"
+                onClick={() => setShowSignaturePad(true)}
+                fullWidth
+                size="lg"
+                disabled={totalPhotos === 0 || submitting}
+              >
+                {submitting ? 'Submitting...' : 'Sign to Confirm'}
+              </ActionButton>
+            )}
           </div>
           {/* Step hint */}
           <p className="text-[10px] text-slate-600 text-center mt-2">

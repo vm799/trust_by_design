@@ -16,6 +16,8 @@ import FloatingActionPanel from '../ui/FloatingActionPanel';
 import { useAuth } from '../../lib/AuthContext';
 import { OfflineIndicator } from '../OfflineIndicator';
 
+const getAuth = () => import('../../lib/auth');
+
 interface AppShellProps {
   children?: React.ReactNode;
 }
@@ -35,6 +37,11 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
   // Get user initials for avatar
   const userInitials = userEmail?.charAt(0).toUpperCase() || 'U';
 
+  const handleLogout = useCallback(async () => {
+    const auth = await getAuth();
+    await auth.signOut();
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
       {/* Desktop Sidebar - hidden on mobile */}
@@ -42,6 +49,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
         className="hidden lg:flex"
         userInitials={userInitials}
         userEmail={userEmail || ''}
+        onLogout={handleLogout}
       />
 
       {/* Mobile Menu Overlay */}
@@ -69,6 +77,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
               userInitials={userInitials}
               userEmail={userEmail || ''}
               onNavigate={closeMobileMenu}
+              onLogout={handleLogout}
             />
           </div>
         </div>

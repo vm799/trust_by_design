@@ -55,6 +55,11 @@ const JobDetail: React.FC = () => {
   const [, setSealingOnDispatch] = useState(false);
   const [, setSealError] = useState<string | null>(null);
 
+  // Report generation state
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   // Sync conflict state (Fix 3.3)
   const [unresolvedConflict, setUnresolvedConflict] = useState(false);
 
@@ -208,6 +213,56 @@ const JobDetail: React.FC = () => {
       return false;
     } finally {
       setSealingOnDispatch(false);
+    }
+  };
+
+  // Send Report — triggers edge function to generate PDF + email
+  const handleSendReport = async () => {
+    if (!job) return;
+    setGeneratingReport(true);
+    setReportError(null);
+    setReportSent(false);
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey) {
+        setReportError('Supabase not configured');
+        return;
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          jobId: job.id,
+          title: job.title,
+          client: client?.name || job.client || '',
+          address: job.address || '',
+          managerEmail: userEmail || '',
+          clientEmail: client?.email || '',
+          technicianName: technician?.name || job.technician || '',
+          completedAt: job.completedAt || job.date,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setReportSent(true);
+        if (result.emailError) {
+          setReportError(`PDF generated but email failed: ${result.emailError}`);
+        }
+        setTimeout(() => setReportSent(false), 5000);
+      } else {
+        setReportError(`Report generation failed (${response.status})`);
+      }
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setGeneratingReport(false);
     }
   };
 
@@ -398,11 +453,18 @@ const JobDetail: React.FC = () => {
             to: route(ROUTES.JOB_EVIDENCE, { id: job.id }),
             variant: 'primary' as const,
           }] : []),
+          ...(status === 'sealed' ? [{
+            label: generatingReport ? 'Sending...' : reportSent ? 'Report Sent' : 'Send Report',
+            icon: reportSent ? 'check_circle' : 'summarize',
+            onClick: handleSendReport,
+            variant: 'primary' as const,
+            disabled: generatingReport || reportSent,
+          }] : []),
           ...(status === 'sealed' && !job.invoiceId ? [{
             label: 'Generate Invoice',
             icon: 'receipt',
             to: `${ROUTES.INVOICES}?jobId=${job.id}`,
-            variant: 'primary' as const,
+            variant: 'secondary' as const,
           }] : []),
           { label: 'Edit', icon: 'edit', to: route(ROUTES.JOB_EDIT, { id: job.id }) },
           // Only show delete for jobs that can be deleted (not sealed, not invoiced)
@@ -485,6 +547,23 @@ const JobDetail: React.FC = () => {
         {job.sealedAt && (
           <div className="mb-6">
             <SealBadge jobId={job.id} />
+          </div>
+        )}
+
+        {/* Report status feedback */}
+        {reportError && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+            <span className="material-symbols-outlined text-red-400">error</span>
+            <span className="text-red-400 text-sm font-medium flex-1">{reportError}</span>
+            <button onClick={() => setReportError(null)} className="text-red-400 hover:text-red-300 min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+          </div>
+        )}
+        {reportSent && !reportError && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
+            <span className="material-symbols-outlined text-emerald-400">check_circle</span>
+            <span className="text-emerald-400 text-sm font-medium">Report generated and sent successfully</span>
           </div>
         )}
 

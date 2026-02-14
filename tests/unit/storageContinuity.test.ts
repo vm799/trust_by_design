@@ -34,7 +34,7 @@ describe('Storage Continuity - DataContext CRUD persistence', () => {
     });
 
     it('addJob should call db.createJob when online', () => {
-      expect(content).toMatch(/dbModule\.createJob\(normalizedJob,\s*workspaceId\)/);
+      expect(content).toMatch(/dbModule\.createJob\(jobWithWorkspace,\s*workspaceId\)/);
     });
 
     it('addJob should save to Dexie offline queue as fallback', () => {
@@ -45,8 +45,12 @@ describe('Storage Continuity - DataContext CRUD persistence', () => {
       expect(content).toMatch(/offlineDb\.saveJobLocal\(/);
     });
 
+    it('addJob should inject workspaceId for Dexie queryability', () => {
+      expect(content).toMatch(/jobWithWorkspace.*workspaceId/);
+    });
+
     it('addJob should still do optimistic state update', () => {
-      expect(content).toMatch(/setJobs\(prev => \[normalizedJob/);
+      expect(content).toMatch(/setJobs\(prev => \[jobWithWorkspace/);
     });
   });
 
@@ -58,15 +62,19 @@ describe('Storage Continuity - DataContext CRUD persistence', () => {
     });
 
     it('updateJob should call db.updateJob when online', () => {
-      expect(content).toMatch(/dbModule\.updateJob\(normalizedJob\.id,\s*normalizedJob\)/);
+      expect(content).toMatch(/dbModule\.updateJob\(jobWithWorkspace\.id,\s*jobWithWorkspace\)/);
     });
 
     it('updateJob should queue UPDATE_JOB action for offline sync', () => {
       expect(content).toMatch(/offlineDb\.queueAction\('UPDATE_JOB'/);
     });
 
+    it('updateJob should inject workspaceId for Dexie queryability', () => {
+      expect(content).toMatch(/jobWithWorkspace.*workspaceId/);
+    });
+
     it('updateJob should still do optimistic state update', () => {
-      expect(content).toMatch(/setJobs\(prev => prev\.map\(j => j\.id === normalizedJob\.id/);
+      expect(content).toMatch(/setJobs\(prev => prev\.map\(j => j\.id === jobWithWorkspace\.id/);
     });
   });
 
