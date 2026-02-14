@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 // REMEDIATION ITEM 13: Static import since view is already lazy-loaded
 import { getSupabase } from '../lib/supabase';
+import { toast } from '../lib/toast';
 
 interface LocationState {
   email?: string;
@@ -117,7 +118,7 @@ const SignupSuccess: React.FC = () => {
               onClick={async () => {
                 const supabase = getSupabase();
                 if (!supabase) {
-                  alert('Supabase not configured');
+                  toast.error('Supabase not configured');
                   return;
                 }
 
@@ -127,9 +128,9 @@ const SignupSuccess: React.FC = () => {
                 });
 
                 if (error) {
-                  alert(`Failed to resend: ${error.message}`);
+                  toast.error(`Failed to resend: ${error.message}`);
                 } else {
-                  alert('Verification email sent! Check your inbox.');
+                  toast.success('Verification email sent! Check your inbox.');
                 }
               }}
             >

@@ -47,7 +47,7 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
     {active && (
       <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />
     )}
-    <span className={`material-symbols-outlined text-xl ${active ? 'font-bold' : ''}`}>
+    <span className={`material-symbols-outlined text-xl ${active ? 'font-bold' : ''}`} aria-hidden="true">
       {item.icon}
     </span>
     <span className={`text-[10px] leading-tight ${active ? 'font-bold' : 'font-medium'}`}>
@@ -105,7 +105,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
               min-h-[56px]
             "
           >
-            <span className="material-symbols-outlined text-white text-3xl font-bold">
+            <span className="material-symbols-outlined text-white text-3xl font-bold" aria-hidden="true">
               add
             </span>
           </Link>

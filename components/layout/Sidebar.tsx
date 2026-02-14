@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all min-h-[44px]"
           >
-            <span className="material-symbols-outlined text-xl">logout</span>
+            <span className="material-symbols-outlined text-xl" aria-hidden="true">logout</span>
             <span className="text-sm font-medium">Sign Out</span>
           </button>
         )}
@@ -148,7 +148,7 @@ const NavLink = memo<NavLinkProps>(({ to, icon, label, badge, active, onClick })
       }
     `}
   >
-    <span className="material-symbols-outlined text-xl">{icon}</span>
+    <span className="material-symbols-outlined text-xl" aria-hidden="true">{icon}</span>
     <span className="text-sm font-medium flex-1">{label}</span>
     {badge !== undefined && badge > 0 && (
       <span className="px-2 py-0.5 text-xs font-bold bg-primary text-white rounded-full">

@@ -21,6 +21,7 @@ import {
   type MagicLinkInfo,
   type LinkLifecycleStage
 } from '../lib/db';
+import { toast } from '../lib/toast';
 
 interface JobReportProps {
    user?: UserProfile | null;
@@ -1192,7 +1193,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   <div className="flex flex-col gap-3">
                      <button onClick={() => {
                         navigator.clipboard.writeText(getReportUrl(job.id));
-                        alert('Link copied to clipboard!');
+                        toast.info('Link copied to clipboard!');
                      }} className="w-full py-4 bg-primary hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-sm font-black">content_copy</span>
                         Copy Link

@@ -800,6 +800,27 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     setTemplates(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  // Auto-resync on network reconnect: push queued changes then pull fresh data
+  useEffect(() => {
+    const handleOnline = async () => {
+      try {
+        // 1. Push any queued offline actions to server
+        const offlineSync = await import('./offline/sync');
+        await offlineSync.pushQueue();
+        // 2. Pull fresh data from server
+        if (workspaceId) {
+          loadedWorkspaceRef.current = null;
+          await loadFromSupabase(workspaceId);
+        }
+      } catch {
+        // Non-blocking: next poll cycle or manual refresh will catch up
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [workspaceId, loadFromSupabase]);
+
   // Refresh function - REMEDIATION ITEM 8: Uses separate isRefreshing state
   const refresh = useCallback(async () => {
     setIsRefreshing(true);

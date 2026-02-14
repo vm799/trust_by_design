@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HandshakeService, HandshakeError } from '../lib/handshakeService';
 import { useTheme } from '../lib/theme';
+import { toast } from '../lib/toast';
 
 // ============================================================================
 // TYPES
@@ -286,7 +287,7 @@ const GoEntryPoint: React.FC = () => {
               if (email) {
                 window.location.href = `mailto:${email}?subject=Job%20Link%20Issue&body=Hi,%0A%0AI%20received%20a%20job%20link%20but%20it%20appears%20to%20be%20invalid.%0A%0ACould%20you%20please%20send%20me%20a%20new%20link?%0A%0AThank%20you`;
               } else {
-                alert('Please contact your manager directly for a new job link.');
+                toast.info('Please contact your manager directly for a new job link.');
               }
             }}
             className={`w-full py-4 min-h-[56px] ${isDark

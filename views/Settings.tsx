@@ -3,6 +3,8 @@ import Layout from '../components/AppLayout';
 import { UserProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/theme';
+import { toast } from '../lib/toast';
 
 interface SettingsProps {
   user: UserProfile;
@@ -19,6 +21,7 @@ interface SubscriptionStatus {
 const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
   const [wsName, setWsName] = useState(user.workspaceName);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
@@ -82,7 +85,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   // Open Stripe billing portal
   const openBillingPortal = async () => {
     if (!session?.access_token) {
-      alert('Please log in to manage billing.');
+      toast.warning('Please log in to manage billing.');
       return;
     }
 
@@ -102,11 +105,11 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || 'Failed to open billing portal.');
+        toast.error(data.error || 'Failed to open billing portal.');
       }
     } catch (error) {
       console.error('Billing portal error:', error);
-      alert('Failed to open billing portal. Please try again.');
+      toast.error('Failed to open billing portal. Please try again.');
     } finally {
       setBillingLoading(false);
     }
@@ -114,7 +117,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 
   const saveWorkspace = () => {
     setUser({ ...user, workspaceName: wsName });
-    alert('Workspace synchronized.');
+    toast.success('Workspace synchronized.');
   };
 
   const toggleSetting = (key: string) => {
@@ -372,6 +375,72 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                </div>
             </div>
 
+            {/* Display Mode */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl shadow-amber-500/10 space-y-6">
+               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                 <span className="material-symbols-outlined text-amber-400">palette</span>
+                 Display Mode
+               </h3>
+
+               {/* Dark / Daylight Toggle */}
+               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+                 <div className="flex items-center gap-3">
+                   <span className="material-symbols-outlined text-xl" aria-hidden="true">
+                     {isDaylightMode ? 'light_mode' : 'dark_mode'}
+                   </span>
+                   <div>
+                     <p className="text-sm font-bold text-white">
+                       {isDaylightMode ? 'Daylight Mode' : 'Dark Mode'}
+                     </p>
+                     <p className="text-[10px] text-slate-400">
+                       {isDaylightMode ? 'High-visibility for outdoor work' : 'Low-light optimised'}
+                     </p>
+                   </div>
+                 </div>
+                 <button
+                   onClick={toggleDayNight}
+                   className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
+                     isDaylightMode ? 'bg-amber-500' : 'bg-slate-600'
+                   }`}
+                   role="switch"
+                   aria-checked={isDaylightMode}
+                   aria-label={`Switch to ${isDaylightMode ? 'dark' : 'daylight'} mode`}
+                 >
+                   <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
+                     isDaylightMode ? 'translate-x-7' : 'translate-x-1'
+                   }`} />
+                 </button>
+               </div>
+
+               {/* Auto Daylight */}
+               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+                 <div className="flex items-center gap-3">
+                   <span className="material-symbols-outlined text-xl text-slate-400" aria-hidden="true">schedule</span>
+                   <div>
+                     <p className="text-sm font-bold text-white">Auto Daylight</p>
+                     <p className="text-[10px] text-slate-400">Switch by time of day (6AM–6PM)</p>
+                   </div>
+                 </div>
+                 <button
+                   onClick={() => setDaylightAuto(!daylightAuto)}
+                   className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
+                     daylightAuto ? 'bg-primary' : 'bg-slate-600'
+                   }`}
+                   role="switch"
+                   aria-checked={daylightAuto}
+                   aria-label={`${daylightAuto ? 'Disable' : 'Enable'} auto daylight mode`}
+                 >
+                   <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
+                     daylightAuto ? 'translate-x-7' : 'translate-x-1'
+                   }`} />
+                 </button>
+               </div>
+
+               <p className="text-[10px] text-slate-400 leading-relaxed">
+                 Current: <span className="font-bold text-white capitalize">{resolvedTheme}</span> mode
+               </p>
+            </div>
+
             {/* User Experience */}
             <div className="bg-slate-900 border border-white/15 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl space-y-4">
                <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">User Experience</h3>
@@ -379,7 +448,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   onClick={() => {
                     localStorage.removeItem('jobproof_onboarding_v4');
                     localStorage.removeItem('jobproof_checklist_dismissed');
-                    alert('Onboarding tour reset! Refresh the page to start over.');
+                    toast.success('Onboarding tour reset! Refresh the page to start over.');
                   }}
                   className="w-full py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/30 rounded-2xl text-primary text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2"
                >
@@ -456,7 +525,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
               </button>
               <button
                 onClick={() => {
-                  alert('Team invitation feature coming soon!');
+                  toast.info('Team invitation feature coming soon!');
                   setShowInviteModal(false);
                 }}
                 className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase transition-all shadow-lg shadow-primary/20"

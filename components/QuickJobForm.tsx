@@ -11,6 +11,7 @@ import {
 import { convertToW3WCached, generateMockW3W } from '../lib/services/what3words';
 import { generateSecureJobId } from '../lib/secureId';
 import { JOB_STATUS, SYNC_STATUS } from '../lib/constants';
+import { toast } from '../lib/toast';
 
 interface QuickJobFormProps {
   techId: string;
@@ -119,12 +120,12 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      alert('Please enter a job title');
+      toast.warning('Please enter a job title');
       return;
     }
 
     if (!clientName.trim() && workMode === 'employed') {
-      alert('Please enter a client name');
+      toast.warning('Please enter a client name');
       return;
     }
 
@@ -214,7 +215,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
 
     } catch (error) {
       console.error('Failed to create job:', error);
-      alert('Failed to create job. Please try again.');
+      toast.error('Failed to create job. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -246,12 +247,12 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         // Fallback to copy
         if (magicLinkUrl) {
           navigator.clipboard.writeText(magicLinkUrl);
-          alert('Link copied to clipboard!');
+          toast.info('Link copied to clipboard!');
         }
       }
     } else if (magicLinkUrl) {
       navigator.clipboard.writeText(magicLinkUrl);
-      alert('Link copied to clipboard!');
+      toast.info('Link copied to clipboard!');
     }
   };
 
