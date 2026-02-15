@@ -1240,8 +1240,10 @@ function generateEmailHtml(job: any, pdfUrl: string, evidence: EvidenceStatus): 
   const sealedTs = formatTimestamp(job.sealed_at);
 
   // App URL for Review & Seal button
-  const appUrl = Deno.env.get('VITE_APP_URL') || Deno.env.get('APP_URL') || 'https://jobproof.vercel.app';
-  const reviewSealUrl = `${appUrl}/#/admin/job/${job.id}/evidence`;
+  // Use request origin/referer when available, fall back to env vars, then production URL
+  const requestOrigin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/+$/, '') || '';
+  const appUrl = requestOrigin || Deno.env.get('VITE_APP_URL') || Deno.env.get('APP_URL') || 'https://trust-by-design.vercel.app';
+  const reviewSealUrl = `${appUrl}/#/admin/jobs/${job.id}/evidence`;
 
   // Truncate hash for display
   const truncateHash = (hash: string | null, len = 16) => {
