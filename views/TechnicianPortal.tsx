@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/AppLayout';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Job, Photo, SyncStatus, PhotoType, SafetyCheck, JobStatus } from '../types';
-import { getJobByToken, updateJob, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
+import { getJobByToken, recordMagicLinkAccess, notifyManagerOfTechJob, getTechnicianWorkMode, generateClientReceipt } from '../lib/db';
 import { getJobLocal, saveJobLocal, getMediaLocal, saveMediaLocal, queueAction } from '../lib/offline/db';
 import { sealEvidence, canSealJob, calculateDataUrlHash } from '../lib/sealing';
 import { getVerifiedLocation, createManualLocationResult } from '../lib/services/what3words';
@@ -1042,14 +1042,9 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       lastUpdated: Date.now()
     };
 
-    // Update job in database before sealing
+    // Update job via DataContext (handles optimistic UI + backend + offline queue)
     try {
-      const updateResult = await updateJob(job.id, updatedJob);
-
-      if (!updateResult.success) {
-        console.warn('Failed to update job before sealing, proceeding with local update');
-        onUpdateJob(updatedJob);
-      }
+      onUpdateJob(updatedJob);
 
       // CRITICAL FIX: Wait for photo sync before sealing
       const unsyncedPhotos = getUnsyncedPhotos(photos);
