@@ -257,6 +257,7 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
   // Load data from Supabase with localStorage fallback
   // REMEDIATION ITEM 5: Uses dynamic import for lazy loading
+  // FIX: Merge local-only items to prevent data loss during workspace ID race condition
   const loadFromSupabase = useCallback(async (wsId: string) => {
     setIsLoading(true);
     setError(null);
@@ -272,9 +273,26 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       ]);
 
       if (jobsResult.success && jobsResult.data) {
-        // db.getJobs() fetches from bunker_jobs with complete mapping (photos, scheduled_date, source)
         // Sprint 2 Task 2.6: Normalize technician IDs on load
-        setJobs(normalizeJobs(jobsResult.data));
+        const serverJobs = normalizeJobs(jobsResult.data);
+        // FIX: Merge local-only jobs (created before workspaceId was available)
+        // Uses setState callback to access current state without stale closure
+        const serverJobIds = new Set(serverJobs.map(j => j.id));
+        setJobs(prev => {
+          const localOnly = prev.filter(j => !serverJobIds.has(j.id));
+          if (localOnly.length > 0) {
+            // Re-queue orphaned items in background (non-blocking)
+            getOfflineDbModule().then(offlineDb => {
+              for (const j of localOnly) {
+                const jobWithWs = { ...j, workspaceId: wsId };
+                offlineDb.saveJobLocal({ ...jobWithWs, syncStatus: 'pending' as const, lastUpdated: Date.now() }).catch(() => {});
+                offlineDb.queueAction('CREATE_JOB', jobWithWs).catch(() => {});
+              }
+            }).catch(() => {});
+            return [...serverJobs, ...localOnly];
+          }
+          return serverJobs;
+        });
       } else {
         console.warn('[DataContext] Supabase jobs failed, using localStorage');
         // WORKSPACE_ISOLATED_STORAGE: Use workspace-scoped key when enabled
@@ -285,8 +303,24 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       }
 
       if (clientsResult.success && clientsResult.data) {
-        setClients(clientsResult.data);
-        // CLAUDE.md mandate: Persist to Dexie for offline access
+        // FIX: Merge local-only clients (created before workspaceId was available)
+        const serverClientIds = new Set(clientsResult.data.map(c => c.id));
+        setClients(prev => {
+          const localOnly = prev.filter(c => !serverClientIds.has(c.id));
+          // Re-queue orphaned local clients in Dexie with correct workspaceId (non-blocking)
+          if (localOnly.length > 0) {
+            getOfflineDbModule().then(offlineDb => {
+              for (const c of localOnly) {
+                offlineDb.saveClientLocal({ ...c, totalJobs: c.totalJobs || 0, workspaceId: wsId, syncStatus: 'pending' as const, lastUpdated: Date.now() }).catch(() => {});
+                offlineDb.queueAction('CREATE_CLIENT', { ...c, workspaceId: wsId }).catch(() => {});
+              }
+            }).catch(() => {});
+            return [...clientsResult.data, ...localOnly];
+          }
+          return clientsResult.data;
+        });
+
+        // CLAUDE.md mandate: Persist server data to Dexie for offline access
         try {
           const offlineDb = await getOfflineDbModule();
           const localClients = clientsResult.data.map(c => ({
@@ -320,8 +354,24 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       }
 
       if (techsResult.success && techsResult.data) {
-        setTechnicians(techsResult.data);
-        // CLAUDE.md mandate: Persist to Dexie for offline access
+        // FIX: Merge local-only technicians (created before workspaceId was available)
+        const serverTechIds = new Set(techsResult.data.map(t => t.id));
+        setTechnicians(prev => {
+          const localOnly = prev.filter(t => !serverTechIds.has(t.id));
+          // Re-queue orphaned local techs in Dexie with correct workspaceId (non-blocking)
+          if (localOnly.length > 0) {
+            getOfflineDbModule().then(offlineDb => {
+              for (const t of localOnly) {
+                offlineDb.saveTechnicianLocal({ ...t, status: t.status || 'Available', rating: t.rating || 0, jobsCompleted: t.jobsCompleted || 0, workspaceId: wsId, syncStatus: 'pending' as const, lastUpdated: Date.now() }).catch(() => {});
+                offlineDb.queueAction('CREATE_TECHNICIAN', { ...t, workspaceId: wsId }).catch(() => {});
+              }
+            }).catch(() => {});
+            return [...techsResult.data, ...localOnly];
+          }
+          return techsResult.data;
+        });
+
+        // CLAUDE.md mandate: Persist server data to Dexie for offline access
         try {
           const offlineDb = await getOfflineDbModule();
           const localTechs = techsResult.data.map(t => ({
