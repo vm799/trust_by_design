@@ -1,32 +1,33 @@
 /**
- * EvidenceReview - Professional Evidence Report
+ * EvidenceReview - Stepped Evidence Review + Seal Workflow
  *
- * Comprehensive forensic report view for sealed/reviewed jobs.
- * Designed for manager review, client presentation, and legal compliance.
+ * 3-step guided flow for manager evidence review and sealing:
+ *   Step 1: Review Evidence (photo gallery + integrity metrics)
+ *   Step 2: Client Attestation (signature via ClientConfirmationCanvas)
+ *   Step 3: Seal & Certificate (inline cryptographic sealing)
  *
- * Sections:
- * 1. Report Header (job title, reference, seal status)
- * 2. Job Summary (date, address, client, technician)
- * 3. Evidence Gallery grouped by type (before/during/after)
- * 4. Photo metadata (GPS, W3W, timestamp, integrity)
- * 5. Client Signature & Confirmation
- * 6. Cryptographic Seal Certificate
- * 7. Chain of Custody Timeline
+ * Once sealed, displays the full forensic report in read-only mode.
  *
  * Phase E: Job Lifecycle / Phase H: Seal & Verify
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, PageContent } from '../../../components/layout';
-import { Card, EmptyState, LoadingSkeleton } from '../../../components/ui';
+import { Card, EmptyState, LoadingSkeleton, ActionButton } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
 import { route, ROUTES } from '../../../lib/routes';
-import { fadeInUp, staggerContainer } from '../../../lib/animations';
+import { fadeInUp, staggerContainer, tapShrink } from '../../../lib/animations';
 import SealBadge from '../../../components/SealBadge';
 import BottomSheet from '../../../components/ui/BottomSheet';
 import { resolveTechnicianId } from '../../../lib/utils/technicianIdNormalization';
+import { sealEvidence, canSealJob } from '../../../lib/sealing';
+import SealingProgressModal, { SealingStatus } from '../../../components/ui/SealingProgressModal';
+import ClientConfirmationCanvas from '../../../components/ClientConfirmationCanvas';
+import SealCertificate from '../../../components/SealCertificate';
+import { Job, JobStatus } from '../../../types';
+import { hapticFeedback, showToast, celebrateSuccess } from '../../../lib/microInteractions';
 
 interface Photo {
   id?: string;
@@ -46,10 +47,16 @@ interface Photo {
   device_info?: { make?: string; model?: string; os?: string };
 }
 
+const REVIEW_STEPS = [
+  { id: 'review', label: 'Review Evidence', icon: 'photo_library' },
+  { id: 'attest', label: 'Client Attestation', icon: 'draw' },
+  { id: 'seal', label: 'Seal & Certify', icon: 'verified' },
+] as const;
+
 const EvidenceReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
-  const { jobs, clients, technicians, isLoading: loading } = useData();
+  const { jobs, clients, technicians, isLoading: loading, updateJob: contextUpdateJob } = useData();
 
   const job = useMemo(() => jobs.find(j => j.id === id) || null, [jobs, id]);
   const client = useMemo(() =>
@@ -65,6 +72,16 @@ const EvidenceReview: React.FC = () => {
   }, [technicians, job]);
 
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+
+  // Stepper state - skip steps if already sealed
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Sealing state
+  const [sealingModalOpen, setSealingModalOpen] = useState(false);
+  const [sealingStatus, setSealingStatus] = useState<SealingStatus>('hashing');
+  const [sealingProgress, setSealingProgress] = useState(0);
+  const [sealingError, setSealingError] = useState<string | undefined>();
+  const [showCertificate, setShowCertificate] = useState(false);
 
   const photos = useMemo(() => (job?.photos || []) as Photo[], [job]);
   const isSealed = Boolean(job?.sealedAt);
@@ -86,6 +103,83 @@ const EvidenceReview: React.FC = () => {
     const withHash = photos.filter(p => p.photo_hash || p.hash).length;
     return { total, withGPS, withW3W, w3wVerified, withHash };
   }, [photos]);
+
+  // Handle client attestation confirmation
+  const handleAttestationConfirmed = useCallback((signature: string, timestamp: string) => {
+    if (!job) return;
+    const updatedJob: Job = {
+      ...job,
+      signature,
+      clientConfirmation: {
+        confirmed: true,
+        signature,
+        timestamp,
+      },
+    };
+    contextUpdateJob(updatedJob);
+    hapticFeedback('success');
+    showToast('Client attestation saved', 'success');
+    setCurrentStep(2); // Advance to seal step
+  }, [job, contextUpdateJob]);
+
+  // Handle inline sealing
+  const handleSealJob = useCallback(async () => {
+    if (!job) return;
+
+    setSealingModalOpen(true);
+    setSealingStatus('hashing');
+    setSealingProgress(15);
+    setSealingError(undefined);
+
+    try {
+      // Progress simulation for UX feedback
+      const progressTimer = setInterval(() => {
+        setSealingProgress(prev => {
+          if (prev >= 85) { clearInterval(progressTimer); return prev; }
+          return prev + 10;
+        });
+      }, 400);
+
+      setSealingStatus('signing');
+      setSealingProgress(40);
+
+      const result = await sealEvidence(job.id);
+
+      clearInterval(progressTimer);
+
+      if (result.success) {
+        setSealingStatus('storing');
+        setSealingProgress(90);
+
+        // Update job in DataContext with seal metadata
+        const sealedJob: Job = {
+          ...job,
+          status: (result.job_status as JobStatus) || 'Submitted',
+          sealedAt: result.sealedAt,
+          evidenceHash: result.evidenceHash,
+          isSealed: true,
+        };
+        contextUpdateJob(sealedJob);
+
+        setSealingProgress(100);
+        setSealingStatus('complete');
+        celebrateSuccess();
+      } else {
+        setSealingStatus('error');
+        setSealingError(result.error || 'Sealing failed. Please try again.');
+      }
+    } catch (err) {
+      setSealingStatus('error');
+      setSealingError(err instanceof Error ? err.message : 'Unexpected error during sealing');
+    }
+  }, [job, contextUpdateJob]);
+
+  // Handle seal retry
+  const handleSealRetry = useCallback(() => {
+    setSealingModalOpen(false);
+    setSealingError(undefined);
+    handleSealJob();
+  }, [handleSealJob]);
 
   if (loading) {
     return (
@@ -284,28 +378,211 @@ const EvidenceReview: React.FC = () => {
           </motion.div>
 
           {/* ============================================================ */}
-          {/* SECTION 4: SEAL CERTIFICATE */}
+          {/* SECTION 4: STEPPED WORKFLOW (unsealed) OR SEAL CERTIFICATE (sealed) */}
           {/* ============================================================ */}
-          {isSealed && (
+          {isSealed ? (
+            <>
+              <motion.div variants={fadeInUp}>
+                <SealBadge jobId={job.id} />
+              </motion.div>
+              <motion.div variants={fadeInUp}>
+                <button
+                  onClick={() => setShowCertificate(true)}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-emerald-400 font-bold text-sm uppercase tracking-widest transition-all min-h-[56px]"
+                >
+                  <span className="material-symbols-outlined text-xl">download</span>
+                  Download Seal Certificate
+                </button>
+              </motion.div>
+            </>
+          ) : photos.length > 0 && (
             <motion.div variants={fadeInUp}>
-              <SealBadge jobId={job.id} />
-            </motion.div>
-          )}
-
-          {/* Auto-Seal Banner */}
-          {!isSealed && job.status === 'Submitted' && photos.length > 0 && (
-            <motion.div variants={fadeInUp}>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-2xl text-emerald-400">lock_clock</span>
+              {/* Step Progress Bar */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  {REVIEW_STEPS.map((step, idx) => {
+                    const isActive = idx === currentStep;
+                    const isComplete = idx < currentStep || isSealed;
+                    const stepColor = idx === 0 ? 'blue' : idx === 1 ? 'amber' : 'emerald';
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => setCurrentStep(idx)}
+                        className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px] ${
+                          isActive
+                            ? `bg-${stepColor}-500/20 text-${stepColor}-400 border border-${stepColor}-500/30`
+                            : isComplete
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-slate-800 text-slate-400 border border-white/10'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {isComplete && !isActive ? 'check_circle' : step.icon}
+                        </span>
+                        <span className="hidden sm:inline">{step.label}</span>
+                        <span className="sm:hidden">{idx + 1}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-white">Auto-Seal in Progress</p>
-                  <p className="text-sm text-slate-400">
-                    Evidence is being cryptographically sealed automatically after technician submission.
-                  </p>
+                {/* Progress track */}
+                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-blue-500 via-amber-500 to-emerald-500 rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${((currentStep + 1) / REVIEW_STEPS.length) * 100}%` }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
                 </div>
               </div>
+
+              {/* Step Content */}
+              <AnimatePresence mode="wait">
+                {/* STEP 1: Review Evidence - handled by gallery sections below */}
+                {currentStep === 0 && (
+                  <motion.div
+                    key="step-review"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Card>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="size-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl text-blue-400">photo_library</span>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 1: Review Evidence</h3>
+                          <p className="text-xs text-slate-400">Verify all photos and metadata below before proceeding</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-300 mb-4">
+                        {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
+                        ({grouped.before.length} before, {grouped.during.length} during, {grouped.after.length} after)
+                      </p>
+                      <button
+                        onClick={() => { hapticFeedback('light'); setCurrentStep(1); }}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all min-h-[56px]"
+                      >
+                        Evidence Reviewed — Continue
+                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                      </button>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {/* STEP 2: Client Attestation */}
+                {currentStep === 1 && (
+                  <motion.div
+                    key="step-attest"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {job.clientConfirmation?.confirmed ? (
+                      <Card>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-xl text-emerald-400">check_circle</span>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Client Already Attested</h3>
+                            <p className="text-xs text-slate-400">
+                              Signed {job.clientConfirmation.timestamp
+                                ? new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB')
+                                : 'previously'}
+                            </p>
+                          </div>
+                        </div>
+                        {job.clientConfirmation.signature && (
+                          <div className="bg-slate-900 border border-emerald-500/20 rounded-xl p-4 mb-4">
+                            <img src={job.clientConfirmation.signature} alt="Client Signature" className="max-h-24 mx-auto" />
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { hapticFeedback('light'); setCurrentStep(2); }}
+                          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all min-h-[56px]"
+                        >
+                          Proceed to Seal
+                          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                        </button>
+                      </Card>
+                    ) : (
+                      <div>
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-xl text-amber-400">draw</span>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 2: Client Attestation</h3>
+                            <p className="text-xs text-slate-400">Hand device to client for signature confirmation</p>
+                          </div>
+                        </div>
+                        <ClientConfirmationCanvas
+                          clientName={client?.name || job.client || 'Client'}
+                          onConfirmed={handleAttestationConfirmed}
+                          onCancel={() => setCurrentStep(0)}
+                          locationW3W={job.w3w}
+                          photosSealed={photos.length}
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* STEP 3: Seal & Certify */}
+                {currentStep === 2 && (
+                  <motion.div
+                    key="step-seal"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Card>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl text-emerald-400">verified</span>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 3: Seal Evidence</h3>
+                          <p className="text-xs text-slate-400">Create tamper-proof cryptographic record</p>
+                        </div>
+                      </div>
+
+                      {/* Pre-seal checklist */}
+                      <div className="space-y-2 mb-6">
+                        <div className={`flex items-center gap-2 text-sm ${photos.length > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span className="material-symbols-outlined text-lg">{photos.length > 0 ? 'check_circle' : 'cancel'}</span>
+                          {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
+                        </div>
+                        <div className={`flex items-center gap-2 text-sm ${job.clientConfirmation?.confirmed ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          <span className="material-symbols-outlined text-lg">{job.clientConfirmation?.confirmed ? 'check_circle' : 'radio_button_unchecked'}</span>
+                          Client attestation {job.clientConfirmation?.confirmed ? 'complete' : '(optional)'}
+                        </div>
+                        <div className={`flex items-center gap-2 text-sm ${job.w3w ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          <span className="material-symbols-outlined text-lg">{job.w3w ? 'check_circle' : 'radio_button_unchecked'}</span>
+                          Location {job.w3w ? `///\u200b${job.w3w}` : '(optional)'}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleSealJob}
+                        className="w-full flex items-center justify-center gap-3 px-6 py-5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl text-base font-black uppercase tracking-widest transition-all min-h-[56px] shadow-lg shadow-emerald-500/20"
+                      >
+                        <span className="material-symbols-outlined text-2xl">lock</span>
+                        Seal Evidence Now
+                      </button>
+
+                      <p className="text-[10px] text-slate-400 text-center mt-3">
+                        Creates RSA-2048 + SHA-256 cryptographic proof. Once sealed, evidence cannot be modified.
+                      </p>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
@@ -663,6 +940,25 @@ const EvidenceReview: React.FC = () => {
           </div>
         )}
       </BottomSheet>
+
+      {/* Sealing Progress Modal */}
+      <SealingProgressModal
+        isOpen={sealingModalOpen}
+        status={sealingStatus}
+        progress={sealingProgress}
+        errorMessage={sealingError}
+        onClose={() => setSealingModalOpen(false)}
+        onRetry={handleSealRetry}
+      />
+
+      {/* Seal Certificate Download Modal */}
+      {job && (
+        <SealCertificate
+          job={job}
+          isOpen={showCertificate}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
     </div>
   );
 };
