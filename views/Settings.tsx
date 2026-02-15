@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/theme';
 import { toast } from '../lib/toast';
+import { inviteTeamMember, isValidEmail, isValidRole, type TeamRole } from '../lib/teamManagement';
+import { isFeatureEnabled } from '../lib/featureFlags';
 
 interface SettingsProps {
   user: UserProfile;
@@ -24,6 +26,9 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   const { resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
   const [wsName, setWsName] = useState(user.workspaceName);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<TeamRole>('member');
+  const [inviteSending, setInviteSending] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
 
@@ -501,17 +506,24 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   id="invite-email"
                   type="email"
                   placeholder="teammate@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
                   className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="invite-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
-                <select id="invite-role" className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer">
-                  <option>Admin</option>
-                  <option>Manager</option>
-                  <option>Technician</option>
-                  <option>View Only</option>
+                <select
+                  id="invite-role"
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as TeamRole)}
+                  className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="technician">Technician</option>
+                  <option value="view_only">View Only</option>
                 </select>
               </div>
             </div>
@@ -524,13 +536,38 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  toast.info('Team invitation feature coming soon!');
-                  setShowInviteModal(false);
+                disabled={inviteSending}
+                onClick={async () => {
+                  if (!inviteEmail || !isValidEmail(inviteEmail)) {
+                    toast.warning('Please enter a valid email address.');
+                    return;
+                  }
+                  if (!isValidRole(inviteRole)) {
+                    toast.warning('Please select a valid role.');
+                    return;
+                  }
+                  setInviteSending(true);
+                  try {
+                    const workspaceId = user.workspace?.id;
+                    const userId = session?.user?.id;
+                    if (!workspaceId || !userId) {
+                      toast.warning('Workspace not configured. Please complete setup first.');
+                      return;
+                    }
+                    await inviteTeamMember(workspaceId, userId, { email: inviteEmail, role: inviteRole });
+                    toast.success(`Invitation sent to ${inviteEmail}`);
+                    setInviteEmail('');
+                    setInviteRole('member');
+                    setShowInviteModal(false);
+                  } catch (err) {
+                    toast.warning(err instanceof Error ? err.message : 'Failed to send invitation');
+                  } finally {
+                    setInviteSending(false);
+                  }
                 }}
-                className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase transition-all shadow-lg shadow-primary/20"
+                className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black uppercase transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               >
-                Send Invite
+                {inviteSending ? 'Sending...' : 'Send Invite'}
               </button>
             </div>
           </div>

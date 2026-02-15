@@ -43,7 +43,12 @@ export type FeatureFlagKey =
   | 'SEAL_ON_DISPATCH'
   | 'TEAM_STATUS_BAR'
   | 'READY_TO_INVOICE_SECTION'
-  | 'WORKSPACE_ISOLATED_STORAGE';
+  | 'WORKSPACE_ISOLATED_STORAGE'
+  | 'REST_API_V1'
+  | 'WEBHOOK_SYSTEM'
+  | 'SSO_ENTERPRISE'
+  | 'PUSH_NOTIFICATIONS'
+  | 'TEAM_MANAGEMENT';
 
 /**
  * Result of evaluating a feature flag
@@ -142,6 +147,41 @@ export const FEATURE_FLAGS = {
     key: 'WORKSPACE_ISOLATED_STORAGE',
     description: 'Isolate IndexedDB storage by workspace ID',
     rolloutPercentage: 0,
+    paidOnly: false,
+    enabledEnvironments: ['local', 'staging', 'production'],
+  },
+  REST_API_V1: {
+    key: 'REST_API_V1',
+    description: 'REST API v1 for third-party integrations',
+    rolloutPercentage: 100,
+    paidOnly: true,
+    enabledEnvironments: ['local', 'staging', 'production'],
+  },
+  WEBHOOK_SYSTEM: {
+    key: 'WEBHOOK_SYSTEM',
+    description: 'Webhook dispatcher for event notifications to external systems',
+    rolloutPercentage: 100,
+    paidOnly: true,
+    enabledEnvironments: ['local', 'staging', 'production'],
+  },
+  SSO_ENTERPRISE: {
+    key: 'SSO_ENTERPRISE',
+    description: 'Enterprise SSO with SAML/OIDC configuration',
+    rolloutPercentage: 0,
+    paidOnly: true,
+    enabledEnvironments: ['local', 'staging'] as Environment[],
+  },
+  PUSH_NOTIFICATIONS: {
+    key: 'PUSH_NOTIFICATIONS',
+    description: 'Web push notifications for real-time alerts',
+    rolloutPercentage: 100,
+    paidOnly: false,
+    enabledEnvironments: ['local', 'staging', 'production'],
+  },
+  TEAM_MANAGEMENT: {
+    key: 'TEAM_MANAGEMENT',
+    description: 'Team member invitation and role management',
+    rolloutPercentage: 100,
     paidOnly: false,
     enabledEnvironments: ['local', 'staging', 'production'],
   },
