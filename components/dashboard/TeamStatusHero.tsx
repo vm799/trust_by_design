@@ -94,25 +94,28 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
 
   const statusColors = {
     operational: {
-      bg: 'bg-emerald-50 dark:bg-emerald-950',
-      border: 'border-emerald-200 dark:border-emerald-800',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
       dot: 'bg-emerald-500',
-      text: 'text-emerald-900 dark:text-emerald-100',
-      label: 'text-emerald-700 dark:text-emerald-300',
+      text: 'text-slate-900 dark:text-white',
+      label: 'text-slate-500 dark:text-slate-400',
+      statusText: 'text-emerald-600 dark:text-emerald-400',
     },
     caution: {
-      bg: 'bg-amber-50 dark:bg-amber-950',
-      border: 'border-amber-200 dark:border-amber-800',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
       dot: 'bg-amber-500',
-      text: 'text-amber-900 dark:text-amber-100',
-      label: 'text-amber-700 dark:text-amber-300',
+      text: 'text-slate-900 dark:text-white',
+      label: 'text-slate-500 dark:text-slate-400',
+      statusText: 'text-amber-600 dark:text-amber-400',
     },
     critical: {
-      bg: 'bg-red-50 dark:bg-red-950',
-      border: 'border-red-200 dark:border-red-800',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
       dot: 'bg-red-500',
-      text: 'text-red-900 dark:text-red-100',
-      label: 'text-red-700 dark:text-red-300',
+      text: 'text-slate-900 dark:text-white',
+      label: 'text-slate-500 dark:text-slate-400',
+      statusText: 'text-red-600 dark:text-red-400',
     },
   };
 
@@ -130,7 +133,7 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
       animate={fadeInUp.visible}
       transition={transitionMedium}
       className={`
-        rounded-xl border-2 p-8
+        rounded-xl border p-8
         ${colors.bg} ${colors.border}
         transition-all duration-300
       `}
@@ -143,7 +146,7 @@ const TeamStatusHero: React.FC<TeamStatusHeroProps> = React.memo(({
         transition={{ ...transitionQuick, delay: 0.1 }}
       >
         <div className={`w-3 h-3 rounded-full animate-pulse ${colors.dot}`} />
-        <h2 className={`text-lg font-bold ${colors.text}`}>
+        <h2 className={`text-lg font-bold ${colors.statusText}`}>
           {statusLabels[metrics.status]}
         </h2>
       </motion.div>

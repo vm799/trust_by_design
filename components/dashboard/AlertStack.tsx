@@ -118,28 +118,37 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
 
   const colorConfig = {
     red: {
-      bg: 'bg-red-50 dark:bg-red-950',
-      border: 'border-red-200 dark:border-red-800',
-      hover: 'hover:bg-red-100 dark:hover:bg-red-900',
-      text: 'text-red-900 dark:text-red-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      leftBorder: 'border-l-4 border-l-red-500',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
+      subtext: 'text-slate-500 dark:text-slate-400',
       icon: 'text-red-600 dark:text-red-400',
-      badge: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200',
+      iconBg: 'bg-red-500/10',
+      badge: 'bg-red-500/10 text-red-600 dark:text-red-400',
     },
     amber: {
-      bg: 'bg-amber-50 dark:bg-amber-950',
-      border: 'border-amber-200 dark:border-amber-800',
-      hover: 'hover:bg-amber-100 dark:hover:bg-amber-900',
-      text: 'text-amber-900 dark:text-amber-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      leftBorder: 'border-l-4 border-l-amber-500',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
+      subtext: 'text-slate-500 dark:text-slate-400',
       icon: 'text-amber-600 dark:text-amber-400',
-      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200',
+      iconBg: 'bg-amber-500/10',
+      badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     },
     blue: {
-      bg: 'bg-blue-50 dark:bg-blue-950',
-      border: 'border-blue-200 dark:border-blue-800',
-      hover: 'hover:bg-blue-100 dark:hover:bg-blue-900',
-      text: 'text-blue-900 dark:text-blue-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      leftBorder: 'border-l-4 border-l-blue-500',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
+      subtext: 'text-slate-500 dark:text-slate-400',
       icon: 'text-blue-600 dark:text-blue-400',
-      badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200',
+      iconBg: 'bg-blue-500/10',
+      badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     },
   };
 
@@ -166,8 +175,8 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
               whileHover={hoverScaleShift}
               onClick={alert.onAction}
             className={`
-              w-full p-4 rounded-lg border-2
-              ${colors.bg} ${colors.border} ${colors.hover}
+              w-full p-4 rounded-lg border
+              ${colors.bg} ${colors.border} ${colors.leftBorder} ${colors.hover}
               transition-all duration-200 cursor-pointer
               hover:shadow-md hover:-translate-y-0.5
               flex items-center justify-between
@@ -176,14 +185,16 @@ const AlertStack: React.FC<AlertStackProps> = React.memo(({ onAlertClick }) => {
             aria-label={alert.label}
           >
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              <span className={`material-symbols-outlined text-2xl flex-shrink-0 ${colors.icon}`}>
-                {alert.icon}
-              </span>
+              <div className={`size-10 rounded-xl ${colors.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <span className={`material-symbols-outlined text-xl ${colors.icon}`}>
+                  {alert.icon}
+                </span>
+              </div>
               <div className="text-left min-w-0 flex-1">
                 <p className={`font-semibold ${colors.text}`}>
                   {alert.label}
                 </p>
-                <p className={`text-xs ${colors.text} opacity-70`}>
+                <p className={`text-xs ${colors.subtext}`}>
                   {alert.cta.split(' →')[0]}
                 </p>
               </div>

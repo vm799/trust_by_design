@@ -56,22 +56,22 @@ const TeamStatusBar: React.FC = () => {
   const statusConfig: Record<TechWorkStatus, { label: string; color: string; icon: string }> = {
     idle: {
       label: 'Idle',
-      color: 'bg-slate-100 dark:bg-slate-800 text-slate-400',
+      color: 'bg-slate-500/10 text-slate-400',
       icon: 'hourglass_empty',
     },
     active: {
       label: 'Active',
-      color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       icon: 'engineering',
     },
     stuck: {
       label: 'Stuck',
-      color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       icon: 'warning',
     },
     completed_today: {
       label: 'Done',
-      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+      color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
       icon: 'check_circle',
     },
   };

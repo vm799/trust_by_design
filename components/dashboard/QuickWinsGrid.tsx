@@ -126,28 +126,34 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
 
   const colorConfig = {
     emerald: {
-      bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      hover: 'hover:from-emerald-100 hover:to-emerald-200 dark:hover:from-emerald-900 dark:hover:to-emerald-800',
-      text: 'text-emerald-900 dark:text-emerald-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
       icon: 'text-emerald-600 dark:text-emerald-400',
-      accent: 'text-emerald-700 dark:text-emerald-300',
+      iconBg: 'bg-emerald-500/10',
+      accent: 'text-slate-600 dark:text-slate-400',
+      leftBorder: 'border-l-4 border-l-emerald-500',
     },
     blue: {
-      bg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900',
-      border: 'border-blue-200 dark:border-blue-800',
-      hover: 'hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900 dark:hover:to-blue-800',
-      text: 'text-blue-900 dark:text-blue-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
       icon: 'text-blue-600 dark:text-blue-400',
-      accent: 'text-blue-700 dark:text-blue-300',
+      iconBg: 'bg-blue-500/10',
+      accent: 'text-slate-600 dark:text-slate-400',
+      leftBorder: 'border-l-4 border-l-blue-500',
     },
     purple: {
-      bg: 'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900',
-      border: 'border-purple-200 dark:border-purple-800',
-      hover: 'hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-900 dark:hover:to-purple-800',
-      text: 'text-purple-900 dark:text-purple-100',
+      bg: 'bg-white dark:bg-slate-900/80',
+      border: 'border-slate-200 dark:border-slate-800',
+      hover: 'hover:bg-slate-50 dark:hover:bg-slate-800/80',
+      text: 'text-slate-900 dark:text-white',
       icon: 'text-purple-600 dark:text-purple-400',
-      accent: 'text-purple-700 dark:text-purple-300',
+      iconBg: 'bg-purple-500/10',
+      accent: 'text-slate-600 dark:text-slate-400',
+      leftBorder: 'border-l-4 border-l-purple-500',
     },
   };
 
@@ -170,8 +176,8 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
             transition={{ ...transitionQuick, delay: index * 0.1 }}
             onClick={card.onAction}
             className={`
-              ${colors.bg} ${colors.border} ${colors.hover}
-              border-2 rounded-xl p-6
+              ${colors.bg} ${colors.border} ${colors.hover} ${colors.leftBorder}
+              border rounded-xl p-6
               transition-all duration-200 cursor-pointer
               hover:shadow-lg hover:-translate-y-1
               text-left group
@@ -180,10 +186,12 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
           >
             {/* Icon */}
             <div className="flex items-start justify-between mb-4">
-              <span className={`material-symbols-outlined text-3xl ${colors.icon}`}>
-                {card.icon}
-              </span>
-              <span className={`material-symbols-outlined text-lg ${colors.icon} group-hover:translate-x-1 transition-transform`}>
+              <div className={`size-10 rounded-xl ${colors.iconBg} flex items-center justify-center`}>
+                <span className={`material-symbols-outlined text-xl ${colors.icon}`}>
+                  {card.icon}
+                </span>
+              </div>
+              <span className="material-symbols-outlined text-lg text-slate-400 group-hover:translate-x-1 transition-transform">
                 chevron_right
               </span>
             </div>
@@ -201,7 +209,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
             {/* Trend */}
             {card.trend && (
               <p className={`text-xs font-medium ${
-                card.trendColor === 'green' ? `${colors.accent}` :
+                card.trendColor === 'green' ? 'text-emerald-600 dark:text-emerald-400' :
                 card.trendColor === 'amber' ? 'text-amber-600 dark:text-amber-400' :
                 'text-slate-400 dark:text-slate-400'
               }`}>
@@ -211,7 +219,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
             )}
 
               {/* CTA */}
-              <p className={`text-xs font-bold uppercase tracking-wide mt-4 ${colors.accent}`}>
+              <p className="text-xs font-bold uppercase tracking-wide mt-4 text-primary">
                 {card.cta}
               </p>
             </motion.button>

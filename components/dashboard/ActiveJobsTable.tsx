@@ -96,31 +96,39 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
     const status = getJobStatus(job);
     const config = {
       overdue: {
-        bg: 'bg-red-50 dark:bg-red-950',
-        border: 'border-red-200 dark:border-red-800',
-        text: 'text-red-900 dark:text-red-100',
-        badge: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200',
+        bg: 'bg-white dark:bg-slate-900/80',
+        border: 'border-slate-200 dark:border-slate-800',
+        leftBorder: 'border-l-4 border-l-red-500',
+        text: 'text-slate-900 dark:text-white',
+        subtext: 'text-slate-500 dark:text-slate-400',
+        badge: 'bg-red-500/10 text-red-600 dark:text-red-400',
         icon: '⚠️',
       },
       'in-progress': {
-        bg: 'bg-blue-50 dark:bg-blue-950',
-        border: 'border-blue-200 dark:border-blue-800',
-        text: 'text-blue-900 dark:text-blue-100',
-        badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200',
+        bg: 'bg-white dark:bg-slate-900/80',
+        border: 'border-slate-200 dark:border-slate-800',
+        leftBorder: 'border-l-4 border-l-blue-500',
+        text: 'text-slate-900 dark:text-white',
+        subtext: 'text-slate-500 dark:text-slate-400',
+        badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
         icon: '⏳',
       },
       complete: {
-        bg: 'bg-emerald-50 dark:bg-emerald-950',
-        border: 'border-emerald-200 dark:border-emerald-800',
-        text: 'text-emerald-900 dark:text-emerald-100',
-        badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200',
+        bg: 'bg-white dark:bg-slate-900/80',
+        border: 'border-slate-200 dark:border-slate-800',
+        leftBorder: 'border-l-4 border-l-emerald-500',
+        text: 'text-slate-900 dark:text-white',
+        subtext: 'text-slate-500 dark:text-slate-400',
+        badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
         icon: '✓',
       },
       default: {
-        bg: 'bg-slate-50 dark:bg-slate-800',
-        border: 'border-slate-200 dark:border-slate-600',
-        text: 'text-slate-900 dark:text-slate-100',
-        badge: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+        bg: 'bg-white dark:bg-slate-900/80',
+        border: 'border-slate-200 dark:border-slate-800',
+        leftBorder: 'border-l-4 border-l-slate-400',
+        text: 'text-slate-900 dark:text-white',
+        subtext: 'text-slate-500 dark:text-slate-400',
+        badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
         icon: '→',
       },
     };
@@ -224,8 +232,8 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                     navigate(`/admin/jobs/${job.id}`);
                   }}
                 className={`
-                  w-full p-4 rounded-lg border-2 text-left
-                  ${statusColor.bg} ${statusColor.border}
+                  w-full p-4 rounded-lg border text-left
+                  ${statusColor.bg} ${statusColor.border} ${statusColor.leftBorder}
                   hover:shadow-md hover:-translate-y-0.5
                   transition-all duration-200 cursor-pointer
                   group
@@ -235,11 +243,10 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                   <div className="flex-1 min-w-0">
                     {/* Job ID & Status */}
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{statusColor.icon}</span>
                       <p className={`font-mono text-sm font-bold ${statusColor.text}`}>
                         {job.id}
                       </p>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${statusColor.badge}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor.badge}`}>
                         {job.status}
                       </span>
                     </div>
@@ -248,7 +255,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                     <p className={`text-sm font-semibold ${statusColor.text} mb-1`}>
                       {clientName}
                     </p>
-                    <p className={`text-xs ${statusColor.text} opacity-70`}>
+                    <p className={`text-xs ${statusColor.subtext}`}>
                       Assigned: {techName}
                     </p>
 
