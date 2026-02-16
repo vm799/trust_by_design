@@ -4,6 +4,7 @@
 // Phase: C.3 - Cryptographic Sealing
 // Purpose: Server-side cryptographic sealing of evidence bundles
 // Security: Private key never exposed to client
+// Supports: User JWT auth (client) + service_role auth (server-to-server)
 // =====================================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -85,43 +86,84 @@ serve(async (req) => {
       )
     }
 
-    // 2. Initialize Supabase client with user's auth
-    const supabaseClient = createClient(
+    // 2. Detect auth method: service_role (server-to-server) vs user JWT
+    const authHeader = req.headers.get('Authorization') || ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const isServiceRole = !!serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`
+
+    // Service role client for all database operations (bypasses RLS)
+    const supabaseServiceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      serviceRoleKey
     )
 
-    // 3. Authenticate user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser()
+    let sealedByEmail = 'system@jobproof.pro'
+    let sealedByUserId: string | null = null
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - valid session required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    if (!isServiceRole) {
+      // 3a. User JWT auth path
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: { Authorization: authHeader },
+          },
+        }
       )
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabaseClient.auth.getUser()
+
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - valid session required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      sealedByEmail = user.email!
+      sealedByUserId = user.id
+    } else {
+      console.log(`[SealEvidence] Service role auth for job ${jobId}`)
     }
 
-    // 4. Fetch job data
-    const { data: job, error: jobError } = await supabaseClient
+    // 4. Fetch job data - try jobs table first, then bunker_jobs
+    let job: any = null
+    let jobSource = ''
+
+    const { data: mainJob } = await supabaseServiceClient
       .from('jobs')
       .select('*')
       .eq('id', jobId)
       .single()
 
-    if (jobError || !job) {
+    if (mainJob) {
+      job = mainJob
+      jobSource = 'jobs'
+    } else {
+      const { data: bunkerJob } = await supabaseServiceClient
+        .from('bunker_jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single()
+
+      if (bunkerJob) {
+        job = bunkerJob
+        jobSource = 'bunker_jobs'
+      }
+    }
+
+    if (!job) {
       return new Response(
         JSON.stringify({ error: 'Job not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log(`[SealEvidence] Found job ${jobId} in ${jobSource}`)
 
     // 5. Check if job is already sealed
     if (job.sealed_at) {
@@ -134,46 +176,79 @@ serve(async (req) => {
       )
     }
 
-    // 6. Check if user has permission to seal (must be in same workspace)
-    const { data: userProfile } = await supabaseClient
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single()
+    // 6. Workspace permission check (skip for service_role calls)
+    if (!isServiceRole && sealedByUserId && job.workspace_id) {
+      const { data: userProfile } = await supabaseServiceClient
+        .from('users')
+        .select('workspace_id')
+        .eq('id', sealedByUserId)
+        .single()
 
-    if (!userProfile || userProfile.workspace_id !== job.workspace_id) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - cannot seal job in different workspace' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      if (!userProfile || userProfile.workspace_id !== job.workspace_id) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - cannot seal job in different workspace' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     // 7. Build evidence bundle (canonical JSON)
+    // Build photo entries based on job source
+    let photos: EvidenceBundle['photos'] = []
+
+    if (jobSource === 'bunker_jobs') {
+      // Bunker jobs store photos inline as base64 columns
+      if (job.before_photo_data) {
+        photos.push({
+          id: `${jobId}_before`,
+          url: 'inline:before',
+          timestamp: job.before_photo_timestamp || job.completed_at || new Date().toISOString(),
+          lat: job.before_photo_lat ? Number(job.before_photo_lat) : undefined,
+          lng: job.before_photo_lng ? Number(job.before_photo_lng) : undefined,
+          type: 'before',
+        })
+      }
+      if (job.after_photo_data) {
+        photos.push({
+          id: `${jobId}_after`,
+          url: 'inline:after',
+          timestamp: job.after_photo_timestamp || job.completed_at || new Date().toISOString(),
+          lat: job.after_photo_lat ? Number(job.after_photo_lat) : undefined,
+          lng: job.after_photo_lng ? Number(job.after_photo_lng) : undefined,
+          type: 'after',
+        })
+      }
+    } else {
+      photos = job.photos || []
+    }
+
     const evidenceBundle: EvidenceBundle = {
       job: {
         id: job.id,
         title: job.title,
-        client: job.client_name,
-        clientId: job.client_id,
-        technician: job.technician_name,
-        technicianId: job.technician_id,
-        date: job.scheduled_date,
-        address: job.address,
+        client: jobSource === 'bunker_jobs' ? (job.client || '') : (job.client_name || ''),
+        clientId: job.client_id || '',
+        technician: job.technician_name || '',
+        technicianId: job.technician_id || '',
+        date: job.scheduled_date || job.created_at || new Date().toISOString(),
+        address: job.address || '',
         notes: job.notes || '',
         workSummary: job.work_summary || '',
         safetyChecklist: job.safety_checklist || [],
         siteHazards: job.site_hazards || [],
         completedAt: job.completed_at || new Date().toISOString(),
       },
-      photos: job.photos || [],
+      photos,
       signature: {
-        url: job.signature_url || null,
+        url: jobSource === 'bunker_jobs'
+          ? (job.signature_data ? 'inline:signature' : null)
+          : (job.signature_url || null),
         signerName: job.signer_name,
         signerRole: job.signer_role,
       },
       metadata: {
         sealedAt: new Date().toISOString(),
-        sealedBy: user.email!,
+        sealedBy: sealedByEmail,
         version: '1.0',
       },
     }
@@ -254,21 +329,16 @@ serve(async (req) => {
     }
 
     // 10. Store seal in database (using service role client for insert permission)
-    const supabaseServiceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
     const sealedAt = new Date().toISOString()
 
     const { error: sealError } = await supabaseServiceClient.from('evidence_seals').insert({
       job_id: jobId,
-      workspace_id: job.workspace_id,
+      workspace_id: job.workspace_id || null,
       evidence_hash: evidenceHash,
       signature: signature,
       algorithm: algorithm,
-      sealed_by_user_id: user.id,
-      sealed_by_email: user.email,
+      sealed_by_user_id: sealedByUserId,
+      sealed_by_email: sealedByEmail,
       evidence_bundle: evidenceBundle,
       sealed_at: sealedAt,
     })
@@ -281,21 +351,23 @@ serve(async (req) => {
       )
     }
 
-    // 11. Update job.sealed_at
-    const { error: updateError } = await supabaseServiceClient
-      .from('jobs')
-      .update({ sealed_at: sealedAt, status: 'Submitted' })
-      .eq('id', jobId)
+    // 11. Update sealed_at on the source table
+    if (jobSource === 'jobs') {
+      const { error: updateError } = await supabaseServiceClient
+        .from('jobs')
+        .update({ sealed_at: sealedAt, evidence_hash: evidenceHash, status: 'Submitted' })
+        .eq('id', jobId)
 
-    if (updateError) {
-      console.error('Failed to update job seal status:', updateError)
-      // Rollback seal insertion
-      await supabaseServiceClient.from('evidence_seals').delete().eq('job_id', jobId)
-      return new Response(
-        JSON.stringify({ error: 'Failed to seal job', details: updateError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      if (updateError) {
+        console.error('Failed to update job seal status:', updateError)
+        await supabaseServiceClient.from('evidence_seals').delete().eq('job_id', jobId)
+        return new Response(
+          JSON.stringify({ error: 'Failed to seal job', details: updateError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
+    // bunker_jobs sealed_at/evidence_hash update is handled by generate-report Step 5
 
     // 12. Magic link tokens are automatically invalidated by database trigger
 
@@ -306,6 +378,7 @@ serve(async (req) => {
         evidenceHash,
         signature: signature.substring(0, 32) + '...', // Truncate for response
         sealedAt,
+        sealedBy: sealedByEmail,
         message: 'Evidence sealed successfully',
       }),
       {
@@ -327,26 +400,3 @@ serve(async (req) => {
     )
   }
 })
-
-/* =====================================================================
- * DEPLOYMENT NOTES:
- * =====================================================================
- *
- * 1. Deploy this function using Supabase CLI:
- *    supabase functions deploy seal-evidence
- *
- * 2. Set environment variables in Supabase Dashboard:
- *    - SEAL_SECRET_KEY (for HMAC) or
- *    - SEAL_PRIVATE_KEY (for RSA-2048 in production)
- *    - SEAL_PUBLIC_KEY (for verification)
- *
- * 3. Grant permissions:
- *    - Function requires SUPABASE_SERVICE_ROLE_KEY to bypass RLS
- *
- * 4. Upgrade to RSA-2048 for production:
- *    - Generate keys: openssl genrsa -out private_key.pem 2048
- *    - Store in Supabase Vault
- *    - Replace HMAC code with RSA signing
- *
- * =====================================================================
- */
