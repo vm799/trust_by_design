@@ -1,16 +1,16 @@
 /**
- * OfflineIndicator - Failed Sync Retry Tests
+ * OfflineIndicator - Sync Recovery Tests
  *
- * Verifies the retry UI for permanently failed sync items:
+ * Verifies the SELF-SUFFICIENT sync status detection and retry UI:
+ * - Reads sync queue directly (no parent passes syncStatus prop)
  * - Shows failed job list with retry buttons
  * - "Retry All" button calls retryFailedSyncItem for each failed item
- * - Individual retry buttons work
- * - Successful retry removes item from list
  * - 44px touch targets on all interactive elements
+ * - Banner appears based on live queue polling, not props
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 
 // Mock useNetworkStatus
@@ -32,30 +32,33 @@ vi.mock('../../../hooks/useNetworkStatus', () => ({
 // Mock syncQueue functions
 const mockRetryFailedSyncItem = vi.fn();
 const mockGetFailedSyncQueue = vi.fn();
+const mockGetSyncQueueStatus = vi.fn();
 vi.mock('../../../lib/syncQueue', () => ({
   getFailedSyncQueue: (...args: unknown[]) => mockGetFailedSyncQueue(...args),
+  getSyncQueueStatus: (...args: unknown[]) => mockGetSyncQueueStatus(...args),
   retryFailedSyncItem: (...args: unknown[]) => mockRetryFailedSyncItem(...args),
 }));
 
 import { OfflineIndicator } from '../../../components/OfflineIndicator';
 
-describe('OfflineIndicator - Failed Sync Retry UI', () => {
+describe('OfflineIndicator - Sync Recovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     mockIsOnline = true;
     mockIsChecking = false;
     mockGetFailedSyncQueue.mockReturnValue([]);
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 0 });
     mockRetryFailedSyncItem.mockResolvedValue(false);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it('renders nothing when online with no sync issues', () => {
-    const { container } = render(
-      <OfflineIndicator syncStatus={{ pending: 0, failed: 0 }} />
-    );
+    const { container } = render(<OfflineIndicator />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -65,7 +68,23 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
     expect(screen.getByText('Bunker Mode')).toBeTruthy();
   });
 
-  it('shows failed sync banner with Retry All button when online with failures', () => {
+  it('self-detects failed sync items WITHOUT syncStatus prop', () => {
+    // No syncStatus prop passed — component reads queue directly
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+      { id: 'job-2', type: 'job', data: {}, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText(/Sync Issues/i)).toBeTruthy();
+    expect(screen.getByText(/2 items failed to sync/i)).toBeTruthy();
+    expect(screen.getByText(/Retry All/i)).toBeTruthy();
+  });
+
+  it('shows failed sync banner with Retry All button when prop is passed', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
     mockGetFailedSyncQueue.mockReturnValue([
       { id: 'job-1', type: 'job', data: { title: 'HVAC Repair' }, retryCount: 7 },
     ]);
@@ -77,6 +96,8 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
   });
 
   it('Retry All button calls retryFailedSyncItem for each failed item', async () => {
+    vi.useRealTimers();
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
     mockGetFailedSyncQueue.mockReturnValue([
       { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
       { id: 'job-2', type: 'job', data: {}, retryCount: 7 },
@@ -96,11 +117,13 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
   });
 
   it('shows retrying state while retry is in progress', async () => {
+    vi.useRealTimers();
     // Make retry hang so we can observe the loading state
     let resolveRetry: (v: boolean) => void;
     mockRetryFailedSyncItem.mockImplementation(
       () => new Promise<boolean>((resolve) => { resolveRetry = resolve; })
     );
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
     mockGetFailedSyncQueue.mockReturnValue([
       { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
     ]);
@@ -123,6 +146,7 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
   });
 
   it('Retry All button has minimum 44px touch target', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
     mockGetFailedSyncQueue.mockReturnValue([
       { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
     ]);
@@ -136,6 +160,7 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
 
   it('does not show retry UI when offline (retries would fail)', () => {
     mockIsOnline = false;
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
     mockGetFailedSyncQueue.mockReturnValue([
       { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
     ]);
@@ -148,9 +173,44 @@ describe('OfflineIndicator - Failed Sync Retry UI', () => {
   });
 
   it('shows syncing banner when items are pending (not failed)', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 3, failed: 0 });
+
     render(<OfflineIndicator syncStatus={{ pending: 3, failed: 0 }} />);
 
     expect(screen.getByText(/Syncing Changes/i)).toBeTruthy();
     expect(screen.getByText(/3 items pending sync/i)).toBeTruthy();
+  });
+
+  it('polls getSyncQueueStatus on mount', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 0 });
+
+    render(<OfflineIndicator />);
+
+    // Should have called getSyncQueueStatus at least once on mount
+    expect(mockGetSyncQueueStatus).toHaveBeenCalled();
+  });
+
+  it('refreshes status after successful retry', async () => {
+    vi.useRealTimers();
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+    ]);
+    mockRetryFailedSyncItem.mockResolvedValue(true);
+
+    render(<OfflineIndicator />);
+
+    const retryAllBtn = screen.getByText(/Retry All/i);
+
+    // Reset call count to track calls after retry
+    mockGetSyncQueueStatus.mockClear();
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 0 });
+
+    fireEvent.click(retryAllBtn);
+
+    await waitFor(() => {
+      // Should have re-read status after retry completed
+      expect(mockGetSyncQueueStatus).toHaveBeenCalled();
+    });
   });
 });

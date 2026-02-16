@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { getFailedSyncQueue, retryFailedSyncItem } from '../lib/syncQueue';
+import { getFailedSyncQueue, getSyncQueueStatus, retryFailedSyncItem } from '../lib/syncQueue';
 
 interface OfflineIndicatorProps {
   syncStatus?: {
@@ -14,20 +14,40 @@ interface OfflineIndicatorProps {
  * Offline/Network Status Indicator
  * Shows connection status, pending sync items, and failed sync retry UI
  *
+ * SELF-SUFFICIENT: Reads sync queue directly via getSyncQueueStatus()
+ * because no parent view passes the syncStatus prop. Falls back to prop
+ * if provided, but always supplements with direct queue reads.
+ *
  * Features:
  * - P1-4: Real network status via ping (not just navigator.onLine)
- * - Sync queue visibility
+ * - Sync queue visibility (reads localStorage directly)
  * - Failed sync retry with one-tap "Retry All"
+ * - Auto-polls queue every 3s when online (catches background sync changes)
  * - Auto-hide when online and synced
  * - Mobile-optimized (44px+ touch targets)
  * - Memoized to prevent unnecessary re-renders
  */
-const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStatus, className = '' }) => {
+const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStatus: syncStatusProp, className = '' }) => {
   // P1-4: Use improved network detection (actual ping, not just navigator.onLine)
   const { isOnline, isChecking } = useNetworkStatus();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryResults, setRetryResults] = useState<{ succeeded: number; failed: number } | null>(null);
+  const [liveStatus, setLiveStatus] = useState<{ pending: number; failed: number }>({ pending: 0, failed: 0 });
+
+  // Poll sync queue status directly — no parent passes this prop
+  useEffect(() => {
+    const poll = () => {
+      setLiveStatus(getSyncQueueStatus());
+    };
+
+    // Initial read
+    poll();
+
+    // Poll every 3s when online to catch background sync changes
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [isOnline]);
 
   // Reset dismissed state when going offline
   useEffect(() => {
@@ -44,7 +64,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
     }
   }, [retryResults]);
 
-  // Retry all failed sync items
+  // Retry all failed sync items, then refresh status
   const handleRetryAll = useCallback(async () => {
     const failedItems = getFailedSyncQueue();
     if (failedItems.length === 0 || isRetrying) return;
@@ -66,11 +86,14 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
 
     setRetryResults({ succeeded, failed });
     setIsRetrying(false);
+    // Refresh status immediately after retry completes
+    setLiveStatus(getSyncQueueStatus());
   }, [isRetrying]);
 
-  // Don't show if online and no pending syncs
-  const hasPending = (syncStatus?.pending || 0) > 0;
-  const hasFailed = (syncStatus?.failed || 0) > 0;
+  // Use prop if provided, otherwise use live polled status
+  const syncStatus = syncStatusProp || liveStatus;
+  const hasPending = syncStatus.pending > 0;
+  const hasFailed = syncStatus.failed > 0;
 
   if (isOnline && !hasPending && !hasFailed) return null;
   if (isDismissed && isOnline) return null;
@@ -114,7 +137,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               Syncing Changes
             </h3>
             <p className="text-xs text-slate-300 font-medium">
-              {syncStatus?.pending || 0} {syncStatus?.pending === 1 ? 'item' : 'items'} pending sync...
+              {syncStatus.pending} {syncStatus.pending === 1 ? 'item' : 'items'} pending sync...
             </p>
           </div>
         </div>
@@ -136,7 +159,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               <p className="text-xs text-slate-300 font-medium">
                 {isRetrying
                   ? 'Attempting to sync failed items...'
-                  : `${syncStatus?.failed || 0} ${syncStatus?.failed === 1 ? 'item' : 'items'} failed to sync. Tap retry when you have signal.`}
+                  : `${syncStatus.failed} ${syncStatus.failed === 1 ? 'item' : 'items'} failed to sync. Tap retry when you have signal.`}
               </p>
             </div>
           </div>

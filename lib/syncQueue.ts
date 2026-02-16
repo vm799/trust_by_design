@@ -375,38 +375,111 @@ export const addToSyncQueue = (job: Job): void => {
 
 /**
  * Get sync queue status
+ *
+ * CRITICAL FIX: Counts BOTH the active retry queue AND the permanently
+ * failed queue. Previously only checked jobproof_sync_queue, but items
+ * are moved to jobproof_failed_sync_queue after MAX_RETRIES — so the
+ * failed count was always 0 and the UI never showed sync failures.
  */
 export const getSyncQueueStatus = (): { pending: number; failed: number } => {
-  const queueJson = localStorage.getItem('jobproof_sync_queue');
-  if (!queueJson) return { pending: 0, failed: 0 };
+  let pending = 0;
+  let failed = 0;
 
   try {
-    const queue: SyncQueueItem[] = JSON.parse(queueJson);
-    const failed = queue.filter(item => item.retryCount >= MAX_RETRIES).length;
-    const pending = queue.length - failed;
-    return { pending, failed };
+    // Count items still in active retry queue
+    const queueJson = localStorage.getItem('jobproof_sync_queue');
+    if (queueJson) {
+      const queue: SyncQueueItem[] = JSON.parse(queueJson);
+      pending = queue.length;
+    }
+
+    // Count permanently failed items (moved here after MAX_RETRIES)
+    const failedJson = localStorage.getItem('jobproof_failed_sync_queue');
+    if (failedJson) {
+      const failedQueue = JSON.parse(failedJson);
+      failed = Array.isArray(failedQueue) ? failedQueue.length : 0;
+    }
   } catch {
-    return { pending: 0, failed: 0 };
+    // Graceful fallback on corrupted localStorage
+  }
+
+  return { pending, failed };
+};
+
+/**
+ * Auto-retry all permanently failed sync items
+ *
+ * Called automatically when regaining connectivity (bunker exit scenario).
+ * Iterates through jobproof_failed_sync_queue and retries each item.
+ * Successful items are removed; failed items stay for manual retry.
+ *
+ * Uses its own concurrency guard to prevent double-processing.
+ */
+let _failedRetryInProgress = false;
+export const autoRetryFailedQueue = async (): Promise<void> => {
+  if (_failedRetryInProgress) return;
+  if (!navigator.onLine) return;
+
+  const failedItems = getFailedSyncQueue();
+  if (failedItems.length === 0) return;
+
+  _failedRetryInProgress = true;
+  try {
+    let recovered = 0;
+
+    for (const item of failedItems) {
+      let success = false;
+      if (item.type === 'job') {
+        success = await syncJobToSupabase(item.data);
+      }
+
+      if (success) {
+        // Remove from failed queue
+        const currentQueue = getFailedSyncQueue();
+        const updatedQueue = currentQueue.filter(i => i.id !== item.id);
+        localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(updatedQueue));
+        recovered++;
+      }
+    }
+
+    if (recovered > 0) {
+      showPersistentNotification({
+        type: 'success',
+        title: 'Evidence Synced',
+        message: `${recovered} job(s) successfully synced after reconnection.`,
+        persistent: false
+      });
+    }
+  } catch (error) {
+    console.error('Failed to auto-retry failed queue:', error);
+  } finally {
+    _failedRetryInProgress = false;
   }
 };
 
 /**
  * Start background sync worker (call once on app load)
  * PERFORMANCE FIX: Reduced interval from 60s to 5 minutes to minimize API calls
+ *
+ * BUNKER RECOVERY: On reconnection, retries BOTH the active queue AND
+ * the permanently failed queue. This ensures a technician exiting a
+ * no-signal zone has their evidence auto-synced without manual intervention.
  */
 export const startSyncWorker = (): void => {
   if (!isSupabaseAvailable()) return;
 
-  // Retry failed syncs every 5 minutes (reduced from 60s to minimize API load)
+  // Retry active queue every 5 minutes
   setInterval(() => {
     if (navigator.onLine) {
       retryFailedSyncs();
     }
   }, 300000); // 5 minutes
 
-  // Also retry on network reconnection
+  // On reconnection: retry BOTH queues (bunker exit scenario)
   window.addEventListener('online', () => {
     retryFailedSyncs();
+    // Delay failed queue retry by 5s to let active queue process first
+    setTimeout(() => autoRetryFailedQueue(), 5000);
   });
 };
 
