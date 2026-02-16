@@ -31,7 +31,7 @@ const LandingPage = lazy(() => import('./views/LandingPage'));
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test
 const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
 const ManagerFocusDashboard = lazy(() => import('./views/app/ManagerFocusDashboard'));
-const CreateJob = lazy(() => import('./views/CreateJob'));
+// CreateJob removed - unified into JobCreationWizard at /admin/create
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test
 const ContractorDashboard = lazy(() => import('./views/ContractorDashboard'));
 const SoloContractorDashboard = lazy(() => import('./views/app/SoloContractorDashboard'));
@@ -606,11 +606,9 @@ const AppContent: React.FC = () => {
             <JobsList jobs={jobs} user={user} />
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
-        {/* SPRINT 3 FIX: Job Detail - Missing route causing "Assign Tech" button to fail */}
+        {/* Unified: /admin/jobs/new redirects to canonical /admin/create */}
         <Route path="/admin/jobs/new" element={isAuthenticated ? (
-          <RouteErrorBoundary sectionName="New Job" fallbackRoute="/admin/jobs">
-            <JobForm />
-          </RouteErrorBoundary>
+          <Navigate to="/admin/create" replace />
         ) : <Navigate to="/auth" replace />} />
         <Route path="/admin/jobs/:id" element={isAuthenticated ? (
           <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/admin/jobs">
@@ -633,12 +631,8 @@ const AppContent: React.FC = () => {
             <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} />
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
-        {/* Legacy Job Creation (kept for backwards compatibility) */}
-        <Route path="/admin/create-quick" element={isAuthenticated ? (
-          <RouteErrorBoundary sectionName="Quick Job Creation" fallbackRoute="/admin">
-            <CreateJob user={user} />
-          </RouteErrorBoundary>
-        ) : <Navigate to="/auth" replace />} />
+        {/* Legacy route redirect - CreateJob removed, unified into Wizard */}
+        <Route path="/admin/create-quick" element={<Navigate to="/admin/create" replace />} />
         <Route path="/admin/clients" element={isAuthenticated ? (
           <RouteErrorBoundary sectionName="Clients" fallbackRoute="/admin">
             <ClientsView user={user} clients={clients} onAdd={addClient} onDelete={deleteClient} />

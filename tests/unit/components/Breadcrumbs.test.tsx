@@ -120,7 +120,7 @@ describe('Breadcrumbs', () => {
         <Breadcrumbs
           items={[
             { label: 'Jobs', href: '/admin/jobs' },
-            { label: 'New Job', href: '/admin/jobs/new' },
+            { label: 'New Job', href: '/admin/create' },
           ]}
           showHome={false}
         />,

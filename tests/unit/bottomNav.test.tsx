@@ -50,10 +50,10 @@ describe('BottomNav Component', () => {
       expect(link?.getAttribute('href')).toBe('/admin/jobs');
     });
 
-    it('should link FAB to /admin/jobs/new', () => {
+    it('should link FAB to /admin/create', () => {
       renderWithRouter('/admin');
       const fab = screen.getByLabelText('Create new job');
-      expect(fab.getAttribute('href')).toBe('/admin/jobs/new');
+      expect(fab.getAttribute('href')).toBe('/admin/create');
     });
 
     it('should link Clients to /admin/clients', () => {

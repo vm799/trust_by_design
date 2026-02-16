@@ -94,7 +94,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
         {/* Center FAB: Add Job */}
         <div className="flex flex-col items-center -mt-4">
           <Link
-            to="/admin/jobs/new"
+            to="/admin/create"
             aria-label="Create new job"
             className="
               size-[56px] rounded-2xl

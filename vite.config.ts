@@ -122,7 +122,6 @@ export default defineConfig(({ mode }) => {
                 './views/ManagerIntentSelector.tsx'
               ],
               'admin-jobs': [
-                './views/CreateJob.tsx',
                 './views/JobCreationWizard.tsx',
                 './views/app/jobs/JobsList.tsx',
                 './views/ClientsView.tsx',

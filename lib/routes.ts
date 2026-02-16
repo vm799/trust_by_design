@@ -36,7 +36,6 @@ export const ROUTES = {
 
   // Jobs - actual routes
   JOBS: '/admin/jobs',
-  JOB_NEW: '/admin/jobs/new',
   JOB_CREATE: '/admin/create',
   JOB_DETAIL: '/admin/jobs/:id',
   JOB_EDIT: '/admin/jobs/:id/edit',

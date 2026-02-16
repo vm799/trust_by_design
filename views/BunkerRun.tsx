@@ -956,7 +956,7 @@ export default function BunkerRun() {
                 href="/#/create-job"
                 className={`px-6 py-3 rounded-lg min-h-[56px] ${buttonPrimaryClasses}`}
               >
-                Create New Job
+                New Job
               </a>
             </div>
           </div>
@@ -1067,7 +1067,7 @@ export default function BunkerRun() {
               href="/#/create-job"
               className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-center"
             >
-              + New Job
+              New Job
             </a>
           </div>
         </div>

@@ -74,7 +74,6 @@ describe('Architecture Compliance', () => {
       // Known legacy files - this list should NOT grow
       // If it does, investigate why a new view isn't using DataContext
       const knownLegacy = [
-        'views/CreateJob.tsx',
         'views/app/Dashboard.tsx',
         'views/app/clients/ClientDetail.tsx',
         'views/app/clients/ClientList.tsx',
