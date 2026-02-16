@@ -628,7 +628,7 @@ const AppContent: React.FC = () => {
         {/* Job Creation - UX Spec: 5-Step Guided Wizard */}
         <Route path="/admin/create" element={isAuthenticated ? (
           <RouteErrorBoundary sectionName="Job Creation" fallbackRoute="/admin">
-            <JobCreationWizard onAddJob={addJob} user={user} clients={clients} technicians={technicians} />
+            <JobCreationWizard />
           </RouteErrorBoundary>
         ) : <Navigate to="/auth" replace />} />
         {/* Legacy route redirect - CreateJob removed, unified into Wizard */}

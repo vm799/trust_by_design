@@ -1,28 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/AppLayout';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Job, Client, Technician, UserProfile } from '../types';
-import { createJob, generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
+import { Job } from '../types';
+import { generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
 import { navigateToNextStep } from '../lib/onboarding';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
-import { toast } from '../lib/toast';
+import { useData } from '../lib/DataContext';
+import { useAuth } from '../lib/AuthContext';
+import { safeSaveDraft, loadDraft, clearDraft as clearDraftDB, migrateDraftFromLocalStorage } from '../lib/utils/storageUtils';
+import { JOB_STATUS, SYNC_STATUS } from '../lib/constants';
 
 /**
- * Job Creation Wizard - UX Spec Compliant
+ * Job Creation Wizard - Unified Job Creation
  *
  * 5-Step Guided Flow (Progressive Disclosure):
  * 1. Job Basics (title, type, priority)
  * 2. Job Location (address, site notes, map preview)
  * 3. Scope & Requirements (description, safety, PPE)
- * 4. Assign Contractor (name, email/phone)
+ * 4. Assign Contractor (client required, technician optional)
  * 5. Review & Create
+ *
+ * Architecture: DataContext + IndexedDB drafts + ISO dates + constants
  */
 
 interface JobCreationWizardProps {
-  onAddJob: (job: Job) => void;
-  user: UserProfile | null;
-  clients: Client[];
-  technicians: Technician[];
+  onAddJob?: (job: Job) => void;
+  user?: { email?: string; persona?: string; workspace?: { id?: string } } | null;
+  clients?: never[];
+  technicians?: never[];
 }
 
 interface JobFormData {
@@ -82,24 +87,29 @@ const STEP_TITLES = [
   'Review & Create',
 ];
 
-const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
-  onAddJob,
-  user,
-  clients,
-  technicians,
-}) => {
+const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // DataContext: Single source of truth for all data operations
+  const {
+    clients,
+    technicians,
+    addJob: contextAddJob,
+  } = useData();
+
+  // AuthContext: Session and user info
+  const { session, userEmail } = useAuth();
+  const workspaceId = session?.user?.user_metadata?.workspace_id || 'default';
+  const userPersona = session?.user?.user_metadata?.persona;
+
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState('');
   const [magicLinkUrl, setMagicLinkUrl] = useState('');
-  const [magicLinkToken, setMagicLinkToken] = useState(''); // Track token for lifecycle
-
-  // Draft storage key for job creation wizard
-  const JOB_DRAFT_KEY = 'jobproof_job_creation_draft';
-  const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+  const [magicLinkToken, setMagicLinkToken] = useState('');
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
@@ -114,48 +124,65 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
     techId: '',
   });
 
-  // Load draft from localStorage on mount (BEFORE handling returnTo params)
+  // Load draft from IndexedDB on mount with workspace isolation + migration
   useEffect(() => {
-    try {
-      const savedDraft = localStorage.getItem(JOB_DRAFT_KEY);
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        if (Date.now() - draft.savedAt < DRAFT_EXPIRY_MS) {
-          setFormData(draft.formData);
-          setStep(draft.step || 1);
-        } else {
-          localStorage.removeItem(JOB_DRAFT_KEY);
-        }
-      }
-    } catch (e) {
-      console.warn('[JobCreationWizard] Failed to load draft:', e);
-    }
-  }, []);
+    if (draftLoaded) return;
 
-  // Auto-save draft on formData/step changes (debounced)
+    const loadDraftFromDB = async () => {
+      try {
+        // Migrate old localStorage drafts to IndexedDB
+        await migrateDraftFromLocalStorage('wizard', workspaceId);
+        // Also migrate from the old key name
+        const oldKey = 'jobproof_job_creation_draft';
+        try {
+          const oldDraft = localStorage.getItem(oldKey);
+          if (oldDraft) {
+            const parsed = JSON.parse(oldDraft);
+            if (parsed.formData) {
+              await safeSaveDraft('wizard', { ...parsed.formData, step: parsed.step } as unknown as Record<string, unknown>, workspaceId);
+              localStorage.removeItem(oldKey);
+            }
+          }
+        } catch { /* migration failed, non-critical */ }
+
+        const draftData = await loadDraft('wizard', workspaceId);
+        if (draftData && draftData.title !== undefined) {
+          const { step: savedStep, ...rest } = draftData as Record<string, unknown>;
+          setFormData(prev => ({ ...prev, ...rest as Partial<JobFormData> }));
+          if (typeof savedStep === 'number' && savedStep >= 1 && savedStep <= 5) {
+            setStep(savedStep);
+          }
+        }
+      } catch (e) {
+        console.error('[JobCreationWizard] Draft load failed:', e);
+      } finally {
+        setDraftLoaded(true);
+      }
+    };
+
+    loadDraftFromDB();
+  }, [draftLoaded, workspaceId]);
+
+  // Auto-save draft to IndexedDB (debounced, workspace-isolated)
   useEffect(() => {
-    // Don't save if form is empty
+    if (!draftLoaded) return;
     if (!formData.title && !formData.address && !formData.workDescription) return;
 
     const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(JOB_DRAFT_KEY, JSON.stringify({
-          formData,
-          step,
-          savedAt: Date.now()
-        }));
-      } catch (e) {
-        console.warn('[JobCreationWizard] Failed to save draft:', e);
-      }
+      safeSaveDraft('wizard', { ...formData, step } as unknown as Record<string, unknown>, workspaceId).catch((error) => {
+        console.error('[JobCreationWizard] Draft save failed:', error);
+      });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [formData, step]);
+  }, [formData, step, draftLoaded, workspaceId]);
 
   // Clear draft after successful job creation
-  const clearDraft = () => {
-    localStorage.removeItem(JOB_DRAFT_KEY);
-  };
+  const clearDraft = useCallback(async () => {
+    try {
+      await clearDraftDB('wizard', workspaceId);
+    } catch { /* non-critical */ }
+  }, [workspaceId]);
 
   // Phase 2.5: Auto-populate from returnTo params (client/technician creation flow)
   useEffect(() => {
@@ -227,7 +254,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
       case 3:
         return !!formData.workDescription.trim();
       case 4:
-        return !!formData.clientId && !!formData.techId;
+        return !!formData.clientId; // Technician is optional ("Assign later")
       default:
         return true;
     }
@@ -263,29 +290,29 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
   const handleDispatch = async () => {
     const client = clients.find(c => c.id === formData.clientId);
-    const tech = technicians.find(t => t.id === formData.techId);
-    if (!client || !tech) return;
+    if (!client) return;
+    const tech = formData.techId ? technicians.find(t => t.id === formData.techId) : null;
 
     setIsCreating(true);
 
     try {
-      const workspaceId = user?.workspace?.id;
-      if (!workspaceId) {
-        toast.error('Workspace not found. Please try logging in again.');
-        setIsCreating(false);
-        return;
-      }
+      // Build the full Job object - DataContext handles all persistence
+      const newJobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-      const jobData: Partial<Job> = {
-        title: formData.title,
+      const newJob: Job = {
+        id: newJobId,
+        title: formData.title.trim(),
+        description: formData.workDescription.trim() || undefined,
+        notes: formData.workDescription.trim() || '',
         client: client.name,
         clientId: client.id,
-        technician: tech.name,
-        techId: tech.id,
-        status: 'Pending',
-        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        address: formData.address,
-        notes: formData.workDescription,
+        technician: tech?.name || '',
+        technicianId: tech?.id || undefined,
+        techId: tech?.id || '',
+        address: formData.address.trim(),
+        date: new Date().toISOString(),
+        priority: formData.priority,
+        status: JOB_STATUS.PENDING,
         photos: [],
         signature: null,
         safetyChecklist: [
@@ -302,106 +329,37 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
             required: true,
           })),
         ],
-        syncStatus: 'synced',
+        siteHazards: [],
+        syncStatus: SYNC_STATUS.PENDING,
         lastUpdated: Date.now(),
       };
 
-      const result = await createJob(jobData, workspaceId);
+      // DataContext handles Supabase + Dexie offline queue automatically
+      contextAddJob(newJob);
+      setCreatedJobId(newJobId);
 
-      if (!result.success) {
-        // Fallback to localStorage
-        const newId = `JP-${crypto.randomUUID()}`;
-
-        // Generate magic link FIRST so we can store it on the job
-        // deliveryEmail is required for validated handshake URLs
-        if (!user?.email) {
-          showToast('Cannot create job: Your email is not available. Please log in again.', 'error');
-          setIsCreating(false);
-          return;
-        }
-        const localMagicLink = storeMagicLinkLocal(newId, user.email, workspaceId);
-
-        // Create job with magic link token embedded (CRITICAL for cross-browser access)
-        const localJob: Job = {
-          ...jobData,
-          id: newId,
-          magicLinkToken: localMagicLink.token,
-          magicLinkUrl: localMagicLink.url
-        } as Job;
-
-        // CRITICAL: Persist job WITH token to localStorage so magic link works across browsers
+      // Generate magic link if technician is assigned
+      if (tech && userEmail) {
         try {
-          const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
-          existingJobs.unshift(localJob);
-          localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-        } catch (e) {
-          console.error('[JobCreationWizard] Failed to persist job to localStorage:', e);
+          const magicLinkResult = await generateMagicLink(newJobId, userEmail);
+          if (magicLinkResult.success && magicLinkResult.data?.url) {
+            setMagicLinkUrl(magicLinkResult.data.url);
+            setMagicLinkToken(magicLinkResult.data.token);
+          } else {
+            const localMagicLink = storeMagicLinkLocal(newJobId, userEmail, workspaceId);
+            setMagicLinkUrl(localMagicLink.url);
+            setMagicLinkToken(localMagicLink.token);
+          }
+        } catch {
+          // Fallback to local token if magic link generation fails
+          const localMagicLink = storeMagicLinkLocal(newJobId, userEmail, workspaceId);
+          setMagicLinkUrl(localMagicLink.url);
+          setMagicLinkToken(localMagicLink.token);
         }
-
-        onAddJob(localJob);
-        setCreatedJobId(newId);
-        setMagicLinkUrl(localMagicLink.url);
-        setMagicLinkToken(localMagicLink.token);
-
-        clearDraft(); // Clear draft on successful creation
-        setShowSuccessModal(true);
-        setIsCreating(false);
-        return;
       }
 
-      const createdJob = result.data!;
-      setCreatedJobId(createdJob.id);
-
-      // Generate magic link with manager's email for report delivery
-      if (!user?.email) {
-        showToast('Cannot create job: Your email is not available. Please log in again.', 'error');
-        setIsCreating(false);
-        return;
-      }
-      const magicLinkResult = await generateMagicLink(createdJob.id, user.email);
-      let jobWithToken = createdJob;
-
-      if (magicLinkResult.success && magicLinkResult.data?.url) {
-        setMagicLinkUrl(magicLinkResult.data.url);
-        setMagicLinkToken(magicLinkResult.data.token);
-        // Store token on job for cross-browser access
-        jobWithToken = {
-          ...createdJob,
-          magicLinkToken: magicLinkResult.data.token,
-          magicLinkUrl: magicLinkResult.data.url
-        };
-      } else {
-        // Fallback to local token generation (user.email already validated above)
-        const localMagicLink = storeMagicLinkLocal(createdJob.id, user.email, workspaceId);
-        setMagicLinkUrl(localMagicLink.url);
-        setMagicLinkToken(localMagicLink.token);
-        // Store token on job for cross-browser access
-        jobWithToken = {
-          ...createdJob,
-          magicLinkToken: localMagicLink.token,
-          magicLinkUrl: localMagicLink.url
-        };
-      }
-
-      // Update localStorage with token-embedded job
-      try {
-        const existingJobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
-        const jobIndex = existingJobs.findIndex((j: Job) => j.id === jobWithToken.id);
-        if (jobIndex >= 0) {
-          existingJobs[jobIndex] = jobWithToken;
-        } else {
-          existingJobs.unshift(jobWithToken);
-        }
-        localStorage.setItem('jobproof_jobs_v2', JSON.stringify(existingJobs));
-      } catch (e) {
-        console.warn('[JobCreationWizard] Failed to update job with magic link token:', e);
-      }
-
-      onAddJob(jobWithToken);
-      clearDraft(); // Clear draft on successful creation
+      await clearDraft();
       setShowSuccessModal(true);
-
-      // PhD-Level Delight: Celebrate successful dispatch!
       celebrateSuccess();
     } catch (error) {
       console.error('Failed to create job:', error);
@@ -412,21 +370,19 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   };
 
   const copyMagicLink = () => {
-    // magicLinkUrl should always be set by now, but generate one if somehow not
     let urlToCopy = magicLinkUrl;
     let tokenToTrack = magicLinkToken;
-    if (!urlToCopy && createdJobId) {
-      if (!user?.email) {
-        showToast('Cannot copy link: Your email is not available. Please log in again.', 'error');
-        return;
-      }
-      const emergencyLink = storeMagicLinkLocal(createdJobId, user.email, user?.workspace?.id || 'local');
+    if (!urlToCopy && createdJobId && userEmail) {
+      const emergencyLink = storeMagicLinkLocal(createdJobId, userEmail, workspaceId);
       urlToCopy = emergencyLink.url;
       tokenToTrack = emergencyLink.token;
     }
+    if (!urlToCopy) {
+      showToast('No link available to copy.', 'error');
+      return;
+    }
     navigator.clipboard.writeText(urlToCopy);
 
-    // Track that the link was sent via copy
     if (tokenToTrack) {
       markLinkAsSent(tokenToTrack, 'copy');
     }
@@ -436,13 +392,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
   };
 
   const selectedClient = clients.find(c => c.id === formData.clientId);
-  const selectedTech = technicians.find(t => t.id === formData.techId);
+  const selectedTech = formData.techId ? technicians.find(t => t.id === formData.techId) : null;
 
   // Phase 2.5: Calculate progress percentage for smooth progress bar
   const progressPercent = ((step - 1) / (STEP_TITLES.length - 1)) * 100;
 
   return (
-    <Layout user={user}>
+    <Layout user={null}>
       <div className="max-w-2xl mx-auto pb-20">
         {/* Phase 2.5: Top Progress Bar - Fixed position for visibility */}
         <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm pt-4 pb-2 -mx-4 px-4 mb-6">
@@ -850,11 +806,10 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
 
               <div className="space-y-2">
                 <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                  Technician *
+                  Technician <span className="text-slate-500 normal-case">(optional)</span>
                 </label>
                 <select
                   id="wizard-technician"
-                  required
                   value={formData.techId}
                   onChange={(e) => {
                     if (e.target.value === '__add_new__') {
@@ -868,7 +823,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     technicians.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
-                  <option value="">Select Technician...</option>
+                  <option value="">Assign later...</option>
                   {technicians.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -943,7 +898,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                     </div>
                     <div className="text-right">
                       <p className="text-slate-400 text-xs">Technician</p>
-                      <p className="text-white font-bold">{selectedTech?.name}</p>
+                      <p className="text-white font-bold">{selectedTech?.name || <span className="text-slate-500 italic">Assign later</span>}</p>
                     </div>
                   </div>
                 </div>
@@ -1016,85 +971,96 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = ({
                 </div>
                 <h3 className="text-2xl font-black text-white uppercase tracking-tight">Job Created</h3>
                 <p className="text-slate-400 text-sm">
-                  Magic link ready for <span className="text-white font-bold">{selectedTech?.name}</span>
+                  {selectedTech
+                    ? <>Magic link ready for <span className="text-white font-bold">{selectedTech.name}</span></>
+                    : <>Job created. Assign a technician from the job detail page.</>
+                  }
                 </p>
               </div>
 
-              <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Magic Link</p>
-                <p className="text-xs font-mono text-white break-all bg-slate-950 p-3 rounded-lg">
-                  {magicLinkUrl || 'Generating link...'}
-                </p>
-              </div>
+              {/* Magic link section - only shown when technician assigned */}
+              {magicLinkUrl && selectedTech && (
+                <>
+                  <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Magic Link</p>
+                    <p className="text-xs font-mono text-white break-all bg-slate-950 p-3 rounded-lg">
+                      {magicLinkUrl}
+                    </p>
+                  </div>
 
-              {/* UAT Fix #11, #13: Multiple share options with tooltips */}
-              <div className="space-y-3">
-                {/* Primary action: Native share or copy */}
-                {typeof navigator !== 'undefined' && 'share' in navigator ? (
-                  <div className="relative group">
-                    <button
-                      onClick={async () => {
-                        const shareData = {
-                          title: `Job Assignment: ${formData.title}`,
-                          text: `You have been assigned a new job. Click to start:`,
-                          url: magicLinkUrl
-                        };
-                        try {
-                          await navigator.share(shareData);
-                          if (magicLinkToken) markLinkAsSent(magicLinkToken, 'share');
-                          showToast('Link shared successfully!', 'success');
-                        } catch (err) {
-                          if ((err as Error).name !== 'AbortError') {
-                            copyMagicLink();
+                  <div className="space-y-3">
+                    {typeof navigator !== 'undefined' && 'share' in navigator ? (
+                      <button
+                        onClick={async () => {
+                          const shareData = {
+                            title: `Job Assignment: ${formData.title}`,
+                            text: `You have been assigned a new job. Click to start:`,
+                            url: magicLinkUrl
+                          };
+                          try {
+                            await navigator.share(shareData);
+                            if (magicLinkToken) markLinkAsSent(magicLinkToken, 'share');
+                            showToast('Link shared successfully!', 'success');
+                          } catch (err) {
+                            if ((err as Error).name !== 'AbortError') {
+                              copyMagicLink();
+                            }
                           }
-                        }
-                      }}
-                      className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
-                      title="Share via your phone's native share menu (WhatsApp, SMS, Email, etc.)"
-                    >
-                      <span className="material-symbols-outlined">share</span>
-                      Share Link
-                    </button>
-                    {/* UAT Fix #13: Tooltip for share icon */}
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-900 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                      Use native share (WhatsApp, SMS, Email)
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-amber-500" />
+                        }}
+                        className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
+                        title="Share via your phone's native share menu (WhatsApp, SMS, Email, etc.)"
+                      >
+                        <span className="material-symbols-outlined">share</span>
+                        Share Link
+                      </button>
+                    ) : (
+                      <button
+                        onClick={copyMagicLink}
+                        className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined">content_copy</span>
+                        Copy Link
+                      </button>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <a
+                        href={`mailto:${selectedTech?.email || ''}?subject=${encodeURIComponent(`Job Assignment: ${formData.title}`)}&body=${encodeURIComponent(`You have been assigned a new job.\n\nJob: ${formData.title}\nClient: ${clients.find(c => c.id === formData.clientId)?.name || ''}\nAddress: ${formData.address}\n\nClick the link below to start:\n${magicLinkUrl}`)}`}
+                        onClick={() => {
+                          if (magicLinkToken) markLinkAsSent(magicLinkToken, 'email');
+                        }}
+                        className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                      >
+                        <span className="material-symbols-outlined text-sm">email</span>
+                        Email
+                      </a>
+                      <button
+                        onClick={copyMagicLink}
+                        className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
+                      >
+                        <span className="material-symbols-outlined text-sm">content_copy</span>
+                        Copy
+                      </button>
                     </div>
                   </div>
-                ) : (
-                  <button
-                    onClick={copyMagicLink}
-                    className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined">content_copy</span>
-                    Copy Link
-                  </button>
-                )}
+                </>
+              )}
 
-                {/* UAT Fix #11: Send via Email option */}
-                <div className="grid grid-cols-2 gap-3">
-                  <a
-                    href={`mailto:${selectedTech?.email || ''}?subject=${encodeURIComponent(`Job Assignment: ${formData.title}`)}&body=${encodeURIComponent(`You have been assigned a new job.\n\nJob: ${formData.title}\nClient: ${clients.find(c => c.id === formData.clientId)?.name || ''}\nAddress: ${formData.address}\n\nClick the link below to start:\n${magicLinkUrl}`)}`}
-                    onClick={() => {
-                      if (magicLinkToken) markLinkAsSent(magicLinkToken, 'email');
-                    }}
-                    className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
-                  >
-                    <span className="material-symbols-outlined text-sm">email</span>
-                    Email
-                  </a>
-                  <button
-                    onClick={copyMagicLink}
-                    className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
-                  >
-                    <span className="material-symbols-outlined text-sm">content_copy</span>
-                    Copy
-                  </button>
-                </div>
+              <div className="space-y-3">
+                {/* View job detail */}
+                <button
+                  onClick={() => navigate(`/admin/jobs/${createdJobId}`)}
+                  className={`w-full py-4 font-black rounded-xl uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] press-spring flex items-center justify-center gap-2 ${
+                    !selectedTech ? 'bg-primary text-white shadow-primary/20' : 'bg-white/10 text-white border border-white/10'
+                  }`}
+                >
+                  <span className="material-symbols-outlined">visibility</span>
+                  View Job
+                </button>
 
                 <button
                   onClick={() => {
-                    navigateToNextStep('CREATE_JOB', user?.persona, navigate);
+                    navigateToNextStep('CREATE_JOB', userPersona, navigate);
                   }}
                   className="w-full py-3 text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-white transition-all"
                 >
