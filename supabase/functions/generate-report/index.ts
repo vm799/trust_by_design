@@ -1119,11 +1119,13 @@ serve(async (req) => {
     if (sealedAt && evidenceHash && !job.sealed_at) {
       updatePayload.sealed_at = sealedAt;
       updatePayload.evidence_hash = evidenceHash;
+      updatePayload.sealed_by = job.sealed_by || 'system@jobproof.pro';
       updatePayload.status = 'Archived';
     }
 
+    // Update the source table (bunker_jobs or jobs)
     await supabase
-      .from('bunker_jobs')
+      .from(jobSource || 'bunker_jobs')
       .update(updatePayload)
       .eq('id', job.id);
 
