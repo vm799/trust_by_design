@@ -21,6 +21,8 @@ import { safeSaveDraft, loadDraft, clearDraft, migrateDraftFromLocalStorage } fr
 import { JOB_STATUS, SYNC_STATUS } from '../../../lib/constants';
 import { toast } from '../../../lib/toast';
 import { hapticConfirm, hapticWarning } from '../../../lib/haptics';
+import { generateMagicLink, storeMagicLinkLocal } from '../../../lib/db';
+import PostJobCreationModal from '../../../components/ui/PostJobCreationModal';
 
 interface FormData {
   title: string;
@@ -77,6 +79,13 @@ const JobForm: React.FC = () => {
   const [addingClient, setAddingClient] = useState(false);
   const [addingTech, setAddingTech] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Post-creation modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdJobMeta, setCreatedJobMeta] = useState<{
+    id: string; title: string; techName?: string; techEmail?: string;
+    clientName?: string; address?: string; magicLinkUrl?: string; magicLinkToken?: string;
+  } | null>(null);
 
   // Default form data factory
   const getDefaultFormData = useCallback((): FormData => {
@@ -300,7 +309,40 @@ const JobForm: React.FC = () => {
         };
         contextAddJob(newJob);
         hapticConfirm();
-        navigate(route(ROUTES.JOB_DETAIL, { id: newJob.id }));
+
+        // Generate magic link if technician assigned
+        let magicUrl: string | undefined;
+        let magicToken: string | undefined;
+        if (selectedTech && session?.user?.email) {
+          try {
+            const result = await generateMagicLink(newJob.id, session.user.email);
+            if (result.success && result.data?.url) {
+              magicUrl = result.data.url;
+              magicToken = result.data.token;
+            } else {
+              const local = storeMagicLinkLocal(newJob.id, session.user.email, workspaceId);
+              magicUrl = local.url;
+              magicToken = local.token;
+            }
+          } catch {
+            const local = storeMagicLinkLocal(newJob.id, session?.user?.email || '', workspaceId);
+            magicUrl = local.url;
+            magicToken = local.token;
+          }
+        }
+
+        // Show success modal with share options
+        setCreatedJobMeta({
+          id: newJob.id,
+          title: newJob.title,
+          techName: selectedTech?.name,
+          techEmail: selectedTech?.email,
+          clientName: selectedClient?.name,
+          address: newJob.address,
+          magicLinkUrl: magicUrl,
+          magicLinkToken: magicToken,
+        });
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error('Failed to save job:', error);
@@ -782,6 +824,25 @@ const JobForm: React.FC = () => {
           </div>
         </Modal>
       </PageContent>
+
+      {/* Post-creation success modal */}
+      {showSuccessModal && createdJobMeta && (
+        <PostJobCreationModal
+          jobId={createdJobMeta.id}
+          jobTitle={createdJobMeta.title}
+          technicianName={createdJobMeta.techName}
+          technicianEmail={createdJobMeta.techEmail}
+          clientName={createdJobMeta.clientName}
+          address={createdJobMeta.address}
+          magicLinkUrl={createdJobMeta.magicLinkUrl}
+          magicLinkToken={createdJobMeta.magicLinkToken}
+          userPersona={session?.user?.user_metadata?.persona}
+          onClose={() => {
+            setShowSuccessModal(false);
+            setCreatedJobMeta(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -156,7 +156,7 @@ export default function BunkerSuccess() {
             onClick={handleCreateAnother}
             className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
           >
-            Create New Job
+            New Job
           </button>
         </div>
 

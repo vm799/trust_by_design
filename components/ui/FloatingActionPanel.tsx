@@ -66,7 +66,7 @@ const FloatingActionPanel: React.FC = () => {
       return {
         label: 'New Job',
         icon: 'add_circle',
-        route: '/admin/jobs/new',
+        route: '/admin/create',
         color: 'bg-primary text-white',
       };
     }

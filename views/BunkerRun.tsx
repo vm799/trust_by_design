@@ -286,6 +286,32 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
     if (response.ok) {
       await runDb.jobs.update(job.id, { syncStatus: 'synced' });
 
+      // Bridge: Also upsert into main 'jobs' table so admins can see bunker jobs
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/jobs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify({
+            id: job.id,
+            title: job.title || `Bunker Job ${job.id}`,
+            description: job.notes || '',
+            notes: job.notes || '',
+            status: job.completedAt ? 'Complete' : 'In Progress',
+            photos: [],
+            created_at: new Date(job.lastUpdated).toISOString(),
+            updated_at: new Date().toISOString(),
+            origin: 'bunker',
+          }),
+        });
+      } catch {
+        // Non-blocking: bunker_jobs sync succeeded, main table bridge is best-effort
+      }
+
       // Trigger report generation if complete
       if (job.completedAt && job.managerEmail) {
         triggerReportGeneration(job);
@@ -956,7 +982,7 @@ export default function BunkerRun() {
                 href="/#/create-job"
                 className={`px-6 py-3 rounded-lg min-h-[56px] ${buttonPrimaryClasses}`}
               >
-                Create New Job
+                New Job
               </a>
             </div>
           </div>
@@ -1067,7 +1093,7 @@ export default function BunkerRun() {
               href="/#/create-job"
               className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-center"
             >
-              + New Job
+              New Job
             </a>
           </div>
         </div>
