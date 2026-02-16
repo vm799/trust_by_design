@@ -53,8 +53,6 @@ const AuthView = lazy(() => import('./views/AuthView'));
 const AuthCallback = lazy(() => import('./views/AuthCallback'));
 // UX Flow Contract: Dedicated expired link view with resend functionality
 const LinkExpiredView = lazy(() => import('./views/LinkExpiredView'));
-// V1 MVP: EmailFirstAuth removed - Magic Link only via AuthView
-// const EmailFirstAuth = lazy(() => import('./views/EmailFirstAuth'));
 const SignupSuccess = lazy(() => import('./views/SignupSuccess'));
 const CompleteOnboarding = lazy(() => import('./views/CompleteOnboarding'));
 const OAuthSetup = lazy(() => import('./views/OAuthSetup'));

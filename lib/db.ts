@@ -538,12 +538,6 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
     if (updates.magicLinkToken !== undefined) updateData.magic_link_token = updates.magicLinkToken;
     if (updates.magicLinkUrl !== undefined) updateData.magic_link_url = updates.magicLinkUrl;
 
-    // Security: Prevent updating seal-related fields directly. 
-    // These must be set via the seal-evidence Edge Function.
-    // if (updates.sealedAt !== undefined) updateData.sealed_at = updates.sealedAt;
-    // if (updates.sealedBy !== undefined) updateData.sealed_by = updates.sealedBy;
-    // if (updates.evidenceHash !== undefined) updateData.evidence_hash = updates.evidenceHash;
-
     const { data, error } = await supabase
       .from('jobs')
       .update(updateData)

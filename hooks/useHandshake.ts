@@ -113,28 +113,6 @@ export function useHandshake(jobId: string | undefined): UseHandshakeResult {
     // Validate checksum
     const isChecksumValid = urlChecksum ? validateChecksum(jobId, urlChecksum) : false;
 
-    // Log for debugging ghost link issues
-    if (isFromUrl) {
-      console.log('[useHandshake] Parsed from URL:', {
-        managerEmail,
-        clientEmail,
-        checksum: urlChecksum,
-        isChecksumValid,
-        fullHash: window.location.hash,
-      });
-    } else if (isStoredForThisJob && (storedManagerEmail || storedClientEmail)) {
-      console.log('[useHandshake] Restored from localStorage (page refresh):', {
-        managerEmail,
-        clientEmail,
-        jobId,
-      });
-    } else {
-      console.warn('[useHandshake] No handshake data found in URL or localStorage!', {
-        jobId,
-        fullHash: window.location.hash,
-      });
-    }
-
     // Store fresh URL params to localStorage for idempotent refresh
     if (isFromUrl) {
       if (urlManagerEmail) {
@@ -177,7 +155,6 @@ export function useHandshake(jobId: string | undefined): UseHandshakeResult {
       hasEmail: true,
     }));
 
-    console.log('[useHandshake] Manager email set manually:', email.trim());
   }, [jobId]);
 
   // Clear all handshake data
@@ -198,7 +175,6 @@ export function useHandshake(jobId: string | undefined): UseHandshakeResult {
       rawParams: new URLSearchParams(),
     });
 
-    console.log('[useHandshake] Handshake data cleared');
   }, []);
 
   // Persist current data to localStorage
@@ -213,7 +189,6 @@ export function useHandshake(jobId: string | undefined): UseHandshakeResult {
       localStorage.setItem(STORAGE_KEYS.JOB_ID, jobId);
     }
 
-    console.log('[useHandshake] Handshake data persisted');
   }, [data, jobId]);
 
   return {

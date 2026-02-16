@@ -593,7 +593,7 @@ const DefaultEmptyState: React.FC<{ role: DashboardRole }> = ({ role }) => {
       title: 'No Jobs Yet',
       description: 'Create your first job to start capturing evidence',
       action: 'Create Job',
-      route: '/contractor/jobs/new',
+      route: '/create-job',
     },
     client: {
       icon: 'folder_open',
