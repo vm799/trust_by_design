@@ -83,7 +83,7 @@ const FloatingActionPanel: React.FC = () => {
         return {
           label: `Continue: ${activeJob.title || 'Active Job'}`,
           icon: 'play_circle',
-          route: `/contractor/jobs/${activeJob.id}`,
+          route: `/contractor/job/${activeJob.id}`,
           color: 'bg-primary text-white',
         };
       }

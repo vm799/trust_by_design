@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Layout from '../components/AppLayout';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Job } from '../types';
-import { generateMagicLink, storeMagicLinkLocal, markLinkAsSent } from '../lib/db';
-import { navigateToNextStep } from '../lib/onboarding';
+import { generateMagicLink, storeMagicLinkLocal } from '../lib/db';
 import { celebrateSuccess, hapticFeedback, showToast } from '../lib/microInteractions';
 import { useData } from '../lib/DataContext';
 import { useAuth } from '../lib/AuthContext';
 import { safeSaveDraft, loadDraft, clearDraft as clearDraftDB, migrateDraftFromLocalStorage } from '../lib/utils/storageUtils';
 import { JOB_STATUS, SYNC_STATUS } from '../lib/constants';
+import { generateJobId } from '../lib/utils/jobId';
+import PostJobCreationModal from '../components/ui/PostJobCreationModal';
 
 /**
  * Job Creation Wizard - Unified Job Creation
@@ -23,11 +24,9 @@ import { JOB_STATUS, SYNC_STATUS } from '../lib/constants';
  * Architecture: DataContext + IndexedDB drafts + ISO dates + constants
  */
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface JobCreationWizardProps {
-  onAddJob?: (job: Job) => void;
-  user?: { email?: string; persona?: string; workspace?: { id?: string } } | null;
-  clients?: never[];
-  technicians?: never[];
+  // All data comes from DataContext + AuthContext internally - no props needed
 }
 
 interface JobFormData {
@@ -297,7 +296,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
 
     try {
       // Build the full Job object - DataContext handles all persistence
-      const newJobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const newJobId = generateJobId();
 
       const newJob: Job = {
         id: newJobId,
@@ -367,28 +366,6 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const copyMagicLink = () => {
-    let urlToCopy = magicLinkUrl;
-    let tokenToTrack = magicLinkToken;
-    if (!urlToCopy && createdJobId && userEmail) {
-      const emergencyLink = storeMagicLinkLocal(createdJobId, userEmail, workspaceId);
-      urlToCopy = emergencyLink.url;
-      tokenToTrack = emergencyLink.token;
-    }
-    if (!urlToCopy) {
-      showToast('No link available to copy.', 'error');
-      return;
-    }
-    navigator.clipboard.writeText(urlToCopy);
-
-    if (tokenToTrack) {
-      markLinkAsSent(tokenToTrack, 'copy');
-    }
-
-    hapticFeedback('success');
-    showToast('Magic link copied to clipboard!', 'success');
   };
 
   const selectedClient = clients.find(c => c.id === formData.clientId);
@@ -943,17 +920,17 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               <button
                 onClick={handleDispatch}
                 disabled={isCreating}
-                className="flex-1 py-4 bg-safety-orange text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-orange-500/20 transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-safety-orange text-white font-bold text-sm rounded-xl uppercase tracking-wide shadow-xl shadow-orange-500/20 transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 min-h-[56px]"
               >
                 {isCreating ? (
                   <>
                     <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating...
+                    <span>Creating...</span>
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined">send</span>
-                    Create Job
+                    <span className="material-symbols-outlined text-lg">send</span>
+                    <span>Create Job</span>
                   </>
                 )}
               </button>
@@ -961,114 +938,22 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
           </div>
         </div>
 
-        {/* Success Modal - UAT Fix #11, #13 */}
+        {/* Success Modal - Uses shared PostJobCreationModal */}
         {showSuccessModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
-            <div className="bg-slate-800 border border-white/15 p-8 rounded-[2.5rem] max-w-lg w-full shadow-2xl space-y-6">
-              <div className="text-center space-y-3">
-                <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto animate-success-pop">
-                  <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Job Created</h3>
-                <p className="text-slate-400 text-sm">
-                  {selectedTech
-                    ? <>Magic link ready for <span className="text-white font-bold">{selectedTech.name}</span></>
-                    : <>Job created. Assign a technician from the job detail page.</>
-                  }
-                </p>
-              </div>
-
-              {/* Magic link section - only shown when technician assigned */}
-              {magicLinkUrl && selectedTech && (
-                <>
-                  <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Magic Link</p>
-                    <p className="text-xs font-mono text-white break-all bg-slate-950 p-3 rounded-lg">
-                      {magicLinkUrl}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {typeof navigator !== 'undefined' && 'share' in navigator ? (
-                      <button
-                        onClick={async () => {
-                          const shareData = {
-                            title: `Job Assignment: ${formData.title}`,
-                            text: `You have been assigned a new job. Click to start:`,
-                            url: magicLinkUrl
-                          };
-                          try {
-                            await navigator.share(shareData);
-                            if (magicLinkToken) markLinkAsSent(magicLinkToken, 'share');
-                            showToast('Link shared successfully!', 'success');
-                          } catch (err) {
-                            if ((err as Error).name !== 'AbortError') {
-                              copyMagicLink();
-                            }
-                          }
-                        }}
-                        className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
-                        title="Share via your phone's native share menu (WhatsApp, SMS, Email, etc.)"
-                      >
-                        <span className="material-symbols-outlined">share</span>
-                        Share Link
-                      </button>
-                    ) : (
-                      <button
-                        onClick={copyMagicLink}
-                        className="w-full py-4 bg-primary text-white font-black rounded-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98] press-spring flex items-center justify-center gap-2"
-                      >
-                        <span className="material-symbols-outlined">content_copy</span>
-                        Copy Link
-                      </button>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <a
-                        href={`mailto:${selectedTech?.email || ''}?subject=${encodeURIComponent(`Job Assignment: ${formData.title}`)}&body=${encodeURIComponent(`You have been assigned a new job.\n\nJob: ${formData.title}\nClient: ${clients.find(c => c.id === formData.clientId)?.name || ''}\nAddress: ${formData.address}\n\nClick the link below to start:\n${magicLinkUrl}`)}`}
-                        onClick={() => {
-                          if (magicLinkToken) markLinkAsSent(magicLinkToken, 'email');
-                        }}
-                        className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
-                      >
-                        <span className="material-symbols-outlined text-sm">email</span>
-                        Email
-                      </a>
-                      <button
-                        onClick={copyMagicLink}
-                        className="py-3 bg-white/10 hover:bg-white/10 text-white font-bold rounded-xl uppercase tracking-wide transition-all border border-white/10 flex items-center justify-center gap-2 text-xs press-spring"
-                      >
-                        <span className="material-symbols-outlined text-sm">content_copy</span>
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="space-y-3">
-                {/* View job detail */}
-                <button
-                  onClick={() => navigate(`/admin/jobs/${createdJobId}`)}
-                  className={`w-full py-4 font-black rounded-xl uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] press-spring flex items-center justify-center gap-2 ${
-                    !selectedTech ? 'bg-primary text-white shadow-primary/20' : 'bg-white/10 text-white border border-white/10'
-                  }`}
-                >
-                  <span className="material-symbols-outlined">visibility</span>
-                  View Job
-                </button>
-
-                <button
-                  onClick={() => {
-                    navigateToNextStep('CREATE_JOB', userPersona, navigate);
-                  }}
-                  className="w-full py-3 text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-white transition-all"
-                >
-                  Return to Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
+          <PostJobCreationModal
+            jobId={createdJobId}
+            jobTitle={formData.title}
+            technicianName={selectedTech?.name}
+            technicianEmail={selectedTech?.email}
+            clientName={selectedClient?.name}
+            address={formData.address}
+            magicLinkUrl={magicLinkUrl || undefined}
+            magicLinkToken={magicLinkToken || undefined}
+            userPersona={userPersona}
+            onClose={() => {
+              setShowSuccessModal(false);
+            }}
+          />
         )}
       </div>
     </Layout>

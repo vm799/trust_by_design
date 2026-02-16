@@ -347,7 +347,7 @@ function storeJobDetailsForSync(job: RunJob): void {
   }
 }
 
-async function triggerReportGeneration(job: RunJob): Promise<void> {
+async function triggerReportGeneration(job: RunJob, isSealed: boolean = false): Promise<void> {
   if (!SUPABASE_URL || !job.managerEmail) return;
 
   try {
@@ -377,6 +377,9 @@ async function triggerReportGeneration(job: RunJob): Promise<void> {
         signerName: job.signature.signerName,
       } : undefined,
       completedAt: job.completedAt,
+      evidenceSealed: isSealed,
+      sealedAt: isSealed ? new Date().toISOString() : undefined,
+      sealMethod: isSealed ? 'RSA-2048 + SHA-256' : undefined,
     };
 
     const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-report`, {
@@ -493,6 +496,7 @@ export default function BunkerRun() {
   const [isJobFinished, setIsJobFinished] = useState(false); // LOOP-BREAKER: Hard exit for completed jobs
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [sealStatus, setSealStatus] = useState<'pending' | 'sealing' | 'sealed' | 'failed'>('pending');
 
   const [showCamera, setShowCamera] = useState(false);
   const [cameraType, setCameraType] = useState<'before' | 'after'>('before');
@@ -801,19 +805,31 @@ export default function BunkerRun() {
       HandshakeService.clear();
 
       // AUTO-SEAL: Cryptographically seal evidence after successful sync
+      setSealStatus('sealing');
+      let sealedSuccessfully = false;
       try {
         const sealResult = await sealEvidence(job.id);
         if (sealResult.success) {
+          setSealStatus('sealed');
+          sealedSuccessfully = true;
           setToastMessage({ text: 'Evidence sealed & synced!', type: 'success' });
+
+          // Re-trigger report with seal confirmation
+          if (job.completedAt && job.managerEmail) {
+            triggerReportGeneration({ ...job, reportUrl: undefined }, sealedSuccessfully);
+          }
+        } else {
+          setSealStatus('failed');
         }
       } catch {
+        setSealStatus('failed');
         // Non-blocking - job is synced, seal can happen later
       }
 
       // Give toast time to show, then navigate
       setTimeout(() => {
         navigate('/success');
-      }, 1000);
+      }, sealedSuccessfully ? 1500 : 1000);
     }
   };
 
@@ -1271,6 +1287,7 @@ export default function BunkerRun() {
               onSync={handleSync}
               onBack={() => goToStep('signature')}
               onFinish={handleFinishJob}
+              sealStatus={sealStatus}
             />
           )}
         </div>
@@ -1300,11 +1317,11 @@ function StatusIndicator({ isOnline, syncStatus, isSyncing, message }: { isOnlin
 
   const getText = () => {
     if (message) return message;
-    if (!isOnline) return 'OFFLINE';
+    if (!isOnline) return 'OFFLINE - SAVED LOCALLY';
     if (isSyncing) return 'SYNCING...';
     if (syncStatus === 'synced') return 'SYNCED ✓';
     if (syncStatus === 'failed') return 'TAP TO RETRY';
-    return 'PENDING';
+    return 'SAVED LOCALLY';
   };
 
   return (
@@ -1480,6 +1497,14 @@ function SignatureStep({
         />
       </div>
 
+      {/* Attestation Declaration - Legal compliance */}
+      <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
+        <p className="text-xs text-amber-200/90 leading-relaxed">
+          <span className="font-bold text-amber-300 block mb-1">Declaration</span>
+          By signing below, I confirm the work described has been completed to my satisfaction and the photographic evidence accurately represents the condition of the site before and after work.
+        </p>
+      </div>
+
       <SignatureCanvas onSave={onSave} />
 
       <button onClick={onBack} className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
@@ -1489,14 +1514,14 @@ function SignatureStep({
   );
 }
 
-function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { job: RunJob; isOnline: boolean; isSyncing: boolean; onSync: () => void; onBack: () => void; onFinish: () => void }) {
+function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealStatus }: { job: RunJob; isOnline: boolean; isSyncing: boolean; onSync: () => void; onBack: () => void; onFinish: () => void; sealStatus?: 'pending' | 'sealing' | 'sealed' | 'failed' }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-600/20 rounded-full text-green-400 text-sm font-medium mb-2">
           Step 4 of 4
         </div>
-        <h2 className="text-xl font-bold text-white">Review & Sync</h2>
+        <h2 className="text-xl font-bold text-white">Review & Seal</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -1516,13 +1541,13 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { jo
 
       {job.signature && (
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
-          <p className="text-xs text-slate-400 mb-2">SIGNATURE</p>
+          <p className="text-xs text-slate-400 mb-2">SIGNED ATTESTATION</p>
           <img src={job.signature.dataUrl} alt="Signature" className="w-full max-w-xs rounded-lg bg-white" />
           <p className="mt-2 text-sm text-slate-300">Signed by: {job.signature.signerName}</p>
         </div>
       )}
 
-      {/* Sync Status */}
+      {/* Sync + Seal Status */}
       <div className={`p-4 rounded-xl border ${
         job.syncStatus === 'synced' ? 'bg-green-900/30 border-green-700' :
         job.syncStatus === 'failed' ? 'bg-red-900/30 border-red-700' :
@@ -1535,26 +1560,76 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish }: { jo
             'bg-yellow-500 animate-pulse'
           }`} />
           <span className="font-medium text-white">
-            {job.syncStatus === 'synced' ? 'Data Synced to Cloud ✓' :
+            {job.syncStatus === 'synced' ? 'Data Synced to Cloud' :
              job.syncStatus === 'failed' ? 'Sync Failed - Retry' :
              'Ready to Sync'}
           </span>
         </div>
+
+        {/* Evidence Seal Status */}
+        {job.syncStatus === 'synced' && (
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base text-emerald-400">
+                {sealStatus === 'sealed' ? 'verified_user' : sealStatus === 'sealing' ? 'hourglass_top' : sealStatus === 'failed' ? 'gpp_bad' : 'shield'}
+              </span>
+              <span className={`text-sm font-medium ${
+                sealStatus === 'sealed' ? 'text-emerald-400' :
+                sealStatus === 'sealing' ? 'text-amber-400' :
+                sealStatus === 'failed' ? 'text-red-400' :
+                'text-slate-400'
+              }`}>
+                {sealStatus === 'sealed' ? 'Evidence Sealed (RSA-2048)' :
+                 sealStatus === 'sealing' ? 'Sealing evidence...' :
+                 sealStatus === 'failed' ? 'Seal failed - evidence still synced' :
+                 'Seal pending'}
+              </span>
+            </div>
+            {sealStatus === 'sealed' && (
+              <p className="text-[10px] text-emerald-400/60 mt-1 ml-6">Tamper-proof cryptographic signature applied</p>
+            )}
+          </div>
+        )}
+
         {job.syncStatus === 'synced' && job.managerEmail && (
-          <p className="mt-2 text-sm text-blue-400">Report queued for {job.managerEmail}</p>
+          <p className="mt-2 text-sm text-blue-400">
+            <span className="material-symbols-outlined text-sm align-middle mr-1">schedule_send</span>
+            Report queued for {job.managerEmail}
+          </p>
         )}
       </div>
 
+      {/* What happens next - Sealing explainer */}
+      {job.syncStatus !== 'synced' && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">What happens when you sync</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span className="material-symbols-outlined text-sm text-blue-400">cloud_upload</span>
+              Evidence uploaded to secure cloud
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span className="material-symbols-outlined text-sm text-emerald-400">verified_user</span>
+              Cryptographically sealed (RSA-2048 + SHA-256)
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span className="material-symbols-outlined text-sm text-purple-400">mail</span>
+              Report emailed to manager
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-3">
-        <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">← Back</button>
+        <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg min-h-[44px]">← Back</button>
         {job.syncStatus !== 'synced' && isOnline && (
-          <button onClick={onSync} disabled={isSyncing} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg font-bold">
-            {isSyncing ? 'SYNCING...' : 'SYNC NOW'}
+          <button onClick={onSync} disabled={isSyncing} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg font-bold min-h-[56px]">
+            {isSyncing ? 'SYNCING...' : 'SYNC & SEAL'}
           </button>
         )}
         {job.syncStatus === 'synced' && (
-          <button onClick={onFinish} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold">
-            ✓ COMPLETE
+          <button onClick={onFinish} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold min-h-[56px]">
+            COMPLETE
           </button>
         )}
       </div>
@@ -1610,11 +1685,13 @@ function Camera({ onCapture, onCancel }: { onCapture: (dataUrl: string) => void;
   }
 
   return (
-    <div className="space-y-4">
-      <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-xl bg-black" />
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
-        <button onClick={capture} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-lg">📸 CAPTURE</button>
+    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[600px]">
+      <div className="flex-1 min-h-0 relative">
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-xl bg-black" />
+      </div>
+      <div className="flex gap-3 pt-4 flex-shrink-0">
+        <button onClick={onCancel} className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold min-h-[56px]">Cancel</button>
+        <button onClick={capture} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-lg min-h-[56px]">CAPTURE</button>
       </div>
     </div>
   );

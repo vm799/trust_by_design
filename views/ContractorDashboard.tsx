@@ -61,7 +61,7 @@ const ContractorDashboard: React.FC<ContractorDashboardProps> = ({
     const completed = myJobs.filter(j => j.status === 'Complete' || j.status === 'Submitted').length;
     const pending = myJobs.filter(j => j.status === 'Pending' || j.status === 'Draft').length;
     return [
-      { label: 'Active', value: activeJobCount, icon: 'play_circle', color: 'blue' as const, route: '/contractor/jobs?filter=active' },
+      { label: 'Active', value: activeJobCount, icon: 'play_circle', color: 'blue' as const, route: '/contractor' },
       { label: 'Pending', value: pending, icon: 'schedule', color: 'amber' as const },
       { label: 'Completed', value: completed, icon: 'check_circle', color: 'emerald' as const },
       { label: 'Total', value: myJobs.length, icon: 'analytics', color: 'slate' as const },
