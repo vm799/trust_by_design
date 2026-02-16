@@ -34,18 +34,18 @@ const STATUS_COLORS: Record<ProofStatus, {
 }> = {
   good: {
     bar: 'bg-emerald-500 dark:bg-emerald-400',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800',
   },
   warning: {
     bar: 'bg-amber-500 dark:bg-amber-400',
-    text: 'text-amber-700 dark:text-amber-300',
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
+    text: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800',
   },
   danger: {
     bar: 'bg-red-500 dark:bg-red-400',
-    text: 'text-red-700 dark:text-red-300',
-    bg: 'bg-red-50 dark:bg-red-950/30',
+    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800',
   },
 };
 

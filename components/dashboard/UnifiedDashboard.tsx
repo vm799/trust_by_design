@@ -30,10 +30,6 @@ import QuickActionCard from './QuickActionCard';
 import {
   staggerContainer,
   fadeInUp,
-  bgOrb1Animate,
-  bgOrb1Transition,
-  bgOrb2Animate,
-  bgOrb2Transition,
 } from '../../lib/animations';
 
 /**
@@ -171,7 +167,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className={`relative overflow-hidden space-y-6 pb-20 ${className}`}
+          className={`relative overflow-hidden space-y-8 pb-20 ${className}`}
         >
           {header}
           {/* QUICK STATS - Always show for managers */}
@@ -259,20 +255,11 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      className={`relative overflow-hidden space-y-6 pb-20 ${className}`}
+      className={`relative overflow-hidden space-y-8 pb-20 ${className}`}
     >
-      {/* Background Orbs - glassmorphism depth effect */}
+      {/* Subtle background accent */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <motion.div
-          className="absolute -top-48 -left-48 size-96 rounded-full bg-emerald-500/10 blur-[120px]"
-          animate={bgOrb1Animate}
-          transition={bgOrb1Transition}
-        />
-        <motion.div
-          className="absolute -bottom-48 -right-48 size-96 rounded-full bg-primary/10 blur-[120px]"
-          animate={bgOrb2Animate}
-          transition={bgOrb2Transition}
-        />
+        <div className="absolute -top-48 -left-48 size-96 rounded-full bg-primary/5 blur-[160px]" />
       </div>
 
       {/* Optional header */}
