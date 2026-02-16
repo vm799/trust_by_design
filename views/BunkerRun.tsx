@@ -26,7 +26,6 @@ import { useHandshake } from '../hooks/useHandshake';
 import { HandshakeService } from '../lib/handshakeService';
 import { toast } from '../lib/toast';
 import { JobSwitcher } from '../components/JobSwitcher';
-import { sealEvidence } from '../lib/sealing';
 
 // ============================================================================
 // LOCALSTORAGE KEYS FOR EMAIL HANDSHAKE
@@ -262,10 +261,15 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
       address: job.address,
       w3w: job.w3w,
       notes: job.notes,
-      // FIX: Derive status from job state - RunJob doesn't have status property
       status: job.completedAt ? 'Complete' : (job.beforePhoto ? 'In Progress' : 'Pending'),
       before_photo_data: job.beforePhoto?.dataUrl,
+      before_photo_timestamp: job.beforePhoto?.timestamp,
+      before_photo_lat: job.beforePhoto?.lat,
+      before_photo_lng: job.beforePhoto?.lng,
       after_photo_data: job.afterPhoto?.dataUrl,
+      after_photo_timestamp: job.afterPhoto?.timestamp,
+      after_photo_lat: job.afterPhoto?.lat,
+      after_photo_lng: job.afterPhoto?.lng,
       signature_data: job.signature?.dataUrl,
       signer_name: job.signature?.signerName,
       completed_at: job.completedAt,
@@ -312,10 +316,8 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
         // Non-blocking: bunker_jobs sync succeeded, main table bridge is best-effort
       }
 
-      // Trigger report generation if complete
-      if (job.completedAt && job.managerEmail) {
-        triggerReportGeneration(job);
-      }
+      // Report generation is triggered from handleSync AFTER sealing completes
+      // Do NOT trigger here — sealing must happen first for sealed reports
 
       return true;
     } else {
@@ -804,26 +806,25 @@ export default function BunkerRun() {
       // This ensures subsequent magic links are not blocked by stale locks
       HandshakeService.clear();
 
-      // AUTO-SEAL: Cryptographically seal evidence after successful sync
+      // Trigger report generation — the server-side generate-report edge function
+      // will auto-seal via seal-evidence (using service_role key, no user auth needed)
+      // This is the ONLY place reports are triggered, ensuring sealing happens server-side
       setSealStatus('sealing');
       let sealedSuccessfully = false;
-      try {
-        const sealResult = await sealEvidence(job.id);
-        if (sealResult.success) {
+
+      if (job.completedAt && job.managerEmail) {
+        try {
+          await triggerReportGeneration(job);
+          // generate-report auto-seals in Step 4 server-side
           setSealStatus('sealed');
           sealedSuccessfully = true;
-          setToastMessage({ text: 'Evidence sealed & synced!', type: 'success' });
-
-          // Re-trigger report with seal confirmation
-          if (job.completedAt && job.managerEmail) {
-            triggerReportGeneration({ ...job, reportUrl: undefined }, sealedSuccessfully);
-          }
-        } else {
+          setToastMessage({ text: 'Evidence sealed & report sent!', type: 'success' });
+        } catch {
           setSealStatus('failed');
+          setToastMessage({ text: 'Report sent (seal pending)', type: 'info' });
         }
-      } catch {
-        setSealStatus('failed');
-        // Non-blocking - job is synced, seal can happen later
+      } else {
+        setSealStatus('pending');
       }
 
       // Give toast time to show, then navigate
