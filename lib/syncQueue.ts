@@ -260,16 +260,26 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
   }
 };
 
+// Concurrency guard: prevents timer + online event from double-processing the queue
+let _retryInProgress = false;
+
 /**
  * Retry failed syncs from localStorage queue
+ *
+ * CRITICAL FIX: Added _retryInProgress lock to prevent concurrent calls
+ * from the 5-minute timer and the 'online' event listener. Without this,
+ * both can read the same localStorage snapshot, process the same items,
+ * and race on the final write — causing double API calls and lost updates.
  */
 export const retryFailedSyncs = async (): Promise<void> => {
+  if (_retryInProgress) return; // Another call is already processing
   if (!isSupabaseAvailable()) return;
   if (!navigator.onLine) return; // Skip retries when offline
 
   const queueJson = localStorage.getItem('jobproof_sync_queue');
   if (!queueJson) return;
 
+  _retryInProgress = true;
   try {
     const queue: SyncQueueItem[] = JSON.parse(queueJson);
     const now = Date.now();
@@ -310,15 +320,16 @@ export const retryFailedSyncs = async (): Promise<void> => {
           });
           localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
 
-          // Show persistent notification to user
+          // Show persistent notification to user with working navigation
+          const failedJobId = item.id;
           showPersistentNotification({
             type: 'error',
             title: 'Sync Failed',
-            message: `Job ${item.id} failed to sync after ${MAX_RETRIES} attempts. Your data is saved locally. Please check your connection or contact support.`,
+            message: `Job ${failedJobId} failed to sync after ${MAX_RETRIES} attempts. Your data is saved locally. Please check your connection or contact support.`,
             persistent: true,
-            actionLabel: 'View Details',
+            actionLabel: 'View Job',
             onAction: () => {
-              // Could navigate to a failed sync details page
+              window.location.hash = `#/app/jobs/${failedJobId}`;
             }
           });
         }
@@ -334,6 +345,8 @@ export const retryFailedSyncs = async (): Promise<void> => {
 
   } catch (error) {
     console.error('Failed to process sync queue:', error);
+  } finally {
+    _retryInProgress = false;
   }
 };
 
