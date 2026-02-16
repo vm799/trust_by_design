@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { getFailedSyncQueue, retryFailedSyncItem } from '../lib/syncQueue';
 
 interface OfflineIndicatorProps {
   syncStatus?: {
@@ -11,19 +12,22 @@ interface OfflineIndicatorProps {
 
 /**
  * Offline/Network Status Indicator
- * Shows connection status and pending sync items
+ * Shows connection status, pending sync items, and failed sync retry UI
  *
  * Features:
  * - P1-4: Real network status via ping (not just navigator.onLine)
  * - Sync queue visibility
+ * - Failed sync retry with one-tap "Retry All"
  * - Auto-hide when online and synced
- * - Mobile-optimized
+ * - Mobile-optimized (44px+ touch targets)
  * - Memoized to prevent unnecessary re-renders
  */
 const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStatus, className = '' }) => {
   // P1-4: Use improved network detection (actual ping, not just navigator.onLine)
   const { isOnline, isChecking } = useNetworkStatus();
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryResults, setRetryResults] = useState<{ succeeded: number; failed: number } | null>(null);
 
   // Reset dismissed state when going offline
   useEffect(() => {
@@ -31,6 +35,38 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
       setIsDismissed(false);
     }
   }, [isOnline]);
+
+  // Clear retry results after 5 seconds
+  useEffect(() => {
+    if (retryResults) {
+      const timer = setTimeout(() => setRetryResults(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryResults]);
+
+  // Retry all failed sync items
+  const handleRetryAll = useCallback(async () => {
+    const failedItems = getFailedSyncQueue();
+    if (failedItems.length === 0 || isRetrying) return;
+
+    setIsRetrying(true);
+    setRetryResults(null);
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const item of failedItems) {
+      const success = await retryFailedSyncItem(item.id);
+      if (success) {
+        succeeded++;
+      } else {
+        failed++;
+      }
+    }
+
+    setRetryResults({ succeeded, failed });
+    setIsRetrying(false);
+  }, [isRetrying]);
 
   // Don't show if online and no pending syncs
   const hasPending = (syncStatus?.pending || 0) > 0;
@@ -84,20 +120,50 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
         </div>
       )}
 
-      {/* Sync Failed Banner (if online and has failures) */}
+      {/* Sync Failed Banner with Retry (if online and has failures) */}
       {isOnline && hasFailed && !hasPending && (
-        <div className="bg-danger/10 border border-danger/20 rounded-2xl p-4 flex items-center gap-4">
-          <div className="size-10 bg-danger/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="material-symbols-outlined text-danger text-xl">sync_problem</span>
+        <div className="bg-danger/10 border border-danger/20 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="size-10 bg-danger/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className={`material-symbols-outlined text-danger text-xl ${isRetrying ? 'animate-spin' : ''}`}>
+                {isRetrying ? 'sync' : 'sync_problem'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-black uppercase text-danger tracking-tight">
+                {isRetrying ? 'Retrying Sync...' : 'Sync Issues Detected'}
+              </h3>
+              <p className="text-xs text-slate-300 font-medium">
+                {isRetrying
+                  ? 'Attempting to sync failed items...'
+                  : `${syncStatus?.failed || 0} ${syncStatus?.failed === 1 ? 'item' : 'items'} failed to sync. Tap retry when you have signal.`}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-black uppercase text-danger tracking-tight">
-              Sync Issues Detected
-            </h3>
-            <p className="text-xs text-slate-300 font-medium">
-              {syncStatus?.failed || 0} {syncStatus?.failed === 1 ? 'item' : 'items'} failed to sync. Check your connection.
-            </p>
-          </div>
+
+          {/* Retry results feedback */}
+          {retryResults && (
+            <div className={`text-xs font-semibold px-3 py-2 rounded-xl ${
+              retryResults.failed === 0
+                ? 'bg-success/10 text-success'
+                : 'bg-warning/10 text-warning'
+            }`}>
+              {retryResults.succeeded > 0 && `${retryResults.succeeded} synced successfully. `}
+              {retryResults.failed > 0 && `${retryResults.failed} still failing.`}
+              {retryResults.failed === 0 && 'All items synced!'}
+            </div>
+          )}
+
+          {/* Retry All button - 44px+ touch target for field workers with gloves */}
+          {!isRetrying && (
+            <button
+              onClick={handleRetryAll}
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-danger/30 bg-danger/5 text-danger text-xs font-black uppercase tracking-widest hover:bg-danger/15 active:bg-danger/25 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">refresh</span>
+              Retry All
+            </button>
+          )}
         </div>
       )}
     </div>
