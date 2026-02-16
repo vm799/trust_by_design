@@ -109,6 +109,6 @@ B2B SaaS Subscription:
 
 ## Contact
 
-**Product:** https://jobproof.vercel.app
+**Product:** https://jobproof.pro
 **Docs:** See /docs folder for complete technical and business documentation
 **Demo:** Available on request
