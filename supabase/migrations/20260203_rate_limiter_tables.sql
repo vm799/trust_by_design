@@ -354,17 +354,33 @@ ALTER TABLE public.rate_limit_counters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_limit_audit ENABLE ROW LEVEL SECURITY;
 
 -- Only service_role can access these tables (Edge Functions)
-CREATE POLICY "Service role full access to rate_limit_counters"
-  ON public.rate_limit_counters FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+-- Use DO block to avoid "policy already exists" errors on re-run
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'rate_limit_counters'
+    AND policyname = 'Service role full access to rate_limit_counters'
+  ) THEN
+    CREATE POLICY "Service role full access to rate_limit_counters"
+      ON public.rate_limit_counters FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
 
-CREATE POLICY "Service role full access to rate_limit_audit"
-  ON public.rate_limit_audit FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'rate_limit_audit'
+    AND policyname = 'Service role full access to rate_limit_audit'
+  ) THEN
+    CREATE POLICY "Service role full access to rate_limit_audit"
+      ON public.rate_limit_audit FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- ============================================================================
 -- SECTION 6: COMMENTS
