@@ -93,30 +93,51 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
       expect(status.failed).toBe(0);
     });
 
-    it('should count failed items (max retries exceeded)', () => {
-      const queue = [
-        {
-          id: 'job-1',
-          type: 'job',
-          data: {},
-          retryCount: 8, // Max retries exceeded (MAX_RETRIES = 8)
-          lastAttempt: Date.now(),
-        },
+    it('should count permanently failed items from failed queue', () => {
+      // Active queue has 1 pending item
+      const activeQueue = [
         {
           id: 'job-2',
           type: 'job',
           data: {},
-          retryCount: 2, // Still pending
+          retryCount: 2,
           lastAttempt: Date.now(),
         },
       ];
+      localStorage.setItem('jobproof_sync_queue', JSON.stringify(activeQueue));
 
-      localStorage.setItem('jobproof_sync_queue', JSON.stringify(queue));
+      // Failed queue has 1 permanently failed item (moved here after MAX_RETRIES)
+      const failedQueue = [
+        {
+          id: 'job-1',
+          type: 'job',
+          data: {},
+          retryCount: 8,
+          lastAttempt: Date.now(),
+          failedAt: new Date().toISOString(),
+          reason: 'Max retries exceeded',
+        },
+      ];
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
 
       const status = getSyncQueueStatus();
 
       expect(status.pending).toBe(1);
       expect(status.failed).toBe(1);
+    });
+
+    it('should count failed items even when active queue is empty', () => {
+      // No active queue — items already moved to failed
+      const failedQueue = [
+        { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+        { id: 'job-2', type: 'job', data: {}, retryCount: 7 },
+      ];
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+      const status = getSyncQueueStatus();
+
+      expect(status.pending).toBe(0);
+      expect(status.failed).toBe(2);
     });
 
     it('should handle corrupted queue data gracefully', () => {
