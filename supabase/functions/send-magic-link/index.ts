@@ -240,7 +240,7 @@ serve(async (req) => {
     console.log(`[SendMagicLink] Sending magic link to ${email}`);
 
     // Build the redirect URL
-    const finalRedirectUrl = redirectUrl || `${supabaseUrl.replace('.supabase.co', '')}.vercel.app/#/auth/callback`;
+    const finalRedirectUrl = redirectUrl || `${Deno.env.get('VITE_APP_URL') || Deno.env.get('APP_URL') || 'https://jobproof.pro'}/#/auth/callback`;
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
