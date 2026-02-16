@@ -2,17 +2,17 @@
 
 # JobProof
 
-**Professional Field Evidence Management System**
+**Offline-First Field Service Evidence Platform**
 
-*Professional job management and secure evidence tracking for field service professionals*
+*Cryptographic proof of work for field service professionals in poor-connectivity environments*
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8_strict-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite)](https://vitejs.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase)](https://supabase.com/)
-[![Tests](https://img.shields.io/badge/Tests-758%20cases-success)](./tests)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3ECF8E?logo=supabase)](https://supabase.com/)
+[![Tests](https://img.shields.io/badge/Tests-1488_passing-success)](./tests)
 
-[Features](#features) • [Architecture](#architecture) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Security](#security)
+[Features](#features) | [Architecture](#architecture) | [Quick Start](#quick-start) | [Enterprise](#enterprise-features) | [Security](#security)
 
 </div>
 
@@ -20,49 +20,46 @@
 
 ## Overview
 
-JobProof is a production-ready field service evidence management platform that provides:
+JobProof is a production-ready field evidence platform built for field workers in remote sites, underground environments, and areas with zero connectivity. Every piece of evidence is cryptographically sealed, GPS-verified, and tamper-evident.
 
-- **Cryptographic Sealing** - RSA-2048 digital signatures for verifiable records
-- **Offline-First** - Full functionality without internet connectivity
-- **GPS Verification** - Precise location tracking with what3words integration
-- **Multi-Persona** - Support for contractors, technicians, and clients
-- **Audit Trail** - Complete job lifecycle tracking with immutable logs
+- **Offline-First** - Full functionality without internet. Data survives airplane mode + app restart.
+- **Cryptographic Sealing** - RSA-2048 + SHA-256 digital signatures for legally defensible records.
+- **Bunker Mode** - No-auth public job runner for zero-service environments. No login required.
+- **Enterprise Ready** - API keys, webhooks, team management, audit logging, SSO infrastructure.
+- **Multi-Persona** - Contractors, agency owners, technicians, clients, site supervisors.
 
 ---
 
 ## Features
 
-### Core Capabilities
+### Core Platform
 
-- 📸 **Evidence Capture** - Photos, signatures, timestamps with GPS metadata
-- 🔒 **Cryptographic Sealing** - RSA-2048 signatures for tamper-evident evidence
-- 🌐 **Offline-First** - IndexedDB storage with automatic sync when online
-- 📍 **Location Accuracy** - GPS coordinates + what3words addresses
-- 👥 **Role-Based Access** - Admin, technician, and client portals
-- 📊 **Instant Reports** - PDF job reports with embedded evidence
-- 🔐 **Enterprise Security** - Row-level security (RLS) policies on all tables
+- **Evidence Capture** - Photos, signatures, timestamps with GPS + what3words metadata
+- **Cryptographic Sealing** - RSA-2048 signatures with SHA-256 evidence hashing
+- **Offline-First Storage** - Dexie/IndexedDB v6 with automatic sync queue
+- **Location Verification** - GPS coordinates + what3words addresses
+- **Role-Based Access** - Admin, manager, technician, and client portals
+- **Job Reports** - PDF-ready reports with embedded evidence
+- **Safety Checklists** - Enforced compliance before job completion
+- **Magic Links** - Passwordless technician access (no app install required)
 
-### User Experiences
+### Bunker Mode
 
-#### Contractors/Admins
-- Create and assign jobs to technicians
-- Track job status in real-time
-- Review completed work with evidence
-- Generate client reports instantly
-- Manage team and workspace settings
+Zero-connectivity job capture for field workers in basements, tunnels, and remote sites:
 
-#### Field Technicians
-- Access jobs via magic links (no login required)
-- Capture photos and signatures offline
-- Submit completed work from any location
-- GPS + what3words location verification
-- Safety checklist enforcement
+- No authentication required - job ID in URL is the permission
+- 4-step wizard: Before Photo > After Photo > Signature > Sync
+- Own IndexedDB database (survives app restarts)
+- Auto-sync when connectivity returns
+- Email handshake for manager/client notifications
 
-#### Clients
-- View job details and progress
-- Provide digital signatures
-- Review completed work evidence
-- Track job history
+### User Portals
+
+**Admins/Managers** - Create jobs, assign technicians, review evidence, generate reports, manage teams, seal completed work.
+
+**Field Technicians** - Access jobs via magic links, capture photos/signatures offline, submit from any location, GPS + what3words verification.
+
+**Clients** - View job progress, provide digital signatures, review completed evidence, track job history.
 
 ---
 
@@ -72,95 +69,218 @@ JobProof is a production-ready field service evidence management platform that p
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **Frontend** | React 18 + TypeScript | Type-safe UI components |
-| **Build Tool** | Vite 6.2 | Fast dev server & optimized builds |
+| **Frontend** | React 18 + TypeScript 5.8 (strict) | Type-safe UI components |
+| **Build** | Vite 6.2 + Terser | Fast builds, code splitting, tree shaking |
 | **Styling** | Tailwind CSS 3.4 | Utility-first responsive design |
-| **Routing** | React Router 6.22 | Client-side navigation |
-| **State** | React Context + Hooks | Global state management |
-| **Offline Storage** | Dexie (IndexedDB) | Client-side database |
-| **Backend** | Supabase | Postgres + Auth + Edge Functions |
-| **Database** | PostgreSQL 15 | Production-grade relational DB |
-| **Authentication** | Supabase Auth | Email/password + Google OAuth + Magic Links |
-| **File Storage** | Supabase Storage | Photo and signature uploads |
-| **Edge Functions** | Deno | Cryptographic sealing/verification |
-| **Security** | Row-Level Security (RLS) | Database-level access control |
-| **Testing** | Vitest + Playwright | Unit + integration + E2E tests |
-| **Deployment** | Vercel | Serverless frontend hosting |
+| **Animation** | Framer Motion 12.x | Shared animation constants |
+| **Routing** | React Router 6.22 | Hash-based client-side navigation |
+| **State** | React Context (DataContext) | Single source of truth for all data |
+| **Offline** | Dexie v4 (IndexedDB v6 schema) | 8-table client-side database |
+| **Backend** | Supabase | PostgreSQL + Auth + Storage + Edge Functions |
+| **Database** | PostgreSQL 17 | 39 migrations, RLS on all tables |
+| **Auth** | Supabase Auth | Email/password + Google OAuth + Magic Links |
+| **Edge Functions** | Deno (10 functions) | Sealing, verification, payments, API |
+| **Payments** | Stripe | Checkout, portal, webhooks |
+| **Testing** | Vitest + Playwright | 1488 unit/integration/E2E tests |
+| **Deployment** | Vercel | Serverless hosting with preview deploys |
 
 ### Project Structure
 
 ```
 trust_by_design/
-├── components/          # React UI components
-│   ├── Layout.tsx      # App shell with navigation
-│   ├── OnboardingFlow.tsx
-│   ├── JobCard.tsx
-│   ├── SealBadge.tsx
-│   └── ...
-├── views/              # Page-level components
-│   ├── AdminDashboard.tsx
-│   ├── TechnicianPortal.tsx
-│   ├── JobReport.tsx
-│   ├── CreateJob.tsx
-│   └── ...
-├── lib/                # Core business logic
-│   ├── auth.ts         # Authentication helpers
-│   ├── db.ts           # Database operations (IndexedDB + Supabase)
-│   ├── sealing.ts      # Cryptographic evidence sealing
-│   ├── syncQueue.ts    # Offline sync management
-│   ├── onboarding.ts   # User onboarding flows
-│   └── utils.ts        # Shared utilities
+├── components/                 # React UI components
+│   ├── ui/                    # ActionButton, Card, Modal, StatusBadge, Tooltip
+│   ├── layout/                # AppShell, BottomNav, PageHeader, Sidebar
+│   ├── dashboard/             # MetricsCard, TeamStatusBar, ProofGapBar
+│   ├── evidence/              # ForensicPhotoCard, ProofPairCard, SealingAnimation
+│   ├── modals/                # ModalBase, QuickAssignModal, QuickSearchModal
+│   ├── branding/              # Logo & brand assets
+│   ├── ProtectedRoute.tsx     # Auth guard wrapper
+│   └── RouteErrorBoundary.tsx # Route-level error boundary
+│
+├── views/                     # Page-level components
+│   ├── app/                   # Admin routes
+│   │   ├── jobs/              # JobsList, JobDetail, JobForm, EvidenceReview
+│   │   ├── clients/           # ClientForm
+│   │   ├── technicians/       # TechnicianForm
+│   │   ├── ManagerFocusDashboard.tsx
+│   │   └── SoloContractorDashboard.tsx
+│   ├── tech/                  # Technician portal
+│   │   ├── TechPortal.tsx     # Technician home
+│   │   ├── TechJobDetail.tsx  # Job detail view
+│   │   ├── EvidenceCapture.tsx # Photo/signature capture
+│   │   └── TechEvidenceReview.tsx
+│   ├── bunker/                # Offline-first bunker mode
+│   │   └── JobRunner.tsx      # Self-contained job evidence capture
+│   ├── BunkerRun.tsx          # Public bunker entry point
+│   ├── AuthView.tsx           # Email + magic link auth
+│   ├── OAuthSetup.tsx         # New user setup + persona selection
+│   ├── LandingPage.tsx        # Public marketing page
+│   ├── Settings.tsx           # Workspace settings
+│   └── ...                    # 20+ additional views
+│
+├── lib/                       # Core business logic
+│   ├── DataContext.tsx        # Centralized data state (single source of truth)
+│   ├── AuthContext.tsx        # Auth state with session memoization
+│   ├── db.ts                  # Supabase database operations
+│   ├── sealing.ts             # RSA-2048 evidence sealing
+│   ├── encryption.ts          # AES-256-GCM encryption
+│   ├── syncQueue.ts           # Offline sync with exponential backoff
+│   ├── auditLog.ts            # Tamper-evident audit logging
+│   ├── apiKeys.ts             # API key management (HMAC-SHA256)
+│   ├── webhookDispatcher.ts   # Webhook delivery with retry
+│   ├── ssoConfig.ts           # SAML 2.0 + OIDC SSO
+│   ├── teamManagement.ts      # Team roles and invitations
+│   ├── featureFlags.ts        # 10 feature flags with rollout control
+│   ├── animations.ts          # Shared Framer Motion constants
+│   ├── offline/               # Offline subsystem
+│   │   ├── db.ts              # Dexie IndexedDB v6 schema (8 tables)
+│   │   ├── sync.ts            # Conflict resolution
+│   │   ├── archive.ts         # Auto-archive sealed jobs >180 days
+│   │   └── cleanup.ts         # Storage quota management
+│   └── services/              # External service integrations
+│
+├── hooks/                     # Custom React hooks
+│   ├── useJobGuard.ts         # Client-first validation
+│   └── useAuthFlow.ts         # Auth state machine
+│
 ├── supabase/
-│   ├── migrations/     # Database schema versions
-│   └── functions/      # Edge Functions (Deno)
-│       ├── seal-evidence/      # RSA-2048 signing
-│       └── verify-evidence/    # Signature verification
+│   ├── migrations/            # 39 SQL migrations (RLS policies)
+│   └── functions/             # 10 Edge Functions
+│       ├── seal-evidence/     # RSA-2048 cryptographic sealing
+│       ├── verify-evidence/   # Evidence integrity verification
+│       ├── api-v1/            # REST API with scoped access
+│       ├── rate-limiter/      # Request rate limiting
+│       ├── stripe-checkout/   # Stripe payment sessions
+│       ├── stripe-portal/     # Customer billing portal
+│       ├── stripe-webhook/    # Stripe event handling
+│       ├── send-magic-link/   # Technician magic links
+│       ├── send-email/        # Notification emails
+│       └── generate-report/   # PDF report generation
+│
 ├── tests/
-│   ├── unit/           # Component & function tests
-│   ├── integration/    # API integration tests
-│   └── e2e/            # End-to-end Playwright tests
-├── App.tsx             # Root application component
-├── types.ts            # TypeScript type definitions
-├── db.ts               # Dexie IndexedDB schema
-└── index.tsx           # Application entry point
+│   ├── unit/                  # 76 test files, 1488 tests
+│   └── e2e/                   # Playwright E2E tests
+│
+├── types.ts                   # TypeScript type definitions
+├── App.tsx                    # Root app with lazy-loaded routes
+└── vite.config.ts             # Build config (18 manual chunks, Terser)
 ```
 
 ### Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      JobProof Architecture                   │
-└─────────────────────────────────────────────────────────────┘
-
-┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-│   Browser    │────────▶│  React App   │────────▶│  Supabase    │
-│  (offline)   │         │   (Vite)     │         │   (online)   │
-└──────────────┘         └──────────────┘         └──────────────┘
-       │                        │                        │
-       │                        │                        │
-       ▼                        ▼                        ▼
-┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-│  IndexedDB   │◀────────│ Sync Queue   │────────▶│  PostgreSQL  │
-│   (Dexie)    │         │  (offline→   │         │  + Storage   │
-│              │         │    online)   │         │              │
-└──────────────┘         └──────────────┘         └──────────────┘
-                                │
-                                │
-                                ▼
-                         ┌──────────────┐
-                         │ Edge Function│
-                         │  (seal/      │
-                         │   verify)    │
-                         └──────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     JobProof Architecture                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────┐    ┌─────────────┐    ┌───────────────────────┐   │
+│  │ Browser  │───>│ DataContext  │───>│ Supabase (PostgreSQL) │   │
+│  │ (React)  │    │ (source of  │    │ + RLS + Edge Funcs    │   │
+│  └──────────┘    │  truth)     │    └───────────────────────┘   │
+│       │          └─────────────┘              │                  │
+│       │                │                     │                  │
+│       v                v                     v                  │
+│  ┌──────────┐    ┌─────────────┐    ┌───────────────────────┐   │
+│  │ IndexedDB│<──>│ Sync Queue  │───>│ Edge Functions (Deno) │   │
+│  │ (Dexie)  │    │ (offline →  │    │ seal / verify / api   │   │
+│  │ 8 tables │    │   online)   │    │ stripe / email        │   │
+│  └──────────┘    └─────────────┘    └───────────────────────┘   │
+│                                              │                  │
+│  ┌──────────┐    ┌─────────────┐             │                  │
+│  │ Bunker   │───>│ BunkerRunDB │    ┌────────┴──────────────┐   │
+│  │ Mode     │    │ (separate   │    │ Webhooks / API Keys   │   │
+│  │ (no auth)│    │  Dexie DB)  │    │ Audit Log / SSO       │   │
+│  └──────────┘    └─────────────┘    └───────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Offline-First Architecture
 
-1. **Capture** - All data stored in IndexedDB immediately
-2. **Queue** - Changes added to sync queue with retry logic
-3. **Sync** - Background sync when network available
-4. **Verify** - Conflict resolution with last-write-wins
-5. **Seal** - Jobs sealed server-side with RSA-2048 signature
+1. **Capture** - All data stored in IndexedDB immediately (every keystroke)
+2. **Queue** - Changes added to sync queue with exponential backoff (7 retries)
+3. **Sync** - Background sync when network available (real ping test, not just `navigator.onLine`)
+4. **Resolve** - Conflict detection with last-write-wins + telemetry
+5. **Seal** - Jobs sealed server-side with RSA-2048 + SHA-256
+
+### Sync Queue Retry Strategy
+
+```
+Retry 1: 2s → Retry 2: 4s → Retry 3: 8s → Retry 4: 15s
+→ Retry 5: 30s → Retry 6: 60s → Retry 7: 60s
+Total window: ~3 minutes before failure
+```
+
+---
+
+## Enterprise Features
+
+### API Keys (REST API v1)
+
+Scoped API access for third-party integrations:
+
+- **HMAC-SHA256** key hashing (keys never stored in plaintext)
+- **Resource:operation** scoping (jobs:read, clients:write, etc.)
+- **Rate limiting** per key (default 1000 req/min)
+- **Expiration** support with auto-revocation
+- **Max 10 keys** per workspace
+
+### Webhook System
+
+Real-time event notifications with 13 event types:
+
+- `job.created`, `job.updated`, `job.completed`, `job.sealed`, `job.deleted`
+- `client.created`, `client.updated`
+- `technician.assigned`, `technician.completed`
+- `invoice.created`, `invoice.paid`
+- `evidence.sealed`, `evidence.verified`
+- **HMAC-SHA256** signature verification on every delivery
+- **Exponential backoff** retry (5s to 1h)
+- **Auto-disable** endpoints after repeated failures
+
+### Team Management
+
+- 5-tier role hierarchy: admin > manager > member > technician > view_only
+- Email-based invitations with 7-day expiry
+- Role enforcement with `canManageRole()` / `canInvite()` guards
+- Last-active tracking for team members
+
+### Audit Logging
+
+Tamper-evident audit trail with 20+ event types:
+
+- Job lifecycle, photo capture/deletion, signature events
+- Location capture, safety checklist, sync events
+- **Hash chaining** - each event references the previous event's hash
+- Device metadata (userAgent, platform, online status)
+- GPS accuracy and source tracking
+
+### SSO (Feature-Flagged)
+
+Enterprise SSO infrastructure ready for activation:
+
+- SAML 2.0 and OIDC protocol support
+- Okta, Azure AD, OneLogin provider configurations
+- Domain-based enforcement
+- Magic link fallback for non-SSO users
+
+### Feature Flags
+
+10 flags with deterministic rollout control:
+
+| Flag | Rollout | Description |
+|------|---------|-------------|
+| `REST_API_V1` | 100% (paid) | REST API with scoped access |
+| `WEBHOOK_SYSTEM` | 100% (paid) | Real-time event notifications |
+| `TEAM_MANAGEMENT` | 100% | Team roles and invitations |
+| `PUSH_NOTIFICATIONS` | 100% | Push notification infrastructure |
+| `TEAM_STATUS_BAR` | 100% | Real-time team status UI |
+| `READY_TO_INVOICE_SECTION` | 100% | Invoice-ready job section |
+| `SEAL_ON_DISPATCH` | 100% | Auto-seal when dispatched |
+| `EDGE_FUNCTION_RATE_LIMITER` | 100% | API rate limiting |
+| `SSO_ENTERPRISE` | 0% (staging) | Enterprise SSO |
+| `WORKSPACE_ISOLATED_STORAGE` | 0% | Per-workspace storage isolation |
 
 ---
 
@@ -169,188 +289,83 @@ trust_by_design/
 ### Prerequisites
 
 - **Node.js** 18+ (LTS recommended)
-- **npm** 9+ or **pnpm** 8+
-- **Supabase Account** (for backend services)
-- **Git** for version control
+- **npm** 9+
+- **Supabase** account (for backend services)
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/trust_by_design.git
-   cd trust_by_design
-   ```
+```bash
+git clone https://github.com/vm799/trust_by_design.git
+cd trust_by_design
+npm install
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### Environment Variables
 
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
-   Edit `.env` with your credentials:
-   ```env
-   # Supabase Configuration
-   VITE_SUPABASE_URL=https://your-project.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key
+```env
+# Required
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_APP_URL=https://yourapp.vercel.app
 
-   # what3words API
-   VITE_W3W_API_KEY=your-w3w-api-key
+# Optional
+VITE_W3W_API_KEY=your-w3w-api-key
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
+```
 
-   # Optional: Google OAuth
-   VITE_GOOGLE_CLIENT_ID=your-google-client-id
-   ```
+### Supabase Setup
 
-4. **Set up Supabase backend**
-   ```bash
-   # Install Supabase CLI
-   npm install -g supabase
+```bash
+npm install -g supabase
+supabase login
+supabase link --project-ref your-project-ref
+supabase db push
+supabase functions deploy
+```
 
-   # Login to Supabase
-   supabase login
+### RSA-2048 Key Generation
 
-   # Link to your project
-   supabase link --project-ref your-project-ref
+```bash
+openssl genrsa -out seal_private_key.pem 2048
+openssl rsa -in seal_private_key.pem -pubout -out seal_public_key.pem
 
-   # Run migrations
-   supabase db push
+base64 -w 0 seal_private_key.pem > seal_private_key_base64.txt
+base64 -w 0 seal_public_key.pem > seal_public_key_base64.txt
 
-   # Deploy Edge Functions
-   supabase functions deploy seal-evidence
-   supabase functions deploy verify-evidence
-   ```
+supabase secrets set SEAL_PRIVATE_KEY="$(cat seal_private_key_base64.txt)"
+supabase secrets set SEAL_PUBLIC_KEY="$(cat seal_public_key_base64.txt)"
 
-5. **Generate RSA-2048 keys for cryptographic sealing**
-   ```bash
-   # Generate keypair
-   openssl genrsa -out seal_private_key.pem 2048
-   openssl rsa -in seal_private_key.pem -pubout -out seal_public_key.pem
-
-   # Convert to base64 for environment variables
-   base64 -w 0 seal_private_key.pem > seal_private_key_base64.txt
-   base64 -w 0 seal_public_key.pem > seal_public_key_base64.txt
-
-   # Set Supabase secrets
-   supabase secrets set SEAL_PRIVATE_KEY="$(cat seal_private_key_base64.txt)"
-   supabase secrets set SEAL_PUBLIC_KEY="$(cat seal_public_key_base64.txt)"
-
-   # SECURITY: Delete local private key after upload
-   rm seal_private_key.pem seal_private_key_base64.txt
-   ```
+# Delete local private key after upload
+rm seal_private_key.pem seal_private_key_base64.txt
+```
 
 ### Development
 
 ```bash
-# Start development server (http://localhost:3000)
-npm run dev
-
-# Run type checking
-npm run type-check
-
-# Run linter
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
+npm run dev              # Dev server (http://localhost:3000)
+npm test                 # Unit tests (watch mode)
+npm test -- --run        # Run tests once (1488 tests)
+npm run lint             # ESLint check
+npm run type-check       # TypeScript validation
+npm run build            # Production build
 ```
 
-### Testing
+### Full Verification
 
 ```bash
-# Unit tests (watch mode)
-npm run test
-
-# Run all unit tests once
-npm run test:unit
-
-# Integration tests
-npm run test:integration
-
-# Test coverage report
-npm run test:coverage
-
-# E2E tests with Playwright
-npm run test:e2e
-
-# E2E with UI
-npm run test:e2e:ui
-
-# E2E debugging
-npm run test:e2e:debug
+npm test -- --run && npm run lint && npm run type-check && npm run build
 ```
 
-### Security & Performance Auditing
-
-Automated audit scripts implementing [JOBPROOF_AUDIT_SPECIFICATION.md](./JOBPROOF_AUDIT_SPECIFICATION.md):
+### Deploy
 
 ```bash
-# Security audit (RLS policies, cryptographic sealing, data integrity)
-npm run audit:security
-
-# Detailed security audit with verbose output
-npm run audit:security:verbose
-
-# Performance audit (query benchmarks, load testing)
-npm run audit:performance
-
-# Production monitoring (daily checks, real-time alerts)
-npm run audit:monitor
-
-# Run all audits
-npm run audit:all
-
-# Deployment verification
-npm run verify:deployment
+vercel deploy            # Preview deployment
+vercel --prod            # Production deployment
 ```
-
-**Audit Scripts Features:**
-- ✅ RLS policy verification (workspace isolation)
-- ✅ Cryptographic sealing audit (100% RSA-2048 required)
-- ✅ Data integrity checks (GPS, signatures, timestamps)
-- ✅ Performance benchmarking (p50, p95, p99 percentiles)
-- ✅ Production monitoring with webhook alerts
-- ✅ CI/CD integration ready
-- ✅ Exit codes for deployment gates (0=pass, 1=critical, 2=high, 3=medium)
-
-See [scripts/README.md](./scripts/README.md) for detailed documentation.
-
-### Build & Deploy
-
-```bash
-# Production build
-npm run build
-
-# Preview production build locally
-npm run preview
-
-# Deploy to Vercel
-vercel --prod
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anonymous key (public) |
-| `VITE_W3W_API_KEY` | ✅ | what3words API key |
-| `VITE_GOOGLE_CLIENT_ID` | ⚠️ | Google OAuth client ID (optional) |
-| `VITE_APP_URL` | ⚠️ | Production app URL for redirects |
-
-### Supabase Secrets (Server-side)
-
-| Secret | Required | Description |
-|--------|----------|-------------|
-| `SEAL_PRIVATE_KEY` | ✅ | RSA-2048 private key (base64) |
-| `SEAL_PUBLIC_KEY` | ✅ | RSA-2048 public key (base64) |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Service role key (auto-configured) |
 
 ---
 
@@ -359,142 +374,132 @@ vercel --prod
 ### Authentication
 
 - **Email/Password** - Supabase Auth with secure password hashing
-- **Magic Links** - Passwordless email authentication (7-day expiry)
+- **Magic Links** - Passwordless technician access (7-day expiry)
 - **Google OAuth** - OAuth 2.0 with PKCE flow
-- **Session Management** - JWT tokens (60min access, 30-day refresh)
+- **Session Management** - JWT tokens with memoized refresh (prevents auth loops)
 
 ### Authorization
 
-- **Row-Level Security (RLS)** - Enforced on all 14 database tables
-- **Workspace Isolation** - Users can only access their workspace data
-- **Role-Based Access** - Admin, member, and token-based permissions
-- **Sealed Job Immutability** - Database triggers prevent modifications
+- **Row-Level Security** - Enforced on all database tables
+- **Workspace Isolation** - Users access only their workspace data
+- **Role Hierarchy** - admin > manager > member > technician > view_only
+- **Sealed Immutability** - Database triggers prevent modification of sealed jobs
+- **Bunker Mode** - Offline universal access with audit trail for later review
 
-### Cryptographic Sealing
+### Cryptography
 
-- **Algorithm** - RSA-2048 with SHA-256 hashing
-- **Evidence Bundle** - JSON canonical serialization
-- **Signature** - Digital signature stored in `evidence_seals` table
-- **Verification** - Cryptographic proof of tampering detection
-- **Key Management** - Private key in Supabase secrets (never in code)
+| Layer | Algorithm | Purpose |
+|-------|-----------|---------|
+| Evidence Sealing | RSA-2048 + SHA-256 | Tamper-evident digital signatures |
+| Encryption at Rest | AES-256-GCM | Sensitive field encryption |
+| In Transit | TLS 1.3 | Transport security (Supabase default) |
+| API Keys | HMAC-SHA256 | Key hashing (never stored plaintext) |
+| Webhooks | HMAC-SHA256 | Delivery signature verification |
+| Keys | In-memory, NON-EXTRACTABLE | Web Crypto API key management |
 
 ### Data Protection
 
-- **Encryption at Rest** - Supabase encrypts all stored data
-- **Encryption in Transit** - HTTPS/TLS 1.3 required
-- **Offline Data** - IndexedDB encrypted by browser sandbox
-- **File Uploads** - Content-type validation, size limits, virus scanning
-
----
-
-## Documentation
-
-### Key Documents
-
-- [**Audit Specification**](./JOBPROOF_AUDIT_SPECIFICATION.md) - Complete audit framework and procedures
-- [**Production Implementation Plan**](./PRODUCTION_READY_IMPLEMENTATION_PLAN.md) - Deployment roadmap
-- [**Testing Guide**](./TESTING_IMPLEMENTATION_GUIDE.md) - Test strategy and coverage
-- [**Deployment Guide**](./DEPLOYMENT_GUIDE.md) - Step-by-step deployment instructions
-- [**Auth Documentation**](./AUTH.md) - Authentication implementation details
-- [**UX Audit**](./FINAL_UX_AUDIT_100.md) - UX score 100/100 achievement report
-
-### Architecture Documents
-
-- [**Business Overview**](./BUSINESS_OVERVIEW.md) - Product vision and market fit
-- [**Domain Analysis**](./DOMAIN_ANALYSIS.md) - Business domain modeling
-- [**Trust System Audit**](./TRUST_SYSTEM_AUDIT.md) - Security architecture review
-- [**Backend Audit**](./BACKEND_AUDIT.md) - Database and API design review
-
-### API Reference
-
-Supabase Edge Functions:
-
-- **POST** `/functions/v1/seal-evidence` - Seal job evidence with RSA-2048
-- **POST** `/functions/v1/verify-evidence` - Verify evidence integrity
+- **RLS Policies** on all tables - `auth.uid()` scoped, never trust client
+- **No `service_role`** keys in frontend code
+- **Sealed jobs** cannot be deleted (`sealedAt` present)
+- **Invoiced jobs** cannot be deleted (`invoiceId` present)
+- **Offline audit trail** - all bunker mode actions logged with timestamp + user
 
 ---
 
 ## Testing
 
-### Test Coverage
+### Coverage
 
-- **758 Total Test Cases** across unit, integration, and E2E tests
-- **80%+ Code Coverage** for critical paths
-- **100% RLS Policy Coverage** - All tables tested for security
+- **1488 tests** across 76 test files
+- **76/76 test files passing**
+- **Vitest** for unit and integration tests
+- **Playwright** for E2E cross-browser tests
 
-### Test Suites
+### Test Categories
 
-1. **Unit Tests** (Vitest)
-   - Component rendering
-   - Business logic functions
-   - Utility functions
-   - Mock sealing/verification
+| Category | Count | Coverage |
+|----------|-------|----------|
+| Unit tests | 1400+ | Components, business logic, utilities |
+| Architecture tests | 30+ | Pattern enforcement (DataContext, auth, animations) |
+| Integration tests | 30+ | Database, sync queue, offline behavior |
+| E2E tests | 20+ | Magic links, cross-browser, technician flows |
 
-2. **Integration Tests** (Vitest)
-   - Database operations
-   - Authentication flows
-   - Sync queue operations
-   - Offline-first behavior
+### Architecture Tests Enforce
 
-3. **E2E Tests** (Playwright)
-   - Complete user workflows
-   - Cross-browser testing
-   - Mobile viewport testing
-   - Offline scenario testing
+- No `supabase.auth.getUser()` in components (use AuthContext)
+- No `useState` for jobs/clients/technicians (use DataContext)
+- All routes lazy-loaded
+- Animation constants from `lib/animations.ts` (no inline objects)
+- Stable React keys (no array index)
 
 ---
 
-## Performance
+## Job Lifecycle
 
-### Metrics
+```
+Draft → Dispatched → In Progress → Complete → Submitted → Sealed → Invoiced
+         |              |            |          |           |
+    (needs tech)   (tech working) (evidence)  (review)   (locked)
+```
 
-- **Lighthouse Score** - Performance: 90+, Accessibility: 95+, Best Practices: 90+
-- **Core Web Vitals**
-  - LCP (Largest Contentful Paint): < 2.5s
-  - FID (First Input Delay): < 100ms
-  - CLS (Cumulative Layout Shift): < 0.1
-- **Bundle Size** - < 500KB gzipped
-- **Database Queries** - 95% execute in < 100ms
+**Deletion rules:**
+- `sealedAt` present = cannot delete (evidence preserved)
+- `invoiceId` present = cannot delete (delete invoice first)
+
+---
+
+## Configuration
+
+### Client Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
+| `VITE_APP_URL` | Yes | Production app URL for redirects |
+| `VITE_W3W_API_KEY` | No | what3words API key |
+| `VITE_GOOGLE_CLIENT_ID` | No | Google OAuth client ID |
+
+### Supabase Secrets (Server-Side Only)
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `SEAL_PRIVATE_KEY` | Yes | RSA-2048 private key (base64) |
+| `SEAL_PUBLIC_KEY` | Yes | RSA-2048 public key (base64) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Auto-configured by Supabase |
 
 ---
 
 ## Contributing
 
-### Development Workflow
+### Before Every Commit
 
-1. Create feature branch from `main`
-2. Implement changes with tests
-3. Run full test suite (`npm run test && npm run test:e2e`)
-4. Type check (`npm run type-check`)
-5. Lint code (`npm run lint`)
-6. Commit with descriptive message
-7. Push and create pull request
+```bash
+npm test -- --run && npm run build
+```
 
 ### Code Standards
 
-- **TypeScript** - Strict mode enabled, no `any` types
-- **ESLint** - Enforce code quality rules
-- **Prettier** - Consistent code formatting
-- **Husky** - Pre-commit hooks for quality gates
+- **DataContext** is the only source of truth for jobs/clients/technicians
+- **AuthContext** for all authentication (never direct `supabase.auth.getUser()`)
+- **Full Job objects** passed to `updateJob()` (not partial updates)
+- **44px minimum** touch targets (WCAG accessibility)
+- **Delete legacy code** (never comment out)
+- **Error states** with retry via `DataContext.refresh()`
+- **Memoize** derived state with `useMemo`
+- **Animation constants** from `lib/animations.ts`
 
 ---
 
 ## License
 
-Copyright © 2026 JobProof. All rights reserved.
-
----
-
-## Support
-
-- **Documentation** - See [/docs](./docs) folder
-- **Issues** - [GitHub Issues](https://github.com/yourusername/trust_by_design/issues)
-- **Security** - Report vulnerabilities to security@jobproof.pro
+Copyright 2026 JobProof. All rights reserved.
 
 ---
 
 <div align="center">
 
-**Built with ❤️ for field service professionals**
+**Built for field workers in poor-service environments**
 
 </div>
