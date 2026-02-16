@@ -22,7 +22,6 @@ const CHECKSUM_SALT = 'jobproof_bunker_2026';
  */
 export const REDIRECT_ALLOWLIST = [
   'https://jobproof.pro',
-  'https://trust-by-design.vercel.app',     // Vercel production
   'http://localhost:3000',
   'http://localhost:5173',  // Vite default
   'http://localhost:5174',  // Vite alternate
