@@ -253,18 +253,18 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
 
       {/* Technician Info */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="size-6 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase flex-shrink-0">
+        <div className="size-6 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase flex-shrink-0">
           {job.technician[0]}
         </div>
-        <span className="text-xs text-slate-400 font-medium truncate">{job.technician}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{job.technician}</span>
       </div>
 
       {/* Evidence Photos */}
       {job.photos.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="material-symbols-outlined text-slate-300 text-xs">photo_library</span>
-            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+            <span className="material-symbols-outlined text-slate-700 dark:text-slate-300 text-xs">photo_library</span>
+            <span className="text-[9px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
               {job.photos.length} Photo{job.photos.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -273,7 +273,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
             {job.photos.slice(0, 4).map((p) => {
               const displayUrl = p.isIndexedDBRef ? (photoDataUrls?.get(p.id) || '') : p.url;
               return (
-                <div key={p.id} className="size-8 rounded-md border-2 border-slate-900 overflow-hidden bg-slate-800 flex-shrink-0">
+                <div key={p.id} className="size-8 rounded-md border-2 border-slate-50 dark:border-slate-900 overflow-hidden bg-gray-100 dark:bg-slate-800 flex-shrink-0">
                   {displayUrl ? (
                     <img
                       src={displayUrl}
@@ -282,14 +282,14 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[10px] text-slate-400">image</span>
+                      <span className="material-symbols-outlined text-[10px] text-slate-500 dark:text-slate-400">image</span>
                     </div>
                   )}
                 </div>
               );
             })}
             {job.photos.length > 4 && (
-              <div className="size-8 rounded-md border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-300">
+              <div className="size-8 rounded-md border-2 border-slate-50 dark:border-slate-900 bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-700 dark:text-slate-300">
                 +{job.photos.length - 4}
               </div>
             )}

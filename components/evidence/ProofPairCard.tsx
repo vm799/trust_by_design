@@ -355,7 +355,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
               className={`
                 flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2
                 ${missingBefore || missingAfter
-                  ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
+                  ? 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-[#00FFCC]/20 text-[#00FFCC] hover:bg-[#00FFCC]/30 transition-colors'
                 }
               `}

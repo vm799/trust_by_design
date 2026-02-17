@@ -1747,7 +1747,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                         e.stopPropagation();
                         cancelGpsCapture();
                       }}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-wider transition-all"
+                      className="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider transition-all"
                     >
                       Cancel
                     </button>
@@ -1761,7 +1761,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <span className="material-symbols-outlined text-warning text-xl font-black">info</span>
                     <div className="flex-1 space-y-2">
                       <p className="text-[11px] font-black text-warning uppercase tracking-tight">Location Access Required</p>
-                      <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-tight">
                         JobProof requires location access for evidence verification. Enable location permissions in your device settings or use manual entry as a fallback.
                       </p>
                     </div>
@@ -1777,13 +1777,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               )}
 
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Safety Checklist</p>
+                <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest pl-2">Safety Checklist</p>
                 {checklist.map((item, idx) => (
                   <button
                     key={item.id}
                     ref={(el) => { checklistRefs.current[idx] = el; }}
                     onClick={() => handleChecklistToggle(idx)}
-                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/15 text-slate-300'}`}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-slate-900 dark:text-white' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/15 text-slate-700 dark:text-slate-300'}`}
                   >
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}

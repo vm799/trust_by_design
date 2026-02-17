@@ -918,7 +918,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="flex-1 py-4 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest hover:bg-slate-700 transition-all"
+                className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-slate-900 dark:text-white font-black rounded-xl uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all"
               >
                 Back
               </button>

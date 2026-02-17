@@ -617,39 +617,20 @@ const FeatureCard = ({
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
     whileHover={hoverLiftQuick}
-    className={`
-      text-center space-y-3 sm:space-y-4 p-6 sm:p-8 rounded-2xl
-      backdrop-blur-xl border transition-all duration-300
-      ${isDark
-        ? 'bg-slate-900 border-white/10 hover:bg-slate-900/70 hover:border-white/20'
-        : 'bg-white/50 border-slate-200/50 hover:bg-white/70 hover:border-slate-300/50 hover:shadow-xl'
-      }
-    `}
+    className="text-center space-y-3 sm:space-y-4 p-6 sm:p-8 rounded-2xl backdrop-blur-xl border transition-all duration-300 bg-white/50 border-slate-200/50 hover:bg-white/70 hover:border-slate-300/50 hover:shadow-xl dark:bg-slate-900 dark:border-white/10 dark:hover:bg-slate-900/70 dark:hover:border-white/20"
   >
     <div
-      className={`
-        inline-flex items-center justify-center size-14 sm:size-16 rounded-xl sm:rounded-2xl
-        ${isDark
-          ? 'bg-gradient-to-br from-primary/30 to-indigo-600/20'
-          : 'bg-gradient-to-br from-amber-100 to-orange-100'
-        }
-      `}
+      className="inline-flex items-center justify-center size-14 sm:size-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-primary/30 dark:to-indigo-600/20"
     >
       <span
-        className={`
-          material-symbols-outlined text-2xl sm:text-3xl
-          ${isDark ? 'text-primary' : 'text-amber-600'}
-        `}
+        className="material-symbols-outlined text-2xl sm:text-3xl text-amber-600 dark:text-primary"
         style={{ fontVariationSettings: "'FILL' 1" }}
       >
         {icon}
       </span>
     </div>
     <h3
-      className={`
-        text-base sm:text-lg font-bold tracking-tight
-        ${isDark ? 'text-white' : 'text-slate-900'}
-      `}
+      className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white"
     >
       {title}
     </h3>

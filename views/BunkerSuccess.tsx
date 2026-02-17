@@ -99,8 +99,8 @@ export default function BunkerSuccess() {
             </div>
             {jobDetails.title && (
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wide">Job Title</p>
-                <p className="text-white">{jobDetails.title}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Job Title</p>
+                <p className="text-slate-900 dark:text-white">{jobDetails.title}</p>
               </div>
             )}
           </div>
@@ -118,7 +118,7 @@ export default function BunkerSuccess() {
               <p className="text-sm text-green-300">
                 PDF report emailed to:
               </p>
-              <p className="text-lg font-medium text-white">
+              <p className="text-lg font-medium text-slate-900 dark:text-white">
                 {jobDetails.managerEmail}
               </p>
               {jobDetails.clientEmail && (
@@ -135,9 +135,9 @@ export default function BunkerSuccess() {
         </div>
 
         {/* Next Steps */}
-        <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-600/50">
-          <h3 className="text-sm font-medium text-slate-300 mb-2">What happens next?</h3>
-          <ul className="text-sm text-slate-400 space-y-1 text-left list-disc list-inside">
+        <div className="bg-gray-100/30 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-300/50 dark:border-slate-600/50">
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">What happens next?</h3>
+          <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-1 text-left list-disc list-inside">
             <li>Manager reviews the evidence</li>
             <li>Client receives their copy</li>
             <li>Job is marked as complete</li>
@@ -154,14 +154,14 @@ export default function BunkerSuccess() {
           </button>
           <button
             onClick={handleCreateAnother}
-            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+            className="w-full py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg font-medium transition-colors"
           >
             New Job
           </button>
         </div>
 
         {/* Footer */}
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Your evidence is securely stored and tamper-proof
         </p>
       </div>

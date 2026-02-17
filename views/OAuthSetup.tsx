@@ -352,19 +352,19 @@ const OAuthSetup: React.FC = () => {
                 transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
                 className="inline-flex items-center justify-center size-20 bg-gradient-to-br from-emerald-500/30 to-primary/30 rounded-3xl mb-2"
               >
-                <span className="material-symbols-outlined text-white text-4xl">waving_hand</span>
+                <span className="material-symbols-outlined text-slate-900 dark:text-white text-4xl">waving_hand</span>
               </motion.div>
               <div className="space-y-2">
-                <h1 className="text-3xl font-black text-white tracking-tight">
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   Hey there! 👋
                 </h1>
-                <p className="text-slate-400 text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-base">
                   Let&apos;s get you set up in 30 seconds
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleNameSubmit} className="bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl space-y-5">
+            <form onSubmit={handleNameSubmit} className="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-3xl space-y-5">
               {error && (
                 <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-danger text-sm">error</span>

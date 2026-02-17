@@ -239,8 +239,8 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
             </motion.div>
 
             {/* Hash display */}
-            <div className="mb-6 p-4 rounded-xl bg-slate-900/80 border border-white/10">
-              <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+            <div className="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10">
+              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                 SHA-256 Hash
               </div>
               <div className="font-mono text-xs text-cyan-400 break-all leading-relaxed">

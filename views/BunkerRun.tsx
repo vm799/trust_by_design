@@ -1154,13 +1154,13 @@ export default function BunkerRun() {
       {/* Pause Job Modal */}
       {showPauseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-600'}`}>
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-white dark:bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-200 dark:border-slate-600'}`}>
             <div className="text-center mb-6">
-              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-500/20'}`}>
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-100 dark:bg-amber-500/20'}`}>
                 <span className="material-symbols-outlined text-3xl text-amber-500">pause_circle</span>
               </div>
               <h2 className="text-xl font-bold mb-2">Pause This Job?</h2>
-              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>
                 Your progress will be saved. You can resume this job later or switch to another job.
               </p>
             </div>

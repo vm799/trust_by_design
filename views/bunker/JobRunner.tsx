@@ -437,7 +437,7 @@ function SignatureCanvas({ onSave, onClear }: SignatureCanvasProps) {
           ref={canvasRef}
           width={350}
           height={200}
-          className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
+          className="border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-white touch-none w-full"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}

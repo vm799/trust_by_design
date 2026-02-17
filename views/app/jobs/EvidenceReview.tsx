@@ -547,22 +547,22 @@ const EvidenceReview: React.FC = () => {
                           <span className="material-symbols-outlined text-xl text-emerald-400">verified</span>
                         </div>
                         <div>
-                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 3: Seal Evidence</h3>
-                          <p className="text-xs text-slate-400">Create tamper-proof cryptographic record</p>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 3: Seal Evidence</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Create tamper-proof cryptographic record</p>
                         </div>
                       </div>
 
                       {/* Pre-seal checklist */}
                       <div className="space-y-2 mb-6">
-                        <div className={`flex items-center gap-2 text-sm ${photos.length > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${photos.length > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span className="material-symbols-outlined text-lg">{photos.length > 0 ? 'check_circle' : 'cancel'}</span>
                           {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
                         </div>
-                        <div className={`flex items-center gap-2 text-sm ${job.clientConfirmation?.confirmed ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${job.clientConfirmation?.confirmed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                           <span className="material-symbols-outlined text-lg">{job.clientConfirmation?.confirmed ? 'check_circle' : 'radio_button_unchecked'}</span>
                           Client attestation {job.clientConfirmation?.confirmed ? 'complete' : '(optional)'}
                         </div>
-                        <div className={`flex items-center gap-2 text-sm ${job.w3w ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${job.w3w ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                           <span className="material-symbols-outlined text-lg">{job.w3w ? 'check_circle' : 'radio_button_unchecked'}</span>
                           Location {job.w3w ? `///\u200b${job.w3w}` : '(optional)'}
                         </div>
@@ -576,7 +576,7 @@ const EvidenceReview: React.FC = () => {
                         Seal Evidence Now
                       </button>
 
-                      <p className="text-[10px] text-slate-400 text-center mt-3">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-3">
                         Creates RSA-2048 + SHA-256 cryptographic proof. Once sealed, evidence cannot be modified.
                       </p>
                     </Card>
@@ -605,8 +605,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-blue-400 text-lg">photo_camera_front</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">Before Work ({grouped.before.length})</h3>
-                      <p className="text-xs text-slate-400">Conditions documented prior to work commencing</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Before Work ({grouped.before.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Conditions documented prior to work commencing</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

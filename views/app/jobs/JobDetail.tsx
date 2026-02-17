@@ -831,13 +831,13 @@ const JobDetail: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {/* Magic Link Display with Dynamic Expiry */}
-              <div className="p-4 bg-slate-800 rounded-xl">
-                <p className="text-xs text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
-                <p className="text-sm text-white font-mono break-all">{magicLink}</p>
+              <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-xl">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
+                <p className="text-sm text-slate-900 dark:text-white font-mono break-all">{magicLink}</p>
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   expiryInfo.isExpired ? 'text-red-400' :
                   expiryInfo.isUrgent ? 'text-amber-400' :
-                  'text-slate-400'
+                  'text-slate-500 dark:text-slate-400'
                 }`}>
                   {expiryInfo.isUrgent && (
                     <span className="material-symbols-outlined text-sm">warning</span>
@@ -853,7 +853,7 @@ const JobDetail: React.FC = () => {
                 className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                   expiryInfo.isExpired || expiryInfo.isUrgent
                     ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
+                    : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
                 }`}
               >
                 {generatingLink ? (
@@ -883,7 +883,7 @@ const JobDetail: React.FC = () => {
                   className={`py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                     linkCopied
                       ? 'bg-emerald-500 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-white'
+                      : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
                   }`}
                 >
                   <span className="material-symbols-outlined text-lg">
@@ -913,7 +913,7 @@ const JobDetail: React.FC = () => {
               {typeof navigator !== 'undefined' && 'share' in navigator && (
                 <button
                   onClick={handleShare}
-                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-lg">ios_share</span>
                   More Share Options...
