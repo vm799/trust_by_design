@@ -13,7 +13,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
-import { generateMagicLink } from '../../../lib/db';
+import { generateMagicLink, getMagicLinksForJob } from '../../../lib/db';
 import { useAuth } from '../../../lib/AuthContext';
 import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
@@ -85,6 +85,15 @@ const JobDetail: React.FC = () => {
       setMagicLink(job.magicLinkUrl);
     }
   }, [job, magicLink]);
+
+  // Load link tracking info from localStorage for real-time status
+  const linkTrackingInfo = useMemo(() => {
+    if (!job?.id) return null;
+    const links = getMagicLinksForJob(job.id);
+    if (links.length === 0) return null;
+    const activeLink = links.find(l => l.status === 'active') || links[0];
+    return activeLink;
+  }, [job?.id]);
 
   const loading = dataLoading;
 
@@ -505,7 +514,7 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
                status === 'active' ? 'pending' :
-               status === 'sent' ? 'mark_email_read' :
+               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at ? 'mark_email_read' : 'schedule_send') :
                status === 'assigned' ? 'person' :
                status === 'invoiced' ? 'receipt' :
                'edit_note'}
@@ -517,7 +526,7 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
                status === 'active' ? 'Work In Progress' :
-               status === 'sent' ? 'Link Sent to Technician' :
+               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at ? 'Link Opened by Technician' : 'Link Sent to Technician') :
                status === 'assigned' ? 'Technician Assigned' :
                status === 'invoiced' ? 'Invoiced' :
                'Draft - Needs Technician'}
@@ -527,7 +536,11 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
-               status === 'sent' ? 'Waiting for technician to start work' :
+               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at
+                 ? `Opened ${new Date((linkTrackingInfo as any).first_accessed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                 : (linkTrackingInfo as any)?.sent_at
+                   ? `Sent ${new Date((linkTrackingInfo as any).sent_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} — not yet opened`
+                   : 'Waiting for technician to open link') :
                status === 'assigned' ? 'Generate and send link to technician' :
                status === 'invoiced' ? 'Invoice has been generated' :
                'Assign a technician to dispatch this job'}
