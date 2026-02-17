@@ -39,7 +39,7 @@ import { useSwipeAction } from '../../../hooks/useSwipeAction';
 import { usePullToRefresh } from '../../../hooks/usePullToRefresh';
 import PullToRefreshIndicator from '../../../components/ui/PullToRefreshIndicator';
 
-type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'archived' | 'sync_issues';
+type FilterType = 'all' | 'active' | 'awaiting_seal' | 'sealed' | 'archived' | 'sync_issues' | 'dispatched' | 'needs_link' | 'needs_proof';
 
 interface FilterTab {
   value: FilterType;
@@ -539,6 +539,15 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
       case 'sync_issues':
         result = result.filter(j => j.syncStatus === SYNC_STATUS.FAILED);
         break;
+      case 'dispatched':
+        result = result.filter(j => j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status));
+        break;
+      case 'needs_link':
+        result = result.filter(j => (j.technicianId || j.techId) && !j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status));
+        break;
+      case 'needs_proof':
+        result = result.filter(j => j.photos.length === 0 && !j.sealedAt && j.status !== 'Archived');
+        break;
       default:
         // 'all' - no filter
         break;
@@ -629,6 +638,42 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
           </header>
         </div>
 
+        {/* Dashboard filter banner - shown when arriving from dashboard chip */}
+        {['dispatched', 'needs_link', 'needs_proof'].includes(currentFilter) && (
+          <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+            currentFilter === 'dispatched' ? 'bg-amber-500/10 border-amber-500/20' :
+            currentFilter === 'needs_link' ? 'bg-slate-500/10 border-slate-500/20' :
+            'bg-blue-500/10 border-blue-500/20'
+          }`}>
+            <div className="flex items-center gap-2">
+              <span className={`material-symbols-outlined text-lg ${
+                currentFilter === 'dispatched' ? 'text-amber-400' :
+                currentFilter === 'needs_link' ? 'text-slate-400' :
+                'text-blue-400'
+              }`}>
+                {currentFilter === 'dispatched' ? 'schedule_send' :
+                 currentFilter === 'needs_link' ? 'link_off' : 'photo_camera'}
+              </span>
+              <span className={`text-sm font-bold ${
+                currentFilter === 'dispatched' ? 'text-amber-400' :
+                currentFilter === 'needs_link' ? 'text-slate-300' :
+                'text-blue-400'
+              }`}>
+                {currentFilter === 'dispatched' ? 'Dispatched — awaiting technician' :
+                 currentFilter === 'needs_link' ? 'Assigned — needs link' :
+                 'Needs proof — no evidence yet'}
+              </span>
+            </div>
+            <button
+              onClick={() => setFilter('all')}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors min-h-[44px]"
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+              Clear
+            </button>
+          </div>
+        )}
+
         {/* Filter Tabs */}
         <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-2">
           <div className="flex flex-wrap gap-2">
@@ -690,7 +735,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 searchQuery
                   ? 'Try adjusting your search or filter criteria.'
                   : currentFilter !== 'all'
-                    ? `No jobs match the "${filterTabs.find(t => t.value === currentFilter)?.label}" filter.`
+                    ? `No jobs match the "${filterTabs.find(t => t.value === currentFilter)?.label || currentFilter.replace(/_/g, ' ')}" filter.`
                     : 'Create your first job to get started.'
               }
               actionLabel={!searchQuery && currentFilter === 'all' ? 'Create Job' : undefined}
