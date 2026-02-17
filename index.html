@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,25 +27,44 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <style>
-    /* Critical CSS for instant dark theme - prevents white flash */
-    /* Phase 5.5: Force dark-only, no horizontal scroll */
+    /* Critical CSS - theme-aware, no horizontal scroll */
     html {
       overflow-x: hidden;
       max-width: 100vw;
     }
     html, body, #root {
-      background-color: #020617; /* slate-950 */
       min-height: 100vh;
+    }
+    /* Default: light theme */
+    html, body, #root {
+      background-color: #ffffff;
     }
     body {
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
       max-width: 100vw;
+      color: #0f172a; /* slate-900 */
+    }
+    /* Dark theme applied by ThemeProvider */
+    html.dark, html.dark body, html.dark #root {
+      background-color: #020617; /* slate-950 */
+    }
+    html.dark body {
       color: #f1f5f9; /* slate-100 */
     }
     #root {
       overflow-x: hidden;
       max-width: 100vw;
+    }
+
+    /* Prevent flash: detect system preference before React mounts */
+    @media (prefers-color-scheme: dark) {
+      html:not(.light):not(.daylight), html:not(.light):not(.daylight) body, html:not(.light):not(.daylight) #root {
+        background-color: #020617;
+      }
+      html:not(.light):not(.daylight) body {
+        color: #f1f5f9;
+      }
     }
 
     /* Loading spinner shown before React mounts */
@@ -79,6 +98,36 @@
       img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     }
   </style>
+
+  <!-- Apply theme class before React mounts to prevent flash -->
+  <script>
+    (function() {
+      try {
+        var stored = localStorage.getItem('jobproof-theme-mode');
+        var theme = stored ? JSON.parse(stored) : 'system';
+        var daylight = localStorage.getItem('jobproof-daylight-enabled');
+        if (daylight && JSON.parse(daylight)) {
+          document.documentElement.classList.add('daylight');
+        } else if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.add('light');
+        } else {
+          // system preference
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.add('light');
+          }
+        }
+      } catch(e) {
+        // Fallback: use system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        }
+      }
+    })();
+  </script>
 </head>
 <body class="antialiased">
   <div id="root"></div>

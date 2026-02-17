@@ -526,15 +526,15 @@ const OAuthSetup: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-primary text-3xl">business</span>
               </motion.div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Name your workspace
               </h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 This is where your team&apos;s jobs will live
               </p>
             </div>
 
-            <form onSubmit={handleWorkspaceSubmit} className="bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl space-y-5">
+            <form onSubmit={handleWorkspaceSubmit} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-3xl space-y-5">
               {error && (
                 <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-danger text-sm">error</span>
@@ -543,30 +543,30 @@ const OAuthSetup: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="oauth-workspace-name" className="text-sm font-bold text-slate-300">Company or workspace name</label>
+                <label htmlFor="oauth-workspace-name" className="text-sm font-bold text-slate-700 dark:text-slate-300">Company or workspace name</label>
                 <input
                   id="oauth-workspace-name"
                   type="text"
                   placeholder={`${firstName}'s Workspace`}
-                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl py-4 px-5 text-slate-900 dark:text-white text-lg placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={workspaceName}
                   onChange={e => setWorkspaceName(e.target.value)}
                 />
-                <p className="text-slate-400 text-xs">
+                <p className="text-slate-500 dark:text-slate-400 text-xs">
                   Leave blank to use &quot;{displayWorkspaceName}&quot;
                 </p>
               </div>
 
               {/* Preview */}
-              <div className="bg-slate-800 border border-white/10 rounded-2xl p-4">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Preview</p>
+              <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Preview</p>
                 <div className="flex items-center gap-3">
                   <div className="size-12 bg-gradient-to-br from-primary to-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-xl">
                     {displayWorkspaceName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-white font-bold">{displayWorkspaceName}</p>
-                    <p className="text-slate-400 text-xs">{fullName} · Owner</p>
+                    <p className="text-slate-900 dark:text-white font-bold">{displayWorkspaceName}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">{fullName} · Owner</p>
                   </div>
                 </div>
               </div>
@@ -591,7 +591,7 @@ const OAuthSetup: React.FC = () => {
 
             <button
               onClick={() => setStep('persona')}
-              className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
+              className="w-full text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm py-2 transition-colors"
             >
               ← Back
             </button>
@@ -615,19 +615,19 @@ const OAuthSetup: React.FC = () => {
                 transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                 className="inline-flex items-center justify-center size-24 bg-gradient-to-br from-primary/30 to-emerald-500/30 rounded-3xl mb-2"
               >
-                <span className="material-symbols-outlined text-white text-5xl">install_mobile</span>
+                <span className="material-symbols-outlined text-slate-900 dark:text-white text-5xl">install_mobile</span>
               </motion.div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-black text-white tracking-tight">
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                   Add to Home Screen? 📱
                 </h1>
-                <p className="text-slate-400 text-sm max-w-xs mx-auto">
+                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
                   Access JobProof instantly, works offline, and looks like a native app
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl space-y-4">
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-3xl space-y-4">
               <div className="space-y-3">
                 {[
                   { icon: 'offline_bolt', text: 'Works offline - capture evidence anywhere' },
@@ -644,7 +644,7 @@ const OAuthSetup: React.FC = () => {
                     <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center">
                       <span className="material-symbols-outlined text-primary text-xl">{item.icon}</span>
                     </div>
-                    <p className="text-white text-sm font-medium">{item.text}</p>
+                    <p className="text-slate-900 dark:text-white text-sm font-medium">{item.text}</p>
                   </motion.div>
                 ))}
               </div>
@@ -661,7 +661,7 @@ const OAuthSetup: React.FC = () => {
 
               <button
                 onClick={handleSkipInstall}
-                className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
+                className="w-full text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm py-2 transition-colors"
               >
                 Maybe later
               </button>
@@ -677,7 +677,7 @@ const OAuthSetup: React.FC = () => {
         transition={{ delay: 0.5 }}
         className="absolute bottom-6 left-0 right-0 flex justify-center z-10"
       >
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
             <span className="material-symbols-outlined text-emerald-400 text-sm">verified</span>
             14-day free trial
