@@ -207,7 +207,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             {onClose && (
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
               >
                 <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
               </button>

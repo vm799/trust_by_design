@@ -690,13 +690,13 @@ const JobDetail: React.FC = () => {
                   </div>
                 </Link>
               ) : (
-                <p className="text-slate-400">No client assigned</p>
+                <p className="text-slate-500 dark:text-slate-400">No client assigned</p>
               )}
             </Card>
 
             {/* Technician Info */}
             <Card>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
                 Technician
               </h3>
               {technician ? (
@@ -706,8 +706,8 @@ const JobDetail: React.FC = () => {
                       <span className="text-amber-400 font-bold">{technician.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{technician.name}</p>
-                      <p className="text-sm text-slate-400 truncate">{technician.phone || technician.email}</p>
+                      <p className="font-medium text-slate-900 dark:text-white truncate">{technician.name}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{technician.phone || technician.email}</p>
                     </div>
                   </div>
                   {!job.sealedAt && (
@@ -722,7 +722,7 @@ const JobDetail: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-slate-400 mb-3">No technician assigned</p>
+                  <p className="text-slate-500 dark:text-slate-400 mb-3">No technician assigned</p>
                   <button
                     onClick={() => setShowAssignModal(true)}
                     className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
@@ -770,14 +770,14 @@ const JobDetail: React.FC = () => {
                 key={tech.id}
                 onClick={() => handleAssignTech(tech.id)}
                 disabled={assigning}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
               >
                 <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                   <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">{tech.name}</p>
-                  <p className="text-sm text-slate-400">{tech.phone || tech.email}</p>
+                  <p className="font-medium text-slate-900 dark:text-white">{tech.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{tech.phone || tech.email}</p>
                 </div>
                 {tech.id === technician?.id && (
                   <span className="material-symbols-outlined text-primary">check_circle</span>
@@ -798,13 +798,13 @@ const JobDetail: React.FC = () => {
         <div className="space-y-6">
           {/* Technician Info */}
           {technician && (
-            <div className="flex items-center gap-3 p-4 bg-slate-800 rounded-xl">
+            <div className="flex items-center gap-3 p-4 bg-gray-100 dark:bg-slate-800 rounded-xl">
               <div className="size-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                 <span className="text-amber-400 font-bold text-lg">{technician.name.charAt(0)}</span>
               </div>
               <div>
-                <p className="font-bold text-white">{technician.name}</p>
-                <p className="text-sm text-slate-400">{technician.email || 'No email'}</p>
+                <p className="font-bold text-slate-900 dark:text-white">{technician.name}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{technician.email || 'No email'}</p>
               </div>
             </div>
           )}

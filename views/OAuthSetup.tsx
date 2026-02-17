@@ -304,7 +304,7 @@ const OAuthSetup: React.FC = () => {
 
   // Render current step
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-emerald-500/20 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 -right-20 size-96 bg-primary/20 blur-[120px] rounded-full" />
@@ -327,7 +327,7 @@ const OAuthSetup: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: i * 0.1 }}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                isCurrent ? 'w-8 bg-primary' : isActive ? 'w-4 bg-primary/50' : 'w-4 bg-white/10'
+                isCurrent ? 'w-8 bg-primary' : isActive ? 'w-4 bg-primary/50' : 'w-4 bg-slate-100/70 dark:bg-white/10'
               }`}
             />
           );

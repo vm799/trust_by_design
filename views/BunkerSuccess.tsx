@@ -77,7 +77,7 @@ export default function BunkerSuccess() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 text-center">
         {/* Success Icon */}
         <div className="inline-flex items-center justify-center w-24 h-24 bg-green-600/20 rounded-full mx-auto">
@@ -86,16 +86,16 @@ export default function BunkerSuccess() {
 
         {/* Success Message */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-white">Job Complete!</h1>
-          <p className="text-lg text-slate-400">Evidence synced successfully</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Job Complete!</h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400">Evidence synced successfully</p>
         </div>
 
         {/* Job Details Card */}
         {jobDetails.id && (
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-600 text-left space-y-3">
+          <div className="bg-gray-100 dark:bg-slate-800 p-6 rounded-xl border border-slate-300 dark:border-slate-600 text-left space-y-3">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Job ID</p>
-              <p className="text-lg font-mono font-bold text-white">{jobDetails.id}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Job ID</p>
+              <p className="text-lg font-mono font-bold text-slate-900 dark:text-white">{jobDetails.id}</p>
             </div>
             {jobDetails.title && (
               <div>

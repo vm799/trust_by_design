@@ -847,56 +847,56 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-6">
                 <span className="material-symbols-outlined text-primary text-4xl">fact_check</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Review & Create
                 </h3>
               </div>
 
               <div className="space-y-4">
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Job Details</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Job Details</p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Title</span>
-                      <span className="text-white font-bold text-sm">{formData.title}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Title</span>
+                      <span className="text-slate-900 dark:text-white font-bold text-sm">{formData.title}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Type</span>
-                      <span className="text-white font-bold text-sm capitalize">{formData.jobType}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Type</span>
+                      <span className="text-slate-900 dark:text-white font-bold text-sm capitalize">{formData.jobType}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Priority</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Priority</span>
                       <span className={`font-bold text-sm uppercase ${
-                        formData.priority === 'urgent' ? 'text-safety-orange' : 'text-white'
+                        formData.priority === 'urgent' ? 'text-safety-orange' : 'text-slate-900 dark:text-white'
                       }`}>{formData.priority}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
-                  <p className="text-white text-sm">{formData.address}</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Location</p>
+                  <p className="text-slate-900 dark:text-white text-sm">{formData.address}</p>
                   {formData.siteNotes && (
-                    <p className="text-slate-400 text-xs mt-1">{formData.siteNotes}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">{formData.siteNotes}</p>
                   )}
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignment</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Assignment</p>
                   <div className="flex justify-between">
                     <div>
-                      <p className="text-slate-400 text-xs">Client</p>
-                      <p className="text-white font-bold">{selectedClient?.name}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">Client</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedClient?.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-slate-400 text-xs">Technician</p>
-                      <p className="text-white font-bold">{selectedTech?.name || <span className="text-slate-500 italic">Assign later</span>}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">Technician</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedTech?.name || <span className="text-slate-500 italic">Assign later</span>}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Safety & PPE</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Safety & PPE</p>
                   <div className="flex flex-wrap gap-2">
                     {formData.requiredPPE.map((ppe) => {
                       const option = PPE_OPTIONS.find(p => p.id === ppe);

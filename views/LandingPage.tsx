@@ -472,11 +472,7 @@ const LandingPage: React.FC = () => {
 
       {/* Phase 4.5: Roadmap Teasers Section */}
       <section
-        className={`
-          relative py-12 sm:py-16 px-4 sm:px-6
-          ${isDark ? 'bg-slate-900/30' : 'bg-white/30'}
-          backdrop-blur-sm
-        `}
+        className="relative py-12 sm:py-16 px-4 sm:px-6 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm"
       >
         <div className="max-w-4xl mx-auto space-y-8">
           <motion.div
@@ -489,14 +485,11 @@ const LandingPage: React.FC = () => {
               Coming Soon
             </span>
             <h2
-              className={`
-                text-2xl sm:text-3xl font-bold tracking-tight
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               Version 2.0 Roadmap
             </h2>
-            <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
               We&apos;re building the future of field service documentation
             </p>
           </motion.div>
@@ -507,19 +500,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0 }}
-              className={`
-                p-5 rounded-xl border text-center space-y-2
-                ${isDark
-                  ? 'bg-slate-900 border-primary/20'
-                  : 'bg-white/50 border-slate-200'
-                }
-              `}
+              className="p-5 rounded-xl border text-center space-y-2 bg-white/50 border-slate-200 dark:bg-slate-900 dark:border-primary/20"
             >
               <span className="material-symbols-outlined text-3xl text-primary">description</span>
-              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-sm uppercase text-slate-900 dark:text-white">
                 Advanced Evidence Export
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Professional PDF reports with verified timestamps
               </p>
             </motion.div>
@@ -529,19 +516,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className={`
-                p-5 rounded-xl border text-center space-y-2
-                ${isDark
-                  ? 'bg-slate-900 border-primary/20'
-                  : 'bg-white/50 border-slate-200'
-                }
-              `}
+              className="p-5 rounded-xl border text-center space-y-2 bg-white/50 border-slate-200 dark:bg-slate-900 dark:border-primary/20"
             >
               <span className="material-symbols-outlined text-3xl text-primary">verified</span>
-              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-sm uppercase text-slate-900 dark:text-white">
                 Secure Verification
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Cryptographic signatures for audit-ready records
               </p>
             </motion.div>
@@ -551,19 +532,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className={`
-                p-5 rounded-xl border text-center space-y-2
-                ${isDark
-                  ? 'bg-slate-900 border-primary/20'
-                  : 'bg-white/50 border-slate-200'
-                }
-              `}
+              className="p-5 rounded-xl border text-center space-y-2 bg-white/50 border-slate-200 dark:bg-slate-900 dark:border-primary/20"
             >
               <span className="material-symbols-outlined text-3xl text-primary">smart_toy</span>
-              <h3 className={`font-black text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-sm uppercase text-slate-900 dark:text-white">
                 AI Job Matching
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Smart technician assignment based on skills and location
               </p>
             </motion.div>
@@ -601,26 +576,17 @@ const LandingPage: React.FC = () => {
 
       {/* Footer - Glassmorphism */}
       <footer
-        className={`
-          relative py-8 sm:py-12 px-4 sm:px-6 border-t backdrop-blur-sm
-          ${isDark
-            ? 'border-white/15 bg-slate-950/50'
-            : 'border-slate-200/50 bg-white/50'
-          }
-        `}
+        className="relative py-8 sm:py-12 px-4 sm:px-6 border-t backdrop-blur-sm border-slate-200/50 bg-white/50 dark:border-white/15 dark:bg-slate-950/50"
       >
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
           <JobProofLogo variant="full" size="sm" />
           <div
-            className={`
-              flex items-center gap-4 sm:gap-6 text-xs sm:text-sm
-              ${isDark ? 'text-slate-400' : 'text-slate-400'}
-            `}
+            className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-400 dark:text-slate-400"
           >
-            <Link to="/pricing" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>
+            <Link to="/pricing" className="transition-colors hover:text-slate-900 dark:hover:text-white">
               Pricing
             </Link>
-            <Link to="/help" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>
+            <Link to="/help" className="transition-colors hover:text-slate-900 dark:hover:text-white">
               Help
             </Link>
             <span>© {new Date().getFullYear()} JobProof</span>

@@ -413,7 +413,7 @@ const EvidenceReview: React.FC = () => {
                             ? `bg-${stepColor}-500/20 text-${stepColor}-400 border border-${stepColor}-500/30`
                             : isComplete
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-slate-800 text-slate-400 border border-white/10'
+                            : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10'
                         }`}
                       >
                         <span className="material-symbols-outlined text-lg">
@@ -426,7 +426,7 @@ const EvidenceReview: React.FC = () => {
                   })}
                 </div>
                 {/* Progress track */}
-                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-blue-500 via-amber-500 to-emerald-500 rounded-full"
                     initial={{ width: '0%' }}
@@ -453,11 +453,11 @@ const EvidenceReview: React.FC = () => {
                           <span className="material-symbols-outlined text-xl text-blue-400">photo_library</span>
                         </div>
                         <div>
-                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 1: Review Evidence</h3>
-                          <p className="text-xs text-slate-400">Verify all photos and metadata below before proceeding</p>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 1: Review Evidence</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Verify all photos and metadata below before proceeding</p>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-300 mb-4">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
                         {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
                         ({grouped.before.length} before, {grouped.during.length} during, {grouped.after.length} after)
                       </p>
@@ -488,8 +488,8 @@ const EvidenceReview: React.FC = () => {
                             <span className="material-symbols-outlined text-xl text-emerald-400">check_circle</span>
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Client Already Attested</h3>
-                            <p className="text-xs text-slate-400">
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Client Already Attested</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               Signed {job.clientConfirmation.timestamp
                                 ? new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB')
                                 : 'previously'}
@@ -497,7 +497,7 @@ const EvidenceReview: React.FC = () => {
                           </div>
                         </div>
                         {job.clientConfirmation.signature && (
-                          <div className="bg-slate-900 border border-emerald-500/20 rounded-xl p-4 mb-4">
+                          <div className="bg-slate-50 dark:bg-slate-900 border border-emerald-500/20 rounded-xl p-4 mb-4">
                             <img src={job.clientConfirmation.signature} alt="Client Signature" className="max-h-24 mx-auto" />
                           </div>
                         )}
@@ -516,8 +516,8 @@ const EvidenceReview: React.FC = () => {
                             <span className="material-symbols-outlined text-xl text-amber-400">draw</span>
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 2: Client Attestation</h3>
-                            <p className="text-xs text-slate-400">Hand device to client for signature confirmation</p>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 2: Client Attestation</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Hand device to client for signature confirmation</p>
                           </div>
                         </div>
                         <ClientConfirmationCanvas

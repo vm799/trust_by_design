@@ -1643,8 +1643,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Safety Check</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight">Verify your location and complete the safety checklist.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Safety Check</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight">Verify your location and complete the safety checklist.</p>
             </header>
 
             <div className="space-y-4">
@@ -1653,12 +1653,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 disabled={locationStatus === 'captured' || locationStatus === 'capturing'}
                 className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
                   locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' :
-                    locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-900 border-white/10 text-white'
+                    locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
                   }`}
               >
                 <div className="flex items-center gap-5">
                   <div className={`size-12 rounded-2xl flex items-center justify-center ${locationStatus === 'captured' ? 'bg-success/20' :
-                    locationStatus === 'denied' ? 'bg-warning/20' : 'bg-white/10'
+                    locationStatus === 'denied' ? 'bg-warning/20' : 'bg-slate-100/70 dark:bg-white/10'
                     }`}>
                     <span className="material-symbols-outlined text-2xl font-black">
                       {locationStatus === 'captured' ? 'near_me' : locationStatus === 'denied' ? 'location_disabled' : 'my_location'}
@@ -1680,14 +1680,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
                         {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">{'///'}</span>}
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-slate-900 dark:text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
                             locationStatus === 'capturing' ? `Acquiring Signal... ${gpsCountdown}s` :
                               locationStatus === 'denied' ? 'Permission Denied' : 'Tap to Get Location'}
                         </p>
                       </div>
                       {locationStatus === 'captured' && coords.lat && (
-                        <p className="text-[8px] font-mono text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                        <p className="text-[8px] font-mono text-slate-700 dark:text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
                       )}
                       {locationStatus === 'captured' && locationWarning && (
                         <p className="text-[8px] text-warning mt-1">{locationWarning}</p>
@@ -1718,7 +1718,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="4"
-                            className="text-slate-700"
+                            className="text-gray-200 dark:text-slate-700"
                           />
                           <circle
                             cx="24"
@@ -1739,7 +1739,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                       </div>
                       <div>
                         <p className="text-[11px] font-black text-primary uppercase tracking-tight">Acquiring GPS Signal</p>
-                        <p className="text-[9px] text-slate-400 uppercase tracking-tight">Please wait while we verify your location</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-tight">Please wait while we verify your location</p>
                       </div>
                     </div>
                     <button

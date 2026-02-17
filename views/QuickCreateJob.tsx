@@ -437,8 +437,8 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Contact Details */}
-          <div className="bg-slate-900 p-6 rounded-[2rem] border border-white/15 space-y-4">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Report Delivery</h2>
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/15 space-y-4">
+            <h2 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Report Delivery</h2>
 
             <div>
               <label htmlFor="qcj-manager-email" className={labelClasses}>
@@ -471,7 +471,7 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Notes */}
-          <div className="bg-slate-900 p-6 rounded-[2rem] border border-white/15">
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/15">
             <label htmlFor="qcj-notes" className={labelClasses}>
               Notes for Technician
             </label>
@@ -489,7 +489,7 @@ export default function QuickCreateJob() {
           <button
             type="submit"
             disabled={isSubmitting || !formData.jobName || !formData.managerEmail}
-            className="w-full py-4 bg-primary hover:bg-primary-hover disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] shadow-xl shadow-primary/20 min-h-[56px]"
+            className="w-full py-4 bg-primary hover:bg-primary-hover disabled:bg-gray-200 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] shadow-xl shadow-primary/20 min-h-[56px]"
           >
             {isSubmitting ? 'Creating...' : 'Create Job & Get Link'}
           </button>
@@ -499,7 +499,7 @@ export default function QuickCreateJob() {
         <div className="mt-6 text-center">
           <a
             href="/#/admin"
-            className="text-slate-400 hover:text-white text-sm transition-colors"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm transition-colors"
           >
             Back to Dashboard
           </a>

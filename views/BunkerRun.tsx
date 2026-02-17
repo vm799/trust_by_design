@@ -1025,9 +1025,9 @@ export default function BunkerRun() {
     return (
       <div className={`min-h-screen ${themeClasses}`}>
         {/* Navigation Header */}
-        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
+        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600'}`}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Complete</span>
+            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>Job Complete</span>
             <a
               href="/#/job-log"
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
@@ -1125,9 +1125,9 @@ export default function BunkerRun() {
   return (
     <div className={`min-h-screen ${themeClasses}`}>
       {/* Navigation Header with Pause and Job Log */}
-      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
+          <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>Job Runner</span>
           <div className="flex items-center gap-2">
             {/* Pause Button - Allow switching to other jobs */}
             <button
@@ -1135,7 +1135,7 @@ export default function BunkerRun() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 ${
                 isDaylight
                   ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                  : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/30'
               } transition-colors`}
             >
               <span className="material-symbols-outlined text-base">pause</span>

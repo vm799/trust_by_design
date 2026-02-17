@@ -1265,7 +1265,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                   <button
                      onClick={() => setShowReassignModal(false)}
-                     className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
+                     className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
                   >
                      Cancel
                   </button>
@@ -1298,8 +1298,8 @@ const TimelineStep = ({ label, time, icon, active = true }: any) => (
 
 const StatusLine = ({ label, value, success }: any) => (
    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-      <span className="text-white/60">{label}</span>
-      <span className={success ? 'text-success' : 'text-white/40'}>{value}</span>
+      <span className="text-slate-500 dark:text-white/60">{label}</span>
+      <span className={success ? 'text-success' : 'text-slate-400 dark:text-white/40'}>{value}</span>
    </div>
 );
 

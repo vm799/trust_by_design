@@ -268,21 +268,21 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
         <div className="flex items-center justify-center gap-8 max-w-lg mx-auto">
           <button
             onClick={() => navigate('/admin')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">person</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
           </button>
           <button
             onClick={() => navigate('/admin')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">settings</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Settings</span>
           </button>
           <button
             onClick={() => navigate('/home')}
-            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
+            className="min-w-[48px] min-h-[48px] flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-xl">help</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Help</span>

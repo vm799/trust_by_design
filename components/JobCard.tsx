@@ -124,8 +124,8 @@ const getJobLifecycle = (job: Job): LifecycleInfo => {
     label: 'Draft',
     icon: 'edit_note',
     color: 'text-slate-400',
-    bgColor: 'bg-slate-800',
-    borderColor: 'border-slate-600',
+    bgColor: 'bg-gray-100 dark:bg-slate-800',
+    borderColor: 'border-slate-300 dark:border-slate-600',
     pulseColor: 'none',
     glowClass: '',
   };
@@ -199,7 +199,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
           ? 'bg-danger/5 border-2 border-danger/30 hover:border-danger/50'
           : hasSyncIssue
           ? 'bg-danger/5 border-2 border-danger/20'
-          : `bg-slate-900 border border-white/15 hover:border-primary/30 ${lifecycle.glowClass}`
+          : `bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 hover:border-primary/30 ${lifecycle.glowClass}`
       }`}
     >
       {/* Urgent Priority Banner */}
@@ -214,11 +214,11 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
           <h3 className={`font-semibold tracking-tight transition-colors truncate ${
-            isUrgent ? 'text-danger group-hover:text-danger' : 'text-white group-hover:text-primary'
+            isUrgent ? 'text-danger group-hover:text-danger' : 'text-slate-900 dark:text-white group-hover:text-primary'
           }`}>
             {job.title}
           </h3>
-          <p className="text-[10px] text-slate-300 font-mono mt-0.5 truncate">
+          <p className="text-[10px] text-slate-700 dark:text-slate-300 font-mono mt-0.5 truncate">
             {job.id}
           </p>
         </div>
@@ -246,9 +246,9 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       </div>
 
       {/* Client Info */}
-      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/15">
-        <span className="material-symbols-outlined text-slate-300 text-sm">business</span>
-        <span className="text-xs text-slate-300 font-bold truncate">{job.client}</span>
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-white/15">
+        <span className="material-symbols-outlined text-slate-700 dark:text-slate-300 text-sm">business</span>
+        <span className="text-xs text-slate-700 dark:text-slate-300 font-bold truncate">{job.client}</span>
       </div>
 
       {/* Technician Info */}
