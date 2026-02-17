@@ -315,14 +315,12 @@ export const retryFailedSyncs = async (): Promise<void> => {
         } else {
           console.error(`❌ Max retries exceeded for ${item.type} ${item.id} - giving up`);
 
-          // Store in failed queue for manual recovery
-          const failedQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
-          failedQueue.push({
+          // Store in failed queue for manual recovery (atomic append)
+          appendToFailedSyncQueue({
             ...item,
             failedAt: new Date().toISOString(),
             reason: 'Max retries exceeded'
           });
-          localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
 
           // Show persistent notification to user with working navigation
           const failedJobId = item.id;
@@ -489,6 +487,35 @@ export const startSyncWorker = (): void => {
     // Delay failed queue retry by 5s to let active queue process first
     setTimeout(() => autoRetryFailedQueue(), 5000);
   });
+};
+
+/**
+ * Atomically append an item to the failed sync queue (localStorage).
+ *
+ * TOCTOU FIX: All escalation paths (localStorage retry, Dexie queue, debounced queue)
+ * must use this function instead of inline read→modify→write. The read-modify-write
+ * happens in a single synchronous block, preventing interleaved writes from overwriting
+ * each other when two async escalations happen between `await` boundaries.
+ */
+export const appendToFailedSyncQueue = (item: {
+  id: string;
+  type: string;
+  data: any;
+  retryCount: number;
+  lastAttempt: number;
+  failedAt: string;
+  reason: string;
+  actionType?: string;
+}): void => {
+  try {
+    // Synchronous read→modify→write — cannot be interleaved by other JS
+    const raw = localStorage.getItem('jobproof_failed_sync_queue') || '[]';
+    const queue = JSON.parse(raw);
+    queue.push(item);
+    localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(queue));
+  } catch (error) {
+    console.error('[SyncQueue] Failed to append to failed sync queue:', error);
+  }
 };
 
 /**

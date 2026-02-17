@@ -1,5 +1,6 @@
 import { getDatabase, queueAction, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
+import { appendToFailedSyncQueue } from '../syncQueue';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
@@ -408,8 +409,8 @@ async function _pushQueueImpl() {
                                 ? 'technician'
                                 : 'job';
 
-                    const failedQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
-                    failedQueue.push({
+                    // TOCTOU FIX: Use atomic append instead of inline read→modify→write
+                    appendToFailedSyncQueue({
                         id: action.payload?.id || `dexie-${action.id}`,
                         type: itemType,
                         actionType: action.type,
@@ -419,7 +420,6 @@ async function _pushQueueImpl() {
                         failedAt: new Date().toISOString(),
                         reason: `Dexie queue: ${action.type} failed after ${DEXIE_QUEUE_MAX_RETRIES} retries`
                     });
-                    localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
 
                     // Remove from Dexie queue (it's now in the failed sync queue)
                     await database.queue.delete(action.id!);
@@ -774,8 +774,21 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                     // Queue seal retry so pushQueue() will re-attempt
                     try {
                         await queueAction('SEAL_JOB', { jobId: payload.jobId });
-                    } catch {
-                        // Last resort: seal action lost, but photos are safe
+                    } catch (dexieErr) {
+                        // P2 FIX: If Dexie is corrupted, escalate to localStorage
+                        // failed queue so OfflineIndicator makes it visible.
+                        // Previously this was a silent loss — seal action gone forever.
+                        console.error('[Auto-Seal] Dexie queue failed, escalating to failed sync queue:', dexieErr);
+                        appendToFailedSyncQueue({
+                            id: payload.jobId,
+                            type: 'job',
+                            actionType: 'SEAL_JOB',
+                            data: { jobId: payload.jobId },
+                            retryCount: 0,
+                            lastAttempt: Date.now(),
+                            failedAt: new Date().toISOString(),
+                            reason: 'SEAL_JOB: Dexie queue unavailable, escalated to failed sync queue'
+                        });
                     }
                 }
             }

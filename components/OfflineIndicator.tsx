@@ -106,6 +106,12 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
   const hasPending = syncStatus.pending > 0;
   const hasFailed = syncStatus.failed > 0;
 
+  // P1 FIELD UX: Show individual failed item names so workers know WHAT's stuck
+  const failedItems = hasFailed ? getFailedSyncQueue() : [];
+  const MAX_VISIBLE_ITEMS = 3;
+  const visibleItems = failedItems.slice(0, MAX_VISIBLE_ITEMS);
+  const hiddenCount = failedItems.length - visibleItems.length;
+
   if (isOnline && !hasPending && !hasFailed) return null;
   if (isDismissed && isOnline) return null;
 
@@ -174,6 +180,27 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               </p>
             </div>
           </div>
+
+          {/* P1: Individual failed item list — shows WHAT's stuck */}
+          {visibleItems.length > 0 && !isRetrying && (
+            <div className="space-y-1 px-1">
+              {visibleItems.map((item) => {
+                const label = item.type === 'job'
+                  ? (item.data?.title || item.id)
+                  : (item.data?.name || item.id);
+                const typeLabel = item.type === 'technician' ? 'Tech' : item.type === 'client' ? 'Client' : 'Job';
+                return (
+                  <div key={item.id} className="text-xs text-slate-400 truncate flex items-center gap-1.5">
+                    <span className="text-danger/60 font-semibold uppercase text-[10px]">{typeLabel}:</span>
+                    <span className="truncate">{label}</span>
+                  </div>
+                );
+              })}
+              {hiddenCount > 0 && (
+                <div className="text-xs text-slate-500 italic">+{hiddenCount} more</div>
+              )}
+            </div>
+          )}
 
           {/* Retry results feedback */}
           {retryResults && (
