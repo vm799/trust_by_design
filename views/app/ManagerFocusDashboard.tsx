@@ -198,6 +198,37 @@ function generateAttentionItems(
     });
   });
 
+  // Check for dispatched links not yet opened (sent > 2 hours ago)
+  const LINK_UNOPENED_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
+  const dispatchedJobs = jobs.filter(j =>
+    j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
+  );
+
+  dispatchedJobs.forEach(job => {
+    const links = getMagicLinksForJob(job.id);
+    const anyOpened = links.some(l => (l as any).first_accessed_at);
+    if (anyOpened) return;
+
+    const sentAt = (links[0] as any)?.sent_at || (links[0] as any)?.created_at || job.magicLinkCreatedAt;
+    if (!sentAt) return;
+
+    const age = now - new Date(sentAt).getTime();
+    if (age >= LINK_UNOPENED_THRESHOLD_MS) {
+      const tech = technicians.find(t => t.id === job.technicianId || t.id === job.techId);
+      items.push({
+        id: `link-${job.id}`,
+        type: 'link_unopened',
+        technicianId: tech?.id,
+        technicianName: tech?.name,
+        jobId: job.id,
+        jobTitle: job.title || `Job #${job.id.slice(0, 6)}`,
+        message: `Link sent ${Math.round(age / (60 * 60 * 1000))}h ago — not opened`,
+        severity: age >= 4 * 60 * 60 * 1000 ? 'critical' : 'warning',
+        timestamp: now,
+      });
+    }
+  });
+
   // Sort by severity (critical first), then by timestamp (newest first)
   return items.sort((a, b) => {
     if (a.severity === 'critical' && b.severity !== 'critical') return -1;
@@ -851,7 +882,7 @@ const ManagerFocusDashboard: React.FC = () => {
                   <span className="text-lg font-bold text-red-400">{metrics.failedSyncs + metrics.overdueJobs}</span>
                   <span className="text-xs text-red-400/80">Issues</span>
                 </div>
-              ) : (
+              ) : metrics.linksAwaiting === 0 && metrics.needsLink === 0 && (
                 <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]">
                   <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
                   <span className="text-xs text-emerald-400/80">All Clear</span>
@@ -882,7 +913,9 @@ const ManagerFocusDashboard: React.FC = () => {
                     variant="interactive"
                     className={item.severity === 'critical' ? 'border-red-500/30' : 'border-amber-500/30'}
                     onClick={() => {
-                      if (item.technicianId) {
+                      if (item.type === 'link_unopened' && item.jobId) {
+                        navigate(route(ROUTES.JOB_DETAIL, { id: item.jobId }));
+                      } else if (item.technicianId) {
                         const tech = technicians.find(t => t.id === item.technicianId);
                         if (tech) setSelectedTechnician(tech);
                       }
@@ -898,7 +931,8 @@ const ManagerFocusDashboard: React.FC = () => {
                           {item.type === 'idle_technician' ? 'person_off' :
                            item.type === 'stuck_job' ? 'schedule' :
                            item.type === 'sync_failed' ? 'sync_problem' :
-                           item.type === 'urgent_job' ? 'bolt' : 'warning'}
+                           item.type === 'urgent_job' ? 'bolt' :
+                           item.type === 'link_unopened' ? 'schedule_send' : 'warning'}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -955,11 +989,17 @@ const ManagerFocusDashboard: React.FC = () => {
                 <div className="size-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
                   <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">Ready for Dispatch</h3>
+                <h3 className="text-base font-bold text-white mb-1">
+                  {metrics.linksAwaiting > 0
+                    ? `${metrics.linksAwaiting} Link${metrics.linksAwaiting !== 1 ? 's' : ''} Awaiting Response`
+                    : 'No Blockers'}
+                </h3>
                 <p className="text-slate-400 text-sm">
                   {metrics.onSiteTechs > 0
                     ? `${metrics.onSiteTechs} technician${metrics.onSiteTechs !== 1 ? 's' : ''} on-site. No issues detected.`
-                    : 'All technicians available. No issues detected.'
+                    : metrics.linksAwaiting > 0
+                      ? 'Dispatched links waiting for technicians to open.'
+                      : 'All technicians available. No issues detected.'
                   }
                 </p>
               </Card>

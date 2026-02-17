@@ -492,7 +492,7 @@ export interface JobFocusMetadata {
  */
 export interface AttentionItem {
   id: string;
-  type: 'idle_technician' | 'rapid_switching' | 'stuck_job' | 'sync_failed' | 'urgent_job';
+  type: 'idle_technician' | 'rapid_switching' | 'stuck_job' | 'sync_failed' | 'urgent_job' | 'link_unopened';
   technicianId?: string;
   technicianName?: string;
   jobId?: string;

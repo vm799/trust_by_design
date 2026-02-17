@@ -238,9 +238,10 @@ describe('ManagerFocusDashboard (Mission Control)', () => {
 
     it('should show "All Clear" when no issues and no dispatched jobs', () => {
       mockTechnicians = [createTechnician()];
-      mockJobs = [createJob({ syncStatus: 'synced', status: 'Pending', lastUpdated: Date.now() })];
+      mockJobs = [createJob({ syncStatus: 'synced', status: 'Pending', lastUpdated: Date.now(), techId: '', technicianId: undefined })];
       renderDashboard();
-      expect(screen.getByText('All Clear')).toBeDefined();
+      const allClearElements = screen.getAllByText('All Clear');
+      expect(allClearElements.length).toBeGreaterThan(0);
     });
   });
 
