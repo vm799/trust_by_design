@@ -373,12 +373,12 @@ const OAuthSetup: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="oauth-full-name" className="text-sm font-bold text-slate-300">What should we call you?</label>
+                <label htmlFor="oauth-full-name" className="text-sm font-bold text-slate-700 dark:text-slate-300">What should we call you?</label>
                 <input
                   id="oauth-full-name"
                   type="text"
                   placeholder="Your name"
-                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl py-4 px-5 text-slate-900 dark:text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                 />
@@ -408,10 +408,10 @@ const OAuthSetup: React.FC = () => {
             className="w-full max-w-lg space-y-6 relative z-10"
           >
             <div className="text-center space-y-2">
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Nice to meet you, {firstName}! 🎉
               </h1>
-              <p className="text-slate-400">
+              <p className="text-slate-500 dark:text-slate-400">
                 How do you work?
               </p>
             </div>
@@ -438,7 +438,7 @@ const OAuthSetup: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-black text-white">Solo Contractor</h3>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Solo Contractor</h3>
                       <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase rounded-full">Popular</span>
                     </div>
                     <p className="text-slate-400 text-sm leading-relaxed">

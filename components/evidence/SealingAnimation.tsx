@@ -272,7 +272,7 @@ const SealingAnimation: React.FC<SealingAnimationProps> = ({
             </div>
 
             {/* Algorithm info */}
-            <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">enhanced_encryption</span>
                 AES-256-GCM

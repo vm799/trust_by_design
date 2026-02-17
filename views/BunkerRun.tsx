@@ -909,7 +909,7 @@ export default function BunkerRun() {
               <span className="text-3xl">⚠️</span>
             </div>
             <h1 className="text-2xl font-bold mb-2">Link Missing Information</h1>
-            <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>
               This link is missing some required data. Please enter the manager&apos;s email
               to continue so we can send the report when you&apos;re done.
             </p>
@@ -918,7 +918,7 @@ export default function BunkerRun() {
           {/* Email Input Form */}
           <form onSubmit={handleFallbackEmailSubmit} className={`${cardClasses} p-6 rounded-xl border space-y-4`}>
             <div>
-              <label htmlFor="bunker-fallback-email" className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+              <label htmlFor="bunker-fallback-email" className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'}`}>
                 Manager&apos;s Email Address
               </label>
               <input
@@ -1167,7 +1167,7 @@ export default function BunkerRun() {
 
             {/* Pause Reason Selection */}
             <div className="mb-6">
-              <span className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+              <span className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'}`}>
                 Why are you pausing?
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -1184,10 +1184,10 @@ export default function BunkerRun() {
                       pauseReason === option.value
                         ? isDaylight
                           ? 'bg-amber-50 border-amber-400 text-amber-700'
-                          : 'bg-amber-500/20 border-amber-500 text-amber-400'
+                          : 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400'
                         : isDaylight
                           ? 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg mb-1">{option.icon}</span>

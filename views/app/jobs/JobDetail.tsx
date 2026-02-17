@@ -481,7 +481,7 @@ const JobDetail: React.FC = () => {
       <PageContent>
         {/* Status Banner - proof-based: shows actual stage, not assumed progress */}
         <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
-          status === 'archived' ? 'bg-slate-700/50 border border-slate-600/50' :
+          status === 'archived' ? 'bg-gray-200/50 dark:bg-slate-700/50 border border-slate-300/50 dark:border-slate-600/50' :
           status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
           status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
           status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
@@ -491,7 +491,7 @@ const JobDetail: React.FC = () => {
           'bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10'
         }`}>
           <div className={`size-12 rounded-xl flex items-center justify-center ${
-            status === 'archived' ? 'bg-slate-600 text-slate-300' :
+            status === 'archived' ? 'bg-gray-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300' :
             status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
             status === 'review' ? 'bg-purple-500/20 text-purple-400' :
             status === 'active' ? 'bg-amber-500/20 text-amber-400' :

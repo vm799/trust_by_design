@@ -298,7 +298,7 @@ const JobCard: React.FC<JobCardProps> = React.memo(({ job, onClick, onRetry, pho
       )}
 
       {/* Sync Status */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/15">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/15">
         <div className="flex items-center gap-2">
           <span className={`
             material-symbols-outlined text-sm font-black

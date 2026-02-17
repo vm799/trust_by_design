@@ -143,10 +143,10 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight truncate">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
               {job.title}
             </h2>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {job.client} • {job.technician}
             </p>
             <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full mt-2 ${status.bgColor} border ${status.borderColor}`}>
@@ -165,7 +165,7 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
             </div>
             <ul className="space-y-1">
               {blockers.map((blocker, i) => (
-                <li key={`blocker-${i}`} className="flex items-center gap-2 text-sm text-slate-300">
+                <li key={`blocker-${i}`} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                   <span className="material-symbols-outlined text-danger text-xs">close</span>
                   {blocker}
                 </li>

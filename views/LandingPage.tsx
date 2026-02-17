@@ -634,7 +634,7 @@ const FeatureCard = ({
     >
       {title}
     </h3>
-    <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+    <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
       {desc}
     </p>
   </motion.div>
@@ -663,26 +663,16 @@ const StepCard = ({
   >
     <motion.div
       whileHover={stepNumberHover}
-      className={`
-        inline-flex items-center justify-center size-10 sm:size-12 rounded-full
-        font-black text-sm sm:text-lg shadow-lg
-        ${isDark
-          ? 'bg-gradient-to-br from-primary to-indigo-600 text-white shadow-primary/30'
-          : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/30'
-        }
-      `}
+      className="inline-flex items-center justify-center size-10 sm:size-12 rounded-full font-black text-sm sm:text-lg shadow-lg text-white bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-500/30 dark:from-primary dark:to-indigo-600 dark:shadow-primary/30"
     >
       {num}
     </motion.div>
     <h3
-      className={`
-        text-xs sm:text-base font-black uppercase
-        ${isDark ? 'text-white' : 'text-slate-900'}
-      `}
+      className="text-xs sm:text-base font-black uppercase text-slate-900 dark:text-white"
     >
       {title}
     </h3>
-    <p className={`text-[10px] sm:text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+    <p className="text-[10px] sm:text-xs leading-relaxed text-slate-600 dark:text-slate-400">
       {desc}
     </p>
   </motion.div>

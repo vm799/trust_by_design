@@ -1798,7 +1798,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <button
               disabled={locationStatus !== 'captured' || checklist.some(i => i.required && !i.checked)}
               onClick={() => setStep(2)}
-              className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
+              className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-lg dark:shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
             >
               Continue
               <span className="material-symbols-outlined font-black">arrow_forward</span>
@@ -1809,8 +1809,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 2 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Photos</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight">Take photos before, during, and after the work.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Photos</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight">Take photos before, during, and after the work.</p>
             </header>
 
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
@@ -1818,7 +1818,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 <button
                   key={type}
                   onClick={() => setActivePhotoType(type)}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'}`}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                 >
                   {type}
                 </button>

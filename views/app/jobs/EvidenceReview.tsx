@@ -630,8 +630,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-amber-400 text-lg">construction</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">During Work ({grouped.during.length})</h3>
-                      <p className="text-xs text-slate-400">Progress documentation during work execution</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">During Work ({grouped.during.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Progress documentation during work execution</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -655,8 +655,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">After Work ({grouped.after.length})</h3>
-                      <p className="text-xs text-slate-400">Completed work evidence and final state</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">After Work ({grouped.after.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Completed work evidence and final state</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -679,7 +679,7 @@ const EvidenceReview: React.FC = () => {
                     <div className="size-8 rounded-lg bg-slate-500/20 flex items-center justify-center">
                       <span className="material-symbols-outlined text-slate-400 text-lg">image</span>
                     </div>
-                    <h3 className="text-sm font-bold text-white">Other ({grouped.other.length})</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Other ({grouped.other.length})</h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {grouped.other.map((photo, i) => (
@@ -702,7 +702,7 @@ const EvidenceReview: React.FC = () => {
           {(job.signature || job.clientConfirmation) && (
             <motion.div variants={fadeInUp}>
               <Card>
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                   Client Confirmation
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
