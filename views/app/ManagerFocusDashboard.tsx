@@ -615,7 +615,7 @@ const ManagerFocusDashboard: React.FC = () => {
   return (
     <div className="overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header with clickable status chips */}
-      <div className="px-4 lg:px-8 py-4 border-b border-white/15 flex items-center justify-between">
+      <div className="px-4 lg:px-8 py-4 border-b border-slate-200 dark:border-white/15 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <StatusRing
             totalJobs={jobs.length}
@@ -673,11 +673,11 @@ const ManagerFocusDashboard: React.FC = () => {
         >
           {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
           <motion.section variants={fadeInUp}>
-            <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase mb-3">Quick Actions</h2>
+            <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide mb-3">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
               >
                 <span className="material-symbols-outlined text-lg text-slate-400">search</span>
@@ -696,7 +696,7 @@ const ManagerFocusDashboard: React.FC = () => {
               </button>
               <Link
                 to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="View all jobs"
               >
                 <span className="material-symbols-outlined text-lg text-slate-400">list_alt</span>
@@ -723,8 +723,8 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* JOB STATUS PILLS - Color-coded filter system */}
           <motion.section variants={fadeInUp}>
-            <div className="border-b border-white/15 pb-4 mb-6">
-              <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Job Status</h2>
+            <div className="border-b border-slate-200 dark:border-white/15 pb-4 mb-6">
+              <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Job Status</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {JOB_PILLS.map(pill => {
@@ -770,10 +770,10 @@ const ManagerFocusDashboard: React.FC = () => {
                         <Link
                           key={job.id}
                           to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700/50 border border-white/15 transition-colors"
+                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-200 dark:border-white/15 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                               {job.title || `Job #${job.id.slice(0, 6)}`}
                             </p>
                             <p className="text-xs text-slate-400 truncate">
@@ -836,12 +836,12 @@ const ManagerFocusDashboard: React.FC = () => {
           {/* ATTENTION QUEUE - Critical exceptions only — hidden when no issues */}
           {attentionItems.length > 0 && (
             <motion.section variants={fadeInUp}>
-              <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
+              <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-white/15 pb-4">
                 <div className="size-8 rounded-xl bg-red-500/20 flex items-center justify-center">
                   <span className="material-symbols-outlined text-red-400">priority_high</span>
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Needs Attention</h2>
+                  <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Needs Attention</h2>
                   <p className="text-xs text-slate-300">
                     {attentionItems.length} item{attentionItems.length !== 1 ? 's' : ''} requiring action
                   </p>
@@ -875,7 +875,7 @@ const ManagerFocusDashboard: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">
+                        <p className="font-medium text-slate-900 dark:text-white truncate">
                           {item.technicianName || item.jobTitle}
                         </p>
                         <p className="text-sm text-slate-400 truncate">{item.message}</p>
@@ -890,12 +890,12 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* TECHNICIAN STATUS GRID - Categorized, mobile-first */}
           <motion.section variants={fadeInUp}>
-            <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-white/15 pb-4">
               <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary">group</span>
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Technicians</h2>
+                <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Technicians</h2>
                 <p className="text-xs text-slate-300">
                   {technicians.length} team member{technicians.length !== 1 ? 's' : ''}
                 </p>
