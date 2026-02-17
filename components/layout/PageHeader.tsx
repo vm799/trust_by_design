@@ -48,7 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   children,
 }) => {
   return (
-    <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-white/15 bg-slate-950/50">
+    <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-slate-200 dark:border-white/15 bg-white/50 dark:bg-slate-950/50 transition-colors">
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-2 text-sm mb-2">
@@ -58,11 +58,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 <span className="text-slate-600">/</span>
               )}
               {crumb.to ? (
-                <Link to={crumb.to} className="text-slate-400 hover:text-white transition-colors">
+                <Link to={crumb.to} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-slate-300">{crumb.label}</span>
+                <span className="text-slate-700 dark:text-slate-300">{crumb.label}</span>
               )}
             </React.Fragment>
           ))}
@@ -73,7 +73,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {backTo && (
         <Link
           to={backTo}
-          className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors mb-3"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-3"
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
           {backLabel || 'Back'}
@@ -83,9 +83,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {/* Title Row */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-white">{title}</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
           {subtitle && (
-            <p className="text-sm text-blue-300/80 font-medium mt-1">{subtitle}</p>
+            <p className="text-sm text-slate-500 dark:text-blue-300/80 font-medium mt-1">{subtitle}</p>
           )}
         </div>
 
@@ -101,8 +101,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
               const variantClasses = {
                 primary: 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20',
-                secondary: 'bg-white/10 hover:bg-white/10 text-white border border-white/10',
-                danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20',
+                secondary: 'bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10',
+                danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20',
               };
 
               const classes = `${baseClasses} ${variantClasses[action.variant || 'secondary']}`;

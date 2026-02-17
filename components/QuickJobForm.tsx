@@ -274,7 +274,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   // UAT Fix #15: Success modal after job creation
   if (showSuccess && createdJob) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">
+      <div className="fixed inset-0 z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-md w-full space-y-6">
             {/* Success Icon */}
@@ -283,8 +283,8 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
                 <span className="material-symbols-outlined text-success text-5xl">check_circle</span>
               </div>
               <div>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Job Created!</h2>
-                <p className="text-slate-400 text-sm mt-1">{createdJob.title}</p>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Job Created!</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{createdJob.title}</p>
               </div>
             </div>
 
@@ -293,8 +293,8 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-start gap-3">
                 <span className="material-symbols-outlined text-primary text-xl">notifications_active</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Manager Notified</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Manager Notified</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Your manager will see this job in their dashboard and can review, approve, or assign it.
                   </p>
                 </div>
@@ -305,8 +305,8 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               <div className="bg-success/10 border border-success/30 rounded-2xl p-4 flex items-start gap-3">
                 <span className="material-symbols-outlined text-success text-xl">receipt</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Ready for Evidence</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Ready for Evidence</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Complete the job and seal evidence. A client receipt will be generated for payment.
                   </p>
                 </div>
@@ -314,28 +314,28 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
             )}
 
             {/* Job Summary */}
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Job ID</span>
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Job ID</span>
                 <span className="text-xs font-mono text-primary">{createdJob.id}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</span>
-                <span className="text-xs text-white font-bold">{createdJob.client}</span>
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Client</span>
+                <span className="text-xs text-slate-900 dark:text-white font-bold">{createdJob.client}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</span>
-                <span className="text-xs text-white font-bold truncate max-w-[60%]">{createdJob.address}</span>
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Location</span>
+                <span className="text-xs text-slate-900 dark:text-white font-bold truncate max-w-[60%]">{createdJob.address}</span>
               </div>
             </div>
 
             {/* Share Options */}
             <div className="space-y-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Share Job Link</p>
+              <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Share Job Link</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleShareLink}
-                  className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-medium tracking-wide transition-all press-spring"
+                  className="py-3 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 rounded-xl flex items-center justify-center gap-2 text-slate-900 dark:text-white text-xs font-medium tracking-wide transition-all press-spring"
                   title="Share via your phone's native share menu"
                 >
                   <span className="material-symbols-outlined text-sm">share</span>
@@ -343,7 +343,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
                 </button>
                 <button
                   onClick={handleEmailLink}
-                  className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex items-center justify-center gap-2 text-white text-xs font-medium tracking-wide transition-all press-spring"
+                  className="py-3 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 rounded-xl flex items-center justify-center gap-2 text-slate-900 dark:text-white text-xs font-medium tracking-wide transition-all press-spring"
                 >
                   <span className="material-symbols-outlined text-sm">email</span>
                   Email
@@ -362,7 +362,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               </button>
               <button
                 onClick={handleViewDashboard}
-                className="w-full py-4 bg-white/10 rounded-2xl font-bold text-slate-400 text-xs uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
+                className="w-full py-4 bg-slate-100 dark:bg-white/10 rounded-2xl font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">dashboard</span>
                 View Dashboard
@@ -375,16 +375,16 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">
+    <div className="fixed inset-0 z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+      <header className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-white uppercase tracking-tight">Quick Job</h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Field-initiated</p>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Quick Job</h1>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">Field-initiated</p>
         </div>
         <button
           onClick={onCancel}
-          className="size-10 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          className="size-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           aria-label="Close"
         >
           <span className="material-symbols-outlined">close</span>
@@ -394,15 +394,15 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
       {/* Form Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Work Mode Toggle */}
-        <div className="bg-slate-900 border border-white/10 rounded-2xl p-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Work Mode</p>
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Work Mode</p>
           <div className="flex gap-2">
             <button
               onClick={() => handleWorkModeChange('employed')}
               className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                 workMode === 'employed'
                   ? 'bg-primary text-white'
-                  : 'bg-white/10 text-slate-400 hover:text-white'
+                  : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span className="material-symbols-outlined text-sm mr-2 align-middle">group</span>
@@ -413,14 +413,14 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                 workMode === 'self_employed'
                   ? 'bg-success text-white'
-                  : 'bg-white/10 text-slate-400 hover:text-white'
+                  : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span className="material-symbols-outlined text-sm mr-2 align-middle">person</span>
               Self-Employed
             </button>
           </div>
-          <p className="text-[9px] text-slate-400 mt-2 leading-relaxed">
+          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
             {workMode === 'employed'
               ? 'Your manager will be notified when you create this job.'
               : 'You\'ll get a client receipt for payment & legal audit trail.'}
@@ -448,14 +448,14 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               </span>
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-black text-white uppercase tracking-widest">Location</p>
+              <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Location</p>
               {locationStatus === 'captured' ? (
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="text-red-500 font-black text-xs">{'///'}</span>
-                  <span className="text-xs font-bold text-white">{w3w.replace('///', '')}</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">{w3w.replace('///', '')}</span>
                 </div>
               ) : locationStatus === 'capturing' ? (
-                <p className="text-xs text-slate-400">Acquiring GPS...</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Acquiring GPS...</p>
               ) : (
                 <p className="text-xs text-warning">Permission denied</p>
               )}
@@ -482,7 +482,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Emergency Boiler Repair"
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
           />
         </div>
 
@@ -498,23 +498,23 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
               onChange={(e) => setClientName(e.target.value)}
               onFocus={() => existingClients.length > 0 && setShowClientList(true)}
               placeholder="Client or property name"
-              className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
             />
             {showClientList && existingClients.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-10 max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-10 max-h-48 overflow-y-auto">
                 {existingClients.map(client => (
                   <button
                     key={client.id}
                     onClick={() => selectClient(client)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
+                    className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
                   >
-                    <p className="text-sm font-bold text-white">{client.name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{client.address}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{client.name}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{client.address}</p>
                   </button>
                 ))}
                 <button
                   onClick={() => setShowClientList(false)}
-                  className="w-full text-center py-2 text-[10px] font-bold text-slate-400 border-t border-white/15"
+                  className="w-full text-center py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-white/15"
                 >
                   Close
                 </button>
@@ -532,7 +532,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
             value={clientAddress}
             onChange={(e) => setClientAddress(e.target.value)}
             placeholder={w3w || 'Will use current location'}
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
           />
         </div>
 
@@ -545,7 +545,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description of work to be done..."
             rows={3}
-            className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold resize-none"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold resize-none"
           />
         </div>
 
@@ -565,7 +565,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="w-full bg-slate-900 border border-white/10 rounded-2xl pl-10 pr-5 py-4 text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl pl-10 pr-5 py-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:outline-none transition-colors text-sm font-bold"
               />
             </div>
           </div>
@@ -585,7 +585,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <footer className="p-6 border-t border-white/10 space-y-3">
+      <footer className="p-6 border-t border-slate-200 dark:border-white/10 space-y-3">
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !title.trim() || (workMode === 'employed' && !clientName.trim())}
@@ -602,7 +602,7 @@ const QuickJobForm: React.FC<QuickJobFormProps> = ({
         </button>
         <button
           onClick={onCancel}
-          className="w-full py-4 bg-white/10 rounded-2xl font-bold text-slate-400 text-xs uppercase tracking-widest hover:text-white transition-colors"
+          className="w-full py-4 bg-slate-100 dark:bg-white/10 rounded-2xl font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           Cancel
         </button>

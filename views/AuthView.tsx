@@ -163,34 +163,34 @@ const AuthView: React.FC = () => {
   // Success state - magic link sent
   if (successMessage) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden transition-colors">
         {/* Background Orbs */}
         <div className="absolute top-0 -left-20 size-96 bg-success/20 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-0 -right-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
 
         <div className="w-full max-w-md space-y-8 relative z-10 animate-in text-center">
           <div className="bg-success/10 size-24 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-success/30">
-            <span className="material-symbols-outlined text-success text-6xl font-black">mark_email_read</span>
+            <span className="material-symbols-outlined text-success text-6xl font-bold">mark_email_read</span>
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter">
               Check Your Email
             </h2>
-            <p className="text-slate-400 text-base font-medium max-w-sm mx-auto leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-base font-medium max-w-sm mx-auto leading-relaxed">
               {successMessage}
             </p>
           </div>
 
-          <div className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3 text-left">
                 <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-primary text-lg font-black">inbox</span>
+                  <span className="material-symbols-outlined text-primary text-lg font-bold">inbox</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Open Your Email</h3>
-                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider mb-1">Open Your Email</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
                     Look for an email from JobProof with your magic link.
                   </p>
                 </div>
@@ -198,11 +198,11 @@ const AuthView: React.FC = () => {
 
               <div className="flex items-start gap-3 text-left">
                 <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-primary text-lg font-black">touch_app</span>
+                  <span className="material-symbols-outlined text-primary text-lg font-bold">touch_app</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Click the Link</h3>
-                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider mb-1">Click the Link</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
                     The link will sign you in automatically — no password needed.
                   </p>
                 </div>
@@ -210,24 +210,24 @@ const AuthView: React.FC = () => {
 
               <div className="flex items-start gap-3 text-left">
                 <div className="bg-primary/10 size-10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-primary text-lg font-black">rocket_launch</span>
+                  <span className="material-symbols-outlined text-primary text-lg font-bold">rocket_launch</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-black text-sm uppercase tracking-widest mb-1">Start Working</h3>
-                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm uppercase tracking-wider mb-1">Start Working</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
                     Access your operations hub instantly.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/15">
-              <p className="text-slate-400 text-xs font-medium mb-3">
+            <div className="pt-4 border-t border-slate-200 dark:border-white/15">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-3">
                 Didn&apos;t receive the email? Check your spam folder or try again.
               </p>
               <button
                 onClick={() => setSuccessMessage(null)}
-                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all"
               >
                 Send Another Link
               </button>
@@ -239,7 +239,7 @@ const AuthView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden transition-colors">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-primary/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-0 -right-20 size-96 bg-blue-500/10 blur-[120px] rounded-full"></div>
@@ -248,15 +248,15 @@ const AuthView: React.FC = () => {
         <div className="text-center space-y-4">
           <Link to="/home" className="inline-flex items-center gap-3 group">
             <div className="bg-primary size-12 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-white text-2xl font-black">verified</span>
+              <span className="material-symbols-outlined text-white text-2xl font-bold">verified</span>
             </div>
-            <span className="text-3xl font-black tracking-tighter text-white uppercase">JobProof</span>
+            <span className="text-3xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase">JobProof</span>
           </Link>
           <div className="space-y-1">
-            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter">
               Get Started
             </h2>
-            <p className="text-slate-300 text-sm font-medium">
+            <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
               {showDevLogin
                 ? 'Dev mode — quick login as any role, or use magic link below.'
                 : 'Enter your email to receive a secure sign-in link. New users will choose their role next.'}
@@ -281,14 +281,14 @@ const AuthView: React.FC = () => {
         {/* DEV QUICK LOGIN - localhost only           */}
         {/* ========================================= */}
         {showDevLogin && testUsers.length > 0 && (
-          <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-[2.5rem] shadow-2xl space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-900 border border-amber-500/30 p-6 rounded-[2.5rem] shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="bg-amber-500/10 size-10 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-amber-400 text-lg font-black">developer_mode</span>
+                <span className="material-symbols-outlined text-amber-400 text-lg font-bold">developer_mode</span>
               </div>
               <div>
-                <p className="text-amber-400 text-xs font-semibold tracking-widest">Dev Quick Login</p>
-                <p className="text-slate-400 text-[10px] font-medium">One-click sign in as any role</p>
+                <p className="text-amber-400 text-xs font-semibold tracking-wider">Dev Quick Login</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium">One-click sign in as any role</p>
               </div>
             </div>
 
@@ -298,7 +298,7 @@ const AuthView: React.FC = () => {
                   key={testUser.role}
                   onClick={() => handleDevLogin(testUser)}
                   disabled={loading}
-                  className="w-full py-4 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-amber-500/40 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
+                  className="w-full py-4 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:border-amber-500/40 text-slate-900 dark:text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
                 >
                   {loading && devLoginRole === testUser.role ? (
                     <div className="size-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin flex-shrink-0"></div>
@@ -306,15 +306,15 @@ const AuthView: React.FC = () => {
                     <span className="material-symbols-outlined text-amber-400 text-xl flex-shrink-0">{testUser.icon}</span>
                   )}
                   <div className="text-left flex-1">
-                    <p className="text-sm font-black">{testUser.label}</p>
-                    <p className="text-slate-400 text-[10px] font-medium normal-case tracking-normal">{testUser.description}</p>
+                    <p className="text-sm font-bold">{testUser.label}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium normal-case tracking-normal">{testUser.description}</p>
                   </div>
                 </button>
               ))}
             </div>
 
             {testUsers.length === 0 && (
-              <p className="text-slate-400 text-xs text-center py-2">
+              <p className="text-slate-500 dark:text-slate-400 text-xs text-center py-2">
                 Set VITE_TEST_*_EMAIL and VITE_TEST_*_PASSWORD in .env.local
               </p>
             )}
@@ -323,13 +323,13 @@ const AuthView: React.FC = () => {
 
         {/* No test users configured hint */}
         {showDevLogin && testUsers.length === 0 && (
-          <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-[2.5rem] shadow-2xl space-y-3">
+          <div className="bg-slate-50 dark:bg-slate-900 border border-amber-500/30 p-6 rounded-[2.5rem] shadow-2xl space-y-3">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-amber-400 text-lg">developer_mode</span>
-              <p className="text-amber-400 text-xs font-semibold tracking-widest">Dev Mode Active</p>
+              <p className="text-amber-400 text-xs font-semibold tracking-wider">Dev Mode Active</p>
             </div>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Quick login not configured. Add test user credentials to <code className="text-amber-400 bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.local</code> — see <code className="text-amber-400 bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.example</code> for details.
+            <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+              Quick login not configured. Add test user credentials to <code className="text-amber-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.local</code> — see <code className="text-amber-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">.env.example</code> for details.
             </p>
           </div>
         )}
@@ -341,20 +341,20 @@ const AuthView: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setAuthMode('magic_link')}
-              className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all min-h-[44px] ${
+              className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all min-h-[44px] ${
                 authMode === 'magic_link'
                   ? 'bg-primary text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Magic Link
             </button>
             <button
               onClick={() => setAuthMode('password')}
-              className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all min-h-[44px] ${
+              className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all min-h-[44px] ${
                 authMode === 'password'
                   ? 'bg-primary text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Password
@@ -366,19 +366,19 @@ const AuthView: React.FC = () => {
         {/* PASSWORD SIGN IN FORM                      */}
         {/* ========================================= */}
         {showPasswordLogin && authMode === 'password' && (
-          <form onSubmit={handlePasswordSubmit} className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <form onSubmit={handlePasswordSubmit} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-center gap-3">
               <span className="material-symbols-outlined text-blue-400 text-xl">lock</span>
               <div>
-                <p className="text-blue-400 text-xs font-black uppercase">Password Sign-In</p>
-                <p className="text-slate-400 text-[10px] font-medium">
+                <p className="text-blue-400 text-xs font-bold uppercase">Password Sign-In</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium">
                   {showDevLogin ? 'Dev/staging mode — use test account credentials' : 'Sign in with email and password'}
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="auth-password-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-password-email" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 Email Address *
               </label>
               <input
@@ -386,14 +386,14 @@ const AuthView: React.FC = () => {
                 required
                 type="email"
                 placeholder="test-manager@jobproof.pro"
-                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 outline-none transition-all"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="auth-password" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-password" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 Password *
               </label>
               <input
@@ -401,7 +401,7 @@ const AuthView: React.FC = () => {
                 required
                 type="password"
                 placeholder="Enter password"
-                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 outline-none transition-all"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
@@ -410,7 +410,7 @@ const AuthView: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[52px]"
+              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[52px]"
             >
               {loading ? (
                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -428,18 +428,18 @@ const AuthView: React.FC = () => {
         {/* MAGIC LINK FORM (default / production)     */}
         {/* ========================================= */}
         {(authMode === 'magic_link' || !showPasswordLogin) && (
-          <form onSubmit={handleMagicLinkSubmit} className="bg-slate-900 border border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+          <form onSubmit={handleMagicLinkSubmit} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
             {/* Magic Link Badge */}
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
               <span className="material-symbols-outlined text-primary text-xl">magic_button</span>
               <div>
-                <p className="text-primary text-xs font-black uppercase">Passwordless Sign-In</p>
-                <p className="text-slate-400 text-[10px] font-medium">We&apos;ll send a secure link to your email</p>
+                <p className="text-primary text-xs font-bold uppercase">Passwordless Sign-In</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium">We&apos;ll send a secure link to your email</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="auth-magic-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <label htmlFor="auth-magic-email" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 Email Address *
               </label>
               <input
@@ -449,12 +449,12 @@ const AuthView: React.FC = () => {
                 type="email"
                 pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                 placeholder="alex@company.com"
-                className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 outline-none transition-all"
+                className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 outline-none transition-all"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 title="Enter a valid email address (e.g., name@domain.co.uk)"
               />
-              <p className="text-slate-400 text-[10px] font-medium">
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium">
                 New users will have a workspace created automatically.
               </p>
             </div>
@@ -462,7 +462,7 @@ const AuthView: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !email}
-              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[52px]"
+              className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[52px]"
             >
               {loading ? (
                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -476,17 +476,17 @@ const AuthView: React.FC = () => {
           </form>
         )}
 
-        <p className="text-center text-xs text-slate-400 font-medium">
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
           Technician? Use the link sent by your manager to access jobs.
         </p>
 
         {/* Legal Disclaimer */}
-        <div className="bg-slate-900 border border-warning/20 rounded-2xl p-4">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-warning/20 rounded-2xl p-4">
           <div className="flex items-start gap-2">
             <span className="material-symbols-outlined text-warning text-sm mt-0.5">info</span>
             <div className="space-y-1">
-              <p className="text-warning text-[10px] font-black uppercase">Legal Notice</p>
-              <p className="text-slate-400 text-[10px] leading-relaxed">
+              <p className="text-warning text-[10px] font-bold uppercase">Legal Notice</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] leading-relaxed">
                 JobProof is a technical evidence capture tool, not a legal authority.
                 We do not certify admissibility or provide legal advice.
               </p>

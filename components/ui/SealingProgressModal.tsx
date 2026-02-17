@@ -124,7 +124,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm"
+            className="absolute inset-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm"
           />
 
           {/* Modal Content */}
@@ -134,7 +134,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
             animate="visible"
             exit="hidden"
             transition={transitionSmooth}
-            className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-labelledby="sealing-title"
@@ -183,20 +183,20 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
               {/* Title */}
               <h2
                 id="sealing-title"
-                className="text-xl font-semibold text-white text-center mb-2"
+                className="text-xl font-semibold text-slate-900 dark:text-white text-center mb-2"
               >
                 {config.label}
               </h2>
 
               {/* Description */}
-              <p className="text-sm text-slate-400 text-center mb-6">
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
                 {config.description}
               </p>
 
               {/* Progress Bar */}
               {status !== 'complete' && status !== 'error' && (
                 <div className="mb-6">
-                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
@@ -204,7 +204,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
                       className="h-full bg-gradient-to-r from-[#00FFCC] to-[#00CC99] shadow-[0_0_10px_rgba(0,255,204,0.6)]"
                     />
                   </div>
-                  <p className="text-xs text-slate-400 text-center mt-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
                     {Math.round(progress)}% Complete
                   </p>
                 </div>
@@ -212,8 +212,8 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
 
               {/* Cryptographic Details Badge */}
               {(status === 'hashing' || status === 'signing') && (
-                <div className="bg-slate-800 border border-white/15 rounded-xl p-3 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-3 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <span className="material-symbols-outlined text-base text-[#00FFCC]">
                       shield
                     </span>
@@ -241,7 +241,7 @@ const SealingProgressModal: React.FC<SealingProgressModalProps> = ({
                     className={`flex-1 min-h-[44px] px-4 py-3 rounded-xl font-medium transition-colors ${
                       status === 'complete'
                         ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400'
-                        : 'bg-slate-800 hover:bg-slate-700 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white'
                     }`}
                   >
                     {status === 'complete' ? 'Done' : 'Close'}

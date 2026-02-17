@@ -235,7 +235,7 @@ const CompleteOnboarding: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
                 <div className="animate-spin size-12 border-4 border-primary/30 border-t-primary rounded-full"></div>
             </div>
         );
@@ -244,28 +244,28 @@ const CompleteOnboarding: React.FC = () => {
     // STEP 1: Name capture (if name is missing)
     if (step === 'name') {
         return (
-            <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 overflow-y-auto flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 overflow-y-auto flex items-center justify-center">
                 <div className="w-full max-w-md space-y-8">
                     {/* Progress indicator */}
                     <div className="flex items-center justify-center gap-2">
                         <div className="size-3 rounded-full bg-primary"></div>
-                        <div className="w-8 h-0.5 bg-slate-700"></div>
-                        <div className="size-3 rounded-full bg-slate-700"></div>
+                        <div className="w-8 h-0.5 bg-slate-300 dark:bg-slate-700"></div>
+                        <div className="size-3 rounded-full bg-slate-300 dark:bg-slate-700"></div>
                     </div>
 
                     <div className="text-center space-y-4">
                         <div className="bg-primary/10 size-20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">
                             <span className="material-symbols-outlined text-primary text-5xl">waving_hand</span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">Welcome!</h1>
-                        <p className="text-slate-400">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Welcome!</h1>
+                        <p className="text-slate-500 dark:text-slate-400">
                             Let&apos;s get you set up. What should we call you?
                         </p>
                     </div>
 
                     <form onSubmit={handleNameSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <label htmlFor="fullName" className="block text-sm font-bold text-slate-300 uppercase tracking-wider">
+                            <label htmlFor="fullName" className="block text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                                 Your Name
                             </label>
                             <input
@@ -275,11 +275,11 @@ const CompleteOnboarding: React.FC = () => {
                                 onChange={(e) => setFullName(e.target.value)}
                                 placeholder="John Smith"
                                 autoComplete="name"
-                                className="w-full px-4 py-4 bg-slate-900 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg"
+                                className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg"
                                 required
                             />
                             {userEmail && (
-                                <p className="text-slate-400 text-xs mt-2">
+                                <p className="text-slate-500 dark:text-slate-400 text-xs mt-2">
                                     Signing in as {userEmail}
                                 </p>
                             )}
@@ -310,7 +310,7 @@ const CompleteOnboarding: React.FC = () => {
 
     // STEP 2: Persona selection
     return (
-        <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 overflow-y-auto">
+        <div className="min-h-screen bg-white dark:bg-slate-950 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12 overflow-y-auto">
             <div className="max-w-6xl mx-auto space-y-12">
                 {/* Progress indicator */}
                 <div className="flex items-center justify-center gap-2">
@@ -323,10 +323,10 @@ const CompleteOnboarding: React.FC = () => {
                     <div className="bg-primary/10 size-20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">
                         <span className="material-symbols-outlined text-primary text-5xl">person_check</span>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">
+                    <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
                         Hi{fullName ? `, ${fullName.split(' ')[0]}` : ''}! Choose Your Role
                     </h1>
-                    <p className="text-slate-400 max-w-2xl mx-auto">
+                    <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
                         Select how you will use JobProof. We&apos;ll customise your experience with workflows optimised for your daily operations.
                     </p>
                 </div>
@@ -343,10 +343,10 @@ const CompleteOnboarding: React.FC = () => {
                 </div>
 
                 {selecting && (
-                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-6 text-center">
+                    <div className="fixed inset-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-6 text-center">
                         <div className="space-y-4">
                             <div className="animate-spin size-12 border-4 border-primary/30 border-t-primary rounded-full mx-auto"></div>
-                            <p className="text-white font-black uppercase tracking-widest text-sm">Configuring Workspace...</p>
+                            <p className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm">Configuring Workspace...</p>
                         </div>
                     </div>
                 )}

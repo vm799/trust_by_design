@@ -22,7 +22,7 @@ const SignupSuccess: React.FC = () => {
   const workspaceName = state?.workspaceName || 'your workspace';
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 py-6 md:px-6 md:py-8 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-success/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-0 -right-20 size-96 bg-primary/10 blur-[120px] rounded-full"></div>
@@ -37,10 +37,10 @@ const SignupSuccess: React.FC = () => {
 
         {/* Header */}
         <div className="text-center space-y-3">
-          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
             Workspace Created!
           </h1>
-          <p className="text-slate-400 text-lg">
+          <p className="text-slate-500 dark:text-slate-400 text-lg">
             Welcome to <span className="text-primary font-black">{workspaceName}</span>!
           </p>
           <p className="text-slate-400 text-sm">

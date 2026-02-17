@@ -349,36 +349,36 @@ const EvidenceCapture: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4 transition-colors">
         <div className="max-w-sm mx-auto text-center">
           <span className="material-symbols-outlined text-5xl text-red-400 mb-4">
             {isCameraPermissionError ? 'no_photography' : 'error'}
           </span>
-          <h2 className="text-white text-lg font-bold mb-2">
+          <h2 className="text-slate-900 dark:text-white text-lg font-bold mb-2">
             {isCameraPermissionError ? 'Camera Access Required' : 'Something Went Wrong'}
           </h2>
-          <p className="text-slate-300 text-sm mb-6">{error}</p>
+          <p className="text-slate-600 dark:text-slate-300 text-sm mb-6">{error}</p>
 
           {/* Sprint 3 Task 3.3: Step-by-step instructions for camera permission */}
           {isCameraPermissionError && !showEscalation && (
-            <div className="bg-slate-900 border border-white/10 rounded-xl p-4 mb-6 text-left">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">How to enable camera:</p>
-              <ol className="space-y-2 text-sm text-slate-300">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 mb-6 text-left">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">How to enable camera:</p>
+              <ol className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li className="flex gap-2">
                   <span className="text-primary font-bold">1.</span>
-                  <span>Open your device <strong className="text-white">Settings</strong></span>
+                  <span>Open your device <strong className="text-slate-900 dark:text-white">Settings</strong></span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold">2.</span>
-                  <span>Find <strong className="text-white">JobProof</strong> in the app list</span>
+                  <span>Find <strong className="text-slate-900 dark:text-white">JobProof</strong> in the app list</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold">3.</span>
-                  <span>Enable <strong className="text-white">Camera</strong> permission</span>
+                  <span>Enable <strong className="text-slate-900 dark:text-white">Camera</strong> permission</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold">4.</span>
-                  <span>Return here and tap <strong className="text-white">Try Again</strong></span>
+                  <span>Return here and tap <strong className="text-slate-900 dark:text-white">Try Again</strong></span>
                 </li>
               </ol>
             </div>
@@ -391,11 +391,11 @@ const EvidenceCapture: React.FC = () => {
                 <span className="material-symbols-outlined text-sm">warning</span>
                 Camera Blocked
               </p>
-              <p className="text-sm text-slate-300 mb-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
                 Camera access is blocked by your device. You need to change this in your device settings, not in the app.
               </p>
-              <div className="space-y-2 text-sm text-slate-300">
-                <p className="font-bold text-white">Options:</p>
+              <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                <p className="font-bold text-slate-900 dark:text-white">Options:</p>
                 <ul className="space-y-2 ml-4 list-disc">
                   <li>Check device Settings → JobProof → Camera = ON</li>
                   <li>Contact your manager if you need help</li>
@@ -416,7 +416,7 @@ const EvidenceCapture: React.FC = () => {
             </button>
             <button
               onClick={goBack}
-              className="w-full px-6 py-4 bg-slate-800 text-slate-300 rounded-xl font-medium min-h-[56px]"
+              className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-medium min-h-[56px]"
             >
               Go Back
             </button>
@@ -489,8 +489,8 @@ const EvidenceCapture: React.FC = () => {
           </div>
 
           {/* Photo Type Selector */}
-          <div className="bg-slate-950 px-4 py-3 border-t border-white/10">
-            <p className="text-xs text-slate-400 text-center mb-2">Photo Type</p>
+          <div className="bg-white dark:bg-slate-950 px-4 py-3 border-t border-slate-200 dark:border-white/10">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-2">Photo Type</p>
             <div className="flex justify-center gap-2">
               {(['before', 'during', 'after'] as PhotoType[]).map((type) => (
                 <button
@@ -504,7 +504,7 @@ const EvidenceCapture: React.FC = () => {
                     px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all min-h-[44px]
                     ${capturedPhoto.type === type
                       ? 'bg-primary text-white'
-                      : 'bg-slate-800 text-slate-400'}
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}
                   `}
                 >
                   {type}
@@ -514,11 +514,11 @@ const EvidenceCapture: React.FC = () => {
           </div>
 
           {/* Actions */}
-          <div className="bg-slate-950 px-4 py-4 pb-safe flex gap-3">
+          <div className="bg-white dark:bg-slate-950 px-4 py-4 pb-safe flex gap-3">
             <button
               onClick={retakePhoto}
               disabled={photoSaveStatus === 'saving'}
-              className="flex-1 py-4 bg-slate-800 text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <span className="material-symbols-outlined">refresh</span>
               Retake
@@ -583,14 +583,14 @@ const EvidenceCapture: React.FC = () => {
           </div>
 
           {/* Photo Type Selector with Counts */}
-          <div className="bg-slate-950 px-4 py-3 border-t border-white/10">
+          <div className="bg-white dark:bg-slate-950 px-4 py-3 border-t border-slate-200 dark:border-white/10">
             <div className="flex justify-center gap-2">
               {(['before', 'during', 'after'] as PhotoType[]).map((type) => {
                 const existingPhotos = (job?.photos || []).filter((p) => p.type?.toLowerCase() === type);
                 const typeColors = {
-                  before: { active: 'bg-blue-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-blue-400/20 text-blue-300' },
-                  during: { active: 'bg-amber-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-amber-400/20 text-amber-300' },
-                  after: { active: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400', badge: 'bg-emerald-400/20 text-emerald-300' },
+                  before: { active: 'bg-blue-500 text-white', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400', badge: 'bg-blue-400/20 text-blue-300' },
+                  during: { active: 'bg-amber-500 text-white', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400', badge: 'bg-amber-400/20 text-amber-300' },
+                  after: { active: 'bg-emerald-500 text-white', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400', badge: 'bg-emerald-400/20 text-emerald-300' },
                 };
                 const colors = typeColors[type];
                 const isSelected = photoType === type;
@@ -618,7 +618,7 @@ const EvidenceCapture: React.FC = () => {
           </div>
 
           {/* Capture Button */}
-          <div className="bg-slate-950 px-4 py-6 pb-safe flex flex-col items-center gap-2">
+          <div className="bg-white dark:bg-slate-950 px-4 py-6 pb-safe flex flex-col items-center gap-2">
             <button
               onClick={capturePhoto}
               aria-label="Capture photo"
