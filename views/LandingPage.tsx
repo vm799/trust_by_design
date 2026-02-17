@@ -734,14 +734,11 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
             Trust & Security
           </span>
           <h2
-            className={`
-              text-2xl sm:text-3xl font-bold tracking-tight
-              ${isDark ? 'text-white' : 'text-slate-900'}
-            `}
+            className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
           >
             Frequently Asked Questions
           </h2>
-          <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
             Everything you need to know about protecting your work
           </p>
         </motion.div>
@@ -754,13 +751,7 @@ const FAQSection = ({ isDark }: { isDark: boolean }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.05 }}
-              className={`
-                rounded-xl border overflow-hidden transition-all
-                ${isDark
-                  ? 'bg-slate-900 border-white/10 hover:border-white/20'
-                  : 'bg-white/50 border-slate-200/50 hover:border-slate-300'
-                }
-              `}
+              className="rounded-xl border overflow-hidden transition-all bg-white/50 border-slate-200/50 hover:border-slate-300 dark:bg-slate-900 dark:border-white/10 dark:hover:border-white/20"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}

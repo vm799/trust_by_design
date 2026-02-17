@@ -1841,15 +1841,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               {photos.filter(p => p.type === activePhotoType).map(p => {
                 const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
                 return (
-                  <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl animate-in group">
+                  <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-2xl animate-in group">
                     <img src={displayUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Proof" />
-                    <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-2xl">
+                    <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950 shadow-lg dark:shadow-2xl">
                       <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       <button
                         onClick={() => confirmDeletePhoto(p)}
-                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md hover:bg-black/90 text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 transition-colors"
+                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md hover:bg-black/90 text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-slate-200 dark:border-white/10 transition-colors"
                         aria-label="Delete photo capture"
                       >
                         Delete Capture
@@ -1863,7 +1863,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <div className="flex gap-4">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-900 border border-white/10 text-white hover:bg-slate-800"
+                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800"
               >
                 Back to Safety
               </button>

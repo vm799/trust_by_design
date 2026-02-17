@@ -176,41 +176,41 @@ const JobQuickView: React.FC<JobQuickViewProps> = ({
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${hasPhotos ? 'text-success' : 'text-slate-400'}`}>
+          <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-3 text-center">
+            <div className={`text-2xl font-black ${hasPhotos ? 'text-success' : 'text-slate-500 dark:text-slate-400'}`}>
               {job.photos.length}
             </div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Photos</div>
+            <div className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Photos</div>
           </div>
-          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${hasSignature ? 'text-success' : 'text-slate-400'}`}>
+          <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-3 text-center">
+            <div className={`text-2xl font-black ${hasSignature ? 'text-success' : 'text-slate-500 dark:text-slate-400'}`}>
               {hasSignature ? '✓' : '—'}
             </div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Signature</div>
+            <div className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Signature</div>
           </div>
-          <div className="bg-slate-800 border border-white/15 rounded-xl p-3 text-center">
-            <div className={`text-2xl font-black ${isSealed ? 'text-success' : 'text-slate-400'}`}>
+          <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-3 text-center">
+            <div className={`text-2xl font-black ${isSealed ? 'text-success' : 'text-slate-500 dark:text-slate-400'}`}>
               {isSealed ? '✓' : '—'}
             </div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Sealed</div>
+            <div className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Sealed</div>
           </div>
         </div>
 
         {/* Tech Link Status */}
-        <div className="bg-slate-800 border border-white/15 rounded-2xl p-4">
+        <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician Link</span>
+            <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Technician Link</span>
             {getTimeSinceSent() && (
-              <span className="text-[10px] text-slate-400">Sent {getTimeSinceSent()}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Sent {getTimeSinceSent()}</span>
             )}
           </div>
 
           {isLoadingLink ? (
-            <div className="animate-pulse h-8 bg-slate-700 rounded"></div>
+            <div className="animate-pulse h-8 bg-gray-200 dark:bg-slate-700 rounded"></div>
           ) : !techLinkSent ? (
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-slate-400">link_off</span>
-              <span className="text-sm text-slate-400">No link generated</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">link_off</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">No link generated</span>
               {onGenerateLink && (
                 <button
                   onClick={() => onGenerateLink(job.id)}

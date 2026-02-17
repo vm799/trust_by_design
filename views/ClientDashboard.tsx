@@ -150,8 +150,8 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
                     <p className="text-warning text-xs font-medium tracking-wider">
                       Due: {new Date(inv.dueDate).toLocaleDateString()}
                     </p>
-                    <p className="text-slate-400 text-sm mt-1">
-                      Amount: <span className="text-white font-bold">${inv.amount.toFixed(2)}</span>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                      Amount: <span className="text-slate-900 dark:text-white font-bold">${inv.amount.toFixed(2)}</span>
                     </p>
                   </div>
                   <button
@@ -168,7 +168,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
         {/* Recent Activity - Uses UnifiedDashboard for job display */}
         <div className="space-y-4">
-          <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest">
+          <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
             Recent Activity
           </h3>
           <UnifiedDashboard

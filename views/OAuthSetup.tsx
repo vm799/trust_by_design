@@ -441,7 +441,7 @@ const OAuthSetup: React.FC = () => {
                       <h3 className="text-lg font-black text-slate-900 dark:text-white">Solo Contractor</h3>
                       <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase rounded-full">Popular</span>
                     </div>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                       I do my own jobs and need proof of work for clients
                     </p>
                     <div className="flex items-center gap-3 mt-3 text-xs text-emerald-400">
@@ -476,8 +476,8 @@ const OAuthSetup: React.FC = () => {
                     <span className="material-symbols-outlined text-primary text-3xl">groups</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-black text-white mb-1">Team Manager</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">Team Manager</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                       I manage technicians and need to track their work
                     </p>
                     <div className="flex items-center gap-3 mt-3 text-xs text-primary">
@@ -500,7 +500,7 @@ const OAuthSetup: React.FC = () => {
 
             <button
               onClick={() => setStep('name')}
-              className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
+              className="w-full text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm py-2 transition-colors"
             >
               ← Back
             </button>

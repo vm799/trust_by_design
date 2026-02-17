@@ -708,11 +708,11 @@ const EvidenceReview: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Signature */}
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Signature</p>
+                    <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Signature</p>
                     <div className={`rounded-xl p-4 border-2 ${
                       isSealed
-                        ? 'bg-slate-900 border-emerald-500/20'
-                        : 'bg-slate-900 border-white/10'
+                        ? 'bg-slate-50 dark:bg-slate-900 border-emerald-500/20'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10'
                     }`}>
                       {(job.clientConfirmation?.signature || job.signature) ? (
                         <img
@@ -721,23 +721,23 @@ const EvidenceReview: React.FC = () => {
                           className="max-h-32 mx-auto"
                         />
                       ) : (
-                        <p className="text-center text-slate-400 text-sm py-4">No signature captured</p>
+                        <p className="text-center text-slate-500 dark:text-slate-400 text-sm py-4">No signature captured</p>
                       )}
                     </div>
                     {job.signerName && (
-                      <p className="text-sm text-white font-medium mt-2">{job.signerName}</p>
+                      <p className="text-sm text-slate-900 dark:text-white font-medium mt-2">{job.signerName}</p>
                     )}
                     {job.signerRole && (
-                      <p className="text-xs text-slate-400">{job.signerRole}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{job.signerRole}</p>
                     )}
                   </div>
 
                   {/* Confirmation Details */}
                   <div className="space-y-3">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Confirmation Details</p>
+                    <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Confirmation Details</p>
 
                     {job.clientConfirmation?.confirmed && (
-                      <div className="flex items-center gap-2 text-emerald-400">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                         <span className="material-symbols-outlined text-lg">check_circle</span>
                         <span className="text-sm font-medium">Client confirmed satisfaction</span>
                       </div>
@@ -745,8 +745,8 @@ const EvidenceReview: React.FC = () => {
 
                     {job.clientConfirmation?.timestamp && (
                       <div>
-                        <p className="text-xs text-slate-400 mb-0.5">Signed At</p>
-                        <p className="text-sm text-white font-mono">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Signed At</p>
+                        <p className="text-sm text-slate-900 dark:text-white font-mono">
                           {new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB', {
                             day: 'numeric',
                             month: 'short',

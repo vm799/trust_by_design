@@ -930,10 +930,10 @@ export default function BunkerRun() {
                 required
                 className={`w-full px-4 py-3 rounded-lg border ${isDaylight
                   ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
-                  : 'bg-slate-900 border-slate-600 text-white placeholder-slate-500'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
-              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>
+              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>
                 The completed job report will be sent to this email.
               </p>
             </div>
@@ -954,7 +954,7 @@ export default function BunkerRun() {
                 // Allow skipping but warn that report delivery may fail
                 setShowEmailFallback(false);
               }}
-              className={`text-sm ${isDaylight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'} transition-colors`}
+              className={`text-sm ${isDaylight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'} transition-colors`}
             >
               Skip (report may not be delivered)
             </button>
@@ -963,9 +963,9 @@ export default function BunkerRun() {
           {/* Job Info */}
           {job && (
             <div className={`${cardClasses} p-4 rounded-xl border`}>
-              <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>JOB</p>
+              <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>JOB</p>
               <p className="text-lg font-bold">{job.title}</p>
-              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>{job.client}</p>
             </div>
           )}
         </div>
