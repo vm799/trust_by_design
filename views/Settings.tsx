@@ -23,7 +23,7 @@ interface SubscriptionStatus {
 const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
+  const { theme, setTheme, resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
   const [wsName, setWsName] = useState(user.workspaceName);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -381,59 +381,87 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </div>
 
             {/* Display Mode */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl shadow-amber-500/10 space-y-6">
-               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
-                 <span className="material-symbols-outlined text-amber-400">palette</span>
+            <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-amber-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-lg dark:shadow-2xl dark:shadow-amber-500/10 space-y-6">
+               <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                 <span className="material-symbols-outlined text-amber-500 dark:text-amber-400">palette</span>
                  Display Mode
                </h3>
 
-               {/* Dark / Daylight Toggle */}
-               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+               {/* Theme Selector - Light / Dark / Daylight */}
+               <div className="grid grid-cols-3 gap-2">
+                 {([
+                   { mode: 'light' as const, icon: 'light_mode', label: 'Light', desc: 'Office & indoor' },
+                   { mode: 'dark' as const, icon: 'dark_mode', label: 'Dark', desc: 'Low-light' },
+                   { mode: 'daylight' as const, icon: 'wb_sunny', label: 'Outdoor', desc: 'High-visibility' },
+                 ]).map(opt => {
+                   const isActive = (opt.mode === 'daylight' && isDaylightMode) ||
+                     (opt.mode !== 'daylight' && !isDaylightMode && theme === opt.mode);
+                   return (
+                     <button
+                       key={opt.mode}
+                       onClick={() => {
+                         if (opt.mode === 'daylight') {
+                           toggleDayNight();
+                         } else {
+                           setTheme(opt.mode);
+                         }
+                       }}
+                       className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all min-h-[56px] ${
+                         isActive
+                           ? 'bg-primary/10 border-primary text-primary'
+                           : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500'
+                       }`}
+                       aria-pressed={isActive}
+                       aria-label={`${opt.label} mode: ${opt.desc}`}
+                     >
+                       <span className="material-symbols-outlined text-xl">{opt.icon}</span>
+                       <span className="text-xs font-semibold">{opt.label}</span>
+                     </button>
+                   );
+                 })}
+               </div>
+
+               {/* System Preference Toggle */}
+               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                  <div className="flex items-center gap-3">
-                   <span className="material-symbols-outlined text-xl" aria-hidden="true">
-                     {isDaylightMode ? 'light_mode' : 'dark_mode'}
-                   </span>
+                   <span className="material-symbols-outlined text-xl text-slate-500 dark:text-slate-400" aria-hidden="true">devices</span>
                    <div>
-                     <p className="text-sm font-bold text-white">
-                       {isDaylightMode ? 'Daylight Mode' : 'Dark Mode'}
-                     </p>
-                     <p className="text-[10px] text-slate-400">
-                       {isDaylightMode ? 'High-visibility for outdoor work' : 'Low-light optimised'}
-                     </p>
+                     <p className="text-sm font-semibold text-slate-900 dark:text-white">Follow System</p>
+                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Match device light/dark setting</p>
                    </div>
                  </div>
                  <button
-                   onClick={toggleDayNight}
+                   onClick={() => setTheme('system')}
                    className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
-                     isDaylightMode ? 'bg-amber-500' : 'bg-slate-600'
+                     theme === 'system' ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
                    }`}
                    role="switch"
-                   aria-checked={isDaylightMode}
-                   aria-label={`Switch to ${isDaylightMode ? 'dark' : 'daylight'} mode`}
+                   aria-checked={theme === 'system'}
+                   aria-label={`${theme === 'system' ? 'Disable' : 'Enable'} system theme preference`}
                  >
                    <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
-                     isDaylightMode ? 'translate-x-7' : 'translate-x-1'
+                     theme === 'system' ? 'translate-x-7' : 'translate-x-1'
                    }`} />
                  </button>
                </div>
 
                {/* Auto Daylight */}
-               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                  <div className="flex items-center gap-3">
-                   <span className="material-symbols-outlined text-xl text-slate-400" aria-hidden="true">schedule</span>
+                   <span className="material-symbols-outlined text-xl text-slate-500 dark:text-slate-400" aria-hidden="true">schedule</span>
                    <div>
-                     <p className="text-sm font-bold text-white">Auto Daylight</p>
-                     <p className="text-[10px] text-slate-400">Switch by time of day (6AM–6PM)</p>
+                     <p className="text-sm font-semibold text-slate-900 dark:text-white">Auto Outdoor</p>
+                     <p className="text-[11px] text-slate-500 dark:text-slate-400">High-visibility 6AM–6PM</p>
                    </div>
                  </div>
                  <button
                    onClick={() => setDaylightAuto(!daylightAuto)}
                    className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
-                     daylightAuto ? 'bg-primary' : 'bg-slate-600'
+                     daylightAuto ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
                    }`}
                    role="switch"
                    aria-checked={daylightAuto}
-                   aria-label={`${daylightAuto ? 'Disable' : 'Enable'} auto daylight mode`}
+                   aria-label={`${daylightAuto ? 'Disable' : 'Enable'} auto outdoor mode`}
                  >
                    <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
                      daylightAuto ? 'translate-x-7' : 'translate-x-1'
@@ -441,8 +469,8 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                  </button>
                </div>
 
-               <p className="text-[10px] text-slate-400 leading-relaxed">
-                 Current: <span className="font-bold text-white capitalize">{resolvedTheme}</span> mode
+               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                 Active: <span className="font-semibold text-slate-900 dark:text-white capitalize">{resolvedTheme}</span> mode
                </p>
             </div>
 
