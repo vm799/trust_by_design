@@ -1,4 +1,4 @@
-import { getDatabase, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
+import { getDatabase, queueAction, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
@@ -386,6 +386,9 @@ async function _pushQueueImpl() {
                 case 'UPDATE_TECHNICIAN':
                     success = await processUpdateTechnician(action.payload);
                     break;
+                case 'SEAL_JOB':
+                    success = await processSealJob(action.payload);
+                    break;
             }
 
             if (success) {
@@ -596,6 +599,52 @@ async function processUpdateTechnician(tech: any) {
     return true;
 }
 
+/**
+ * Process SEAL_JOB: Retry evidence sealing for a job whose photos are all synced.
+ * Queued by processUploadPhoto when auto-seal fails after last photo upload.
+ * Without this, jobs stay "Submitted" forever with no path to "Sealed".
+ */
+async function processSealJob(payload: { jobId: string }): Promise<boolean> {
+    if (!payload.jobId) return false;
+
+    const database = await getDatabase();
+    const job = await database.jobs.get(payload.jobId);
+
+    if (!job) return false;
+    if (job.sealedAt || job.isSealed) return true; // Already sealed
+
+    // Verify all photos are synced before sealing
+    const allPhotosReady = !job.photos || job.photos.every(
+        (p: Photo) => p.syncStatus === 'synced' && !p.isIndexedDBRef
+    );
+    if (!allPhotosReady) return false;
+
+    try {
+        const sealResult = await sealEvidence(payload.jobId);
+        if (sealResult.success) {
+            await database.jobs.update(payload.jobId, {
+                sealedAt: sealResult.sealedAt,
+                evidenceHash: sealResult.evidenceHash,
+                status: 'Archived' as const,
+                isSealed: true,
+                lastUpdated: Date.now()
+            });
+
+            showPersistentNotification({
+                type: 'success',
+                title: 'Evidence Sealed',
+                message: `Job "${job.title || payload.jobId}" has been sealed with tamper-proof hash.`,
+                persistent: false
+            });
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error(`[Sync] SEAL_JOB failed for ${payload.jobId}:`, error);
+        return false;
+    }
+}
+
 async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?: string }) {
     const supabase = getSupabase();
     if (!supabase) return false;
@@ -698,7 +747,6 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                     const sealResult = await sealEvidence(payload.jobId);
 
                     if (sealResult.success) {
-                        // Update local job with seal data
                         await database.jobs.update(payload.jobId, {
                             sealedAt: sealResult.sealedAt,
                             evidenceHash: sealResult.evidenceHash,
@@ -706,14 +754,19 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                             isSealed: true,
                             lastUpdated: Date.now()
                         });
-
                     } else {
                         console.error(`[Auto-Seal] Failed to seal job ${payload.jobId}:`, sealResult.error);
-                        // Don't fail the photo upload if sealing fails - can retry later
+                        // Queue seal retry so pushQueue() will re-attempt
+                        await queueAction('SEAL_JOB', { jobId: payload.jobId });
                     }
                 } catch (error) {
                     console.error(`[Auto-Seal] Exception during auto-seal for job ${payload.jobId}:`, error);
-                    // Don't fail the photo upload if sealing fails - can retry later
+                    // Queue seal retry so pushQueue() will re-attempt
+                    try {
+                        await queueAction('SEAL_JOB', { jobId: payload.jobId });
+                    } catch {
+                        // Last resort: seal action lost, but photos are safe
+                    }
                 }
             }
         }

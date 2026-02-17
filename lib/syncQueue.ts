@@ -151,15 +151,19 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
     }
 
     // 2. Upload signature from IndexedDB to Supabase Storage
+    // FAILSAFE: Throw on failure like photos do. Previously failed silently,
+    // saving an invalid IndexedDB key as signature_url in Supabase.
     let signatureUrl = job.signature;
     if (job.signature && job.signatureIsIndexedDBRef) {
       const sigData = await getMedia(job.signature);
-      if (sigData) {
-        const publicUrl = await uploadSignature(job.id, sigData);
-        if (publicUrl) {
-          signatureUrl = publicUrl;
-        }
+      if (!sigData) {
+        throw new Error(`Signature data not found in IndexedDB for job ${job.id}`);
       }
+      const publicUrl = await uploadSignature(job.id, sigData);
+      if (!publicUrl) {
+        throw new Error(`Signature upload failed for job ${job.id}`);
+      }
+      signatureUrl = publicUrl;
     }
 
     // 3. Upsert job to database
