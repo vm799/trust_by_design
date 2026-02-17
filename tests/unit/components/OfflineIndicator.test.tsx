@@ -33,10 +33,12 @@ vi.mock('../../../hooks/useNetworkStatus', () => ({
 const mockRetryFailedSyncItem = vi.fn();
 const mockGetFailedSyncQueue = vi.fn();
 const mockGetSyncQueueStatus = vi.fn();
+const mockIsRetryInProgress = vi.fn();
 vi.mock('../../../lib/syncQueue', () => ({
   getFailedSyncQueue: (...args: unknown[]) => mockGetFailedSyncQueue(...args),
   getSyncQueueStatus: (...args: unknown[]) => mockGetSyncQueueStatus(...args),
   retryFailedSyncItem: (...args: unknown[]) => mockRetryFailedSyncItem(...args),
+  isRetryInProgress: (...args: unknown[]) => mockIsRetryInProgress(...args),
 }));
 
 import { OfflineIndicator } from '../../../components/OfflineIndicator';
@@ -50,6 +52,7 @@ describe('OfflineIndicator - Sync Recovery', () => {
     mockGetFailedSyncQueue.mockReturnValue([]);
     mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 0 });
     mockRetryFailedSyncItem.mockResolvedValue(false);
+    mockIsRetryInProgress.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -211,6 +214,27 @@ describe('OfflineIndicator - Sync Recovery', () => {
     await waitFor(() => {
       // Should have re-read status after retry completed
       expect(mockGetSyncQueueStatus).toHaveBeenCalled();
+    });
+  });
+
+  it('skips retry when auto-retry is already in progress', async () => {
+    vi.useRealTimers();
+    // Auto-retry is running (bunker exit scenario)
+    mockIsRetryInProgress.mockReturnValue(true);
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+      { id: 'job-2', type: 'job', data: {}, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    const retryAllBtn = screen.getByText(/Retry All/i);
+    fireEvent.click(retryAllBtn);
+
+    await waitFor(() => {
+      // Should NOT have called retryFailedSyncItem — auto-retry is handling it
+      expect(mockRetryFailedSyncItem).not.toHaveBeenCalled();
     });
   });
 });
