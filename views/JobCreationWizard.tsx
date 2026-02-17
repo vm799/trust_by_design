@@ -95,6 +95,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
     clients,
     technicians,
     addJob: contextAddJob,
+    updateJob: contextUpdateJob,
   } = useData();
 
   // AuthContext: Session and user info
@@ -339,21 +340,35 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
 
       // Generate magic link if technician is assigned
       if (tech && userEmail) {
+        let linkUrl: string | null = null;
+        let linkToken: string | null = null;
+
         try {
           const magicLinkResult = await generateMagicLink(newJobId, userEmail);
           if (magicLinkResult.success && magicLinkResult.data?.url) {
-            setMagicLinkUrl(magicLinkResult.data.url);
-            setMagicLinkToken(magicLinkResult.data.token);
+            linkUrl = magicLinkResult.data.url;
+            linkToken = magicLinkResult.data.token;
           } else {
             const localMagicLink = storeMagicLinkLocal(newJobId, userEmail, workspaceId);
-            setMagicLinkUrl(localMagicLink.url);
-            setMagicLinkToken(localMagicLink.token);
+            linkUrl = localMagicLink.url;
+            linkToken = localMagicLink.token;
           }
         } catch {
-          // Fallback to local token if magic link generation fails
           const localMagicLink = storeMagicLinkLocal(newJobId, userEmail, workspaceId);
-          setMagicLinkUrl(localMagicLink.url);
-          setMagicLinkToken(localMagicLink.token);
+          linkUrl = localMagicLink.url;
+          linkToken = localMagicLink.token;
+        }
+
+        if (linkUrl && linkToken) {
+          setMagicLinkUrl(linkUrl);
+          setMagicLinkToken(linkToken);
+          // Persist magic link on the job so it survives navigation
+          contextUpdateJob({
+            ...newJob,
+            magicLinkUrl: linkUrl,
+            magicLinkToken: linkToken,
+            magicLinkCreatedAt: new Date().toISOString(),
+          });
         }
       }
 

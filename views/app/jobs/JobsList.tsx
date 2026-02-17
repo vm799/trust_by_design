@@ -68,7 +68,7 @@ interface JobsListProps {
 }
 
 /**
- * Get lifecycle stage for a job (same logic as AdminDashboard)
+ * Get lifecycle stage for a job
  */
 const getJobLifecycle = (job: Job) => {
   // VERIFIED: Submitted status (already sealed and verified)

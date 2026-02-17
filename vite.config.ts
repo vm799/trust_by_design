@@ -117,7 +117,6 @@ export default defineConfig(({ mode }) => {
 
               // Admin routes - split by function
               'admin-dashboard': [
-                './views/AdminDashboard.tsx',
                 './views/app/ManagerFocusDashboard.tsx',
                 './views/ManagerIntentSelector.tsx'
               ],
