@@ -339,7 +339,21 @@ export async function pushQueue() {
 }
 
 /**
+ * Max retries for Dexie queue items before escalation.
+ * After this many failures, items are promoted to the localStorage
+ * failed sync queue where the OfflineIndicator shows them to the user.
+ *
+ * Without this cap, failed items retry forever with no user visibility.
+ */
+const DEXIE_QUEUE_MAX_RETRIES = 10;
+
+/**
  * Internal implementation of pushQueue
+ *
+ * FAILSAFE FIX: Items that exceed DEXIE_QUEUE_MAX_RETRIES are escalated
+ * to jobproof_failed_sync_queue (localStorage) so the OfflineIndicator
+ * banner shows them and the user can manually retry. Previously, failed
+ * items just incremented retryCount forever with no cap and no visibility.
  */
 async function _pushQueueImpl() {
     const database = await getDatabase();
@@ -376,10 +390,37 @@ async function _pushQueueImpl() {
 
             if (success) {
                 await database.queue.update(action.id!, { synced: true });
-                // Optional: delete from queue after success
                 await database.queue.delete(action.id!);
             } else {
-                await database.queue.update(action.id!, { retryCount: action.retryCount + 1 });
+                const newRetryCount = (action.retryCount || 0) + 1;
+
+                if (newRetryCount >= DEXIE_QUEUE_MAX_RETRIES) {
+                    // Escalate to failed sync queue for user visibility
+                    const failedQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
+                    failedQueue.push({
+                        id: action.payload?.id || `dexie-${action.id}`,
+                        type: action.type.includes('JOB') ? 'job' : 'job',
+                        data: action.payload,
+                        retryCount: newRetryCount,
+                        lastAttempt: Date.now(),
+                        failedAt: new Date().toISOString(),
+                        reason: `Dexie queue: ${action.type} failed after ${DEXIE_QUEUE_MAX_RETRIES} retries`
+                    });
+                    localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+                    // Remove from Dexie queue (it's now in the failed sync queue)
+                    await database.queue.delete(action.id!);
+                    console.error(`[Sync] ${action.type} ${action.id} escalated to failed sync queue after ${DEXIE_QUEUE_MAX_RETRIES} retries`);
+
+                    showPersistentNotification({
+                        type: 'error',
+                        title: 'Sync Failed',
+                        message: `A ${action.type.replace('_', ' ').toLowerCase()} failed to sync after multiple attempts. Check the sync status banner.`,
+                        persistent: true
+                    });
+                } else {
+                    await database.queue.update(action.id!, { retryCount: newRetryCount });
+                }
             }
         } catch (error) {
             console.error(`[Sync] Action ${action.id} failed:`, error);

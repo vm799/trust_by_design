@@ -206,6 +206,17 @@ describe('Storage Continuity - Offline sync handlers', () => {
   it('processCreateTechnician should upsert to technicians table', () => {
     expect(syncContent).toMatch(/\.from\('technicians'\)\s*\n?\s*\.upsert\(/);
   });
+
+  it('pushQueue should escalate items to failed sync queue after max retries', () => {
+    // Verify the escalation logic exists in _pushQueueImpl
+    expect(syncContent).toContain('DEXIE_QUEUE_MAX_RETRIES');
+    expect(syncContent).toContain('jobproof_failed_sync_queue');
+    expect(syncContent).toContain('escalated to failed sync queue');
+  });
+
+  it('pushQueue should notify user when items are escalated', () => {
+    expect(syncContent).toContain('showPersistentNotification');
+  });
 });
 
 describe('Storage Continuity - OfflineAction type supports all action types', () => {
