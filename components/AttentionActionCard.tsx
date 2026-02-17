@@ -204,8 +204,8 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
         };
       case 'missing_evidence':
         return {
-          bg: 'bg-slate-800',
-          border: 'border-white/10',
+          bg: 'bg-gray-100 dark:bg-slate-800',
+          border: 'border-slate-200 dark:border-white/10',
           icon: 'photo_library',
           iconColor: 'text-slate-400',
           title: 'No Evidence Yet',
@@ -213,8 +213,8 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
         };
       default:
         return {
-          bg: 'bg-slate-800',
-          border: 'border-white/10',
+          bg: 'bg-gray-100 dark:bg-slate-800',
+          border: 'border-slate-200 dark:border-white/10',
           icon: 'info',
           iconColor: 'text-slate-400',
           title: 'Attention Required',
@@ -229,18 +229,18 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
     <div className={`${style.bg} border ${style.border} rounded-2xl p-4 transition-all`}>
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
-        <div className={`size-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0`}>
+        <div className={`size-10 rounded-xl bg-slate-100/70 dark:bg-white/10 flex items-center justify-center flex-shrink-0`}>
           <span className={`material-symbols-outlined text-xl ${style.iconColor}`}>{style.icon}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-white text-sm uppercase tracking-tight truncate">
+          <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight truncate">
             {job.title}
           </h4>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
             {style.title} - {style.subtitle}
           </p>
-          <p className="text-[10px] text-slate-400 mt-1">
-            Tech: <span className="text-slate-300">{technician?.name || job.technician || 'Unassigned'}</span>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+            Tech: <span className="text-slate-700 dark:text-slate-300">{technician?.name || job.technician || 'Unassigned'}</span>
             {client && <span> | Client: {client.name}</span>}
           </p>
         </div>
@@ -282,7 +282,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
                 </button>
                 <button
                   onClick={handleCall}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >
                   <span className="material-symbols-outlined text-xs">call</span>
                   Call
@@ -293,7 +293,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             {technician?.email && (
               <button
                 onClick={handleEmail}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
               >
                 <span className="material-symbols-outlined text-xs">mail</span>
                 Email
@@ -315,7 +315,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             </button>
             <button
               onClick={() => onNavigate?.(`/admin/report/${job.id}`)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <span className="material-symbols-outlined text-xs">visibility</span>
               Review
@@ -348,7 +348,7 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
             )}
             <button
               onClick={() => onNavigate?.(`/admin/report/${job.id}`)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <span className="material-symbols-outlined text-xs">visibility</span>
               View
@@ -359,8 +359,8 @@ const AttentionActionCard: React.FC<AttentionActionCardProps> = ({
 
       {/* Sealing Explanation - Only show for awaiting_seal */}
       {type === 'awaiting_seal' && (
-        <div className="mt-3 pt-3 border-t border-white/15">
-          <p className="text-[9px] text-slate-400">
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/15">
+          <p className="text-[9px] text-slate-500 dark:text-slate-400">
             <span className="text-success font-bold">Why seal?</span> Sealing creates a tamper-proof cryptographic record.
             Once sealed, evidence cannot be modified, giving your clients confidence in the proof of work.
           </p>

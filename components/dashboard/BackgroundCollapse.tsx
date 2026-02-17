@@ -102,7 +102,7 @@ const BackgroundItemRow: React.FC<BackgroundItemRowProps> = React.memo(({
   const content = (
     <>
       {/* Type icon */}
-      <span className="material-symbols-outlined text-xs text-slate-400 shrink-0">
+      <span className="material-symbols-outlined text-xs text-slate-500 dark:text-slate-400 shrink-0">
         {typeIcon}
       </span>
 
@@ -128,7 +128,7 @@ const BackgroundItemRow: React.FC<BackgroundItemRowProps> = React.memo(({
 
       {/* Chevron for clickable items */}
       {hasRoute && (
-        <span className="material-symbols-outlined text-xs text-slate-400 shrink-0">
+        <span className="material-symbols-outlined text-xs text-slate-500 dark:text-slate-400 shrink-0">
           chevron_right
         </span>
       )}

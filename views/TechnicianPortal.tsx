@@ -1201,7 +1201,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
           <div className="size-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-400 text-sm font-semibold tracking-widest">Loading Job...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold tracking-widest">Loading Job...</p>
         </div>
       </Layout>
     );
@@ -1245,18 +1245,18 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-white/15 shadow-2xl relative`}>
+          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative`}>
             <span className={`material-symbols-outlined text-7xl font-black text-${config.colour}`}>{config.icon}</span>
           </div>
           <div className="space-y-3">
-            <h2 className={`text-4xl font-black text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
-            <p className="text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
-            <div className="bg-slate-900 border border-white/15 rounded-2xl p-4 mt-4">
+            <h2 className={`text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
+            <p className="text-slate-700 dark:text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-4 mt-4">
               <p className="text-xs text-primary font-bold uppercase tracking-wide">{config.action}</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 min-h-[48px] flex items-center justify-center gap-2"
@@ -1275,15 +1275,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/15 shadow-2xl relative">
+          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative">
             <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
-            <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
@@ -1357,15 +1357,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in px-4">
-          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/15 shadow-2xl relative animate-success-pop">
+          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative animate-success-pop">
             <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
-            <p className="text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
             {job?.evidenceHash && (
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-3 mt-4">
-                <p className="text-[9px] text-slate-400 uppercase tracking-wide">Evidence Hash</p>
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 mt-4">
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Evidence Hash</p>
                 <p className="text-[10px] font-mono text-success truncate">{job.evidenceHash}</p>
               </div>
             )}
@@ -1373,31 +1373,31 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
           {/* UAT Fix #12: Report sharing options */}
           <div className="w-full max-w-xs space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Share Report</p>
+            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Share Report</p>
             <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={handleEmailReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Send report via email"
               >
                 <span className="material-symbols-outlined text-primary text-xl">email</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Email</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Email</span>
               </button>
               <button
                 onClick={handlePrintReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Print or save as PDF"
               >
                 <span className="material-symbols-outlined text-primary text-xl">print</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">PDF</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">PDF</span>
               </button>
               <button
                 onClick={handleShareReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Share report link"
               >
                 <span className="material-symbols-outlined text-primary text-xl">share</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Share</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Share</span>
               </button>
               <button
                 onClick={() => setShowCertificate(true)}
@@ -1419,7 +1419,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             />
           )}
 
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
       </Layout>
     );
@@ -1427,7 +1427,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   return (
     <Layout isAdmin={false}>
-      <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-900">
+      <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-50 dark:bg-slate-900">
         <div
           className={`h-full transition-all duration-1000 ${isOnline ? (isSyncing ? 'bg-primary animate-pulse' : 'bg-success') : 'bg-warning'}`}
           style={{ width: `${(step / 4) * 100}%` }}
@@ -1459,13 +1459,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
         {/* Visual Sync Queue Status */}
         {photos.some(p => p.syncStatus === 'pending') && (
-          <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 animate-in">
+          <div className="bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-2xl p-4 animate-in">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="size-3 bg-primary rounded-full animate-pulse"></div>
-                <p className="text-xs font-bold text-white uppercase tracking-wide">Photo Upload Queue</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">Photo Upload Queue</p>
               </div>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
                 {photos.filter(p => p.syncStatus === 'synced' || !p.isIndexedDBRef).length}/{photos.length} synced
               </span>
             </div>
@@ -1478,13 +1478,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                       ? 'bg-success'
                       : p.syncStatus === 'syncing'
                       ? 'bg-primary animate-pulse'
-                      : 'bg-slate-700'
+                      : 'bg-gray-200 dark:bg-slate-700'
                   }`}
                   title={`${p.type}: ${p.syncStatus || 'pending'}`}
                 />
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-2">Photos saved locally and uploading in background</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Photos saved locally and uploading in background</p>
           </div>
         )}
 
@@ -1493,8 +1493,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
               JOB REF: {job.id}
             </h2>
-            <h3 className="text-3xl font-bold text-white tracking-tight leading-none">{job.title}</h3>
-            <p className="text-xs text-slate-300 font-medium tracking-tight">{job.client} • {job.address}</p>
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{job.title}</h3>
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium tracking-tight">{job.client} • {job.address}</p>
           </div>
           <div className="text-right flex items-center gap-3">
             <button
@@ -1502,7 +1502,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 saveDraftState({ step, photos, checklist, notes, signerName, signerRole, w3w, coords, locationStatus, locationVerified });
                 showAlert('Progress Saved', 'Your work has been saved locally. You can close this page and return via the same link to continue.', 'info');
               }}
-              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              className="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
               aria-label="Save Progress"
               title="Save & Exit Later"
             >
@@ -1510,7 +1510,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </button>
             <button
               onClick={() => setShowHelp(true)}
-              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              className="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
               aria-label="Help"
             >
               <span className="material-symbols-outlined text-lg">help</span>
@@ -1529,7 +1529,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <p className="text-xs font-black text-primary uppercase tracking-widest">
                 Step {step} of 4
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
                 {step === 1 && 'Safety & Location'}
                 {step === 2 && 'Capture Evidence'}
                 {step === 3 && 'Review Summary'}
@@ -1544,10 +1544,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               const isCurrent = step === stepNum;
               return (
                 <div key={label} className="flex-1 space-y-2">
-                  <div className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? (isLocked ? 'bg-slate-500' : 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]') : 'bg-slate-800'}`} />
+                  <div className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? (isLocked ? 'bg-slate-500' : 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]') : 'bg-gray-100 dark:bg-slate-800'}`} />
                   <div className="flex items-center justify-center gap-1">
-                    {isLocked && <span className="material-symbols-outlined text-[8px] text-slate-400">lock</span>}
-                    <p className={`text-[8px] font-black uppercase tracking-widest text-center ${isCurrent ? 'text-primary' : isLocked ? 'text-slate-400' : 'text-slate-400'}`}>{label}</p>
+                    {isLocked && <span className="material-symbols-outlined text-[8px] text-slate-500 dark:text-slate-400">lock</span>}
+                    <p className={`text-[8px] font-black uppercase tracking-widest text-center ${isCurrent ? 'text-primary' : isLocked ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>{label}</p>
                   </div>
                 </div>
               );
@@ -1562,70 +1562,70 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
               </div>
-              <h2 className="text-4xl font-semibold tracking-tight leading-none text-white">Job Assignment</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
+              <h2 className="text-4xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Job Assignment</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
             </header>
 
-            <div className="bg-slate-900 border border-white/15 rounded-[3rem] overflow-hidden shadow-2xl">
-              <div className="px-8 py-6 border-b border-white/15 bg-white/[0.02]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Job Details</p>
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl">
+              <div className="px-8 py-6 border-b border-slate-200 dark:border-white/15 bg-slate-100/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">Job Details</p>
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Service Description</p>
-                  <p className="text-2xl font-bold text-white tracking-tight">{job.title}</p>
+                  <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Service Description</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{job.title}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
-                    <p className="text-sm font-medium text-white">{job.client}</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Client</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{job.client}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Reference</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Reference</p>
                     <p className="text-sm font-mono text-primary font-black">{job.id}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
-                  <div className="bg-slate-800 p-4 rounded-2xl border border-white/15">
-                    <p className="text-sm font-medium text-white tracking-tight leading-relaxed">{job.address}</p>
+                  <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Location</p>
+                  <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-white/15">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white tracking-tight leading-relaxed">{job.address}</p>
                   </div>
                 </div>
 
                 {job.notes && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Special Instructions</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Special Instructions</p>
                     <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
-                      <p className="text-sm text-white tracking-tight leading-relaxed">{job.notes}</p>
+                      <p className="text-sm text-slate-900 dark:text-white tracking-tight leading-relaxed">{job.notes}</p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8">
               <div className="flex items-center gap-4 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">What You Need To Do</p>
+                <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">What You Need To Do</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Location verification via GPS + what3words</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Location verification via GPS + what3words</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Safety checklist completion required</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Safety checklist completion required</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Photo evidence capture (Before/During/After)</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Photo evidence capture (Before/During/After)</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Client signature for completion seal</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Client signature for completion seal</p>
                 </li>
               </ul>
             </div>
@@ -1643,8 +1643,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 1 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Safety Check</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight">Verify your location and complete the safety checklist.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Safety Check</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight">Verify your location and complete the safety checklist.</p>
             </header>
 
             <div className="space-y-4">
@@ -1653,12 +1653,12 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 disabled={locationStatus === 'captured' || locationStatus === 'capturing'}
                 className={`w-full flex items-center justify-between p-7 rounded-[2.5rem] border-2 transition-all ${locationStatus === 'captured' ? 'bg-success/5 border-success/30 text-success' :
                   locationStatus === 'capturing' ? 'bg-primary/10 border-primary/30 text-primary' :
-                    locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-900 border-white/10 text-white'
+                    locationStatus === 'denied' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
                   }`}
               >
                 <div className="flex items-center gap-5">
                   <div className={`size-12 rounded-2xl flex items-center justify-center ${locationStatus === 'captured' ? 'bg-success/20' :
-                    locationStatus === 'denied' ? 'bg-warning/20' : 'bg-white/10'
+                    locationStatus === 'denied' ? 'bg-warning/20' : 'bg-slate-100/70 dark:bg-white/10'
                     }`}>
                     <span className="material-symbols-outlined text-2xl font-black">
                       {locationStatus === 'captured' ? 'near_me' : locationStatus === 'denied' ? 'location_disabled' : 'my_location'}
@@ -1680,14 +1680,14 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <div className="flex flex-col mt-0.5">
                       <div className="flex items-center gap-2">
                         {locationStatus === 'captured' && <span className="text-red-500 font-black text-xs">{'///'}</span>}
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-white' : 'opacity-60'}`}>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${locationStatus === 'captured' ? 'text-slate-900 dark:text-white' : 'opacity-60'}`}>
                           {locationStatus === 'captured' ? w3w.replace('///', '') :
                             locationStatus === 'capturing' ? `Acquiring Signal... ${gpsCountdown}s` :
                               locationStatus === 'denied' ? 'Permission Denied' : 'Tap to Get Location'}
                         </p>
                       </div>
                       {locationStatus === 'captured' && coords.lat && (
-                        <p className="text-[8px] font-mono text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
+                        <p className="text-[8px] font-mono text-slate-700 dark:text-slate-300 uppercase">GPS: {coords.lat.toFixed(6)}, {coords.lng?.toFixed(6)}</p>
                       )}
                       {locationStatus === 'captured' && locationWarning && (
                         <p className="text-[8px] text-warning mt-1">{locationWarning}</p>
@@ -1718,7 +1718,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="4"
-                            className="text-slate-700"
+                            className="text-gray-200 dark:text-slate-700"
                           />
                           <circle
                             cx="24"
@@ -1739,7 +1739,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                       </div>
                       <div>
                         <p className="text-[11px] font-black text-primary uppercase tracking-tight">Acquiring GPS Signal</p>
-                        <p className="text-[9px] text-slate-400 uppercase tracking-tight">Please wait while we verify your location</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-tight">Please wait while we verify your location</p>
                       </div>
                     </div>
                     <button
@@ -1747,7 +1747,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                         e.stopPropagation();
                         cancelGpsCapture();
                       }}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-wider transition-all"
+                      className="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider transition-all"
                     >
                       Cancel
                     </button>
@@ -1761,7 +1761,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                     <span className="material-symbols-outlined text-warning text-xl font-black">info</span>
                     <div className="flex-1 space-y-2">
                       <p className="text-[11px] font-black text-warning uppercase tracking-tight">Location Access Required</p>
-                      <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-tight">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-tight">
                         JobProof requires location access for evidence verification. Enable location permissions in your device settings or use manual entry as a fallback.
                       </p>
                     </div>
@@ -1777,13 +1777,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               )}
 
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest pl-2">Safety Checklist</p>
+                <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest pl-2">Safety Checklist</p>
                 {checklist.map((item, idx) => (
                   <button
                     key={item.id}
                     ref={(el) => { checklistRefs.current[idx] = el; }}
                     onClick={() => handleChecklistToggle(idx)}
-                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-white' : 'bg-slate-900 border-white/15 text-slate-300'}`}
+                    className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] border transition-all text-left focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950 ${item.checked ? 'bg-primary/5 border-primary/30 text-slate-900 dark:text-white' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/15 text-slate-700 dark:text-slate-300'}`}
                   >
                     <span className="material-symbols-outlined text-2xl font-black">
                       {item.checked ? 'check_box' : 'check_box_outline_blank'}
@@ -1798,7 +1798,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <button
               disabled={locationStatus !== 'captured' || checklist.some(i => i.required && !i.checked)}
               onClick={() => setStep(2)}
-              className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
+              className="w-full py-6 bg-primary rounded-[2.5rem] font-black text-white shadow-lg dark:shadow-2xl shadow-primary/30 disabled:opacity-20 flex items-center justify-center gap-3 transition-all text-lg uppercase tracking-[0.2em]"
             >
               Continue
               <span className="material-symbols-outlined font-black">arrow_forward</span>
@@ -1809,8 +1809,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
         {step === 2 && (
           <div className="space-y-8 animate-in">
             <header className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-tight leading-none text-white">Photos</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight">Take photos before, during, and after the work.</p>
+              <h2 className="text-3xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Photos</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight">Take photos before, during, and after the work.</p>
             </header>
 
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
@@ -1818,7 +1818,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 <button
                   key={type}
                   onClick={() => setActivePhotoType(type)}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'}`}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all whitespace-nowrap ${activePhotoType === type ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                 >
                   {type}
                 </button>
@@ -1841,15 +1841,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               {photos.filter(p => p.type === activePhotoType).map(p => {
                 const displayUrl = p.isIndexedDBRef ? (photoDataUrls.get(p.id) || '') : p.url;
                 return (
-                  <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl animate-in group">
+                  <div key={p.id} className="aspect-square rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg dark:shadow-2xl animate-in group">
                     <img src={displayUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Proof" />
-                    <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-2xl">
+                    <div className="absolute top-4 right-4 bg-success text-white size-7 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950 shadow-lg dark:shadow-2xl">
                       <span className="material-symbols-outlined text-sm font-black text-white">verified</span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       <button
                         onClick={() => confirmDeletePhoto(p)}
-                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md hover:bg-black/90 text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-white/10 transition-colors"
+                        className="w-full min-h-[44px] py-2 bg-black/80 backdrop-blur-md hover:bg-black/90 text-white text-[9px] font-black uppercase tracking-widest rounded-xl border border-slate-200 dark:border-white/10 transition-colors"
                         aria-label="Delete photo capture"
                       >
                         Delete Capture
@@ -1863,7 +1863,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <div className="flex gap-4">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-900 border border-white/10 text-white hover:bg-slate-800"
+                className="flex-1 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800"
               >
                 Back to Safety
               </button>

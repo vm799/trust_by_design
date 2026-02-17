@@ -318,16 +318,16 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          case 'expired': return 'text-warning';
          case 'revoked': return 'text-danger';
          case 'used': return 'text-primary';
-         case 'sealed': return 'text-slate-400';
-         default: return 'text-slate-400';
+         case 'sealed': return 'text-slate-500 dark:text-slate-400';
+         default: return 'text-slate-500 dark:text-slate-400';
       }
    };
 
    if (!job) return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
          <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold tracking-tighter">Report Unavailable</h1>
-            <p className="text-slate-300 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
+            <p className="text-slate-700 dark:text-slate-300 uppercase tracking-tight">The requested evidence bundle could not be retrieved from the hub.</p>
             <button onClick={() => navigate('/admin')} className="px-8 py-3 bg-primary text-white font-black rounded-xl uppercase tracking-widest">Return to Hub</button>
          </div>
       </div>
@@ -741,7 +741,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                      {/* Status Badge - Context-appropriate */}
                      {isSealed ? (
-                        <div className="bg-slate-950 text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-white/15 relative group overflow-hidden">
+                        <div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-10 rounded-[3rem] text-center w-full md:w-auto shrink-0 shadow-2xl border border-slate-200 dark:border-white/15 relative group overflow-hidden">
                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                            <span className="material-symbols-outlined text-6xl mb-3 text-success font-black relative z-10">verified</span>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1 relative z-10">Cryptographically Sealed</p>
@@ -791,7 +791,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
             {!publicView && (
                <aside className="w-full lg:w-80 space-y-6 no-print shrink-0">
-                  <div className="bg-slate-900 border border-white/15 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
+                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-8 rounded-[3rem] shadow-2xl sticky top-24 space-y-8">
 
                      {/* ============================================================ */}
                      {/* PRIORITY SECTION: Job Status & Blockers (ALWAYS AT TOP) */}
@@ -819,30 +819,30 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                      : 'Evidence Incomplete'}
                                  </p>
                                  {blockers.length > 0 && (
-                                    <p className="text-xs text-white/70 mt-1">{blockers[0]}</p>
+                                    <p className="text-xs text-slate-600 dark:text-white/70 mt-1">{blockers[0]}</p>
                                  )}
                               </div>
                            </div>
 
                            {/* Quick Stats */}
-                           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10">
+                           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
                               <div className="text-center">
-                                 <p className={`text-lg font-black ${hasPhotos ? 'text-success' : 'text-white/30'}`}>
+                                 <p className={`text-lg font-black ${hasPhotos ? 'text-success' : 'text-slate-300 dark:text-white/30'}`}>
                                     {job.photos.length}
                                  </p>
-                                 <p className="text-[8px] font-bold text-white/50 uppercase">Photos</p>
+                                 <p className="text-[8px] font-bold text-slate-400 dark:text-white/50 uppercase">Photos</p>
                               </div>
                               <div className="text-center">
-                                 <p className={`text-lg font-black ${hasSignature ? 'text-success' : 'text-white/30'}`}>
+                                 <p className={`text-lg font-black ${hasSignature ? 'text-success' : 'text-slate-300 dark:text-white/30'}`}>
                                     {hasSignature ? '✓' : '—'}
                                  </p>
-                                 <p className="text-[8px] font-bold text-white/50 uppercase">Signature</p>
+                                 <p className="text-[8px] font-bold text-slate-400 dark:text-white/50 uppercase">Signature</p>
                               </div>
                               <div className="text-center">
-                                 <p className={`text-lg font-black ${isSealed ? 'text-success' : 'text-white/30'}`}>
+                                 <p className={`text-lg font-black ${isSealed ? 'text-success' : 'text-slate-300 dark:text-white/30'}`}>
                                     {isSealed ? '✓' : '—'}
                                  </p>
-                                 <p className="text-[8px] font-bold text-white/50 uppercase">Sealed</p>
+                                 <p className="text-[8px] font-bold text-slate-400 dark:text-white/50 uppercase">Sealed</p>
                               </div>
                            </div>
                         </div>
@@ -853,10 +853,10 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      {/* ============================================================ */}
                      {!isSealed && magicLinkInfo && (
                         <div className={`rounded-2xl p-4 border ${
-                           !techLinkOpened ? 'bg-danger/10 border-danger/30' : 'bg-slate-800 border-white/15'
+                           !techLinkOpened ? 'bg-danger/10 border-danger/30' : 'bg-gray-100 dark:bg-slate-800 border-slate-200 dark:border-white/15'
                         }`}>
                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-[10px] font-black text-white uppercase tracking-widest">Tech Link</span>
+                              <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Tech Link</span>
                               <span className={`text-[10px] font-black uppercase tracking-widest ${getLinkStatusColor(magicLinkInfo.status)}`}>
                                  {magicLinkInfo.status}
                               </span>
@@ -878,13 +878,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     return (
                                        <React.Fragment key={stage}>
                                           <div className={`size-6 rounded-lg flex items-center justify-center ${
-                                             isComplete ? 'bg-success/20 text-success' : 'bg-slate-700 text-slate-400'
+                                             isComplete ? 'bg-success/20 text-success' : 'bg-gray-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                           }`}>
                                              <span className="material-symbols-outlined text-[10px]">
                                                 {stage === 'sent' ? 'send' : stage === 'opened' ? 'visibility' : stage === 'job_started' ? 'photo_camera' : 'verified'}
                                              </span>
                                           </div>
-                                          {idx < 3 && <div className={`flex-1 h-px ${isComplete ? 'bg-success/50' : 'bg-slate-700'}`} />}
+                                          {idx < 3 && <div className={`flex-1 h-px ${isComplete ? 'bg-success/50' : 'bg-gray-200 dark:bg-slate-700'}`} />}
                                        </React.Fragment>
                                     );
                                  })}
@@ -905,7 +905,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                      {/* ACTIONS (Conditional based on job state) */}
                      {/* ============================================================ */}
                      <div>
-                        <h3 className="text-xs font-black text-white mb-6 uppercase tracking-[0.2em]">Actions</h3>
+                        <h3 className="text-xs font-black text-slate-900 dark:text-white mb-6 uppercase tracking-[0.2em]">Actions</h3>
                         <div className="space-y-3">
                            {isSealed && !existingInvoice && (
                               <button onClick={handleGenerateInvoice} className="w-full bg-success hover:bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-success/20 group">
@@ -914,7 +914,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               </button>
                            )}
                            {isSealed && (
-                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-white/10 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10 group">
+                              <button onClick={() => setShowClientReceipt(true)} className="w-full bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-slate-200 dark:border-white/10 group">
                                  <span className="material-symbols-outlined text-sm font-black">receipt_long</span>
                                  Client Receipt
                                  {isSelfEmployedJob && (
@@ -929,13 +929,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <span className="material-symbols-outlined text-sm font-black">print</span>
                                     Print / Export PDF
                                  </button>
-                                 <button onClick={() => setShowShareModal(true)} className="w-full bg-white/10 hover:bg-white/10 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-white/10">
+                                 <button onClick={() => setShowShareModal(true)} className="w-full bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-[10px] border border-slate-200 dark:border-white/10">
                                     <span className="material-symbols-outlined text-sm font-black">share</span>
                                     Share Evidence Link
                                  </button>
                               </>
                            ) : (
-                              <div className="text-center py-4 text-white/30">
+                              <div className="text-center py-4 text-slate-300 dark:text-white/30">
                                  <span className="material-symbols-outlined text-2xl mb-2">print_disabled</span>
                                  <p className="text-[10px] uppercase tracking-widest">No evidence to print</p>
                               </div>
@@ -945,13 +945,13 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                      {/* Magic Link Management Section */}
                      {job.status !== 'Submitted' && (
-                        <div className="pt-8 border-t border-white/15">
+                        <div className="pt-8 border-t border-slate-200 dark:border-white/15">
                            <button
                               onClick={() => setShowLinkManagement(!showLinkManagement)}
                               className="w-full flex items-center justify-between mb-4"
                            >
-                              <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Technician Link</h3>
-                              <span className={`material-symbols-outlined text-slate-400 text-sm transition-transform ${showLinkManagement ? 'rotate-180' : ''}`}>
+                              <h3 className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-[0.2em]">Technician Link</h3>
+                              <span className={`material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm transition-transform ${showLinkManagement ? 'rotate-180' : ''}`}>
                                  expand_more
                               </span>
                            </button>
@@ -960,43 +960,43 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                               <div className="space-y-4 animate-in">
                                  {/* Link Status */}
                                  {magicLinkInfo ? (
-                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15 space-y-3">
+                                    <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-white/15 space-y-3">
                                        <div className="flex items-center justify-between">
-                                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+                                          <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</span>
                                           <span className={`text-[10px] font-black uppercase tracking-widest ${getLinkStatusColor(magicLinkInfo.status)}`}>
                                              {magicLinkInfo.status}
                                           </span>
                                        </div>
                                        <div className="flex items-center justify-between">
-                                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expires</span>
+                                          <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Expires</span>
                                           <span className={`text-[10px] font-bold ${
                                              new Date(magicLinkInfo.expires_at).getTime() - Date.now() < 24 * 60 * 60 * 1000
                                                 ? 'text-warning'
-                                                : 'text-slate-300'
+                                                : 'text-slate-700 dark:text-slate-300'
                                           }`}>
                                              {formatExpiration(magicLinkInfo.expires_at)}
                                           </span>
                                        </div>
                                        {magicLinkInfo.first_accessed_at && (
                                           <div className="flex items-center justify-between">
-                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">First Used</span>
-                                             <span className="text-[10px] text-slate-300">
+                                             <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">First Used</span>
+                                             <span className="text-[10px] text-slate-700 dark:text-slate-300">
                                                 {new Date(magicLinkInfo.first_accessed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                                              </span>
                                           </div>
                                        )}
                                     </div>
                                  ) : (
-                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15 text-center">
-                                       <span className="material-symbols-outlined text-slate-400 text-2xl mb-2">link_off</span>
-                                       <p className="text-[10px] text-slate-400 uppercase tracking-widest">No active link</p>
+                                    <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-white/15 text-center">
+                                       <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-2xl mb-2">link_off</span>
+                                       <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">No active link</p>
                                     </div>
                                  )}
 
                                  {/* Link Lifecycle Timeline */}
                                  {lifecycleSummary && (
-                                    <div className="bg-slate-800 rounded-2xl p-4 border border-white/15">
-                                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Link Lifecycle</p>
+                                    <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-white/15">
+                                       <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Link Lifecycle</p>
                                        <div className="flex items-center justify-between gap-1">
                                           {[
                                              { stage: 'sent' as LinkLifecycleStage, icon: 'send', label: 'Sent' },
@@ -1015,18 +1015,18 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                                             ? isCurrent
                                                                ? 'bg-primary text-white'
                                                                : 'bg-success/20 text-success'
-                                                            : 'bg-slate-700 text-slate-400'
+                                                            : 'bg-gray-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                                       }`}>
                                                          <span className="material-symbols-outlined text-xs">{item.icon}</span>
                                                       </div>
-                                                      <span className="text-[7px] font-bold uppercase tracking-widest text-slate-400">{item.label}</span>
+                                                      <span className="text-[7px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{item.label}</span>
                                                    </div>
                                                    {idx < 3 && (
                                                       <div className={`flex-1 h-px ${
                                                          lifecycleSummary.stages.findIndex(s => s.stage === item.stage && s.completed) <
                                                          lifecycleSummary.stages.findIndex(s => s.stage === lifecycleSummary.currentStage)
                                                             ? 'bg-success/50'
-                                                            : 'bg-slate-700'
+                                                            : 'bg-gray-200 dark:bg-slate-700'
                                                       }`} />
                                                    )}
                                                 </React.Fragment>
@@ -1043,7 +1043,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                           <span className="material-symbols-outlined text-warning text-sm animate-pulse">warning</span>
                                           <div className="flex-1">
                                              <p className="text-[9px] font-black text-warning uppercase tracking-widest">Needs Attention</p>
-                                             <p className="text-[10px] text-slate-300 mt-1">
+                                             <p className="text-[10px] text-slate-700 dark:text-slate-300 mt-1">
                                                 {lifecycleSummary.flagReason || 'Link has not been opened by technician'}
                                              </p>
                                           </div>
@@ -1054,7 +1054,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                                    setLifecycleSummary(prev => prev ? { ...prev, needsAttention: false } : null);
                                                 }
                                              }}
-                                             className="text-[8px] font-bold text-warning hover:text-white uppercase tracking-widest px-2 py-1 rounded-lg bg-warning/20 hover:bg-warning/30 transition-all"
+                                             className="text-[8px] font-bold text-warning hover:text-slate-900 dark:hover:text-white uppercase tracking-widest px-2 py-1 rounded-lg bg-warning/20 hover:bg-warning/30 transition-all"
                                           >
                                              Dismiss
                                           </button>
@@ -1089,7 +1089,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <button
                                        onClick={handleRegenerateLink}
                                        disabled={linkActionLoading}
-                                       className="w-full py-3 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                       className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                        <span className="material-symbols-outlined text-xs">refresh</span>
                                        {magicLinkInfo ? 'Regenerate Link' : 'Generate New Link'}
@@ -1102,21 +1102,21 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.SHORT)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +24h
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.STANDARD)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +7 days
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.EXTENDED)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +30 days
                                              </button>
@@ -1148,8 +1148,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                      )}
 
-                     <div className="pt-8 border-t border-white/15">
-                        <h3 className="text-[10px] font-black text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
+                     <div className="pt-8 border-t border-slate-200 dark:border-white/15">
+                        <h3 className="text-[10px] font-black text-slate-900 dark:text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
                         <div className="space-y-3">
                            <StatusLine
                               label="Photos"
@@ -1174,20 +1174,20 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          </div>
          {showShareModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowShareModal(false)}>
-               <div className="bg-slate-800 border border-white/15 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-primary/20 size-16 rounded-[2.5rem] flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-primary text-4xl font-black">share</span>
                      </div>
-                     <h3 className="text-2xl font-black text-white tracking-tighter uppercase">Share Evidence Report</h3>
+                     <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Share Evidence Report</h3>
                   </div>
 
                   <div className="bg-white p-6 rounded-3xl flex items-center justify-center">
                      <QRCodeSVG value={getReportUrl(job.id)} size={192} level="M" />
                   </div>
 
-                  <div className="bg-slate-800 rounded-2xl p-4 border border-white/15">
-                     <p className="text-xs font-mono text-white break-all text-center">{getReportUrl(job.id)}</p>
+                  <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-white/15">
+                     <p className="text-xs font-mono text-slate-900 dark:text-white break-all text-center">{getReportUrl(job.id)}</p>
                   </div>
 
                   <div className="flex flex-col gap-3">
@@ -1198,7 +1198,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <span className="material-symbols-outlined text-sm font-black">content_copy</span>
                         Copy Link
                      </button>
-                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
+                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
                         Close
                      </button>
                   </div>
@@ -1209,14 +1209,14 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          {/* Reassign Technician Modal */}
          {showReassignModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowReassignModal(false)}>
-               <div className="bg-slate-800 border border-white/15 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-warning/20 size-14 rounded-2xl flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-warning text-3xl font-black">swap_horiz</span>
                      </div>
-                     <h3 className="text-xl font-black text-white tracking-tighter uppercase">Reassign Technician</h3>
-                     <p className="text-xs text-slate-400 uppercase tracking-widest">
-                        Current: <span className="text-white font-bold">{job.technician}</span>
+                     <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Reassign Technician</h3>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                        Current: <span className="text-slate-900 dark:text-white font-bold">{job.technician}</span>
                      </p>
                   </div>
 
@@ -1225,7 +1225,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <span className="material-symbols-outlined text-warning text-lg">warning</span>
                         <div className="space-y-1">
                            <p className="text-[10px] font-black text-warning uppercase tracking-widest">Important</p>
-                           <p className="text-xs text-slate-300">
+                           <p className="text-xs text-slate-700 dark:text-slate-300">
                               Reassigning will revoke the current technician&apos;s access and generate a new link for the selected technician.
                            </p>
                         </div>
@@ -1233,29 +1233,29 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
 
                   <div className="space-y-3">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select New Technician</p>
+                     <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Select New Technician</p>
                      <div className="space-y-2 max-h-60 overflow-y-auto">
                         {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').map(tech => (
                            <button
                               key={tech.id}
                               onClick={() => handleReassignJob(tech.id, tech.name)}
                               disabled={linkActionLoading}
-                              className="w-full flex items-center gap-4 p-4 bg-slate-800 hover:bg-slate-800 border border-white/15 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
+                              className="w-full flex items-center gap-4 p-4 bg-gray-100 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/15 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
                            >
                               <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
                                  {tech.name[0]}
                               </div>
                               <div className="flex-1 text-left">
-                                 <p className="text-sm font-black text-white uppercase tracking-tight">{tech.name}</p>
-                                 <p className="text-[10px] text-slate-400 uppercase tracking-widest">{tech.status}</p>
+                                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{tech.name}</p>
+                                 <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">{tech.status}</p>
                               </div>
-                              <span className="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg transition-colors">
+                              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary text-lg transition-colors">
                                  arrow_forward
                               </span>
                            </button>
                         ))}
                         {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').length === 0 && (
-                           <div className="text-center py-8 text-slate-400">
+                           <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                               <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
                               <p className="text-xs uppercase tracking-widest">No available technicians</p>
                            </div>
@@ -1265,7 +1265,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
 
                   <button
                      onClick={() => setShowReassignModal(false)}
-                     className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
+                     className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all"
                   >
                      Cancel
                   </button>
@@ -1298,8 +1298,8 @@ const TimelineStep = ({ label, time, icon, active = true }: any) => (
 
 const StatusLine = ({ label, value, success }: any) => (
    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-      <span className="text-white/60">{label}</span>
-      <span className={success ? 'text-success' : 'text-white/40'}>{value}</span>
+      <span className="text-slate-500 dark:text-white/60">{label}</span>
+      <span className={success ? 'text-success' : 'text-slate-400 dark:text-white/40'}>{value}</span>
    </div>
 );
 

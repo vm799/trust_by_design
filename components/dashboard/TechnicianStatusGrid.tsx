@@ -157,11 +157,11 @@ const TechnicianStatusGrid: React.FC<TechnicianStatusGridProps> = ({
                   aria-label={`${tech.name} - ${category.label}${tech.activeJobTitle ? `: ${tech.activeJobTitle}` : ''}`}
                 >
                   <span className={`size-2 rounded-full ${category.color.dot} shrink-0`} />
-                  <span className="text-sm font-medium text-white truncate max-w-[120px]">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[120px]">
                     {tech.name}
                   </span>
                   {category.key === 'working' && tech.activeJobTitle && (
-                    <span className="text-xs text-slate-400 truncate max-w-[80px] hidden sm:inline">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[80px] hidden sm:inline">
                       {tech.activeJobTitle}
                     </span>
                   )}
@@ -170,7 +170,7 @@ const TechnicianStatusGrid: React.FC<TechnicianStatusGridProps> = ({
                       {tech.jobsRemaining} pending
                     </span>
                   )}
-                  <span className="material-symbols-outlined text-xs text-slate-400 shrink-0">
+                  <span className="material-symbols-outlined text-xs text-slate-500 dark:text-slate-400 shrink-0">
                     chevron_right
                   </span>
                 </button>

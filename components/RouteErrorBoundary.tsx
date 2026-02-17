@@ -79,7 +79,7 @@ class RouteErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-6">
-          <div className="max-w-md bg-slate-900 backdrop-blur-xl border border-slate-600/50 rounded-2xl p-8 text-center">
+          <div className="max-w-md bg-slate-50 dark:bg-slate-900 backdrop-blur-xl border border-slate-200 dark:border-slate-600/50 rounded-2xl p-8 text-center">
             {/* Icon */}
             <div className={`size-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
               isNetworkError ? 'bg-amber-500/10' : 'bg-danger/10'
@@ -92,12 +92,12 @@ class RouteErrorBoundary extends Component<Props, State> {
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-bold text-white mb-2">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
               {isNetworkError ? 'Connection Issue' : 'Something went wrong'}
             </h2>
 
             {/* Description */}
-            <p className="text-slate-400 text-sm mb-6">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
               {isNetworkError
                 ? `Failed to load ${sectionName}. Check your connection and try again.`
                 : `We couldn't load ${sectionName}. This error has been logged.`}
@@ -105,7 +105,7 @@ class RouteErrorBoundary extends Component<Props, State> {
 
             {/* Error details (dev only) */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="bg-slate-800 rounded-xl p-3 mb-4 text-left overflow-auto max-h-32">
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-3 mb-4 text-left overflow-auto max-h-32">
                 <p className="text-xs font-mono text-red-400">
                   {this.state.error.name}: {this.state.error.message}
                 </p>
@@ -116,7 +116,7 @@ class RouteErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3">
               <button
                 onClick={this.handleGoBack}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium text-sm transition-colors"
+                className="flex-1 py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-medium text-sm transition-colors"
               >
                 Go Back
               </button>

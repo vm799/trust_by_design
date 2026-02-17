@@ -188,9 +188,9 @@ const BunkerStatusBadge: React.FC<BunkerStatusBadgeProps> = ({
       {effectiveState === 'failed' && onRetry && (
         <button
           onClick={onRetry}
-          className="ml-1 p-1 rounded-lg hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="ml-1 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
-          <span className="material-symbols-outlined text-sm text-white">refresh</span>
+          <span className="material-symbols-outlined text-sm text-slate-900 dark:text-white">refresh</span>
         </button>
       )}
     </motion.div>

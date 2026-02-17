@@ -99,13 +99,13 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
   // Custom header for client role - clear hierarchy with border separator
   const dashboardHeader = useMemo(() => (
-    <header className="flex items-center gap-4 pb-6 mb-2 border-b border-white/5">
+    <header className="flex items-center gap-4 pb-6 mb-2 border-b border-slate-200/50 dark:border-white/5">
       <div className="size-12 bg-primary/20 rounded-2xl flex items-center justify-center">
         <span className="material-symbols-outlined text-primary text-xl font-black">domain</span>
       </div>
       <div>
-        <h1 className="text-2xl font-black text-white uppercase tracking-tighter">My Account</h1>
-        <p className="text-slate-400 text-xs font-medium tracking-widest mt-0.5">
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">My Account</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-widest mt-0.5">
           {myJobsCount} Jobs &bull; {pendingInvoices.length} Pending Invoices
         </p>
       </div>
@@ -114,9 +114,9 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
   // Custom empty state for clients
   const emptyState = useMemo(() => (
-    <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 text-center">
-      <span className="material-symbols-outlined text-4xl text-slate-600 mb-3">folder_open</span>
-      <p className="text-slate-300 text-sm font-medium">No job history found.</p>
+    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 text-center">
+      <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600 mb-3">folder_open</span>
+      <p className="text-slate-700 dark:text-slate-300 text-sm font-medium">No job history found.</p>
     </div>
   ), []);
 
@@ -144,14 +144,14 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
                   className="bg-warning/10 border border-warning/20 rounded-[2rem] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div>
-                    <h4 className="text-lg font-black text-white uppercase">
+                    <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase">
                       {job?.title || 'Unknown Job'}
                     </h4>
                     <p className="text-warning text-xs font-medium tracking-wider">
                       Due: {new Date(inv.dueDate).toLocaleDateString()}
                     </p>
-                    <p className="text-slate-400 text-sm mt-1">
-                      Amount: <span className="text-white font-bold">${inv.amount.toFixed(2)}</span>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                      Amount: <span className="text-slate-900 dark:text-white font-bold">${inv.amount.toFixed(2)}</span>
                     </p>
                   </div>
                   <button
@@ -168,7 +168,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ jobs, invoices, user 
 
         {/* Recent Activity - Uses UnifiedDashboard for job display */}
         <div className="space-y-4">
-          <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest">
+          <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
             Recent Activity
           </h3>
           <UnifiedDashboard

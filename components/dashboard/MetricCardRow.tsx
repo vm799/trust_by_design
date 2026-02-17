@@ -81,7 +81,7 @@ const MetricCardItem: React.FC<{ metric: MetricCard }> = React.memo(({ metric })
           <span className="material-symbols-outlined text-xl">{metric.icon}</span>
         </div>
         {metric.delta && (
-          <span className={`text-xs font-medium ${colors.text} bg-white/10 px-2 py-0.5 rounded-full`}>
+          <span className={`text-xs font-medium ${colors.text} bg-slate-100/70 dark:bg-white/10 px-2 py-0.5 rounded-full`}>
             {metric.delta}
           </span>
         )}
@@ -89,7 +89,7 @@ const MetricCardItem: React.FC<{ metric: MetricCard }> = React.memo(({ metric })
       <p className={`text-2xl font-extrabold ${colors.text} leading-none mb-1`}>
         {metric.value}
       </p>
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
         {metric.label}
       </p>
     </div>

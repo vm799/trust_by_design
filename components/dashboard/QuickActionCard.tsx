@@ -54,42 +54,42 @@ const STATUS_COLORS: Record<StatusColor, {
   leftBorder: string;
 }> = {
   critical: {
-    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    container: 'bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200 dark:border-white/10',
     iconBg: 'bg-red-500/20',
     icon: 'text-red-400',
-    hover: 'hover:bg-slate-900/80',
+    hover: 'hover:bg-slate-100 dark:hover:bg-slate-900/80',
     pulse: 'bg-red-500',
     leftBorder: 'border-l-4 border-l-red-500',
   },
   warning: {
-    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    container: 'bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200 dark:border-white/10',
     iconBg: 'bg-amber-500/20',
     icon: 'text-amber-400',
-    hover: 'hover:bg-slate-900/80',
+    hover: 'hover:bg-slate-100 dark:hover:bg-slate-900/80',
     pulse: 'bg-amber-500',
     leftBorder: 'border-l-4 border-l-amber-500',
   },
   success: {
-    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    container: 'bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200 dark:border-white/10',
     iconBg: 'bg-emerald-500/20',
     icon: 'text-emerald-400',
-    hover: 'hover:bg-slate-900/80',
+    hover: 'hover:bg-slate-100 dark:hover:bg-slate-900/80',
     pulse: 'bg-emerald-500',
     leftBorder: 'border-l-4 border-l-emerald-500',
   },
   info: {
-    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    container: 'bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200 dark:border-white/10',
     iconBg: 'bg-primary/20',
     icon: 'text-primary',
-    hover: 'hover:bg-slate-900/80',
+    hover: 'hover:bg-slate-100 dark:hover:bg-slate-900/80',
     pulse: 'bg-primary',
     leftBorder: 'border-l-4 border-l-primary',
   },
   neutral: {
-    container: 'bg-slate-900/70 backdrop-blur-lg border border-white/10',
+    container: 'bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200 dark:border-white/10',
     iconBg: 'bg-slate-500/20',
-    icon: 'text-slate-400',
-    hover: 'hover:bg-slate-900/80',
+    icon: 'text-slate-500 dark:text-slate-400',
+    hover: 'hover:bg-slate-100 dark:hover:bg-slate-900/80',
     pulse: 'bg-slate-400',
     leftBorder: 'border-l-4 border-l-slate-500',
   },
@@ -142,7 +142,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
           ${colorConfig.hover}
           transition-all
           group text-left min-h-[72px]
-          shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30
+          shadow-lg shadow-black/10 dark:shadow-black/20 hover:shadow-xl hover:shadow-black/15 dark:hover:shadow-black/30
         `}
       >
         {/* Left: Icon with status indicator */}
@@ -162,11 +162,11 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
 
         {/* Center: Title + Subtitle */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white truncate text-base">
+          <p className="font-bold text-slate-900 dark:text-white truncate text-base">
             {title}
           </p>
           {subtitle && (
-            <p className="text-sm text-slate-300 truncate">
+            <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
               {subtitle}
             </p>
           )}
@@ -198,7 +198,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                   className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] ${
                     action.variant === 'danger'
                       ? 'text-red-400 hover:bg-red-500/20'
-                      : 'text-slate-400 hover:text-white hover:bg-white/10'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
                   }`}
                   title={action.label}
                 >
@@ -217,12 +217,12 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="sm:hidden p-2 rounded-lg text-slate-400 hover:bg-white/10 min-h-[44px] min-w-[44px]"
+              className="sm:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 min-h-[44px] min-w-[44px]"
             >
               <span className="material-symbols-outlined">more_vert</span>
             </button>
           ) : (
-            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
               chevron_right
             </span>
           )}
@@ -246,7 +246,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
               initial={dropdownMenu.initial}
               animate={dropdownMenu.animate}
               exit={dropdownMenu.exit}
-              className="absolute top-full right-0 mt-1 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 z-50 min-w-[180px] overflow-hidden"
+              className="absolute top-full right-0 mt-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200 dark:border-white/10 z-50 min-w-[180px] overflow-hidden"
             >
               {actions.map((action, i) => (
                 <button
@@ -255,8 +255,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors min-h-[52px] ${
                     action.variant === 'danger'
                       ? 'text-red-400 hover:bg-red-500/20'
-                      : 'text-slate-200 hover:bg-white/10'
-                  } ${i > 0 ? 'border-t border-white/10' : ''}`}
+                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'
+                  } ${i > 0 ? 'border-t border-slate-200 dark:border-white/10' : ''}`}
                 >
                   <span className="material-symbols-outlined text-lg">
                     {action.icon}

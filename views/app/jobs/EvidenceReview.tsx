@@ -231,19 +231,19 @@ const EvidenceReview: React.FC = () => {
             <div className={`rounded-2xl p-6 border-2 ${
               isSealed
                 ? 'bg-gradient-to-br from-emerald-950/50 to-slate-900 border-emerald-500/30'
-                : 'bg-gradient-to-br from-slate-900 to-slate-800 border-white/10'
+                : 'bg-gradient-to-br from-slate-50 dark:from-slate-900 to-gray-100 dark:to-slate-800 border-slate-200 dark:border-white/10'
             }`}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className={`material-symbols-outlined text-3xl ${isSealed ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    <span className={`material-symbols-outlined text-3xl ${isSealed ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                       {isSealed ? 'verified' : 'description'}
                     </span>
                     <div>
-                      <h2 className="text-xl font-black text-white tracking-tight uppercase">
+                      <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
                         {job.title || 'Untitled Job'}
                       </h2>
-                      <p className="text-xs text-slate-400 font-mono">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         REF: {job.id.slice(0, 8).toUpperCase()}
                       </p>
                     </div>
@@ -254,7 +254,7 @@ const EvidenceReview: React.FC = () => {
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     : job.status === 'Submitted'
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'bg-slate-700 text-slate-300 border border-white/10'
+                    : 'bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
                 }`}>
                   {isSealed ? 'Cryptographically Sealed' : job.status === 'Submitted' ? 'Awaiting Seal' : 'Under Review'}
                 </div>
@@ -267,14 +267,14 @@ const EvidenceReview: React.FC = () => {
           {/* ============================================================ */}
           <motion.div variants={fadeInUp}>
             <Card>
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                 Job Summary
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Date */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Date</p>
-                  <p className="text-sm text-white font-medium">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Date</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">
                     {new Date(job.date).toLocaleDateString('en-GB', {
                       weekday: 'long',
                       day: 'numeric',
@@ -286,45 +286,45 @@ const EvidenceReview: React.FC = () => {
 
                 {/* Client */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
-                  <p className="text-sm text-white font-medium">{client?.name || job.client || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Client</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{client?.name || job.client || 'N/A'}</p>
                   {client?.email && (
-                    <p className="text-xs text-slate-400">{client.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{client.email}</p>
                   )}
                 </div>
 
                 {/* Technician */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Technician</p>
-                  <p className="text-sm text-white font-medium">{technician?.name || job.technician || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Technician</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{technician?.name || job.technician || 'N/A'}</p>
                   {technician?.email && (
-                    <p className="text-xs text-slate-400">{technician.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{technician.email}</p>
                   )}
                 </div>
 
                 {/* Location */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</p>
-                  <p className="text-sm text-white font-medium">{job.address || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{job.address || 'N/A'}</p>
                   {job.w3w && (
-                    <p className="text-xs text-emerald-400 font-mono">{'///'}{job.w3w}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">{'///'}{job.w3w}</p>
                   )}
                 </div>
               </div>
 
               {/* Description */}
               {(job.description || job.notes) && (
-                <div className="mt-4 pt-4 border-t border-white/15">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Description</p>
-                  <p className="text-sm text-slate-300">{job.description || job.notes}</p>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/15">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Description</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{job.description || job.notes}</p>
                 </div>
               )}
 
               {/* Amount */}
               {(job.total || job.price) && (
-                <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
-                  <p className="text-lg font-black text-white">£{(job.total || job.price || 0).toFixed(2)}</p>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/15 flex items-center justify-between">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Amount</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">£{(job.total || job.price || 0).toFixed(2)}</p>
                 </div>
               )}
             </Card>
@@ -335,7 +335,7 @@ const EvidenceReview: React.FC = () => {
           {/* ============================================================ */}
           <motion.div variants={fadeInUp}>
             <Card>
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                 Evidence Integrity
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
@@ -413,7 +413,7 @@ const EvidenceReview: React.FC = () => {
                             ? `bg-${stepColor}-500/20 text-${stepColor}-400 border border-${stepColor}-500/30`
                             : isComplete
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-slate-800 text-slate-400 border border-white/10'
+                            : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10'
                         }`}
                       >
                         <span className="material-symbols-outlined text-lg">
@@ -426,7 +426,7 @@ const EvidenceReview: React.FC = () => {
                   })}
                 </div>
                 {/* Progress track */}
-                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-blue-500 via-amber-500 to-emerald-500 rounded-full"
                     initial={{ width: '0%' }}
@@ -453,11 +453,11 @@ const EvidenceReview: React.FC = () => {
                           <span className="material-symbols-outlined text-xl text-blue-400">photo_library</span>
                         </div>
                         <div>
-                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 1: Review Evidence</h3>
-                          <p className="text-xs text-slate-400">Verify all photos and metadata below before proceeding</p>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 1: Review Evidence</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Verify all photos and metadata below before proceeding</p>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-300 mb-4">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
                         {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
                         ({grouped.before.length} before, {grouped.during.length} during, {grouped.after.length} after)
                       </p>
@@ -488,8 +488,8 @@ const EvidenceReview: React.FC = () => {
                             <span className="material-symbols-outlined text-xl text-emerald-400">check_circle</span>
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Client Already Attested</h3>
-                            <p className="text-xs text-slate-400">
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Client Already Attested</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               Signed {job.clientConfirmation.timestamp
                                 ? new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB')
                                 : 'previously'}
@@ -497,7 +497,7 @@ const EvidenceReview: React.FC = () => {
                           </div>
                         </div>
                         {job.clientConfirmation.signature && (
-                          <div className="bg-slate-900 border border-emerald-500/20 rounded-xl p-4 mb-4">
+                          <div className="bg-slate-50 dark:bg-slate-900 border border-emerald-500/20 rounded-xl p-4 mb-4">
                             <img src={job.clientConfirmation.signature} alt="Client Signature" className="max-h-24 mx-auto" />
                           </div>
                         )}
@@ -516,8 +516,8 @@ const EvidenceReview: React.FC = () => {
                             <span className="material-symbols-outlined text-xl text-amber-400">draw</span>
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 2: Client Attestation</h3>
-                            <p className="text-xs text-slate-400">Hand device to client for signature confirmation</p>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 2: Client Attestation</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Hand device to client for signature confirmation</p>
                           </div>
                         </div>
                         <ClientConfirmationCanvas
@@ -547,22 +547,22 @@ const EvidenceReview: React.FC = () => {
                           <span className="material-symbols-outlined text-xl text-emerald-400">verified</span>
                         </div>
                         <div>
-                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Step 3: Seal Evidence</h3>
-                          <p className="text-xs text-slate-400">Create tamper-proof cryptographic record</p>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Step 3: Seal Evidence</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Create tamper-proof cryptographic record</p>
                         </div>
                       </div>
 
                       {/* Pre-seal checklist */}
                       <div className="space-y-2 mb-6">
-                        <div className={`flex items-center gap-2 text-sm ${photos.length > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${photos.length > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span className="material-symbols-outlined text-lg">{photos.length > 0 ? 'check_circle' : 'cancel'}</span>
                           {photos.length} photo{photos.length !== 1 ? 's' : ''} captured
                         </div>
-                        <div className={`flex items-center gap-2 text-sm ${job.clientConfirmation?.confirmed ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${job.clientConfirmation?.confirmed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                           <span className="material-symbols-outlined text-lg">{job.clientConfirmation?.confirmed ? 'check_circle' : 'radio_button_unchecked'}</span>
                           Client attestation {job.clientConfirmation?.confirmed ? 'complete' : '(optional)'}
                         </div>
-                        <div className={`flex items-center gap-2 text-sm ${job.w3w ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        <div className={`flex items-center gap-2 text-sm ${job.w3w ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                           <span className="material-symbols-outlined text-lg">{job.w3w ? 'check_circle' : 'radio_button_unchecked'}</span>
                           Location {job.w3w ? `///\u200b${job.w3w}` : '(optional)'}
                         </div>
@@ -576,7 +576,7 @@ const EvidenceReview: React.FC = () => {
                         Seal Evidence Now
                       </button>
 
-                      <p className="text-[10px] text-slate-400 text-center mt-3">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-3">
                         Creates RSA-2048 + SHA-256 cryptographic proof. Once sealed, evidence cannot be modified.
                       </p>
                     </Card>
@@ -605,8 +605,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-blue-400 text-lg">photo_camera_front</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">Before Work ({grouped.before.length})</h3>
-                      <p className="text-xs text-slate-400">Conditions documented prior to work commencing</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Before Work ({grouped.before.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Conditions documented prior to work commencing</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -630,8 +630,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-amber-400 text-lg">construction</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">During Work ({grouped.during.length})</h3>
-                      <p className="text-xs text-slate-400">Progress documentation during work execution</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">During Work ({grouped.during.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Progress documentation during work execution</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -655,8 +655,8 @@ const EvidenceReview: React.FC = () => {
                       <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">After Work ({grouped.after.length})</h3>
-                      <p className="text-xs text-slate-400">Completed work evidence and final state</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">After Work ({grouped.after.length})</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Completed work evidence and final state</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -679,7 +679,7 @@ const EvidenceReview: React.FC = () => {
                     <div className="size-8 rounded-lg bg-slate-500/20 flex items-center justify-center">
                       <span className="material-symbols-outlined text-slate-400 text-lg">image</span>
                     </div>
-                    <h3 className="text-sm font-bold text-white">Other ({grouped.other.length})</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Other ({grouped.other.length})</h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {grouped.other.map((photo, i) => (
@@ -702,17 +702,17 @@ const EvidenceReview: React.FC = () => {
           {(job.signature || job.clientConfirmation) && (
             <motion.div variants={fadeInUp}>
               <Card>
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                   Client Confirmation
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Signature */}
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Signature</p>
+                    <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Signature</p>
                     <div className={`rounded-xl p-4 border-2 ${
                       isSealed
-                        ? 'bg-slate-900 border-emerald-500/20'
-                        : 'bg-slate-900 border-white/10'
+                        ? 'bg-slate-50 dark:bg-slate-900 border-emerald-500/20'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10'
                     }`}>
                       {(job.clientConfirmation?.signature || job.signature) ? (
                         <img
@@ -721,23 +721,23 @@ const EvidenceReview: React.FC = () => {
                           className="max-h-32 mx-auto"
                         />
                       ) : (
-                        <p className="text-center text-slate-400 text-sm py-4">No signature captured</p>
+                        <p className="text-center text-slate-500 dark:text-slate-400 text-sm py-4">No signature captured</p>
                       )}
                     </div>
                     {job.signerName && (
-                      <p className="text-sm text-white font-medium mt-2">{job.signerName}</p>
+                      <p className="text-sm text-slate-900 dark:text-white font-medium mt-2">{job.signerName}</p>
                     )}
                     {job.signerRole && (
-                      <p className="text-xs text-slate-400">{job.signerRole}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{job.signerRole}</p>
                     )}
                   </div>
 
                   {/* Confirmation Details */}
                   <div className="space-y-3">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Confirmation Details</p>
+                    <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Confirmation Details</p>
 
                     {job.clientConfirmation?.confirmed && (
-                      <div className="flex items-center gap-2 text-emerald-400">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                         <span className="material-symbols-outlined text-lg">check_circle</span>
                         <span className="text-sm font-medium">Client confirmed satisfaction</span>
                       </div>
@@ -745,8 +745,8 @@ const EvidenceReview: React.FC = () => {
 
                     {job.clientConfirmation?.timestamp && (
                       <div>
-                        <p className="text-xs text-slate-400 mb-0.5">Signed At</p>
-                        <p className="text-sm text-white font-mono">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Signed At</p>
+                        <p className="text-sm text-slate-900 dark:text-white font-mono">
                           {new Date(job.clientConfirmation.timestamp).toLocaleString('en-GB', {
                             day: 'numeric',
                             month: 'short',

@@ -42,11 +42,11 @@ const UpgradeBanner: React.FC<Props> = ({
           >
             {isAtLimit ? 'Job Limit Reached' : 'Approaching Limit'}
           </h3>
-          <p className="text-slate-300 text-xs mb-3">
+          <p className="text-slate-700 dark:text-slate-300 text-xs mb-3">
             {jobsUsed}/{jobsLimit} jobs used. Upgrade to Team for unlimited
             jobs.
           </p>
-          <div className="bg-slate-800 rounded-full h-2 mb-3 overflow-hidden">
+          <div className="bg-gray-100 dark:bg-slate-800 rounded-full h-2 mb-3 overflow-hidden">
             <div
               className={`h-full ${
                 isAtLimit ? 'bg-danger' : 'bg-warning'

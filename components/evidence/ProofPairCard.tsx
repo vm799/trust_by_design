@@ -148,13 +148,13 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
       className={`
         rounded-2xl overflow-hidden
         bg-[#121212] border-2 transition-all duration-300
-        ${isSealed ? 'border-[#00FFCC]/40' : hasIssue ? 'border-amber-500/40' : 'border-white/10'}
+        ${isSealed ? 'border-[#00FFCC]/40' : hasIssue ? 'border-amber-500/40' : 'border-slate-200 dark:border-white/10'}
         ${isSealed ? config.glow : hasIssue ? 'shadow-[0_0_15px_rgba(245,158,11,0.3)]' : ''}
         ${className}
       `}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/10 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-100/70 dark:bg-white/10 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-3 min-w-0">
           <div className={`size-8 rounded-lg ${config.bg} flex items-center justify-center shrink-0`}>
             <span className={`material-symbols-outlined text-lg ${config.color}`}>
@@ -162,8 +162,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
             </span>
           </div>
           <div className="min-w-0">
-            <p className="font-mono text-xs text-slate-400 truncate">{jobId}</p>
-            <p className="font-bold text-white truncate">{clientName}</p>
+            <p className="font-mono text-xs text-slate-500 dark:text-slate-400 truncate">{jobId}</p>
+            <p className="font-bold text-slate-900 dark:text-white truncate">{clientName}</p>
           </div>
         </div>
 
@@ -205,7 +205,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
               )}
             </button>
           ) : (
-            <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-2">
+            <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-2">
               <motion.div
                 animate={pulseOpacityFade}
                 transition={transitionPulse}
@@ -214,7 +214,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 <span className="material-symbols-outlined text-2xl text-amber-400">photo_camera</span>
               </motion.div>
               <p className="text-xs text-amber-400 font-bold">MISSING</p>
-              <p className="text-[10px] text-slate-400">Before photo</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">Before photo</p>
             </div>
           )}
         </div>
@@ -256,7 +256,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
               )}
             </button>
           ) : (
-            <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-2">
+            <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-2">
               <motion.div
                 animate={pulseDot}
                 transition={transitionPulseFast}
@@ -265,7 +265,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 <span className="material-symbols-outlined text-2xl text-red-400">warning</span>
               </motion.div>
               <p className="text-xs text-red-400 font-bold">MISSING</p>
-              <p className="text-[10px] text-slate-400">After photo</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">After photo</p>
             </div>
           )}
         </div>
@@ -282,10 +282,10 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
       )}
 
       {/* Metadata Footer */}
-      <div className="px-4 py-3 border-t border-white/10">
+      <div className="px-4 py-3 border-t border-slate-200 dark:border-white/10">
         <button
           onClick={() => setShowMetadata(!showMetadata)}
-          className="w-full flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors"
+          className="w-full flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           <span className="font-mono">
             {beforePhoto?.location && formatCoords(beforePhoto.location)}
@@ -311,9 +311,9 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 {beforePhoto?.location && (
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-xs text-emerald-400">gps_fixed</span>
-                    <span className="text-slate-300">GPS: {formatCoords(beforePhoto.location)}</span>
+                    <span className="text-slate-700 dark:text-slate-300">GPS: {formatCoords(beforePhoto.location)}</span>
                     {beforePhoto.location.accuracy && (
-                      <span className="text-slate-400">({Math.round(beforePhoto.location.accuracy)}m)</span>
+                      <span className="text-slate-500 dark:text-slate-400">({Math.round(beforePhoto.location.accuracy)}m)</span>
                     )}
                   </div>
                 )}
@@ -325,7 +325,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                       grid_3x3
                     </span>
                     <span className="text-cyan-400">{'///'}</span>
-                    <span className="text-slate-300">{beforePhoto.w3w.replace(/^\/\/\//, '')}</span>
+                    <span className="text-slate-700 dark:text-slate-300">{beforePhoto.w3w.replace(/^\/\/\//, '')}</span>
                     {beforePhoto.w3w_verified && (
                       <span className="text-emerald-400 text-[9px]">VERIFIED</span>
                     )}
@@ -335,8 +335,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
                 {/* Device */}
                 {deviceId && (
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-xs text-slate-400">smartphone</span>
-                    <span className="text-slate-400">Device: {deviceId}</span>
+                    <span className="material-symbols-outlined text-xs text-slate-500 dark:text-slate-400">smartphone</span>
+                    <span className="text-slate-500 dark:text-slate-400">Device: {deviceId}</span>
                   </div>
                 )}
               </div>
@@ -347,7 +347,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
 
       {/* Actions */}
       {(onVerify || onFlag) && (
-        <div className="flex gap-2 p-3 border-t border-white/10">
+        <div className="flex gap-2 p-3 border-t border-slate-200 dark:border-white/10">
           {onVerify && status !== 'verified' && (
             <button
               onClick={onVerify}
@@ -355,7 +355,7 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
               className={`
                 flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2
                 ${missingBefore || missingAfter
-                  ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
+                  ? 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-[#00FFCC]/20 text-[#00FFCC] hover:bg-[#00FFCC]/30 transition-colors'
                 }
               `}

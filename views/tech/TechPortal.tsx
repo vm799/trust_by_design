@@ -338,7 +338,7 @@ const HeroJobCard = React.memo(({
             ) : (
               <Link
                 to={`/tech/job/${job.id}`}
-                className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[56px]"
+                className="flex-1 py-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] min-h-[56px]"
                 aria-label="Continue working on job"
               >
                 <span className="material-symbols-outlined">play_arrow</span>

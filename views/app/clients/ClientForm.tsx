@@ -229,7 +229,7 @@ const ClientForm: React.FC = () => {
             <div className="space-y-6">
               {/* Client Type */}
               <div>
-                <label htmlFor="client-type" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="client-type" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Client Type
                 </label>
                 <input id="client-type" type="hidden" value={formData.type} />
@@ -241,7 +241,7 @@ const ClientForm: React.FC = () => {
                       flex-1 py-3 px-4 rounded-xl border transition-all
                       ${formData.type === 'residential'
                         ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'}
+                        : 'bg-gray-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20'}
                     `}
                   >
                     <span className="material-symbols-outlined mb-1">home</span>
@@ -254,7 +254,7 @@ const ClientForm: React.FC = () => {
                       flex-1 py-3 px-4 rounded-xl border transition-all
                       ${formData.type === 'commercial'
                         ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/20'}
+                        : 'bg-gray-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20'}
                     `}
                   >
                     <span className="material-symbols-outlined mb-1">business</span>
@@ -265,7 +265,7 @@ const ClientForm: React.FC = () => {
 
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -275,9 +275,9 @@ const ClientForm: React.FC = () => {
                   onChange={handleChange('name')}
                   placeholder="e.g. Smith Residence or Acme Corp"
                   className={`
-                    w-full px-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500
+                    w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500
                     focus:outline-none focus:border-primary/50
-                    ${errors.name ? 'border-red-500' : 'border-white/10'}
+                    ${errors.name ? 'border-red-500' : 'border-slate-200 dark:border-white/10'}
                   `}
                 />
                 {errors.name && (
@@ -287,7 +287,7 @@ const ClientForm: React.FC = () => {
 
               {/* Address */}
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="address" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Address
                 </label>
                 <input
@@ -296,7 +296,7 @@ const ClientForm: React.FC = () => {
                   value={formData.address}
                   onChange={handleChange('address')}
                   placeholder="123 Main St, Sydney NSW 2000"
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50"
+                  className="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary/50"
                 />
               </div>
 

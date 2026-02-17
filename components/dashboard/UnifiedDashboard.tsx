@@ -48,8 +48,8 @@ const SectionHeader: React.FC<{
         <span className="material-symbols-outlined text-base text-primary">{icon}</span>
       </div>
       <div>
-        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wide">{title}</h3>
-        {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">{title}</h3>
+        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
       </div>
     </div>
     {seeAllRoute && (
@@ -417,12 +417,12 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({
       {/* NO WORK ITEMS - Show helpful message when queue is empty */}
       {hasNoWorkItems && role === 'manager' && (
         <motion.section variants={fadeInUp}>
-          <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-8 text-center">
+          <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-8 text-center">
             <div className="size-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-3xl text-emerald-400">check_circle</span>
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">All Caught Up!</h3>
-            <p className="text-slate-400 text-sm mb-6">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">All Caught Up!</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
               No jobs need attention right now. Use the quick actions above to get started.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
@@ -461,14 +461,14 @@ const OfflineBanner: React.FC<{
     `}
   >
     <div className="flex items-center gap-3">
-      <span className={`material-symbols-outlined text-xl ${isStale ? 'text-amber-500' : 'text-slate-400'}`}>
+      <span className={`material-symbols-outlined text-xl ${isStale ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>
         {isOffline ? 'cloud_off' : 'sync_problem'}
       </span>
       <div>
         <p className={`text-sm font-bold ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
           {isOffline ? 'Offline Mode' : 'Data may be outdated'}
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {isStale
             ? 'Last synced more than 5 minutes ago'
             : 'Working with cached data'
@@ -528,7 +528,7 @@ const SyncSummaryBanner: React.FC<{
               : `${pending} job${pending !== 1 ? 's' : ''} pending sync`
             }
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {hasFailed
               ? 'Data may be lost - retry recommended'
               : 'Changes will sync when online'
@@ -594,7 +594,7 @@ const DefaultEmptyState: React.FC<{ role: DashboardRole }> = ({ role }) => {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="size-20 rounded-[2rem] bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-6">
-        <span className="material-symbols-outlined text-4xl text-slate-400">
+        <span className="material-symbols-outlined text-4xl text-slate-500 dark:text-slate-400">
           {config.icon}
         </span>
       </div>
