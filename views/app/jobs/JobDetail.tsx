@@ -514,7 +514,7 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'verified' :
                status === 'review' ? 'rate_review' :
                status === 'active' ? 'pending' :
-               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at ? 'mark_email_read' : 'schedule_send') :
+               status === 'sent' ? (linkTrackingInfo?.first_accessed_at ? 'mark_email_read' : 'schedule_send') :
                status === 'assigned' ? 'person' :
                status === 'invoiced' ? 'receipt' :
                'edit_note'}
@@ -526,7 +526,7 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
                status === 'active' ? 'Work In Progress' :
-               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at ? 'Link Opened by Technician' : 'Link Sent to Technician') :
+               status === 'sent' ? (linkTrackingInfo?.first_accessed_at ? 'Link Opened by Technician' : 'Link Sent to Technician') :
                status === 'assigned' ? 'Technician Assigned' :
                status === 'invoiced' ? 'Invoiced' :
                'Draft - Needs Technician'}
@@ -536,10 +536,10 @@ const JobDetail: React.FC = () => {
                status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
                status === 'active' ? 'Technician is working on this job' :
-               status === 'sent' ? ((linkTrackingInfo as any)?.first_accessed_at
-                 ? `Opened ${new Date((linkTrackingInfo as any).first_accessed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-                 : (linkTrackingInfo as any)?.sent_at
-                   ? `Sent ${new Date((linkTrackingInfo as any).sent_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} — not yet opened`
+               status === 'sent' ? (linkTrackingInfo?.first_accessed_at
+                 ? `Opened ${new Date(linkTrackingInfo.first_accessed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                 : linkTrackingInfo?.sent_at
+                   ? `Sent ${new Date(linkTrackingInfo.sent_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} — not yet opened`
                    : 'Waiting for technician to open link') :
                status === 'assigned' ? 'Generate and send link to technician' :
                status === 'invoiced' ? 'Invoice has been generated' :

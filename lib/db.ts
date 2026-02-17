@@ -1340,9 +1340,11 @@ export const getMagicLinksForJob = (jobId: string): MagicLinkInfo[] => {
         workspace_id: data.workspace_id,
         expires_at: data.expires_at,
         status,
-        created_at: (data as any).created_at,
-        first_accessed_at: (data as any).first_accessed_at,
-        assigned_to_tech_id: (data as any).assigned_to_tech_id,
+        created_at: (data as Record<string, any>).created_at,
+        first_accessed_at: (data as Record<string, any>).first_accessed_at,
+        assigned_to_tech_id: (data as Record<string, any>).assigned_to_tech_id,
+        sent_at: (data as Record<string, any>).sent_at,
+        sent_via: (data as Record<string, any>).sent_via,
       });
     }
   });
@@ -1370,6 +1372,8 @@ export const getMagicLinksForJob = (jobId: string): MagicLinkInfo[] => {
           created_at: data.created_at,
           first_accessed_at: data.first_accessed_at,
           assigned_to_tech_id: data.assigned_to_tech_id,
+          sent_at: data.sent_at,
+          sent_via: data.sent_via,
         });
       }
     });

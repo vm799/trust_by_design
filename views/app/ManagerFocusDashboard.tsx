@@ -206,10 +206,10 @@ function generateAttentionItems(
 
   dispatchedJobs.forEach(job => {
     const links = getMagicLinksForJob(job.id);
-    const anyOpened = links.some(l => (l as any).first_accessed_at);
+    const anyOpened = links.some(l => l.first_accessed_at);
     if (anyOpened) return;
 
-    const sentAt = (links[0] as any)?.sent_at || (links[0] as any)?.created_at || job.magicLinkCreatedAt;
+    const sentAt = links[0]?.sent_at || links[0]?.created_at || job.magicLinkCreatedAt;
     if (!sentAt) return;
 
     const age = now - new Date(sentAt).getTime();
@@ -585,7 +585,7 @@ const ManagerFocusDashboard: React.FC = () => {
     let linksAwaiting = 0;
     for (const job of dispatchedJobsList) {
       const links = getMagicLinksForJob(job.id);
-      const anyOpened = links.some(l => (l as any).first_accessed_at);
+      const anyOpened = links.some(l => l.first_accessed_at);
       if (anyOpened) linksOpened++;
       else linksAwaiting++;
     }
@@ -986,8 +986,14 @@ const ManagerFocusDashboard: React.FC = () => {
           {attentionItems.length === 0 && technicians.length > 0 && (
             <motion.section variants={fadeInUp}>
               <Card className="text-center py-6">
-                <div className="size-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
-                  <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
+                <div className={`size-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${
+                  metrics.linksAwaiting > 0 ? 'bg-amber-500/20' : 'bg-emerald-500/20'
+                }`}>
+                  <span className={`material-symbols-outlined text-2xl ${
+                    metrics.linksAwaiting > 0 ? 'text-amber-400' : 'text-emerald-400'
+                  }`}>
+                    {metrics.linksAwaiting > 0 ? 'schedule_send' : 'check_circle'}
+                  </span>
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                   {metrics.linksAwaiting > 0
