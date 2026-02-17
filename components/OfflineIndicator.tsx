@@ -117,7 +117,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
                 </>
               )}
             </h3>
-            <p className="text-xs text-slate-300 font-medium leading-relaxed">
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
               {isChecking
                 ? 'Verifying network connectivity...'
                 : 'Full access enabled. All features available. Changes sync when online.'}
@@ -136,7 +136,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
             <h3 className="text-sm font-black uppercase text-primary tracking-tight">
               Syncing Changes
             </h3>
-            <p className="text-xs text-slate-300 font-medium">
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {syncStatus.pending} {syncStatus.pending === 1 ? 'item' : 'items'} pending sync...
             </p>
           </div>
@@ -156,7 +156,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
               <h3 className="text-sm font-black uppercase text-danger tracking-tight">
                 {isRetrying ? 'Retrying Sync...' : 'Sync Issues Detected'}
               </h3>
-              <p className="text-xs text-slate-300 font-medium">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
                 {isRetrying
                   ? 'Attempting to sync failed items...'
                   : `${syncStatus.failed} ${syncStatus.failed === 1 ? 'item' : 'items'} failed to sync. Tap retry when you have signal.`}

@@ -191,7 +191,7 @@ const QuickWinsGrid: React.FC<QuickWinsGridProps> = React.memo(({ onCardClick })
                   {card.icon}
                 </span>
               </div>
-              <span className="material-symbols-outlined text-lg text-slate-400 group-hover:translate-x-1 transition-transform">
+              <span className="material-symbols-outlined text-lg text-slate-500 dark:text-slate-400 group-hover:translate-x-1 transition-transform">
                 chevron_right
               </span>
             </div>

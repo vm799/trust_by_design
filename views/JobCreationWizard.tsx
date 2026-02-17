@@ -393,14 +393,14 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
     <Layout user={null}>
       <div className="max-w-2xl mx-auto pb-20">
         {/* Phase 2.5: Top Progress Bar - Fixed position for visibility */}
-        <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm pt-4 pb-2 -mx-4 px-4 mb-6">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+        <div className="sticky top-0 z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm pt-4 pb-2 -mx-4 px-4 mb-6">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
             <span className="font-bold uppercase tracking-widest">
               Step {step} of {STEP_TITLES.length}
             </span>
             <span className="font-mono">{Math.round(progressPercent)}%</span>
           </div>
-          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary to-success rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercent}%` }}
@@ -420,7 +420,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                         ? 'bg-success text-white'
                         : idx + 1 === step
                         ? 'bg-primary text-white ring-4 ring-primary/20'
-                        : 'bg-slate-800 text-slate-400'
+                        : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                     }`}
                   >
                     {idx + 1 < step ? (
@@ -430,27 +430,27 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     )}
                   </div>
                   <span className={`text-[9px] font-bold uppercase tracking-wider mt-2 hidden md:block ${
-                    idx + 1 === step ? 'text-white' : 'text-slate-400'
+                    idx + 1 === step ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
                   }`}>
                     {title}
                   </span>
                 </div>
                 {idx < STEP_TITLES.length - 1 && (
                   <div className={`flex-1 h-0.5 mx-2 ${
-                    idx + 1 < step ? 'bg-success' : 'bg-slate-800'
+                    idx + 1 < step ? 'bg-success' : 'bg-gray-100 dark:bg-slate-800'
                   }`} />
                 )}
               </div>
             ))}
           </div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight text-center md:hidden">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight text-center md:hidden">
             {STEP_TITLES[step - 1]}
           </h2>
         </div>
 
         {/* Step Content - Phase 2.5: Added keyboard navigation */}
         <div
-          className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-6 md:p-8 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+          className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-6 md:p-8 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all"
           onKeyDown={handleKeyDown}
         >
           {/* Step 1: Job Basics */}
@@ -458,13 +458,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">work</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   What&apos;s the job?
                 </h3>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-job-title" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-job-title" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Job Title *
                 </label>
                 <input
@@ -474,13 +474,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white text-lg outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white text-lg outline-none transition-all"
                   placeholder="e.g., Boiler Service - Unit 4B"
                 />
               </div>
 
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Job Type *
                 </span>
                 <div className="grid grid-cols-3 gap-3">
@@ -491,8 +491,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       onClick={() => setFormData({ ...formData, jobType: type.id })}
                       className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                         formData.jobType === type.id
-                          ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
+                          ? 'bg-primary/10 border-primary text-slate-900 dark:text-white'
+                          : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-2xl ${
@@ -506,7 +506,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
 
               {/* UAT Fix #5: Normal/Urgent buttons with distinct colors */}
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Priority
                 </span>
                 <div className="flex gap-4">
@@ -519,7 +519,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'normal'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
+                        : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">schedule</span>
@@ -534,7 +534,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     className={`flex-1 py-4 rounded-xl border-2 font-bold uppercase tracking-wide transition-all press-spring btn-interactive flex items-center justify-center gap-2 ${
                       formData.priority === 'urgent'
                         ? 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
-                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-red-500/50 hover:text-red-400'
+                        : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400 hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">priority_high</span>
@@ -550,13 +550,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">location_on</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Where is the job?
                 </h3>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-job-address" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-job-address" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Job Address *
                 </label>
                 <input
@@ -566,20 +566,20 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all"
                   placeholder="123 Industrial Estate, London, UK"
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-site-notes" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-site-notes" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Site Notes (Optional)
                 </label>
                 <textarea
                   id="wizard-site-notes"
                   value={formData.siteNotes}
                   onChange={(e) => setFormData({ ...formData, siteNotes: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all resize-none"
                   rows={3}
                   placeholder="Gate code, access instructions, parking info..."
                 />
@@ -587,9 +587,9 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
 
               {/* UAT Fix #8: Location preview with clickable map link */}
               {formData.address && (
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                       Location Preview
                     </p>
                     <a
@@ -606,13 +606,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     href={`https://maps.google.com/?q=${encodeURIComponent(formData.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block bg-slate-700 rounded-lg h-40 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:bg-slate-600 transition-colors"
+                    className="block bg-gray-200 dark:bg-slate-700 rounded-lg h-40 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10" />
-                    <span className="material-symbols-outlined text-slate-400 text-5xl group-hover:text-primary transition-colors z-20">map</span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-100/80 dark:from-slate-900/80 to-transparent z-10" />
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-5xl group-hover:text-primary transition-colors z-20">map</span>
                     <div className="absolute bottom-3 left-3 right-3 z-20">
-                      <p className="text-[10px] text-white font-medium tracking-tight truncate">{formData.address}</p>
-                      <p className="text-[8px] text-slate-300 uppercase tracking-wide mt-1 flex items-center gap-1">
+                      <p className="text-[10px] text-slate-900 dark:text-white font-medium tracking-tight truncate">{formData.address}</p>
+                      <p className="text-[8px] text-slate-700 dark:text-slate-300 uppercase tracking-wide mt-1 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[10px]">touch_app</span>
                         Tap to view in Google Maps
                       </p>
@@ -628,13 +628,13 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">checklist</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Scope & Safety
                 </h3>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Work Description *
                 </label>
                 <textarea
@@ -643,15 +643,15 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                   required
                   value={formData.workDescription}
                   onChange={(e) => setFormData({ ...formData, workDescription: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all resize-none"
                   rows={4}
                   placeholder="• Check boiler pressure&#10;• Inspect flue&#10;• Test safety valve"
                 />
-                <p className="text-[10px] text-slate-400">Use bullet points for clarity</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Use bullet points for clarity</p>
               </div>
 
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Safety Requirements
                 </span>
                 <div className="space-y-2">
@@ -669,12 +669,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       }}
                       className={`w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
                         formData.safetyRequirements.includes(req.id)
-                          ? 'bg-amber-500/10 border-amber-500/50 text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400'
+                          ? 'bg-amber-500/10 border-amber-500/50 text-slate-900 dark:text-white'
+                          : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
-                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-400'
+                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {formData.safetyRequirements.includes(req.id) ? 'check_box' : 'check_box_outline_blank'}
                       </span>
@@ -685,7 +685,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Required PPE
                 </span>
                 <div className="grid grid-cols-4 gap-2">
@@ -703,8 +703,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       }}
                       className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
                         formData.requiredPPE.includes(ppe.id)
-                          ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400'
+                          ? 'bg-primary/10 border-primary text-slate-900 dark:text-white'
+                          : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -723,7 +723,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">person_add</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Who&apos;s doing the work?
                 </h3>
               </div>
@@ -735,7 +735,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     <span className="material-symbols-outlined text-warning text-xl">warning</span>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Clients Found</p>
-                      <p className="text-xs text-slate-400 mt-1">You need to create a client first before creating a job.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">You need to create a client first before creating a job.</p>
                       <Link
                         to={`/admin/clients/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
@@ -754,7 +754,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     <span className="material-symbols-outlined text-warning text-xl">warning</span>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Technicians Found</p>
-                      <p className="text-xs text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
                       <Link
                         to={`/admin/technicians/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
@@ -768,7 +768,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Client *
                 </label>
                 <select
@@ -784,7 +784,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       setFormData({ ...formData, clientId: e.target.value });
                     }
                   }}
-                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                  className={`w-full bg-gray-100 dark:bg-slate-800 border-2 rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all ${
                     clients.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
@@ -797,7 +797,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Technician <span className="text-slate-500 normal-case">(optional)</span>
                 </label>
                 <select
@@ -811,7 +811,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       setFormData({ ...formData, techId: e.target.value });
                     }
                   }}
-                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                  className={`w-full bg-gray-100 dark:bg-slate-800 border-2 rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all ${
                     technicians.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
@@ -824,8 +824,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               {selectedTech && (
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15 animate-in">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15 animate-in">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                     Selected Technician
                   </p>
                   <div className="flex items-center gap-3">
@@ -833,8 +833,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       <span className="material-symbols-outlined text-primary text-2xl">person</span>
                     </div>
                     <div>
-                      <p className="text-white font-bold">{selectedTech.name}</p>
-                      <p className="text-slate-400 text-sm">{selectedTech.specialty || 'Field Technician'}</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedTech.name}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">{selectedTech.specialty || 'Field Technician'}</p>
                     </div>
                   </div>
                 </div>
@@ -847,56 +847,56 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-6">
                 <span className="material-symbols-outlined text-primary text-4xl">fact_check</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Review & Create
                 </h3>
               </div>
 
               <div className="space-y-4">
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Job Details</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Job Details</p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Title</span>
-                      <span className="text-white font-bold text-sm">{formData.title}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Title</span>
+                      <span className="text-slate-900 dark:text-white font-bold text-sm">{formData.title}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Type</span>
-                      <span className="text-white font-bold text-sm capitalize">{formData.jobType}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Type</span>
+                      <span className="text-slate-900 dark:text-white font-bold text-sm capitalize">{formData.jobType}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Priority</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm">Priority</span>
                       <span className={`font-bold text-sm uppercase ${
-                        formData.priority === 'urgent' ? 'text-safety-orange' : 'text-white'
+                        formData.priority === 'urgent' ? 'text-safety-orange' : 'text-slate-900 dark:text-white'
                       }`}>{formData.priority}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
-                  <p className="text-white text-sm">{formData.address}</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Location</p>
+                  <p className="text-slate-900 dark:text-white text-sm">{formData.address}</p>
                   {formData.siteNotes && (
-                    <p className="text-slate-400 text-xs mt-1">{formData.siteNotes}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">{formData.siteNotes}</p>
                   )}
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assignment</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Assignment</p>
                   <div className="flex justify-between">
                     <div>
-                      <p className="text-slate-400 text-xs">Client</p>
-                      <p className="text-white font-bold">{selectedClient?.name}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">Client</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedClient?.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-slate-400 text-xs">Technician</p>
-                      <p className="text-white font-bold">{selectedTech?.name || <span className="text-slate-500 italic">Assign later</span>}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">Technician</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedTech?.name || <span className="text-slate-500 italic">Assign later</span>}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Safety & PPE</p>
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Safety & PPE</p>
                   <div className="flex flex-wrap gap-2">
                     {formData.requiredPPE.map((ppe) => {
                       const option = PPE_OPTIONS.find(p => p.id === ppe);
@@ -918,7 +918,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="flex-1 py-4 bg-slate-800 text-white font-black rounded-xl uppercase tracking-widest hover:bg-slate-700 transition-all"
+                className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-slate-900 dark:text-white font-black rounded-xl uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all"
               >
                 Back
               </button>

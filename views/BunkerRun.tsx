@@ -419,11 +419,11 @@ export default function BunkerRun() {
   // Theme-aware CSS classes
   const themeClasses = isDaylight
     ? 'bg-slate-100 text-slate-900' // Daylight: Anti-glare gray background
-    : 'bg-slate-950 text-white';    // Dark: Standard dark mode
+    : 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white';    // Dark: Standard dark mode
 
   const cardClasses = isDaylight
     ? 'bg-white border-slate-300 shadow-md'
-    : 'bg-slate-800 border-slate-600';
+    : 'bg-gray-100 dark:bg-slate-800 border-slate-200 dark:border-slate-600';
 
   const buttonPrimaryClasses = isDaylight
     ? 'bg-orange-500 hover:bg-orange-400 text-slate-900 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] font-bold'
@@ -431,7 +431,7 @@ export default function BunkerRun() {
 
   const buttonSecondaryClasses = isDaylight
     ? 'bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900'
-    : 'bg-slate-700 hover:bg-slate-600 text-white';
+    : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white';
 
   // ============================================================================
   // HASH PARAM HANDSHAKE - PhD-level defensive URL parsing
@@ -909,7 +909,7 @@ export default function BunkerRun() {
               <span className="text-3xl">⚠️</span>
             </div>
             <h1 className="text-2xl font-bold mb-2">Link Missing Information</h1>
-            <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>
               This link is missing some required data. Please enter the manager&apos;s email
               to continue so we can send the report when you&apos;re done.
             </p>
@@ -918,7 +918,7 @@ export default function BunkerRun() {
           {/* Email Input Form */}
           <form onSubmit={handleFallbackEmailSubmit} className={`${cardClasses} p-6 rounded-xl border space-y-4`}>
             <div>
-              <label htmlFor="bunker-fallback-email" className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+              <label htmlFor="bunker-fallback-email" className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'}`}>
                 Manager&apos;s Email Address
               </label>
               <input
@@ -930,10 +930,10 @@ export default function BunkerRun() {
                 required
                 className={`w-full px-4 py-3 rounded-lg border ${isDaylight
                   ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
-                  : 'bg-slate-900 border-slate-600 text-white placeholder-slate-500'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
-              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>
+              <p className={`mt-2 text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>
                 The completed job report will be sent to this email.
               </p>
             </div>
@@ -954,7 +954,7 @@ export default function BunkerRun() {
                 // Allow skipping but warn that report delivery may fail
                 setShowEmailFallback(false);
               }}
-              className={`text-sm ${isDaylight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'} transition-colors`}
+              className={`text-sm ${isDaylight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'} transition-colors`}
             >
               Skip (report may not be delivered)
             </button>
@@ -963,9 +963,9 @@ export default function BunkerRun() {
           {/* Job Info */}
           {job && (
             <div className={`${cardClasses} p-4 rounded-xl border`}>
-              <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-400'}`}>JOB</p>
+              <p className={`text-xs ${isDaylight ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>JOB</p>
               <p className="text-lg font-bold">{job.title}</p>
-              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>{job.client}</p>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>{job.client}</p>
             </div>
           )}
         </div>
@@ -1025,9 +1025,9 @@ export default function BunkerRun() {
     return (
       <div className={`min-h-screen ${themeClasses}`}>
         {/* Navigation Header */}
-        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
+        <div className={`fixed top-0 left-0 right-0 z-50 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600'}`}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Complete</span>
+            <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>Job Complete</span>
             <a
               href="/#/job-log"
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${buttonSecondaryClasses}`}
@@ -1043,18 +1043,18 @@ export default function BunkerRun() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-green-600/20 rounded-full mb-4">
               <span className="text-5xl">✅</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Mission Accomplished!</h1>
-            <p className="text-slate-400">Your job evidence has been synced to the cloud.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Mission Accomplished!</h1>
+            <p className="text-slate-500 dark:text-slate-400">Your job evidence has been synced to the cloud.</p>
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 mb-6">
-            <p className="text-xs text-slate-400">JOB</p>
-            <p className="text-lg font-bold text-white">{job.title}</p>
-            <p className="text-sm text-slate-400">{job.client}</p>
-            {job.address && <p className="text-sm text-slate-400">{job.address}</p>}
+          <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-600 mb-6">
+            <p className="text-xs text-slate-500 dark:text-slate-400">JOB</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{job.title}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{job.client}</p>
+            {job.address && <p className="text-sm text-slate-500 dark:text-slate-400">{job.address}</p>}
             {job.completedAt && (
-              <p className="text-xs text-green-400 mt-2">
+              <p className="text-xs text-green-600 dark:text-green-400 mt-2">
                 Completed: {new Date(job.completedAt).toLocaleString()}
               </p>
             )}
@@ -1064,14 +1064,14 @@ export default function BunkerRun() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             {job.beforePhoto && (
               <div>
-                <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-                <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">BEFORE</p>
+                <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
               </div>
             )}
             {job.afterPhoto && (
               <div>
-                <p className="text-xs text-slate-400 mb-1">AFTER</p>
-                <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">AFTER</p>
+                <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
               </div>
             )}
           </div>
@@ -1089,11 +1089,11 @@ export default function BunkerRun() {
           )}
 
           {job.managerEmail && (
-            <div className="bg-blue-900/30 border border-blue-700 p-4 rounded-xl mb-6">
-              <p className="text-sm text-blue-400">
+            <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 p-4 rounded-xl mb-6">
+              <p className="text-sm text-blue-700 dark:text-blue-400">
                 <span className="material-symbols-outlined align-middle text-sm mr-1">schedule_send</span>
-                Report queued for <span className="font-medium text-white">{job.managerEmail}</span>
-                <span className="block text-xs text-blue-400/70 mt-1">Check your email shortly. Contact manager if not received.</span>
+                Report queued for <span className="font-medium text-slate-900 dark:text-white">{job.managerEmail}</span>
+                <span className="block text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">Check your email shortly. Contact manager if not received.</span>
               </p>
             </div>
           )}
@@ -1102,7 +1102,7 @@ export default function BunkerRun() {
           <div className="flex gap-3">
             <a
               href="/#/job-log"
-              className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-center"
+              className="flex-1 py-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold text-center"
             >
               View Job Log
             </a>
@@ -1125,9 +1125,9 @@ export default function BunkerRun() {
   return (
     <div className={`min-h-screen ${themeClasses}`}>
       {/* Navigation Header with Pause and Job Log */}
-      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-slate-900/90 border-slate-600'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-40 backdrop-blur border-b ${isDaylight ? 'bg-white/90 border-slate-300' : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600'}`}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>Job Runner</span>
+          <span className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>Job Runner</span>
           <div className="flex items-center gap-2">
             {/* Pause Button - Allow switching to other jobs */}
             <button
@@ -1135,7 +1135,7 @@ export default function BunkerRun() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 ${
                 isDaylight
                   ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                  : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/30'
               } transition-colors`}
             >
               <span className="material-symbols-outlined text-base">pause</span>
@@ -1154,20 +1154,20 @@ export default function BunkerRun() {
       {/* Pause Job Modal */}
       {showPauseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-600'}`}>
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDaylight ? 'bg-white' : 'bg-white dark:bg-slate-900'} border ${isDaylight ? 'border-slate-200' : 'border-slate-200 dark:border-slate-600'}`}>
             <div className="text-center mb-6">
-              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-500/20'}`}>
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-4 ${isDaylight ? 'bg-amber-100' : 'bg-amber-100 dark:bg-amber-500/20'}`}>
                 <span className="material-symbols-outlined text-3xl text-amber-500">pause_circle</span>
               </div>
               <h2 className="text-xl font-bold mb-2">Pause This Job?</h2>
-              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-sm ${isDaylight ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}>
                 Your progress will be saved. You can resume this job later or switch to another job.
               </p>
             </div>
 
             {/* Pause Reason Selection */}
             <div className="mb-6">
-              <span className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-300'}`}>
+              <span className={`block text-sm font-medium mb-2 ${isDaylight ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'}`}>
                 Why are you pausing?
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -1184,10 +1184,10 @@ export default function BunkerRun() {
                       pauseReason === option.value
                         ? isDaylight
                           ? 'bg-amber-50 border-amber-400 text-amber-700'
-                          : 'bg-amber-500/20 border-amber-500 text-amber-400'
+                          : 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400'
                         : isDaylight
                           ? 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg mb-1">{option.icon}</span>
@@ -1326,9 +1326,9 @@ function StatusIndicator({ isOnline, syncStatus, isSyncing, message }: { isOnlin
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900/90 backdrop-blur rounded-full border border-slate-600">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur rounded-full border border-slate-200 dark:border-slate-600">
       <div className={`w-3 h-3 rounded-full ${getColor()}`} />
-      <span className="text-xs font-medium text-slate-300">{getText()}</span>
+      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{getText()}</span>
     </div>
   );
 }
@@ -1364,7 +1364,7 @@ function ProgressBar({ currentStep }: { currentStep: WizardStep }) {
         <div
           key={step}
           className={`flex-1 h-2 rounded-full transition-colors ${
-            index <= currentIndex ? 'bg-blue-500' : 'bg-slate-700'
+            index <= currentIndex ? 'bg-blue-500' : 'bg-gray-200 dark:bg-slate-700'
           }`}
         />
       ))}
@@ -1390,26 +1390,26 @@ function PhotoStep({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-400 text-sm font-medium mb-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-700 dark:text-blue-400 text-sm font-medium mb-2">
           Step {step} of 4
         </div>
-        <h2 className="text-xl font-bold text-white">{title}</h2>
-        <p className="text-slate-400 text-sm">{subtitle}</p>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{subtitle}</p>
       </div>
 
       {showCamera ? (
         <Camera onCapture={onCapture} onCancel={onCancelCamera} />
       ) : photo ? (
         <div className="space-y-4">
-          <img src={photo.dataUrl} alt={title} className="w-full rounded-xl border border-slate-600" />
+          <img src={photo.dataUrl} alt={title} className="w-full rounded-xl border border-slate-200 dark:border-slate-600" />
           <PhotoMeta photo={photo} />
           <div className="flex gap-3">
             {canGoBack && (
-              <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
+              <button onClick={onBack} className="py-3 px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">
                 ← Back
               </button>
             )}
-            <button onClick={onOpenCamera} className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
+            <button onClick={onOpenCamera} className="flex-1 py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">
               Retake
             </button>
             <button onClick={onNext} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold">
@@ -1423,7 +1423,7 @@ function PhotoStep({
             📸 TAKE {title.toUpperCase()}
           </button>
           {canGoBack && (
-            <button onClick={onBack} className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
+            <button onClick={onBack} className="w-full py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">
               ← Back
             </button>
           )}
@@ -1449,15 +1449,15 @@ function SignatureStep({
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-400 text-sm font-medium mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-700 dark:text-blue-400 text-sm font-medium mb-2">
             Step 3 of 4
           </div>
-          <h2 className="text-xl font-bold text-white">Signature Captured</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Signature Captured</h2>
         </div>
-        <img src={signature.dataUrl} alt="Signature" className="w-full rounded-xl border border-slate-600 bg-white" />
-        <p className="text-center text-slate-400">Signed by: <span className="text-white font-medium">{signature.signerName}</span></p>
+        <img src={signature.dataUrl} alt="Signature" className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white" />
+        <p className="text-center text-slate-500 dark:text-slate-400">Signed by: <span className="text-slate-900 dark:text-white font-medium">{signature.signerName}</span></p>
         <div className="flex gap-3">
-          <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">← Back</button>
+          <button onClick={onBack} className="py-3 px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">← Back</button>
           <button onClick={onNext} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold">NEXT →</button>
         </div>
       </div>
@@ -1467,48 +1467,48 @@ function SignatureStep({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-400 text-sm font-medium mb-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-700 dark:text-blue-400 text-sm font-medium mb-2">
           Step 3 of 4
         </div>
-        <h2 className="text-xl font-bold text-white">Client Signature</h2>
-        <p className="text-slate-400 text-sm">Get client approval</p>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Client Signature</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">Get client approval</p>
       </div>
 
       <div>
-        <label htmlFor="bunker-tech-name" className="block text-sm font-medium text-slate-300 mb-2">Your Name (Technician)</label>
+        <label htmlFor="bunker-tech-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Your Name (Technician)</label>
         <input
           id="bunker-tech-name"
           type="text"
           value={techName}
           onChange={(e) => onTechNameChange(e.target.value)}
           placeholder="e.g., John Smith"
-          className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500"
         />
       </div>
 
       <div>
-        <label htmlFor="bunker-client-name" className="block text-sm font-medium text-slate-300 mb-2">Client Name *</label>
+        <label htmlFor="bunker-client-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Client Name *</label>
         <input
           id="bunker-client-name"
           type="text"
           value={signerName}
           onChange={(e) => onSignerNameChange(e.target.value)}
           placeholder="Enter client name"
-          className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500"
         />
       </div>
 
       {/* Attestation Declaration - Legal compliance */}
-      <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
-        <p className="text-xs text-amber-200/90 leading-relaxed">
-          <span className="font-bold text-amber-300 block mb-1">Declaration</span>
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/40 rounded-xl p-4">
+        <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+          <span className="font-bold text-amber-700 dark:text-amber-300 block mb-1">Declaration</span>
           By signing below, I confirm the work described has been completed to my satisfaction and the photographic evidence accurately represents the condition of the site before and after work.
         </p>
       </div>
 
       <SignatureCanvas onSave={onSave} />
 
-      <button onClick={onBack} className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
+      <button onClick={onBack} className="w-full py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">
         ← Back
       </button>
     </div>
@@ -1519,40 +1519,40 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-600/20 rounded-full text-green-400 text-sm font-medium mb-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-600/20 rounded-full text-green-600 dark:text-green-400 text-sm font-medium mb-2">
           Step 4 of 4
         </div>
-        <h2 className="text-xl font-bold text-white">Review & Seal</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Review & Seal</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         {job.beforePhoto && (
           <div>
-            <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-            <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">BEFORE</p>
+            <img src={job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
           </div>
         )}
         {job.afterPhoto && (
           <div>
-            <p className="text-xs text-slate-400 mb-1">AFTER</p>
-            <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">AFTER</p>
+            <img src={job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
           </div>
         )}
       </div>
 
       {job.signature && (
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
-          <p className="text-xs text-slate-400 mb-2">SIGNED ATTESTATION</p>
+        <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-600">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">SIGNED ATTESTATION</p>
           <img src={job.signature.dataUrl} alt="Signature" className="w-full max-w-xs rounded-lg bg-white" />
-          <p className="mt-2 text-sm text-slate-300">Signed by: {job.signature.signerName}</p>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">Signed by: {job.signature.signerName}</p>
         </div>
       )}
 
       {/* Sync + Seal Status */}
       <div className={`p-4 rounded-xl border ${
-        job.syncStatus === 'synced' ? 'bg-green-900/30 border-green-700' :
-        job.syncStatus === 'failed' ? 'bg-red-900/30 border-red-700' :
-        'bg-yellow-900/30 border-yellow-700'
+        job.syncStatus === 'synced' ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700' :
+        job.syncStatus === 'failed' ? 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700' :
+        'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-4 h-4 rounded-full ${
@@ -1560,7 +1560,7 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
             job.syncStatus === 'failed' ? 'bg-red-500' :
             'bg-yellow-500 animate-pulse'
           }`} />
-          <span className="font-medium text-white">
+          <span className="font-medium text-slate-900 dark:text-white">
             {job.syncStatus === 'synced' ? 'Data Synced to Cloud' :
              job.syncStatus === 'failed' ? 'Sync Failed - Retry' :
              'Ready to Sync'}
@@ -1569,16 +1569,16 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
 
         {/* Evidence Seal Status */}
         {job.syncStatus === 'synced' && (
-          <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-emerald-400">
+              <span className="material-symbols-outlined text-base text-emerald-600 dark:text-emerald-400">
                 {sealStatus === 'sealed' ? 'verified_user' : sealStatus === 'sealing' ? 'hourglass_top' : sealStatus === 'failed' ? 'gpp_bad' : 'shield'}
               </span>
               <span className={`text-sm font-medium ${
-                sealStatus === 'sealed' ? 'text-emerald-400' :
-                sealStatus === 'sealing' ? 'text-amber-400' :
-                sealStatus === 'failed' ? 'text-red-400' :
-                'text-slate-400'
+                sealStatus === 'sealed' ? 'text-emerald-600 dark:text-emerald-400' :
+                sealStatus === 'sealing' ? 'text-amber-600 dark:text-amber-400' :
+                sealStatus === 'failed' ? 'text-red-600 dark:text-red-400' :
+                'text-slate-500 dark:text-slate-400'
               }`}>
                 {sealStatus === 'sealed' ? 'Evidence Sealed (RSA-2048)' :
                  sealStatus === 'sealing' ? 'Sealing evidence...' :
@@ -1587,13 +1587,13 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
               </span>
             </div>
             {sealStatus === 'sealed' && (
-              <p className="text-[10px] text-emerald-400/60 mt-1 ml-6">Tamper-proof cryptographic signature applied</p>
+              <p className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 ml-6">Tamper-proof cryptographic signature applied</p>
             )}
           </div>
         )}
 
         {job.syncStatus === 'synced' && job.managerEmail && (
-          <p className="mt-2 text-sm text-blue-400">
+          <p className="mt-2 text-sm text-blue-700 dark:text-blue-400">
             <span className="material-symbols-outlined text-sm align-middle mr-1">schedule_send</span>
             Report queued for {job.managerEmail}
           </p>
@@ -1602,19 +1602,19 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
 
       {/* What happens next - Sealing explainer */}
       {job.syncStatus !== 'synced' && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">What happens when you sync</p>
+        <div className="bg-gray-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">What happens when you sync</p>
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <span className="material-symbols-outlined text-sm text-blue-400">cloud_upload</span>
+            <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+              <span className="material-symbols-outlined text-sm text-blue-700 dark:text-blue-400">cloud_upload</span>
               Evidence uploaded to secure cloud
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <span className="material-symbols-outlined text-sm text-emerald-400">verified_user</span>
+            <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+              <span className="material-symbols-outlined text-sm text-emerald-600 dark:text-emerald-400">verified_user</span>
               Cryptographically sealed (RSA-2048 + SHA-256)
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <span className="material-symbols-outlined text-sm text-purple-400">mail</span>
+            <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+              <span className="material-symbols-outlined text-sm text-purple-600 dark:text-purple-400">mail</span>
               Report emailed to manager
             </div>
           </div>
@@ -1622,7 +1622,7 @@ function ReviewStep({ job, isOnline, isSyncing, onSync, onBack, onFinish, sealSt
       )}
 
       <div className="flex gap-3">
-        <button onClick={onBack} className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg min-h-[44px]">← Back</button>
+        <button onClick={onBack} className="py-3 px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg min-h-[44px]">← Back</button>
         {job.syncStatus !== 'synced' && isOnline && (
           <button onClick={onSync} disabled={isSyncing} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg font-bold min-h-[56px]">
             {isSyncing ? 'SYNCING...' : 'SYNC & SEAL'}
@@ -1678,9 +1678,9 @@ function Camera({ onCapture, onCancel }: { onCapture: (dataUrl: string) => void;
 
   if (error) {
     return (
-      <div className="p-6 bg-red-900/50 rounded-xl text-center">
-        <p className="text-red-300 mb-4">{error}</p>
-        <button onClick={onCancel} className="px-6 py-3 bg-slate-700 text-white rounded-lg">Cancel</button>
+      <div className="p-6 bg-red-50 dark:bg-red-900/50 rounded-xl text-center">
+        <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
+        <button onClick={onCancel} className="px-6 py-3 bg-gray-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg">Cancel</button>
       </div>
     );
   }
@@ -1691,7 +1691,7 @@ function Camera({ onCapture, onCancel }: { onCapture: (dataUrl: string) => void;
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-xl bg-black" />
       </div>
       <div className="flex gap-3 pt-4 flex-shrink-0">
-        <button onClick={onCancel} className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold min-h-[56px]">Cancel</button>
+        <button onClick={onCancel} className="flex-1 py-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold min-h-[56px]">Cancel</button>
         <button onClick={capture} className="flex-1 py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-lg min-h-[56px]">CAPTURE</button>
       </div>
     </div>
@@ -1755,7 +1755,7 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
           ref={canvasRef}
           width={350}
           height={200}
-          className="border-2 border-slate-600 rounded-lg bg-white touch-none w-full"
+          className="border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-white touch-none w-full"
           onMouseDown={start}
           onMouseMove={draw}
           onMouseUp={stop}
@@ -1766,14 +1766,14 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
         />
         {/* Sign here affordance overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex items-center gap-2 text-slate-300">
+          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-300">
             <span className="material-symbols-outlined text-4xl">draw</span>
             <span className="text-xl font-medium tracking-wide">Sign here</span>
           </div>
         </div>
       </div>
       <div className="flex gap-3">
-        <button onClick={clear} className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Clear</button>
+        <button onClick={clear} className="flex-1 py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">Clear</button>
         <button onClick={() => onSave(canvasRef.current!.toDataURL('image/png'))} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Save Signature</button>
       </div>
     </div>
@@ -1782,12 +1782,12 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
 
 function PhotoMeta({ photo }: { photo: Photo }) {
   return (
-    <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-      <span className="px-2 py-1 bg-slate-800 rounded">{new Date(photo.timestamp).toLocaleString()}</span>
+    <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">{new Date(photo.timestamp).toLocaleString()}</span>
       {photo.lat && photo.lng && (
-        <span className="px-2 py-1 bg-slate-800 rounded">📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</span>
+        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</span>
       )}
-      <span className="px-2 py-1 bg-slate-800 rounded">{(photo.sizeBytes / 1024).toFixed(0)} KB</span>
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">{(photo.sizeBytes / 1024).toFixed(0)} KB</span>
     </div>
   );
 }

@@ -490,24 +490,24 @@ const JobDetail: React.FC = () => {
       <PageContent>
         {/* Status Banner - proof-based: shows actual stage, not assumed progress */}
         <div className={`p-4 rounded-2xl mb-6 flex items-center gap-4 ${
-          status === 'archived' ? 'bg-slate-700/50 border border-slate-600/50' :
+          status === 'archived' ? 'bg-gray-200/50 dark:bg-slate-700/50 border border-slate-300/50 dark:border-slate-600/50' :
           status === 'sealed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
           status === 'review' ? 'bg-purple-500/10 border border-purple-500/20' :
           status === 'active' ? 'bg-amber-500/10 border border-amber-500/20' :
           status === 'sent' ? 'bg-blue-500/10 border border-blue-500/20' :
           status === 'assigned' ? 'bg-indigo-500/10 border border-indigo-500/20' :
           status === 'invoiced' ? 'bg-cyan-500/10 border border-cyan-500/20' :
-          'bg-slate-800 border border-white/10'
+          'bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10'
         }`}>
           <div className={`size-12 rounded-xl flex items-center justify-center ${
-            status === 'archived' ? 'bg-slate-600 text-slate-300' :
+            status === 'archived' ? 'bg-gray-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300' :
             status === 'sealed' ? 'bg-emerald-500/20 text-emerald-400' :
             status === 'review' ? 'bg-purple-500/20 text-purple-400' :
             status === 'active' ? 'bg-amber-500/20 text-amber-400' :
             status === 'sent' ? 'bg-blue-500/20 text-blue-400' :
             status === 'assigned' ? 'bg-indigo-500/20 text-indigo-400' :
             status === 'invoiced' ? 'bg-cyan-500/20 text-cyan-400' :
-            'bg-slate-700 text-slate-400'
+            'bg-gray-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
           }`}>
             <span className="material-symbols-outlined text-2xl">
               {status === 'archived' ? 'archive' :
@@ -521,7 +521,7 @@ const JobDetail: React.FC = () => {
             </span>
           </div>
           <div className="flex-1">
-            <p className="font-medium text-white">
+            <p className="font-medium text-slate-900 dark:text-white">
               {status === 'archived' ? 'Archived' :
                status === 'sealed' ? 'Cryptographically Sealed' :
                status === 'review' ? 'Ready for Review' :
@@ -531,7 +531,7 @@ const JobDetail: React.FC = () => {
                status === 'invoiced' ? 'Invoiced' :
                'Draft - Needs Technician'}
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {status === 'archived' ? job?.archivedAt ? `Archived on ${new Date(job.archivedAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}` : 'Job archived' :
                status === 'sealed' ? 'Evidence has been sealed and verified' :
                status === 'review' ? 'Evidence uploaded, awaiting seal' :
@@ -586,14 +586,14 @@ const JobDetail: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Job Details */}
             <Card>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
                 Job Details
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-slate-400">calendar_today</span>
+                  <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">calendar_today</span>
                   <div>
-                    <p className="text-white">
+                    <p className="text-slate-900 dark:text-white">
                       {new Date(job.date).toLocaleDateString('en-GB', {
                         weekday: 'long',
                         year: 'numeric',
@@ -601,16 +601,16 @@ const JobDetail: React.FC = () => {
                         day: 'numeric',
                       })}
                     </p>
-                    <p className="text-sm text-slate-400">Scheduled Date</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Scheduled Date</p>
                   </div>
                 </div>
 
                 {job.address && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400">location_on</span>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">location_on</span>
                     <div className="flex-1">
-                      <p className="text-white">{job.address}</p>
-                      <p className="text-sm text-slate-400">Location</p>
+                      <p className="text-slate-900 dark:text-white">{job.address}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Location</p>
                       {/* Phase 9: Clickable map link */}
                       <button
                         onClick={() => {
@@ -628,20 +628,20 @@ const JobDetail: React.FC = () => {
 
                 {(job.description || job.notes) && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400">description</span>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">description</span>
                     <div>
-                      <p className="text-white">{job.description || job.notes}</p>
-                      <p className="text-sm text-slate-400">Description</p>
+                      <p className="text-slate-900 dark:text-white">{job.description || job.notes}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Description</p>
                     </div>
                   </div>
                 )}
 
                 {(job.total || job.price) && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400">payments</span>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">payments</span>
                     <div>
-                      <p className="text-white text-lg font-semibold">£{(job.total || job.price || 0).toFixed(2)}</p>
-                      <p className="text-sm text-slate-400">Total</p>
+                      <p className="text-slate-900 dark:text-white text-lg font-semibold">£{(job.total || job.price || 0).toFixed(2)}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Total</p>
                     </div>
                   </div>
                 )}
@@ -652,7 +652,7 @@ const JobDetail: React.FC = () => {
             {job.photos && job.photos.length > 0 && (
               <Card>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
+                  <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     Evidence ({job.photos.length} items)
                   </h3>
                   <ActionButton
@@ -668,7 +668,7 @@ const JobDetail: React.FC = () => {
                   {job.photos.slice(0, 4).map((photo, i) => (
                     <div
                       key={(photo as any).id || photo.url || `photo-${i}`}
-                      className="aspect-square rounded-lg bg-slate-800 overflow-hidden"
+                      className="aspect-square rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden"
                     >
                       <img
                         src={photo.url || photo.localPath}
@@ -686,30 +686,30 @@ const JobDetail: React.FC = () => {
           <div className="space-y-6">
             {/* Client Info */}
             <Card>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
                 Client
               </h3>
               {client ? (
                 <Link to={route(ROUTES.CLIENT_DETAIL, { id: client.id })} className="block">
-                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-white/10 transition-colors active:scale-[0.98]">
+                  <div className="flex items-center gap-3 p-3 -m-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors active:scale-[0.98]">
                     <div className="size-10 rounded-lg bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
                       <span className="text-primary font-bold">{client.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{client.name}</p>
-                      <p className="text-sm text-slate-400 truncate">{client.address || client.email}</p>
+                      <p className="font-medium text-slate-900 dark:text-white truncate">{client.name}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{client.address || client.email}</p>
                     </div>
-                    <span className="material-symbols-outlined text-slate-400">chevron_right</span>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">chevron_right</span>
                   </div>
                 </Link>
               ) : (
-                <p className="text-slate-400">No client assigned</p>
+                <p className="text-slate-500 dark:text-slate-400">No client assigned</p>
               )}
             </Card>
 
             {/* Technician Info */}
             <Card>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
                 Technician
               </h3>
               {technician ? (
@@ -719,8 +719,8 @@ const JobDetail: React.FC = () => {
                       <span className="text-amber-400 font-bold">{technician.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{technician.name}</p>
-                      <p className="text-sm text-slate-400 truncate">{technician.phone || technician.email}</p>
+                      <p className="font-medium text-slate-900 dark:text-white truncate">{technician.name}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{technician.phone || technician.email}</p>
                     </div>
                   </div>
                   {!job.sealedAt && (
@@ -735,7 +735,7 @@ const JobDetail: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-slate-400 mb-3">No technician assigned</p>
+                  <p className="text-slate-500 dark:text-slate-400 mb-3">No technician assigned</p>
                   <button
                     onClick={() => setShowAssignModal(true)}
                     className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
@@ -783,14 +783,14 @@ const JobDetail: React.FC = () => {
                 key={tech.id}
                 onClick={() => handleAssignTech(tech.id)}
                 disabled={assigning}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-left disabled:opacity-50 active:scale-[0.98]"
               >
                 <div className="size-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                   <span className="text-amber-400 font-bold">{tech.name.charAt(0)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">{tech.name}</p>
-                  <p className="text-sm text-slate-400">{tech.phone || tech.email}</p>
+                  <p className="font-medium text-slate-900 dark:text-white">{tech.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{tech.phone || tech.email}</p>
                 </div>
                 {tech.id === technician?.id && (
                   <span className="material-symbols-outlined text-primary">check_circle</span>
@@ -811,13 +811,13 @@ const JobDetail: React.FC = () => {
         <div className="space-y-6">
           {/* Technician Info */}
           {technician && (
-            <div className="flex items-center gap-3 p-4 bg-slate-800 rounded-xl">
+            <div className="flex items-center gap-3 p-4 bg-gray-100 dark:bg-slate-800 rounded-xl">
               <div className="size-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                 <span className="text-amber-400 font-bold text-lg">{technician.name.charAt(0)}</span>
               </div>
               <div>
-                <p className="font-bold text-white">{technician.name}</p>
-                <p className="text-sm text-slate-400">{technician.email || 'No email'}</p>
+                <p className="font-bold text-slate-900 dark:text-white">{technician.name}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{technician.email || 'No email'}</p>
               </div>
             </div>
           )}
@@ -844,13 +844,13 @@ const JobDetail: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {/* Magic Link Display with Dynamic Expiry */}
-              <div className="p-4 bg-slate-800 rounded-xl">
-                <p className="text-xs text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
-                <p className="text-sm text-white font-mono break-all">{magicLink}</p>
+              <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-xl">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
+                <p className="text-sm text-slate-900 dark:text-white font-mono break-all">{magicLink}</p>
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   expiryInfo.isExpired ? 'text-red-400' :
                   expiryInfo.isUrgent ? 'text-amber-400' :
-                  'text-slate-400'
+                  'text-slate-500 dark:text-slate-400'
                 }`}>
                   {expiryInfo.isUrgent && (
                     <span className="material-symbols-outlined text-sm">warning</span>
@@ -866,7 +866,7 @@ const JobDetail: React.FC = () => {
                 className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                   expiryInfo.isExpired || expiryInfo.isUrgent
                     ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
+                    : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
                 }`}
               >
                 {generatingLink ? (
@@ -896,7 +896,7 @@ const JobDetail: React.FC = () => {
                   className={`py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                     linkCopied
                       ? 'bg-emerald-500 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-white'
+                      : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
                   }`}
                 >
                   <span className="material-symbols-outlined text-lg">
@@ -926,7 +926,7 @@ const JobDetail: React.FC = () => {
               {typeof navigator !== 'undefined' && 'share' in navigator && (
                 <button
                   onClick={handleShare}
-                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-lg">ios_share</span>
                   More Share Options...

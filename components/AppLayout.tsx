@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
           <div className="flex items-center justify-between max-w-5xl mx-auto">
             <JobProofLogo variant="full" size="sm" showTagline={false} />
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Secure Evidence Capture</span>
+              <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-300 uppercase tracking-wide">Secure Evidence Capture</span>
             </div>
           </div>
         </header>
@@ -45,28 +45,28 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
         </div>
 
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
-          <div className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Management</div>
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 mt-8 px-3">Management</div>
           <NavLink to="/admin" icon="dashboard" label="Dashboard" active={location.pathname === '/admin'} id="nav-dashboard" />
           <NavLink to="/admin/clients" icon="group" label="Clients" active={location.pathname === '/admin/clients'} id="nav-clients" />
           <NavLink to="/admin/technicians" icon="engineering" label="Technicians" active={location.pathname === '/admin/technicians'} id="nav-techs" />
 
-          <div className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">Financials</div>
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 mt-8 px-3">Financials</div>
           <NavLink to="/admin/invoices" icon="receipt_long" label="Invoices" active={location.pathname === '/admin/invoices'} />
 
-          <div className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-[0.2em] mb-4 mt-8 px-3">System</div>
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 mt-8 px-3">System</div>
           <NavLink to="/admin/settings" icon="settings" label="Settings" active={location.pathname === '/admin/settings'} id="nav-settings" />
           <NavLink to="/admin/help" icon="help_center" label="Help Center" active={location.pathname === '/admin/help'} />
         </nav>
 
-        <div className="p-6 border-t border-white/15">
-          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-white/10 border-white/15 hover:bg-white/10'}`}>
+        <div className="p-6 border-t border-slate-200 dark:border-white/15">
+          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-slate-100/50 dark:bg-white/10 border-slate-200 dark:border-white/15 hover:bg-slate-100/70 dark:hover:bg-white/10'}`}>
             <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-black text-white">
               {user?.name?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate text-white">{user?.name || 'User'}</p>
+              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{user?.name || 'User'}</p>
               <div className="flex items-center gap-2">
-                <p className="text-[10px] text-slate-300 truncate uppercase font-black tracking-widest">
+                <p className="text-[11px] text-slate-400 dark:text-slate-300 truncate capitalize font-medium">
                   {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
                 </p>
                 {user?.persona && (
@@ -87,7 +87,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
             <div className="flex justify-between items-center mb-10">
               <div className="flex items-center gap-3">
                 <div className="bg-primary size-8 rounded-lg flex items-center justify-center text-white"><span className="material-symbols-outlined text-sm font-black">verified</span></div>
-                <span className="text-xl font-black text-slate-900 dark:text-white uppercase">JobProof</span>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">JobProof</span>
               </div>
               <button
                 onClick={toggleMobileMenu}
@@ -111,7 +111,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name || 'User'}</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[10px] text-slate-400 dark:text-slate-400 truncate uppercase font-bold">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate capitalize font-medium">
                     {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
                   </p>
                   {user?.persona && (
@@ -148,7 +148,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
                   <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-lg" aria-hidden="true">arrow_back</span>
                 </Link>
               )}
-              <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+              <h1 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {location.pathname === '/admin' ? 'Dashboard' :
                   location.pathname === '/admin/create' ? 'Create Job' :
                     location.pathname === '/admin/clients' ? 'Clients' :
@@ -170,7 +170,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
               aria-label="Create new job"
             >
               <span className="material-symbols-outlined text-base font-black" aria-hidden="true">add</span>
-              <span className="tracking-widest uppercase">New Job</span>
+              <span className="tracking-wide font-bold">New Job</span>
             </Link>
           </div>
         </header>
@@ -195,14 +195,14 @@ const NavLink: React.FC<{ to: string, icon: string, label: string, active?: bool
     aria-current={active ? 'page' : undefined}
   >
     <span className="material-symbols-outlined font-black">{icon}</span>
-    <span className="text-sm font-medium tracking-widest">{label}</span>
+    <span className="text-sm font-medium tracking-normal">{label}</span>
   </Link>
 ));
 
 NavLink.displayName = 'NavLink';
 
 const MobileNavLink: React.FC<{ to: string, icon: string, label: string, onClick: () => void }> = React.memo(({ to, icon, label, onClick }) => (
-  <Link to={to} onClick={onClick} className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest active:bg-primary/20 transition-all">
+  <Link to={to} onClick={onClick} className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-semibold text-sm tracking-normal active:bg-primary/20 transition-all">
     <span className="material-symbols-outlined text-primary font-black">{icon}</span>
     {label}
   </Link>

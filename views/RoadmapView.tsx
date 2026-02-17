@@ -6,19 +6,19 @@ const RoadmapView: React.FC = () => {
     <Layout>
       <div className="max-w-6xl mx-auto space-y-12 pb-24">
         <div className="space-y-2">
-          <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Product Roadmap</h2>
-          <p className="text-slate-400 text-sm">Our development timeline and commitment to building a real trust system.</p>
+          <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Product Roadmap</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Our development timeline and commitment to building a real trust system.</p>
         </div>
 
         {/* Timeline Overview */}
-        <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Current Phase</h3>
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 space-y-6">
+          <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Current Phase</h3>
           <div className="flex items-center gap-6">
             <div className="bg-primary/10 px-6 py-3 rounded-2xl border border-primary/20">
               <p className="text-primary font-black uppercase tracking-wider">Phase C: Trust Foundation</p>
-              <p className="text-slate-400 text-xs mt-1">Weeks 1-4 • In Progress</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Weeks 1-4 • In Progress</p>
             </div>
-            <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div className="h-full bg-primary w-[10%] rounded-full animate-pulse"></div>
             </div>
           </div>
@@ -28,7 +28,7 @@ const RoadmapView: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-success text-3xl font-black">check_circle</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Completed</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Completed</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FeatureCard
@@ -68,7 +68,7 @@ const RoadmapView: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-3xl font-black animate-spin">sync</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">In Development</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">In Development</h3>
             <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-black uppercase">Phase C</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,34 +114,34 @@ const RoadmapView: React.FC = () => {
         {/* Coming Next Release - Invoicing & Payments */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-amber-400 text-3xl font-black">payments</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Coming Next Release</h3>
-            <span className="bg-amber-400/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase">Next</span>
+            <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-3xl font-black">payments</span>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Coming Next Release</h3>
+            <span className="bg-amber-400/10 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase">Next</span>
           </div>
           <div className="bg-amber-400/5 border border-amber-400/20 rounded-[2.5rem] p-8 space-y-4">
             <div className="flex items-start gap-4">
-              <span className="material-symbols-outlined text-amber-400 text-2xl">receipt_long</span>
+              <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl">receipt_long</span>
               <div className="space-y-2">
-                <h4 className="text-white font-black uppercase tracking-tight">Invoicing & Payments</h4>
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight">Invoicing & Payments</h4>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                   Full invoicing workflow built on top of sealed evidence. Generate invoices from completed jobs,
                   track payment status, and export to accounting systems.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400">check_box_outline_blank</span>
                     Invoice creation from jobs
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400">check_box_outline_blank</span>
                     Payment tracking
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400">check_box_outline_blank</span>
                     CSV/PDF export
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="material-symbols-outlined text-sm text-amber-400">check_box_outline_blank</span>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400">check_box_outline_blank</span>
                     QuickBooks/Xero integration
                   </div>
                 </div>
@@ -154,7 +154,7 @@ const RoadmapView: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-blue-400 text-3xl font-black">schedule</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Planned</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Planned</h3>
             <span className="bg-blue-400/10 text-blue-400 px-3 py-1 rounded-full text-xs font-black uppercase">Phase D</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -207,7 +207,7 @@ const RoadmapView: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-purple-400 text-3xl font-black">calendar_month</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Business Systems</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Business Systems</h3>
             <span className="bg-purple-400/10 text-purple-400 px-3 py-1 rounded-full text-xs font-black uppercase">Phase E</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -259,9 +259,9 @@ const RoadmapView: React.FC = () => {
         {/* Future Features */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-slate-400 text-3xl font-black">rocket_launch</span>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Future Features</h3>
-            <span className="bg-slate-800 text-slate-400 px-3 py-1 rounded-full text-xs font-black uppercase">Post-Beta</span>
+            <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-3xl font-black">rocket_launch</span>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Future Features</h3>
+            <span className="bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full text-xs font-black uppercase">Post-Beta</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FutureFeatureCard
@@ -313,8 +313,8 @@ const RoadmapView: React.FC = () => {
         </section>
 
         {/* Milestones */}
-        <section className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-6">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Key Milestones</h3>
+        <section className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 space-y-6">
+          <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Key Milestones</h3>
           <div className="space-y-4">
             <Milestone
               week="Week 4"
@@ -353,17 +353,17 @@ const RoadmapView: React.FC = () => {
         </section>
 
         {/* Legal Notice */}
-        <div className="bg-slate-900 border border-warning/20 rounded-[2.5rem] p-8">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-warning/20 rounded-[2.5rem] p-8">
           <div className="flex items-start gap-4">
             <span className="material-symbols-outlined text-warning text-2xl font-black">info</span>
             <div className="space-y-2">
-              <h3 className="text-sm font-black text-white uppercase">Development Transparency</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase">Development Transparency</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                 This roadmap reflects our commitment to building a real trust system, not a demo.
                 All &quot;In Development&quot; features are actively being built and will be completed before beta launch.
                 Features marked &quot;Future&quot; are not yet scheduled but represent our long-term vision.
               </p>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                 We maintain this roadmap with complete honesty. If a feature is not implemented,
                 we do not claim it exists. Trust by Design is a technical evidence tool, not a legal authority.
               </p>
@@ -387,16 +387,16 @@ const FeatureCard = ({ status, title, description, phase, timeline }: any) => {
   return (
     <div className={`${c.bg} border ${c.border} p-6 rounded-2xl space-y-3`}>
       <div className="flex items-start justify-between">
-        <h4 className="text-white font-black uppercase tracking-tight">{title}</h4>
+        <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight">{title}</h4>
         <span className={`material-symbols-outlined ${c.text} text-xl font-black ${status === 'in-progress' ? 'animate-spin' : ''}`}>
           {c.icon}
         </span>
       </div>
-      <p className="text-slate-400 text-xs leading-relaxed">{description}</p>
+      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{description}</p>
       {phase && (
         <div className="flex items-center gap-2 text-[10px] font-black uppercase">
           <span className={`${c.text}`}>{phase}</span>
-          {timeline && <span className="text-slate-400">• {timeline}</span>}
+          {timeline && <span className="text-slate-500 dark:text-slate-400">• {timeline}</span>}
         </div>
       )}
     </div>
@@ -404,12 +404,12 @@ const FeatureCard = ({ status, title, description, phase, timeline }: any) => {
 };
 
 const FutureFeatureCard = ({ title, description, icon }: any) => (
-  <div className="bg-slate-800 border border-white/15 p-6 rounded-2xl space-y-3 hover:border-primary/20 transition-all group">
-    <span className={`material-symbols-outlined text-slate-400 text-3xl font-black group-hover:text-primary transition-colors`}>
+  <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-6 rounded-2xl space-y-3 hover:border-primary/20 transition-all group">
+    <span className={`material-symbols-outlined text-slate-500 dark:text-slate-400 text-3xl font-black group-hover:text-primary transition-colors`}>
       {icon}
     </span>
-    <h4 className="text-white font-black uppercase tracking-tight text-sm">{title}</h4>
-    <p className="text-slate-400 text-xs leading-relaxed">{description}</p>
+    <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-sm">{title}</h4>
+    <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{description}</p>
   </div>
 );
 
@@ -417,16 +417,16 @@ const Milestone = ({ week, title, items, status }: any) => {
   const isActive = status === 'in-progress';
 
   return (
-    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-white/10 border-white/15'}`}>
+    <div className={`p-6 rounded-2xl border ${isActive ? 'bg-primary/5 border-primary/20' : 'bg-slate-100/70 dark:bg-white/10 border-slate-200 dark:border-white/15'}`}>
       <div className="flex items-start gap-4">
-        <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${isActive ? 'bg-primary text-white' : 'bg-slate-800 text-slate-400'}`}>
+        <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${isActive ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
           {week}
         </div>
         <div className="flex-1 space-y-2">
-          <h4 className="text-white font-black uppercase tracking-tight">{title}</h4>
+          <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight">{title}</h4>
           <ul className="space-y-1">
             {items.map((item: string, i: number) => (
-              <li key={`milestone-item-${i}`} className="text-slate-400 text-xs flex items-center gap-2">
+              <li key={`milestone-item-${i}`} className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
                 <span className={`size-1.5 rounded-full ${isActive ? 'bg-primary' : 'bg-slate-600'}`}></span>
                 {item}
               </li>

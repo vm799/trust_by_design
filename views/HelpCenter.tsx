@@ -48,8 +48,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       content: (
         <div className="space-y-6">
           <div>
-            <h4 className="text-lg font-black text-white uppercase tracking-tight mb-3">Quick Start Guide</h4>
-            <ol className="space-y-3 text-sm text-slate-300">
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-3">Quick Start Guide</h4>
+            <ol className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
               <li className="flex gap-3">
                 <span className="font-black text-primary">1.</span>
                 <span><span className="font-bold">Verify Your Email</span> - Check your inbox for the verification link we sent when you signed up.</span>
@@ -91,12 +91,12 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       title: 'Mobile & Offline',
       desc: 'Using JobProof in basements and remote sites without signal.',
       content: (
-        <div className="space-y-4 text-sm text-slate-300">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
           <p className="leading-relaxed">
-            JobProof is built <span className="font-bold text-white">offline-first</span>. All your work is saved locally on your device in IndexedDB, then synced to the cloud when you&apos;re back online.
+            JobProof is built <span className="font-bold text-slate-900 dark:text-white">offline-first</span>. All your work is saved locally on your device in IndexedDB, then synced to the cloud when you&apos;re back online.
           </p>
-          <div className="bg-slate-800 border border-white/15 rounded-xl p-4 space-y-2">
-            <h5 className="font-black text-white uppercase text-xs">What works offline:</h5>
+          <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4 space-y-2">
+            <h5 className="font-bold text-slate-900 dark:text-white uppercase text-xs">What works offline:</h5>
             <ul className="space-y-1 text-xs">
               <li className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-success text-sm">check_circle</span>
@@ -118,7 +118,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           </div>
           <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
             <p className="text-xs font-bold text-warning uppercase mb-1">Pro Tip</p>
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               Your device will show an offline indicator when there&apos;s no connection. All changes will sync automatically when you&apos;re back online.
             </p>
           </div>
@@ -131,40 +131,40 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       title: 'Evidence Guide',
       desc: 'Capturing categorized photos and signatures effectively.',
       content: (
-        <div className="space-y-4 text-sm text-slate-300">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
           <p className="leading-relaxed">
-            JobProof uses a <span className="font-bold text-white">3-phase photo categorization</span> system to ensure comprehensive evidence capture:
+            JobProof uses a <span className="font-bold text-slate-900 dark:text-white">3-phase photo categorization</span> system to ensure comprehensive evidence capture:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-sm">photo_camera</span>
                 </div>
-                <h5 className="font-black text-white uppercase text-xs">Before</h5>
+                <h5 className="font-bold text-slate-900 dark:text-white uppercase text-xs">Before</h5>
               </div>
-              <p className="text-xs text-slate-400">Initial site conditions, existing damage, baseline state</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Initial site conditions, existing damage, baseline state</p>
             </div>
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-warning/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-warning text-sm">construction</span>
                 </div>
-                <h5 className="font-black text-white uppercase text-xs">During</h5>
+                <h5 className="font-bold text-slate-900 dark:text-white uppercase text-xs">During</h5>
               </div>
-              <p className="text-xs text-slate-400">Work in progress, process photos, intermediate steps</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Work in progress, process photos, intermediate steps</p>
             </div>
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 bg-success/20 rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined text-success text-sm">check_circle</span>
                 </div>
-                <h5 className="font-black text-white uppercase text-xs">After</h5>
+                <h5 className="font-bold text-slate-900 dark:text-white uppercase text-xs">After</h5>
               </div>
-              <p className="text-xs text-slate-400">Completed work, final results, clean site</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Completed work, final results, clean site</p>
             </div>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Use the phase tabs in the TechnicianPortal to switch between categories while capturing evidence.
           </p>
         </div>
@@ -176,9 +176,9 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       title: 'Privacy & Security',
       desc: 'How we protect your operational data and signatures.',
       content: (
-        <div className="space-y-4 text-sm text-slate-300">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
           <p className="leading-relaxed">
-            JobProof implements <span className="font-bold text-white">enterprise-grade security</span> to protect your evidence and ensure data integrity:
+            JobProof implements <span className="font-bold text-slate-900 dark:text-white">enterprise-grade security</span> to protect your evidence and ensure data integrity:
           </p>
           <div className="space-y-3">
             <div className="flex gap-3">
@@ -186,8 +186,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 <span className="material-symbols-outlined text-success text-sm">encrypted</span>
               </div>
               <div>
-                <h5 className="font-bold text-white text-xs uppercase mb-1">End-to-End Encryption</h5>
-                <p className="text-xs text-slate-400">All data is encrypted in transit (TLS) and at rest (AES-256).</p>
+                <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-1">End-to-End Encryption</h5>
+                <p className="text-xs text-slate-500 dark:text-slate-400">All data is encrypted in transit (TLS) and at rest (AES-256).</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -195,8 +195,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 <span className="material-symbols-outlined text-success text-sm">verified_user</span>
               </div>
               <div>
-                <h5 className="font-bold text-white text-xs uppercase mb-1">Cryptographic Sealing</h5>
-                <p className="text-xs text-slate-400">Jobs are sealed with HMAC signatures to prevent tampering.</p>
+                <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-1">Cryptographic Sealing</h5>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Jobs are sealed with HMAC signatures to prevent tampering.</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -204,8 +204,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 <span className="material-symbols-outlined text-success text-sm">shield</span>
               </div>
               <div>
-                <h5 className="font-bold text-white text-xs uppercase mb-1">Row-Level Security</h5>
-                <p className="text-xs text-slate-400">Database access controlled by workspace isolation and RLS policies.</p>
+                <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-1">Row-Level Security</h5>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Database access controlled by workspace isolation and RLS policies.</p>
               </div>
             </div>
           </div>
@@ -218,19 +218,19 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
       title: 'Troubleshooting',
       desc: 'Common issues and how to fix them quickly.',
       content: (
-        <div className="space-y-4 text-sm text-slate-300">
+        <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
           <p className="leading-relaxed">
             Quick solutions to the most common issues:
           </p>
           <div className="space-y-4">
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-danger/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-danger text-sm">photo_camera</span>
                 </div>
                 <div>
-                  <h5 className="font-black text-white text-xs uppercase mb-2">Photos won&apos;t upload</h5>
-                  <ul className="space-y-1 text-xs text-slate-400">
+                  <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-2">Photos won&apos;t upload</h5>
+                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <li>• Check if you&apos;re offline (look for the offline indicator)</li>
                     <li>• Photos are saved locally and will sync when online</li>
                     <li>• Try the &quot;Retry Sync&quot; button in the dashboard</li>
@@ -239,14 +239,14 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-warning/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-warning text-sm">location_off</span>
                 </div>
                 <div>
-                  <h5 className="font-black text-white text-xs uppercase mb-2">GPS not working</h5>
-                  <ul className="space-y-1 text-xs text-slate-400">
+                  <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-2">GPS not working</h5>
+                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <li>• Ensure location permissions are enabled in your browser</li>
                     <li>• Move to an area with better signal (away from metal roofs)</li>
                     <li>• GPS still acquiring? Wait 10-15 seconds, it will lock on</li>
@@ -255,14 +255,14 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-primary text-sm">link_off</span>
                 </div>
                 <div>
-                  <h5 className="font-black text-white text-xs uppercase mb-2">Magic link not working</h5>
-                  <ul className="space-y-1 text-xs text-slate-400">
+                  <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-2">Magic link not working</h5>
+                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <li>• Links expire after 7 days - request a fresh link</li>
                     <li>• Check the full URL was copied (no text cut off)</li>
                     <li>• Try opening in a different browser</li>
@@ -271,14 +271,14 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-slate-800 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="size-8 bg-success/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="material-symbols-outlined text-success text-sm">draw</span>
                 </div>
                 <div>
-                  <h5 className="font-black text-white text-xs uppercase mb-2">Signature pad issues</h5>
-                  <ul className="space-y-1 text-xs text-slate-400">
+                  <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase mb-2">Signature pad issues</h5>
+                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <li>• Use your finger or stylus directly on the white area</li>
                     <li>• Tap &quot;Clear&quot; if you need to start over</li>
                     <li>• The pad works even without internet</li>
@@ -290,8 +290,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           </div>
           <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mt-4">
             <p className="text-xs font-bold text-primary uppercase mb-1">Still stuck?</p>
-            <p className="text-xs text-slate-300">
-              Contact support at <span className="font-bold text-white">help@jobproof.app</span> or use the in-app feedback button.
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Contact support at <span className="font-bold text-slate-900 dark:text-white">help@jobproof.app</span> or use the in-app feedback button.
             </p>
           </div>
         </div>
@@ -343,7 +343,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
         <div className="pt-6">
           <button
             onClick={() => goBack()}
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back
@@ -354,8 +354,8 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <div className="size-16 bg-primary/20 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20">
             <span className="material-symbols-outlined text-primary text-4xl">help_center</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase leading-none">Support</h2>
-          <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto font-medium">Documentation, FAQs, and operational best practices.</p>
+          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Support</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-base sm:text-lg max-w-xl mx-auto font-medium">Documentation, FAQs, and operational best practices.</p>
         </div>
 
         {/* Help Topic Cards */}
@@ -377,11 +377,11 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
           <div
             ref={expandedContentRef}
             tabIndex={-1}
-            className="bg-slate-900 border border-white/10 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] shadow-2xl animate-in scroll-mt-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] shadow-2xl animate-in scroll-mt-4 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
           >
             <button
               onClick={() => setSelectedSection(null)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 group"
+              className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 group"
             >
               <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
               <span className="text-xs font-semibold tracking-widest">Back to Topics</span>
@@ -391,10 +391,10 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ user }) => {
         )}
 
         {/* Operational FAQs */}
-        <section className="bg-slate-900 border border-white/15 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] space-y-8 shadow-2xl">
+        <section className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] space-y-8 shadow-2xl transition-colors">
           <div className="space-y-2">
-            <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tighter border-l-4 border-primary pl-4">Operational FAQs</h3>
-            <p className="text-slate-400 text-sm pl-4">Click any question to expand the answer</p>
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter border-l-4 border-primary pl-4">Operational FAQs</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm pl-4">Click any question to expand the answer</p>
           </div>
           <div className="space-y-3">
             {faqs.map((faq) => (

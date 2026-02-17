@@ -86,8 +86,8 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({ user,
               Verify Your Email
             </h3>
           </div>
-          <p className="text-xs text-slate-300 font-medium leading-relaxed">
-            Please check <span className="font-black text-white">{user.email}</span> and click the verification link to activate your account.
+          <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+            Please check <span className="font-black text-slate-900 dark:text-white">{user.email}</span> and click the verification link to activate your account.
           </p>
           {message && (
             <p className={`text-[10px] font-bold ${message.startsWith('✅') ? 'text-success' : 'text-danger'}`}>
@@ -111,7 +111,7 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({ user,
 
           <button
             onClick={handleDismiss}
-            className="p-2.5 text-slate-400 hover:text-white transition-colors"
+            className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             title="Dismiss (will reappear until verified)"
           >
             <span className="material-symbols-outlined text-lg">close</span>

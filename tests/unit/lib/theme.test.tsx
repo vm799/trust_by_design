@@ -5,7 +5,9 @@ import { ThemeProvider, useTheme, DAYLIGHT_TOKENS, NEOBRUTALIST_SHADOW } from '.
 // Create a proper matchMedia mock
 const createMatchMediaMock = (prefersDark = false) => {
   return vi.fn().mockImplementation((query: string) => ({
-    matches: query === '(prefers-color-scheme: dark)' ? prefersDark : false,
+    matches: query === '(prefers-color-scheme: dark)' ? prefersDark
+           : query === '(prefers-color-scheme: light)' ? !prefersDark
+           : false,
     media: query,
     onchange: null,
     addListener: vi.fn(),
@@ -22,6 +24,7 @@ const ThemeTestComponent = () => {
     theme,
     setTheme,
     resolvedTheme,
+    isLightMode,
     isEvening,
     toggleDayNight,
     isDaylightMode,
@@ -34,11 +37,13 @@ const ThemeTestComponent = () => {
     <div>
       <span data-testid="theme">{theme}</span>
       <span data-testid="resolved">{resolvedTheme}</span>
+      <span data-testid="light-mode">{isLightMode ? 'yes' : 'no'}</span>
       <span data-testid="evening">{isEvening ? 'yes' : 'no'}</span>
       <span data-testid="daylight">{isDaylightMode ? 'yes' : 'no'}</span>
       <span data-testid="daylight-auto">{daylightAuto ? 'yes' : 'no'}</span>
       <span data-testid="theme-state">{themeState}</span>
       <button data-testid="toggle" onClick={toggleDayNight}>Toggle</button>
+      <button data-testid="set-light" onClick={() => setTheme('light')}>Light</button>
       <button data-testid="set-dark" onClick={() => setTheme('dark')}>Dark</button>
       <button data-testid="set-system" onClick={() => setTheme('system')}>System</button>
       <button data-testid="set-daylight" onClick={() => setTheme('daylight')}>Daylight</button>
@@ -56,7 +61,7 @@ const ThemeTestComponent = () => {
 describe('Theme System', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.classList.remove('dark', 'daylight');
+    document.documentElement.classList.remove('light', 'dark', 'daylight');
     document.documentElement.removeAttribute('data-theme');
     window.matchMedia = createMatchMediaMock(false);
   });
@@ -66,15 +71,16 @@ describe('Theme System', () => {
   });
 
   describe('ThemeProvider - Default Behavior', () => {
-    it('defaults to dark mode when no preference is stored', () => {
+    it('defaults to system mode and resolves based on prefers-color-scheme', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('theme').textContent).toBe('dark');
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      expect(screen.getByTestId('theme').textContent).toBe('system');
+      // With prefersDark=false mock, system resolves to light
+      expect(screen.getByTestId('resolved').textContent).toBe('light');
     });
 
     it('respects stored theme from localStorage', () => {
@@ -98,7 +104,8 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(document.documentElement.classList.contains('dark')).toBe(true);
+      // System default with prefersDark=false resolves to light
+      expect(document.documentElement.classList.contains('light')).toBe(true);
     });
 
     it('supports forceTheme prop for testing', () => {
@@ -114,19 +121,18 @@ describe('Theme System', () => {
   });
 
   describe('toggleDayNight - Theme Switching', () => {
-    it('toggles from dark to daylight', () => {
+    it('toggles from current theme to daylight', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
       fireEvent.click(screen.getByTestId('toggle'));
       expect(screen.getByTestId('resolved').textContent).toBe('daylight');
     });
 
-    it('toggles from daylight to dark', () => {
+    it('toggles from daylight back to system preference', () => {
       localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
       localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
 
@@ -138,10 +144,11 @@ describe('Theme System', () => {
 
       expect(screen.getByTestId('resolved').textContent).toBe('daylight');
       fireEvent.click(screen.getByTestId('toggle'));
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      // With prefersDark=false, system resolves to light
+      expect(screen.getByTestId('resolved').textContent).toBe('light');
     });
 
-    it('cycles through themes: daylight -> dark', () => {
+    it('cycles through themes: daylight -> system', () => {
       localStorage.setItem('jobproof-daylight-mode', JSON.stringify(true));
       localStorage.setItem('jobproof-theme-mode', JSON.stringify('daylight'));
 
@@ -153,7 +160,8 @@ describe('Theme System', () => {
 
       expect(screen.getByTestId('resolved').textContent).toBe('daylight');
       fireEvent.click(screen.getByTestId('toggle'));
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      // System resolves based on prefers-color-scheme mock
+      expect(['light', 'dark']).toContain(screen.getByTestId('resolved').textContent);
     });
   });
 
@@ -192,9 +200,6 @@ describe('Theme System', () => {
           <ThemeTestComponent />
         </ThemeProvider>
       );
-
-      // Start in dark mode
-      expect(document.documentElement.classList.contains('dark')).toBe(true);
 
       fireEvent.click(screen.getByTestId('set-daylight'));
       expect(document.documentElement.classList.contains('daylight')).toBe(true);
@@ -241,9 +246,6 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      // Start in dark mode
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
-
       fireEvent.click(screen.getByTestId('enable-daylight'));
       expect(screen.getByTestId('resolved').textContent).toBe('daylight');
     });
@@ -264,8 +266,7 @@ describe('Theme System', () => {
   });
 
   describe('System theme mode', () => {
-    it('always returns dark (light mode removed)', () => {
-      // Light mode has been removed - system always returns dark
+    it('returns dark when system prefers dark', () => {
       window.matchMedia = createMatchMediaMock(true);
 
       render(
@@ -278,8 +279,7 @@ describe('Theme System', () => {
       expect(screen.getByTestId('resolved').textContent).toBe('dark');
     });
 
-    it('returns dark even when system prefers light (light mode removed)', () => {
-      // Light mode has been removed due to poor contrast
+    it('returns light when system prefers light', () => {
       window.matchMedia = createMatchMediaMock(false);
 
       render(
@@ -289,7 +289,7 @@ describe('Theme System', () => {
       );
 
       fireEvent.click(screen.getByTestId('set-system'));
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved').textContent).toBe('light');
     });
   });
 
@@ -336,21 +336,22 @@ describe('Theme System', () => {
   // NEW TESTS: Dark Mode and Theme Persistence
   // ============================================
 
-  describe('Dark Mode - Document Class Application', () => {
-    it('applies dark class to documentElement on initial render', () => {
+  describe('Document Class Application', () => {
+    it('applies resolved theme class to documentElement on initial render', () => {
       render(
         <ThemeProvider>
           <ThemeTestComponent />
         </ThemeProvider>
       );
 
-      expect(document.documentElement.classList.contains('dark')).toBe(true);
-      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      const resolved = screen.getByTestId('resolved').textContent;
+      expect(document.documentElement.classList.contains(resolved!)).toBe(true);
+      expect(document.documentElement.getAttribute('data-theme')).toBe(resolved);
     });
 
     it('removes all theme classes before applying new theme', () => {
-      // Start with both classes applied (simulating corrupted state)
-      document.documentElement.classList.add('dark', 'daylight');
+      // Start with multiple classes applied (simulating corrupted state)
+      document.documentElement.classList.add('light', 'dark', 'daylight');
 
       render(
         <ThemeProvider>
@@ -358,9 +359,13 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      // Should only have dark class, daylight should be removed
-      expect(document.documentElement.classList.contains('dark')).toBe(true);
-      expect(document.documentElement.classList.contains('daylight')).toBe(false);
+      const resolved = screen.getByTestId('resolved').textContent!;
+      // Should only have the resolved theme class
+      expect(document.documentElement.classList.contains(resolved)).toBe(true);
+      const otherThemes = ['light', 'dark', 'daylight'].filter(t => t !== resolved);
+      otherThemes.forEach(t => {
+        expect(document.documentElement.classList.contains(t)).toBe(false);
+      });
     });
 
     it('sets data-theme attribute matching resolved theme', () => {
@@ -370,10 +375,11 @@ describe('Theme System', () => {
         </ThemeProvider>
       );
 
-      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-
       fireEvent.click(screen.getByTestId('set-daylight'));
       expect(document.documentElement.getAttribute('data-theme')).toBe('daylight');
+
+      fireEvent.click(screen.getByTestId('set-dark'));
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
   });
 
@@ -443,8 +449,7 @@ describe('Theme System', () => {
   });
 
   describe('System Theme Mode - Prefers Color Scheme', () => {
-    it('system mode always returns dark (light mode removed for poor contrast)', () => {
-      // Even when system prefers light, we return dark
+    it('system mode resolves to light when system prefers light', () => {
       window.matchMedia = createMatchMediaMock(false); // prefers-light
 
       render(
@@ -454,7 +459,7 @@ describe('Theme System', () => {
       );
 
       fireEvent.click(screen.getByTestId('set-system'));
-      expect(screen.getByTestId('resolved').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved').textContent).toBe('light');
     });
 
     it('registers listener for prefers-color-scheme changes in system mode', () => {

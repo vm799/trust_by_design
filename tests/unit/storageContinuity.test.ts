@@ -206,6 +206,55 @@ describe('Storage Continuity - Offline sync handlers', () => {
   it('processCreateTechnician should upsert to technicians table', () => {
     expect(syncContent).toMatch(/\.from\('technicians'\)\s*\n?\s*\.upsert\(/);
   });
+
+  it('pushQueue should escalate items to failed sync queue after max retries', () => {
+    expect(syncContent).toContain('DEXIE_QUEUE_MAX_RETRIES');
+    expect(syncContent).toContain('jobproof_failed_sync_queue');
+    expect(syncContent).toContain('escalated to failed sync queue');
+  });
+
+  it('pushQueue should notify user when items are escalated', () => {
+    expect(syncContent).toContain('showPersistentNotification');
+  });
+
+  it('pushQueue should handle SEAL_JOB action', () => {
+    expect(syncContent).toMatch(/case 'SEAL_JOB'/);
+    expect(syncContent).toContain('processSealJob');
+  });
+
+  it('processSealJob should call sealEvidence and update job on success', () => {
+    expect(syncContent).toContain('async function processSealJob');
+    expect(syncContent).toContain('sealEvidence');
+    // Verify it checks if already sealed
+    expect(syncContent).toContain('Already sealed');
+  });
+
+  it('auto-seal failure should queue SEAL_JOB for retry', () => {
+    // processUploadPhoto should queue SEAL_JOB when sealing fails
+    // Both the success and failure paths should queue the action
+    expect(syncContent).toContain("queueAction('SEAL_JOB'");
+  });
+});
+
+describe('Storage Continuity - debouncedSync escalation', () => {
+  const debouncedContent = readFile('lib/debouncedSync.ts');
+
+  it('processOfflineQueue should have max retry limit', () => {
+    expect(debouncedContent).toContain('DEBOUNCED_QUEUE_MAX_RETRIES');
+  });
+
+  it('processOfflineQueue should escalate items to failed sync queue after max retries', () => {
+    expect(debouncedContent).toContain('jobproof_failed_sync_queue');
+  });
+
+  it('processOfflineQueue should track retryCount on each item', () => {
+    expect(debouncedContent).toContain('retryCount');
+  });
+
+  it('processOfflineQueue should check isSupabaseAvailable before processing', () => {
+    const funcBody = debouncedContent.split('processOfflineQueue')[1]?.slice(0, 200) || '';
+    expect(funcBody).toContain('isSupabaseAvailable()');
+  });
 });
 
 describe('Storage Continuity - OfflineAction type supports all action types', () => {

@@ -249,18 +249,18 @@ const AuthCallback: React.FC = () => {
     const hasJobIntent = storedIntent?.jobId;
 
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 transition-colors">
         <div className="w-full max-w-md space-y-6 text-center">
           <div className="bg-danger/10 size-20 rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-danger text-4xl">error</span>
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
               Sign In Failed
             </h1>
-            <p className="text-slate-400 text-sm">{error}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{error}</p>
             {hasJobIntent && (
-              <p className="text-slate-400 text-xs mt-2">
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-2">
                 You were trying to access Job #{storedIntent.jobId}
               </p>
             )}
@@ -268,13 +268,13 @@ const AuthCallback: React.FC = () => {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/auth', { replace: true })}
-              className="w-full min-h-[44px] py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+              className="w-full min-h-[44px] py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all"
             >
               {hasJobIntent ? 'Resend Link' : 'Try Again'}
             </button>
             <button
               onClick={() => navigate('/home', { replace: true })}
-              className="w-full min-h-[44px] py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all"
+              className="w-full min-h-[44px] py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all"
             >
               Back to Home
             </button>
@@ -285,14 +285,14 @@ const AuthCallback: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 transition-colors">
       <div className="text-center space-y-6">
         <div className="size-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
         <div className="space-y-2">
-          <h1 className="text-xl font-black text-white uppercase tracking-tight">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
             Signing You In
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             Verifying your credentials...
           </p>
         </div>

@@ -29,8 +29,8 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       className={`
         group relative p-8 rounded-3xl border-2 transition-all text-left
         ${disabled
-          ? 'bg-slate-800 border-slate-600 opacity-50 cursor-not-allowed'
-          : 'bg-slate-900 border-slate-600 hover:border-primary hover:bg-slate-800 cursor-pointer active:scale-95'
+          ? 'bg-gray-100 dark:bg-slate-800 border-slate-200 dark:border-slate-600 opacity-50 cursor-not-allowed'
+          : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-600 hover:border-primary hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer active:scale-95'
         }
       `}
     >
@@ -42,30 +42,30 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       </div>
 
       {/* Title */}
-      <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
+      <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">
         Site Supervisor
       </h3>
 
       {/* Subtitle */}
-      <p className="text-slate-400 text-sm mb-4">
+      <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
         Coordinate crews, track materials, ensure safety compliance
       </p>
 
       {/* Key Features */}
       <ul className="space-y-2 mb-6">
-        <li className="flex items-center gap-2 text-slate-300 text-xs">
+        <li className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs">
           <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Daily crew assignment
         </li>
-        <li className="flex items-center gap-2 text-slate-300 text-xs">
+        <li className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs">
           <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Material tracking & deliveries
         </li>
-        <li className="flex items-center gap-2 text-slate-300 text-xs">
+        <li className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs">
           <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           Safety rounds & inspections
         </li>
-        <li className="flex items-center gap-2 text-slate-300 text-xs">
+        <li className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs">
           <span className="material-symbols-outlined text-safety-orange text-sm">check_circle</span>
           End-of-day reporting
         </li>
@@ -74,7 +74,7 @@ const SiteSupervisorCard: React.FC<Props> = ({ onSelect, disabled = false }) => 
       {/* Use Case */}
       <div className="bg-safety-orange/5 rounded-xl p-3 border border-safety-orange/10">
         <p className="text-orange-400 text-xs font-bold mb-1">Perfect for:</p>
-        <p className="text-slate-400 text-xs">
+        <p className="text-slate-500 dark:text-slate-400 text-xs">
           Site managers coordinating 5-20 technicians across multiple jobs daily
         </p>
       </div>

@@ -83,6 +83,10 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
     return filtered;
   }, [jobs, clients, filter, searchTerm]);
 
+  // Memoized lookup maps to avoid .find() in render loop
+  const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.name])), [clients]);
+  const techMap = useMemo(() => new Map(technicians.map(t => [t.id, t.name])), [technicians]);
+
   const getJobStatus = (job: Job) => {
     const dueDate = new Date(job.date);
     const now = new Date();
@@ -167,7 +171,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
 
         {/* Search */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">
             search
           </span>
           <input
@@ -216,8 +220,8 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
           >
             {displayJobs.map((job, index) => {
               const statusColor = getStatusColor(job);
-              const clientName = clients.find(c => c.id === job.clientId)?.name || 'Unknown Client';
-              const techName = technicians.find(t => t.id === job.technicianId)?.name || 'Unassigned';
+              const clientName = clientMap.get(job.clientId) || 'Unknown Client';
+              const techName = techMap.get(job.technicianId) || 'Unassigned';
 
               return (
                 <motion.button
@@ -268,7 +272,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                   </div>
 
                     {/* Arrow */}
-                    <span className="material-symbols-outlined flex-shrink-0 text-slate-400 group-hover:translate-x-1 transition-transform">
+                    <span className="material-symbols-outlined flex-shrink-0 text-slate-500 dark:text-slate-400 group-hover:translate-x-1 transition-transform">
                       chevron_right
                     </span>
                   </div>

@@ -169,8 +169,8 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
         relative overflow-hidden
         min-h-[72px]
         rounded-2xl
-        bg-slate-900/80 backdrop-blur-xl
-        border border-white/10
+        bg-slate-50 dark:bg-slate-900/80 backdrop-blur-xl
+        border border-slate-200 dark:border-white/10
         border-l-4 ${config.border}
         shadow-lg shadow-black/20
         ${className}
@@ -206,13 +206,13 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
         <div className="flex-1 min-w-0">
           <h3
             id={`tile-title-${title.replace(/\s+/g, '-').toLowerCase()}`}
-            className="font-bold text-white truncate text-base leading-tight"
+            className="font-bold text-slate-900 dark:text-white truncate text-base leading-tight"
           >
             {title}
           </h3>
 
           {subtitle && (
-            <p className="text-sm text-slate-400 truncate mt-0.5">
+            <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
               {subtitle}
             </p>
           )}
@@ -223,10 +223,10 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
               {metadata.map((item) => (
                 <span
                   key={item.label}
-                  className="text-xs text-slate-400"
+                  className="text-xs text-slate-500 dark:text-slate-400"
                 >
-                  <span className="text-slate-600">{item.label}:</span>{' '}
-                  <span className="text-slate-300 font-medium">{item.value}</span>
+                  <span className="text-slate-500 dark:text-slate-600">{item.label}:</span>{' '}
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">{item.value}</span>
                 </span>
               ))}
             </div>
@@ -254,7 +254,7 @@ const GlassActionTile: React.FC<GlassActionTileProps> = ({
               ${config.actionBg} ${config.actionHover} ${config.actionText}
               transition-colors duration-150
               shadow-md shadow-black/20
-              focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-slate-900
+              focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900
             `}
             aria-label={`${actionLabel} for ${title}`}
           >

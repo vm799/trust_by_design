@@ -304,7 +304,7 @@ const OAuthSetup: React.FC = () => {
 
   // Render current step
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-0 -left-20 size-96 bg-emerald-500/20 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 -right-20 size-96 bg-primary/20 blur-[120px] rounded-full" />
@@ -327,7 +327,7 @@ const OAuthSetup: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: i * 0.1 }}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                isCurrent ? 'w-8 bg-primary' : isActive ? 'w-4 bg-primary/50' : 'w-4 bg-white/10'
+                isCurrent ? 'w-8 bg-primary' : isActive ? 'w-4 bg-primary/50' : 'w-4 bg-slate-100/70 dark:bg-white/10'
               }`}
             />
           );
@@ -352,19 +352,19 @@ const OAuthSetup: React.FC = () => {
                 transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
                 className="inline-flex items-center justify-center size-20 bg-gradient-to-br from-emerald-500/30 to-primary/30 rounded-3xl mb-2"
               >
-                <span className="material-symbols-outlined text-white text-4xl">waving_hand</span>
+                <span className="material-symbols-outlined text-slate-900 dark:text-white text-4xl">waving_hand</span>
               </motion.div>
               <div className="space-y-2">
-                <h1 className="text-3xl font-black text-white tracking-tight">
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   Hey there! 👋
                 </h1>
-                <p className="text-slate-400 text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-base">
                   Let&apos;s get you set up in 30 seconds
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleNameSubmit} className="bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl space-y-5">
+            <form onSubmit={handleNameSubmit} className="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-3xl space-y-5">
               {error && (
                 <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-danger text-sm">error</span>
@@ -373,12 +373,12 @@ const OAuthSetup: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="oauth-full-name" className="text-sm font-bold text-slate-300">What should we call you?</label>
+                <label htmlFor="oauth-full-name" className="text-sm font-bold text-slate-700 dark:text-slate-300">What should we call you?</label>
                 <input
                   id="oauth-full-name"
                   type="text"
                   placeholder="Your name"
-                  className="w-full bg-slate-800 border border-white/10 rounded-2xl py-4 px-5 text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl py-4 px-5 text-slate-900 dark:text-white text-lg placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                 />
@@ -408,10 +408,10 @@ const OAuthSetup: React.FC = () => {
             className="w-full max-w-lg space-y-6 relative z-10"
           >
             <div className="text-center space-y-2">
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Nice to meet you, {firstName}! 🎉
               </h1>
-              <p className="text-slate-400">
+              <p className="text-slate-500 dark:text-slate-400">
                 How do you work?
               </p>
             </div>
@@ -438,10 +438,10 @@ const OAuthSetup: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-black text-white">Solo Contractor</h3>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">Solo Contractor</h3>
                       <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase rounded-full">Popular</span>
                     </div>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                       I do my own jobs and need proof of work for clients
                     </p>
                     <div className="flex items-center gap-3 mt-3 text-xs text-emerald-400">
@@ -476,8 +476,8 @@ const OAuthSetup: React.FC = () => {
                     <span className="material-symbols-outlined text-primary text-3xl">groups</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-black text-white mb-1">Team Manager</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">Team Manager</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                       I manage technicians and need to track their work
                     </p>
                     <div className="flex items-center gap-3 mt-3 text-xs text-primary">
@@ -500,7 +500,7 @@ const OAuthSetup: React.FC = () => {
 
             <button
               onClick={() => setStep('name')}
-              className="w-full text-center text-slate-400 hover:text-white text-sm py-2 transition-colors"
+              className="w-full text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm py-2 transition-colors"
             >
               ← Back
             </button>

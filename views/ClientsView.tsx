@@ -27,50 +27,50 @@ const ClientsSkeleton = React.memo(() => (
     {/* Header skeleton */}
     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
       <div className="space-y-2">
-        <div className="h-8 w-48 bg-slate-800 rounded animate-pulse" />
-        <div className="h-3 w-64 bg-slate-800 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-gray-100 dark:bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-64 bg-gray-100 dark:bg-slate-800 rounded animate-pulse" />
       </div>
-      <div className="h-11 w-36 bg-slate-800 rounded-xl animate-pulse" />
+      <div className="h-11 w-36 bg-gray-100 dark:bg-slate-800 rounded-xl animate-pulse" />
     </div>
     {/* Search skeleton */}
-    <div className="h-11 w-full bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
+    <div className="h-11 w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
     {/* Card grid skeleton */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={`skeleton-client-${i}`}
-          className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 animate-pulse"
+          className="bg-gradient-to-br from-slate-50 dark:from-slate-900 to-white dark:to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 animate-pulse"
         >
           {/* ID Badge and Job Count */}
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <div className="h-2 w-14 bg-slate-800 rounded" />
-              <div className="h-3 w-16 bg-slate-800 rounded" />
+              <div className="h-2 w-14 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-3 w-16 bg-gray-100 dark:bg-slate-800 rounded" />
             </div>
             <div className="text-right space-y-1">
-              <div className="h-2 w-16 bg-slate-800 rounded" />
-              <div className="h-5 w-8 bg-slate-800 rounded ml-auto" />
+              <div className="h-2 w-16 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-gray-100 dark:bg-slate-800 rounded ml-auto" />
             </div>
           </div>
           {/* Organization Name */}
           <div className="space-y-2">
-            <div className="h-4 w-2/3 bg-slate-800 rounded" />
-            <div className="h-3 w-3/4 bg-slate-800 rounded" />
+            <div className="h-4 w-2/3 bg-gray-100 dark:bg-slate-800 rounded" />
+            <div className="h-3 w-3/4 bg-gray-100 dark:bg-slate-800 rounded" />
           </div>
           {/* Location placeholder */}
-          <div className="bg-white/10 rounded-2xl p-3 border border-white/15">
+          <div className="bg-slate-100/70 dark:bg-white/10 rounded-2xl p-3 border border-slate-200 dark:border-white/15">
             <div className="flex items-start gap-2">
-              <div className="size-3 bg-slate-800 rounded-full shrink-0 mt-0.5" />
+              <div className="size-3 bg-gray-100 dark:bg-slate-800 rounded-full shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
-                <div className="h-3 w-full bg-slate-800 rounded" />
-                <div className="h-3 w-2/3 bg-slate-800 rounded" />
+                <div className="h-3 w-full bg-gray-100 dark:bg-slate-800 rounded" />
+                <div className="h-3 w-2/3 bg-gray-100 dark:bg-slate-800 rounded" />
               </div>
             </div>
           </div>
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
-            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
           </div>
         </div>
       ))}
@@ -101,31 +101,31 @@ const ClientCard = React.memo(({
   return (
     <div
       {...handlers}
-      className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 hover:border-primary/40 transition-all group shadow-lg shadow-primary/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
+      className={`bg-gradient-to-br from-slate-50 dark:from-slate-900 to-white dark:to-slate-950 border-2 border-primary/20 p-6 rounded-3xl space-y-4 hover:border-primary/40 transition-all group shadow-lg shadow-primary/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
     >
       {/* ID Badge and Job Count */}
       <div className="flex justify-between items-start">
         <div className="space-y-1 flex-1">
           <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] font-mono">Client ID</p>
-          <p className="text-xs font-black text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
+          <p className="text-xs font-black text-slate-900 dark:text-white font-mono">{client.id.toUpperCase().substring(0, 8)}</p>
         </div>
         <div className="text-right">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Jobs</p>
+          <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Jobs</p>
           <p className="text-xl font-black text-primary">{client.totalJobs || 0}</p>
         </div>
       </div>
 
       {/* Organization Name */}
       <div>
-        <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-primary transition-colors">{client.name}</h3>
+        <h3 className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-tight group-hover:text-primary transition-colors">{client.name}</h3>
         <p className="text-[10px] text-primary/80 font-mono">{client.email}</p>
       </div>
 
       {/* Location and Details */}
-      <div className="bg-white/10 rounded-2xl p-3 space-y-1 border border-white/15">
+      <div className="bg-slate-100/70 dark:bg-white/10 rounded-2xl p-3 space-y-1 border border-slate-200 dark:border-white/15">
         <div className="flex items-start gap-2">
-          <span className="material-symbols-outlined text-xs text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
-          <p className="text-xs text-slate-300 leading-relaxed">{client.address}</p>
+          <span className="material-symbols-outlined text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 mt-0.5">location_on</span>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{client.address}</p>
         </div>
       </div>
 
@@ -233,11 +233,11 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             <span className="material-symbols-outlined text-danger flex-shrink-0">error</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-danger">Failed to delete client</p>
-              <p className="text-xs text-slate-300 mt-1">{deleteError}</p>
+              <p className="text-xs text-slate-700 dark:text-slate-300 mt-1">{deleteError}</p>
             </div>
             <button
               onClick={() => setDeleteError(null)}
-              className="text-slate-400 hover:text-white transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Dismiss error"
             >
               <span className="material-symbols-outlined">close</span>
@@ -247,8 +247,8 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Client Registry</h2>
-            <p className="text-slate-400 text-sm">Manage customer records and service locations.</p>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Client Registry</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Manage customer records and service locations.</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
@@ -261,19 +261,19 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         {/* Search bar */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg">search</span>
           <input
             type="text"
             placeholder="Search by name, email, or location..."
             aria-label="Search clients"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-400"
+            className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-slate-900 dark:text-white outline-none transition-colors placeholder:text-slate-500 dark:placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Clear search"
             >
               <span className="material-symbols-outlined text-sm">close</span>
@@ -282,17 +282,17 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
         </div>
 
         {showAdd && (
-          <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
-            <input required placeholder="Client Name" aria-label="Client Name" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
-            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
+          <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
+            <input required placeholder="Client Name" aria-label="Client Name" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
             <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
           </form>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClients.length === 0 ? (
-            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/15 rounded-3xl text-center opacity-40">
+            <div className="col-span-full py-20 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-white/15 rounded-3xl text-center opacity-40">
               <span className="material-symbols-outlined text-5xl mb-2 font-black">person_add</span>
               <p className="font-black uppercase tracking-widest text-[10px]">
                 {searchQuery ? 'No clients match your search.' : 'Registry is empty.'}
@@ -318,7 +318,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             onClick={() => setConfirmDeleteId(null)}
           >
             <div
-              className="bg-slate-800 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
+              className="bg-gray-100 dark:bg-slate-800 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">
@@ -326,17 +326,17 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                   <span className="material-symbols-outlined text-red-400 text-2xl">warning</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">Confirm Delete</h3>
-                  <p className="text-sm text-slate-400">This action cannot be undone.</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white">Confirm Delete</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">This action cannot be undone.</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-300">
-                Are you sure you want to delete client <strong className="text-white">{clients.find(c => c.id === confirmDeleteId)?.name}</strong>?
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Are you sure you want to delete client <strong className="text-slate-900 dark:text-white">{clients.find(c => c.id === confirmDeleteId)?.name}</strong>?
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDeleteId(null)}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
+                  className="flex-1 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>

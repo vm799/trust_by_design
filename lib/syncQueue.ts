@@ -151,15 +151,19 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
     }
 
     // 2. Upload signature from IndexedDB to Supabase Storage
+    // FAILSAFE: Throw on failure like photos do. Previously failed silently,
+    // saving an invalid IndexedDB key as signature_url in Supabase.
     let signatureUrl = job.signature;
     if (job.signature && job.signatureIsIndexedDBRef) {
       const sigData = await getMedia(job.signature);
-      if (sigData) {
-        const publicUrl = await uploadSignature(job.id, sigData);
-        if (publicUrl) {
-          signatureUrl = publicUrl;
-        }
+      if (!sigData) {
+        throw new Error(`Signature data not found in IndexedDB for job ${job.id}`);
       }
+      const publicUrl = await uploadSignature(job.id, sigData);
+      if (!publicUrl) {
+        throw new Error(`Signature upload failed for job ${job.id}`);
+      }
+      signatureUrl = publicUrl;
     }
 
     // 3. Upsert job to database
@@ -413,12 +417,16 @@ export const getSyncQueueStatus = (): { pending: number; failed: number } => {
  * Iterates through jobproof_failed_sync_queue and retries each item.
  * Successful items are removed; failed items stay for manual retry.
  *
- * Uses its own concurrency guard to prevent double-processing.
+ * SHARED GUARD: Uses _failedRetryInProgress to prevent concurrent access
+ * from both autoRetryFailedQueue() and retryFailedSyncItem(). Without this,
+ * a user tapping "Retry All" while auto-retry is running could double-process
+ * the same items, corrupt the queue, or cause double API calls.
  */
 let _failedRetryInProgress = false;
 export const autoRetryFailedQueue = async (): Promise<void> => {
   if (_failedRetryInProgress) return;
   if (!navigator.onLine) return;
+  if (!isSupabaseAvailable()) return;
 
   const failedItems = getFailedSyncQueue();
   if (failedItems.length === 0) return;
@@ -500,46 +508,57 @@ export const getFailedSyncQueue = (): SyncQueueItem[] => {
 /**
  * Retry a specific failed sync item
  *
+ * RACE PROTECTION: Shares _failedRetryInProgress guard with autoRetryFailedQueue.
+ * If auto-retry is running when user taps "Retry", this returns false immediately
+ * rather than double-processing. The auto-retry will handle the item.
+ *
  * @param itemId - The ID of the failed sync item to retry
  * @returns Promise<boolean> - True if retry was successful
  */
 export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
-  const failedQueue = getFailedSyncQueue();
-  const item = failedQueue.find(i => i.id === itemId);
+  if (_failedRetryInProgress) return false;
 
-  if (!item) {
-    console.error(`Failed sync item ${itemId} not found`);
-    return false;
-  }
+  _failedRetryInProgress = true;
+  try {
+    const failedQueue = getFailedSyncQueue();
+    const item = failedQueue.find(i => i.id === itemId);
 
-  // Attempt sync
-  let success = false;
-  if (item.type === 'job') {
-    success = await syncJobToSupabase(item.data);
-  }
+    if (!item) {
+      return false;
+    }
 
-  if (success) {
-    // Remove from failed queue
-    const updatedQueue = failedQueue.filter(i => i.id !== itemId);
-    localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(updatedQueue));
+    // Attempt sync
+    let success = false;
+    if (item.type === 'job') {
+      success = await syncJobToSupabase(item.data);
+    }
 
-    showPersistentNotification({
-      type: 'success',
-      title: 'Sync Recovered',
-      message: `Job ${itemId} has been successfully synced to cloud.`,
-      persistent: false
-    });
+    if (success) {
+      // Re-read queue (may have changed) and remove item
+      const currentQueue = getFailedSyncQueue();
+      const updatedQueue = currentQueue.filter(i => i.id !== itemId);
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(updatedQueue));
 
-    return true;
-  } else {
-    showPersistentNotification({
-      type: 'error',
-      title: 'Retry Failed',
-      message: `Failed to sync job ${itemId}. Please try again later or contact support.`,
-      persistent: false
-    });
+      showPersistentNotification({
+        type: 'success',
+        title: 'Sync Recovered',
+        message: `Job ${itemId} has been successfully synced to cloud.`,
+        persistent: false
+      });
 
-    return false;
+      return true;
+    } else {
+      showPersistentNotification({
+        type: 'error',
+        title: 'Retry Failed',
+        message: `Failed to sync job ${itemId}. Please try again later or contact support.`,
+        persistent: false
+      });
+
+      return false;
+    }
+  } finally {
+    _failedRetryInProgress = false;
   }
 };
 

@@ -61,7 +61,7 @@ const GPS_ACCURACY = {
  * Get accuracy color based on GPS accuracy
  */
 function getAccuracyColor(accuracy: number | undefined): string {
-  if (!accuracy) return 'text-slate-400';
+  if (!accuracy) return 'text-slate-500 dark:text-slate-400';
   if (accuracy <= GPS_ACCURACY.HIGH) return 'text-emerald-400';
   if (accuracy <= GPS_ACCURACY.MEDIUM) return 'text-amber-400';
   return 'text-red-400';
@@ -133,13 +133,13 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
     <motion.div
       initial={fadeInDownSmall.initial}
       animate={fadeInDownSmall.animate}
-      className={`bg-slate-950/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden ${className}`}
+      className={`bg-white dark:bg-slate-950/90 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden ${className}`}
     >
       {/* HUD Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white/10 border-b border-white/10">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-100/70 dark:bg-white/10 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-sm text-primary">verified_user</span>
-          <span className="text-xs font-bold text-white uppercase tracking-wider">Evidence Capture</span>
+          <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Evidence Capture</span>
         </div>
 
         {/* Bunker Mode Badge */}
@@ -168,9 +168,9 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
       <div className="p-3 space-y-2 font-mono text-xs">
         {/* Timestamp Row */}
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm text-slate-400">schedule</span>
-          <span className="text-slate-300">{formattedTime}</span>
-          <span className="text-slate-400">UTC</span>
+          <span className="material-symbols-outlined text-sm text-slate-500 dark:text-slate-400">schedule</span>
+          <span className="text-slate-700 dark:text-slate-300">{formattedTime}</span>
+          <span className="text-slate-500 dark:text-slate-400">UTC</span>
         </div>
 
         {/* GPS Row */}
@@ -186,7 +186,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
             <span className="text-amber-400">Acquiring GPS signal...</span>
           ) : location ? (
             <div className="flex items-center gap-2">
-              <span className="text-slate-300">
+              <span className="text-slate-700 dark:text-slate-300">
                 {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
               </span>
               {location.accuracy && (
@@ -211,7 +211,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
           <span className={`material-symbols-outlined text-sm ${
             displayW3W
               ? w3wVerified ? 'text-emerald-400' : 'text-amber-400'
-              : 'text-slate-400'
+              : 'text-slate-500 dark:text-slate-400'
           }`}>
             grid_3x3
           </span>
@@ -219,7 +219,7 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
           {displayW3W ? (
             <div className="flex items-center gap-2">
               <span className="text-cyan-400">{'///'}</span>
-              <span className="text-slate-300">{displayW3W}</span>
+              <span className="text-slate-700 dark:text-slate-300">{displayW3W}</span>
               {w3wVerified ? (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400">
                   Verified
@@ -231,21 +231,21 @@ const MetadataHUD: React.FC<MetadataHUDProps> = ({
               )}
             </div>
           ) : (
-            <span className="text-slate-400">W3W pending...</span>
+            <span className="text-slate-500 dark:text-slate-400">W3W pending...</span>
           )}
         </div>
 
         {/* Device ID Row (if provided) */}
         {deviceId && (
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-slate-400">smartphone</span>
-            <span className="text-slate-400 truncate">{deviceId}</span>
+            <span className="material-symbols-outlined text-sm text-slate-500 dark:text-slate-400">smartphone</span>
+            <span className="text-slate-500 dark:text-slate-400 truncate">{deviceId}</span>
           </div>
         )}
       </div>
 
       {/* Sync Status Footer */}
-      <div className={`px-3 py-2 border-t border-white/10 flex items-center gap-2 ${
+      <div className={`px-3 py-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2 ${
         isOffline ? 'bg-amber-500/10' : 'bg-emerald-500/10'
       }`}>
         <span className={`material-symbols-outlined text-sm ${

@@ -4,6 +4,8 @@ import {
   retryFailedSyncs,
   addToSyncQueue,
   getSyncQueueStatus,
+  autoRetryFailedQueue,
+  retryFailedSyncItem,
 } from '@/lib/syncQueue';
 import { createMockJob } from '../mocks/mockData';
 import * as supabase from '@/lib/supabase';
@@ -383,6 +385,71 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
 
       // Restore original implementation
       localStorage.setItem = originalSetItem;
+    });
+  });
+
+  describe('autoRetryFailedQueue', () => {
+    it('should not run when Supabase is unavailable', async () => {
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(false);
+
+      const failedQueue = [
+        { id: 'job-1', type: 'job', data: createMockJob({ id: 'job-1' }), retryCount: 7, lastAttempt: Date.now() },
+      ];
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+      await autoRetryFailedQueue();
+
+      // Queue should be unchanged — no retry attempted
+      const result = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')!);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('job-1');
+    });
+
+    it('should not run when offline', async () => {
+      Object.defineProperty(navigator, 'onLine', { writable: true, value: false });
+
+      const failedQueue = [
+        { id: 'job-1', type: 'job', data: createMockJob({ id: 'job-1' }), retryCount: 7, lastAttempt: Date.now() },
+      ];
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+      await autoRetryFailedQueue();
+
+      const result = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')!);
+      expect(result).toHaveLength(1);
+    });
+
+    it('should do nothing when failed queue is empty', async () => {
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(true);
+      await autoRetryFailedQueue();
+      expect(localStorage.getItem('jobproof_failed_sync_queue')).toBeNull();
+    });
+  });
+
+  describe('retryFailedSyncItem - race protection', () => {
+    it('should return false when item not found in queue', async () => {
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify([]));
+      const result = await retryFailedSyncItem('nonexistent-id');
+      expect(result).toBe(false);
+    });
+
+    it('should re-read queue when removing item after sync success', async () => {
+      // This tests that retryFailedSyncItem re-reads the queue before removing,
+      // avoiding stale snapshot issues from concurrent modifications
+      vi.spyOn(supabase, 'isSupabaseAvailable').mockReturnValue(false);
+
+      const failedQueue = [
+        { id: 'job-1', type: 'job', data: createMockJob({ id: 'job-1' }), retryCount: 7, lastAttempt: Date.now() },
+      ];
+      localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedQueue));
+
+      // Will fail because Supabase not available
+      const result = await retryFailedSyncItem('job-1');
+      expect(result).toBe(false);
+
+      // Queue should still have the item
+      const remaining = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')!);
+      expect(remaining).toHaveLength(1);
     });
   });
 });

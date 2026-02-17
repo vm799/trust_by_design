@@ -79,7 +79,7 @@ const StatusRing: React.FC<StatusRingProps> = React.memo(({
           r={RADIUS}
           fill="none"
           strokeWidth={STROKE_WIDTH}
-          className="stroke-slate-800"
+          className="stroke-slate-200 dark:stroke-slate-800"
         />
         {/* Progress arc */}
         <circle

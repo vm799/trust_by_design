@@ -40,7 +40,7 @@ const NavItemLink = memo<{ item: NavItem; active: boolean }>(({ item, active }) 
       rounded-xl transition-colors
       ${active
         ? 'text-primary bg-primary/10'
-        : 'text-slate-400 hover:text-slate-300'
+        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
       }
     `}
   >
@@ -76,7 +76,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ className = '' }) => {
       aria-label="Main navigation"
       className={`
         fixed bottom-0 left-0 right-0 z-40
-        bg-slate-950/95 backdrop-blur-xl border-t border-white/10
+        bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10
         pb-safe
         ${className}
       `}

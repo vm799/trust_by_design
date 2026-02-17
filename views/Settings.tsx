@@ -23,7 +23,7 @@ interface SubscriptionStatus {
 const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
+  const { theme, setTheme, resolvedTheme, isDaylightMode, toggleDayNight, daylightAuto, setDaylightAuto } = useTheme();
   const [wsName, setWsName] = useState(user.workspaceName);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -141,25 +141,25 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
     <Layout user={user}>
       <div className="max-w-5xl mx-auto space-y-12 pb-24">
         <div className="flex flex-col gap-1">
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase leading-none">Settings</h2>
-          <p className="text-slate-400 text-sm sm:text-base">Manage organizational parameters, user roles, and operational protocols.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Settings</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Manage organizational parameters, user roles, and operational protocols.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
           <div className="lg:col-span-2 space-y-8 sm:space-y-12">
             {/* Organisation Profile */}
-            <section id="nav-settings" className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
-               <div className="p-6 sm:p-8 border-b border-slate-800 flex justify-between items-center bg-white/[0.02]">
-                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Organisation Profile</h3>
+            <section id="nav-settings" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl transition-colors">
+               <div className="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                  <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider">Organisation Profile</h3>
                   <button onClick={saveWorkspace} className="text-primary text-xs font-semibold tracking-widest hover:underline transition-all">Save</button>
                </div>
                <div className="p-6 sm:p-10 space-y-8">
                   <div className="space-y-2">
-                    <label htmlFor="settings-workspace-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Workspace Name</label>
+                    <label htmlFor="settings-workspace-name" className="text-[10px] font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Workspace Name</label>
                     <input
                       id="settings-workspace-name"
                       type="text"
-                      className="w-full bg-slate-800 border-slate-600 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
+                      className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all text-sm sm:text-base"
                       value={wsName}
                       onChange={e => setWsName(e.target.value)}
                       placeholder="Enter workspace name"
@@ -169,19 +169,19 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </section>
 
             {/* Users & Roles */}
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
-               <div className="p-6 sm:p-8 border-b border-slate-800 bg-white/[0.02]">
-                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Users & Roles</h3>
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl transition-colors">
+               <div className="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider">Users & Roles</h3>
                </div>
                <div className="p-6 sm:p-10 space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="size-10 bg-primary rounded-xl flex items-center justify-center font-black text-sm sm:text-base">
+                        <div className="size-10 bg-primary rounded-xl flex items-center justify-center font-bold text-sm sm:text-base">
                           {user?.name?.[0] || user?.email?.[0] || 'A'}
                         </div>
                         <div>
-                           <p className="text-sm font-bold text-white">{user?.name || user?.email || 'Admin User'}</p>
-                           <p className="text-[10px] text-slate-300 uppercase font-black">Admin</p>
+                           <p className="text-sm font-bold text-slate-900 dark:text-white">{user?.name || user?.email || 'Admin User'}</p>
+                           <p className="text-[10px] text-slate-500 dark:text-slate-300 uppercase font-semibold">Admin</p>
                         </div>
                      </div>
                      <span className="text-[10px] font-black text-success uppercase">Active</span>
@@ -197,13 +197,13 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </section>
 
             {/* Billing & Subscription */}
-            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
-               <div className="p-6 sm:p-8 border-b border-slate-800 bg-white/[0.02]">
-                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Billing & Subscription</h3>
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl transition-colors">
+               <div className="p-6 sm:p-8 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider">Billing & Subscription</h3>
                </div>
                <div className="p-6 sm:p-10 space-y-6">
                   {/* Current Plan */}
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className={`size-10 rounded-xl flex items-center justify-center font-black text-sm ${
                           subscription?.tier === 'agency' ? 'bg-amber-500' :
@@ -215,10 +215,10 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                           </span>
                         </div>
                         <div>
-                           <p className="text-sm font-bold text-white capitalize">
+                           <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">
                              {subscription?.tier || 'Solo'} Plan
                            </p>
-                           <p className="text-[10px] text-slate-300 uppercase font-black">
+                           <p className="text-[10px] text-slate-500 dark:text-slate-300 uppercase font-semibold">
                              {subscription?.status === 'trialing' ? (
                                <>
                                  Trial ends {subscription.trialEnd
@@ -248,8 +248,8 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-start gap-3">
                       <span className="material-symbols-outlined text-primary">schedule</span>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-white">Trial ending soon</p>
-                        <p className="text-xs text-slate-300 mt-1">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">Trial ending soon</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                           Add a payment method before {new Date(subscription.trialEnd).toLocaleDateString('en-GB', {
                             day: 'numeric', month: 'long', year: 'numeric'
                           })} to keep your plan features.
@@ -263,8 +263,8 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl flex items-start gap-3">
                       <span className="material-symbols-outlined text-warning">pause_circle</span>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-white">Subscription paused</p>
-                        <p className="text-xs text-slate-300 mt-1">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">Subscription paused</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                           Your trial has ended. Add a payment method to resume your subscription and access all features.
                         </p>
                       </div>
@@ -302,7 +302,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                     )}
                     <button
                       onClick={() => navigate('/pricing')}
-                      className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold tracking-widest transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-base">compare</span>
                       Compare Plans
@@ -312,9 +312,9 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </section>
 
             {/* Job Configuration */}
-            <section className="bg-gradient-to-br from-slate-900 to-slate-950 border border-orange-500/20 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl shadow-orange-500/10">
-               <div className="p-6 sm:p-8 border-b border-orange-500/20 bg-orange-500/5">
-                  <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+            <section className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-orange-200 dark:border-orange-500/20 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl dark:shadow-orange-500/10 transition-colors">
+               <div className="p-6 sm:p-8 border-b border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/5">
+                  <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider flex items-center gap-2">
                     <span className="material-symbols-outlined text-orange-400">settings</span>
                     Job Configuration
                   </h3>
@@ -347,18 +347,18 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
           {/* Sidebar */}
           <aside className="space-y-8">
             {/* Device Policies */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-blue-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl shadow-blue-500/10 space-y-8">
-               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
-                 <span className="material-symbols-outlined text-blue-400">smartphone</span>
+            <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-blue-200 dark:border-blue-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-lg dark:shadow-2xl dark:shadow-blue-500/10 space-y-8 transition-colors">
+               <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider flex items-center gap-2">
+                 <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">smartphone</span>
                  Device Policies
                </h3>
                <div className="space-y-4">
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Local Retention</p>
+                     <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Local Retention</p>
                      <select
                        value={deviceSettings.localRetention}
                        onChange={(e) => updateDeviceSetting('localRetention', e.target.value)}
-                       className="w-full bg-slate-800 border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                       className="w-full bg-white dark:bg-slate-800 border-blue-300 dark:border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                      >
                         <option value="14">14 Days</option>
                         <option value="30">30 Days</option>
@@ -366,11 +366,11 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                      </select>
                   </div>
                   <div className="space-y-1">
-                     <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Photo Quality</p>
+                     <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Photo Quality</p>
                      <select
                        value={deviceSettings.photoQuality}
                        onChange={(e) => updateDeviceSetting('photoQuality', e.target.value)}
-                       className="w-full bg-slate-800 border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                       className="w-full bg-white dark:bg-slate-800 border-blue-300 dark:border-blue-500/30 border rounded-xl py-3 px-4 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                      >
                         <option value="high">High (Detailed Proof)</option>
                         <option value="standard">Standard (Balanced)</option>
@@ -381,59 +381,87 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             </div>
 
             {/* Display Mode */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl shadow-amber-500/10 space-y-6">
-               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em] flex items-center gap-2">
-                 <span className="material-symbols-outlined text-amber-400">palette</span>
+            <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-amber-500/20 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-lg dark:shadow-2xl dark:shadow-amber-500/10 space-y-6">
+               <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                 <span className="material-symbols-outlined text-amber-500 dark:text-amber-400">palette</span>
                  Display Mode
                </h3>
 
-               {/* Dark / Daylight Toggle */}
-               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+               {/* Theme Selector - Light / Dark / Daylight */}
+               <div className="grid grid-cols-3 gap-2">
+                 {([
+                   { mode: 'light' as const, icon: 'light_mode', label: 'Light', desc: 'Office & indoor' },
+                   { mode: 'dark' as const, icon: 'dark_mode', label: 'Dark', desc: 'Low-light' },
+                   { mode: 'daylight' as const, icon: 'wb_sunny', label: 'Outdoor', desc: 'High-visibility' },
+                 ]).map(opt => {
+                   const isActive = (opt.mode === 'daylight' && isDaylightMode) ||
+                     (opt.mode !== 'daylight' && !isDaylightMode && theme === opt.mode);
+                   return (
+                     <button
+                       key={opt.mode}
+                       onClick={() => {
+                         if (opt.mode === 'daylight') {
+                           toggleDayNight();
+                         } else {
+                           setTheme(opt.mode);
+                         }
+                       }}
+                       className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all min-h-[56px] ${
+                         isActive
+                           ? 'bg-primary/10 border-primary text-primary'
+                           : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500'
+                       }`}
+                       aria-pressed={isActive}
+                       aria-label={`${opt.label} mode: ${opt.desc}`}
+                     >
+                       <span className="material-symbols-outlined text-xl">{opt.icon}</span>
+                       <span className="text-xs font-semibold">{opt.label}</span>
+                     </button>
+                   );
+                 })}
+               </div>
+
+               {/* System Preference Toggle */}
+               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                  <div className="flex items-center gap-3">
-                   <span className="material-symbols-outlined text-xl" aria-hidden="true">
-                     {isDaylightMode ? 'light_mode' : 'dark_mode'}
-                   </span>
+                   <span className="material-symbols-outlined text-xl text-slate-500 dark:text-slate-400" aria-hidden="true">devices</span>
                    <div>
-                     <p className="text-sm font-bold text-white">
-                       {isDaylightMode ? 'Daylight Mode' : 'Dark Mode'}
-                     </p>
-                     <p className="text-[10px] text-slate-400">
-                       {isDaylightMode ? 'High-visibility for outdoor work' : 'Low-light optimised'}
-                     </p>
+                     <p className="text-sm font-semibold text-slate-900 dark:text-white">Follow System</p>
+                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Match device light/dark setting</p>
                    </div>
                  </div>
                  <button
-                   onClick={toggleDayNight}
+                   onClick={() => setTheme('system')}
                    className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
-                     isDaylightMode ? 'bg-amber-500' : 'bg-slate-600'
+                     theme === 'system' ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
                    }`}
                    role="switch"
-                   aria-checked={isDaylightMode}
-                   aria-label={`Switch to ${isDaylightMode ? 'dark' : 'daylight'} mode`}
+                   aria-checked={theme === 'system'}
+                   aria-label={`${theme === 'system' ? 'Disable' : 'Enable'} system theme preference`}
                  >
                    <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
-                     isDaylightMode ? 'translate-x-7' : 'translate-x-1'
+                     theme === 'system' ? 'translate-x-7' : 'translate-x-1'
                    }`} />
                  </button>
                </div>
 
                {/* Auto Daylight */}
-               <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-white/15">
+               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/15">
                  <div className="flex items-center gap-3">
-                   <span className="material-symbols-outlined text-xl text-slate-400" aria-hidden="true">schedule</span>
+                   <span className="material-symbols-outlined text-xl text-slate-500 dark:text-slate-400" aria-hidden="true">schedule</span>
                    <div>
-                     <p className="text-sm font-bold text-white">Auto Daylight</p>
-                     <p className="text-[10px] text-slate-400">Switch by time of day (6AM–6PM)</p>
+                     <p className="text-sm font-semibold text-slate-900 dark:text-white">Auto Outdoor</p>
+                     <p className="text-[11px] text-slate-500 dark:text-slate-400">High-visibility 6AM–6PM</p>
                    </div>
                  </div>
                  <button
                    onClick={() => setDaylightAuto(!daylightAuto)}
                    className={`relative w-14 h-8 rounded-full transition-colors min-h-[44px] min-w-[56px] flex items-center ${
-                     daylightAuto ? 'bg-primary' : 'bg-slate-600'
+                     daylightAuto ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
                    }`}
                    role="switch"
                    aria-checked={daylightAuto}
-                   aria-label={`${daylightAuto ? 'Disable' : 'Enable'} auto daylight mode`}
+                   aria-label={`${daylightAuto ? 'Disable' : 'Enable'} auto outdoor mode`}
                  >
                    <span className={`absolute size-6 bg-white rounded-full shadow-md transition-transform ${
                      daylightAuto ? 'translate-x-7' : 'translate-x-1'
@@ -441,14 +469,14 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                  </button>
                </div>
 
-               <p className="text-[10px] text-slate-400 leading-relaxed">
-                 Current: <span className="font-bold text-white capitalize">{resolvedTheme}</span> mode
+               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                 Active: <span className="font-semibold text-slate-900 dark:text-white capitalize">{resolvedTheme}</span> mode
                </p>
             </div>
 
             {/* User Experience */}
-            <div className="bg-slate-900 border border-white/15 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-2xl space-y-4">
-               <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">User Experience</h3>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-6 sm:p-8 rounded-2xl sm:rounded-[3rem] shadow-lg dark:shadow-2xl space-y-4 transition-colors">
+               <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider">User Experience</h3>
                <button
                   onClick={() => {
                     localStorage.removeItem('jobproof_onboarding_v4');
@@ -460,7 +488,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                   <span className="material-symbols-outlined text-base">refresh</span>
                   Restart Onboarding Tour
                </button>
-               <p className="text-[10px] text-slate-300 leading-relaxed">
+               <p className="text-[10px] text-slate-500 dark:text-slate-300 leading-relaxed">
                   Launch the interactive walkthrough again to review key features and workflows.
                </p>
             </div>
@@ -471,9 +499,9 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
                  <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center">
                    <span className="material-symbols-outlined text-primary text-xl">help_center</span>
                  </div>
-                 <h3 className="font-black text-white uppercase text-xs tracking-[0.2em]">Need Help?</h3>
+                 <h3 className="font-semibold text-slate-900 dark:text-white uppercase text-xs tracking-wider">Need Help?</h3>
                </div>
-               <p className="text-xs text-slate-300 leading-relaxed">
+               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Visit our help center for guides, FAQs, and best practices.
                </p>
                <button
@@ -489,36 +517,36 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 
       {/* Invite Team Member Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-800 border border-white/15 p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] max-w-md w-full shadow-2xl space-y-6 animate-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] max-w-md w-full shadow-2xl space-y-6 animate-in">
             <div className="text-center space-y-2">
               <div className="size-14 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-primary text-3xl">person_add</span>
               </div>
-              <h2 className="text-2xl font-black text-white tracking-tighter uppercase">Invite Team Member</h2>
-              <p className="text-slate-400 text-sm">Send an invitation to join your workspace</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Invite Team Member</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Send an invitation to join your workspace</p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="invite-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email Address</label>
+                <label htmlFor="invite-email" className="text-[10px] font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Email Address</label>
                 <input
                   id="invite-email"
                   type="email"
                   placeholder="teammate@example.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="invite-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Role</label>
+                <label htmlFor="invite-role" className="text-[10px] font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">Role</label>
                 <select
                   id="invite-role"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as TeamRole)}
-                  className="w-full bg-slate-800 border-slate-600 border rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer"
+                  className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer"
                 >
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
@@ -531,7 +559,7 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase transition-all"
+                className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl text-xs font-semibold uppercase transition-all"
               >
                 Cancel
               </button>
@@ -580,10 +608,10 @@ const Settings: React.FC<SettingsProps> = ({ user, setUser }) => {
 const ToggleSetting = ({ label, active, onToggle }: { label: string, active: boolean, onToggle: () => void }) => (
   <button
     onClick={onToggle}
-    className="w-full flex items-center justify-between p-4 bg-slate-800 hover:bg-slate-800 border border-orange-500/20 hover:border-orange-500/40 rounded-xl transition-all group"
+    className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 border border-orange-200 dark:border-orange-500/20 hover:border-orange-300 dark:hover:border-orange-500/40 rounded-xl transition-all group"
   >
-    <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{label}</span>
-    <div className={`w-11 h-6 rounded-full p-1 transition-all ${active ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-slate-700'}`}>
+    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{label}</span>
+    <div className={`w-11 h-6 rounded-full p-1 transition-all ${active ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
        <div className={`size-4 bg-white rounded-full shadow-sm transition-all ${active ? 'translate-x-5' : 'translate-x-0'}`} />
     </div>
   </button>

@@ -24,55 +24,55 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-12">
-        <div className="flex justify-between items-end border-b border-white/15 pb-8">
+        <div className="flex justify-between items-end border-b border-slate-200 dark:border-white/15 pb-8">
           <div className="flex items-start gap-4">
             <button
               onClick={() => navigate('/admin')}
-              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring lg:hidden mt-1"
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 press-spring lg:hidden mt-1"
               aria-label="Back to dashboard"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
             <div className="space-y-1">
-               <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Your Profile</h2>
-               <p className="text-slate-400">Manage your administrative credentials.</p>
+               <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase">Your Profile</h2>
+               <p className="text-slate-500 dark:text-slate-400">Manage your administrative credentials.</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-primary to-blue-600 size-20 rounded-[2rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-primary/20">
+          <div className="bg-gradient-to-br from-primary to-blue-600 size-20 rounded-[2rem] flex items-center justify-center text-white font-bold text-3xl shadow-2xl shadow-primary/20">
             {user.name[0]}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-           <section className="space-y-6 bg-slate-900 p-8 rounded-[2.5rem] border border-white/15 shadow-xl">
+           <section className="space-y-6 bg-slate-50 dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/15 shadow-xl transition-colors">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                    <label htmlFor="profile-full-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Full Name</label>
+                    <label htmlFor="profile-full-name" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Full Name</label>
                     <input
                       id="profile-full-name"
                       type="text"
-                      className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                      className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-primary outline-none"
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                     />
                  </div>
                  <div className="space-y-2">
-                    <label htmlFor="profile-system-role" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">System Role</label>
+                    <label htmlFor="profile-system-role" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">System Role</label>
                     <input
                       id="profile-system-role"
                       type="text"
                       readOnly
-                      className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-slate-300 outline-none cursor-not-allowed uppercase font-black text-xs"
+                      className="w-full bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-600 dark:text-slate-300 outline-none cursor-not-allowed uppercase font-bold text-xs"
                       value={formData.role}
                     />
                  </div>
               </div>
               <div className="space-y-2">
-                 <label htmlFor="profile-email" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</label>
+                 <label htmlFor="profile-email" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Email</label>
                  <input
                    id="profile-email"
                    type="email"
-                   className="w-full bg-slate-800 border-slate-600 rounded-xl py-3 px-4 text-white focus:ring-primary outline-none"
+                   className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 border rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-primary outline-none"
                    value={formData.email}
                    onChange={e => setFormData({...formData, email: e.target.value})}
                  />
@@ -86,7 +86,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
                  )}
                  <button
                   onClick={handleSave}
-                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95 press-spring"
+                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-bold text-sm uppercase tracking-wider shadow-xl shadow-primary/20 transition-all active:scale-95 press-spring"
                  >
                     Save Changes
                  </button>
@@ -94,11 +94,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser, onLogout }) =>
            </section>
 
            <div className="flex flex-col gap-4">
-              <button 
+              <button
                 onClick={onLogout}
-                className="w-full py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl font-black text-sm uppercase tracking-widest border border-red-500/20 transition-all flex items-center justify-center gap-3"
+                className="w-full py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl font-bold text-sm uppercase tracking-wider border border-red-500/20 transition-all flex items-center justify-center gap-3"
               >
-                <span className="material-symbols-outlined font-black">logout</span>
+                <span className="material-symbols-outlined font-bold">logout</span>
                 Sign Out
               </button>
            </div>

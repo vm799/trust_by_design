@@ -196,41 +196,41 @@ const JobsListSkeleton = React.memo(() => (
     {/* Header skeleton */}
     <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
       <div className="space-y-2">
-        <div className="h-8 w-32 bg-slate-800 rounded animate-pulse" />
-        <div className="h-3 w-20 bg-slate-800 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
       </div>
-      <div className="h-12 w-32 bg-slate-800 rounded-2xl animate-pulse" />
+      <div className="h-12 w-32 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
     </header>
     {/* Filter tabs skeleton */}
-    <div className="bg-slate-900 border border-white/15 rounded-2xl p-2">
+    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-2">
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={`skeleton-tab-${i}`} className="h-9 w-24 bg-slate-800 rounded-xl animate-pulse" />
+          <div key={`skeleton-tab-${i}`} className="h-9 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
         ))}
       </div>
     </div>
     {/* Search skeleton */}
-    <div className="h-12 w-full bg-slate-900 border border-white/15 rounded-2xl animate-pulse" />
+    <div className="h-12 w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl animate-pulse" />
     {/* Card skeletons */}
     <div className="space-y-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={`skeleton-jobcard-${i}`}
-          className="bg-slate-900 border border-white/15 rounded-2xl p-4 animate-pulse"
+          className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-4 animate-pulse"
         >
           <div className="flex items-start gap-4">
             {/* Status icon placeholder */}
-            <div className="size-12 rounded-xl bg-slate-800 shrink-0" />
+            <div className="size-12 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0" />
             {/* Content placeholders */}
             <div className="flex-1 min-w-0 space-y-3">
               <div className="flex items-center gap-2">
-                <div className="h-4 w-3/4 bg-slate-800 rounded" />
-                <div className="size-3 bg-slate-800 rounded-full shrink-0" />
+                <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="size-3 bg-slate-200 dark:bg-slate-800 rounded-full shrink-0" />
               </div>
-              <div className="h-3 w-1/2 bg-slate-800 rounded" />
+              <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-800 rounded" />
               <div className="flex items-center gap-3">
-                <div className="h-3 w-20 bg-slate-800 rounded" />
-                <div className="h-3 w-16 bg-slate-800 rounded" />
+                <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
               </div>
             </div>
           </div>
@@ -293,7 +293,7 @@ const MobileJobCard = React.memo(({
         tabIndex={0}
         onClick={() => { reset(); onNavigate(job.id); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reset(); onNavigate(job.id); } }}
-        className="w-full bg-slate-900 border border-white/15 hover:border-white/20 rounded-2xl p-4 text-left transition-all group relative cursor-pointer"
+        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 hover:border-slate-300 dark:hover:border-white/20 rounded-2xl p-4 text-left transition-all group relative cursor-pointer"
         style={isEnabled && offsetX !== 0 ? { transform: `translateX(${offsetX}px)`, transition: 'none' } : undefined}
       >
         <div className="flex items-start gap-4">
@@ -307,18 +307,18 @@ const MobileJobCard = React.memo(({
           {/* Job Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 min-w-0">
-              <h4 className="font-bold text-white text-sm line-clamp-2 min-w-0 flex-1 group-hover:text-primary transition-colors">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2 min-w-0 flex-1 group-hover:text-primary transition-colors">
                 {job.title}
               </h4>
-              <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
+              <span className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider shrink-0 ${lifecycle.bgColor} ${lifecycle.color} ${lifecycle.borderColor} border`}>
                 {lifecycle.label}
               </span>
               <SyncDot status={job.syncStatus} />
             </div>
-            <p className="text-xs text-slate-400 truncate mb-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
               {job.client}
             </p>
-            <div className="flex items-center gap-3 text-[10px] text-slate-400">
+            <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs">person</span>
                 {job.technician}
@@ -340,7 +340,7 @@ const MobileJobCard = React.memo(({
             )}
 
             {/* Quick Actions */}
-            <div className="mt-3 pt-3 border-t border-white/15">
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/15">
               <JobActionMenu
                 job={job}
                 onAction={onAction}
@@ -612,25 +612,25 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
       <div ref={pullRefreshRef} className="space-y-6 pb-20">
         <PullToRefreshIndicator progress={progress} isRefreshing={isRefreshing} isPulling={isPulling} />
         {/* Header */}
-        <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
+        <div className="lg:sticky lg:top-0 lg:z-10 lg:bg-white/80 dark:lg:bg-slate-950/80 lg:backdrop-blur-sm lg:pb-4 lg:-mt-2 lg:pt-2">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate(ROUTES.DASHBOARD)}
-                  className="size-10 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                  className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
                 >
                   <span className="material-symbols-outlined text-lg">arrow_back</span>
                 </button>
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">Jobs</h2>
-                  <p className="text-slate-400 text-sm">{filteredJobs.length} of {jobs.length} jobs</p>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase">Jobs</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{filteredJobs.length} of {jobs.length} jobs</p>
                 </div>
               </div>
             </div>
             <button
               onClick={() => navigate('/admin/create')}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white font-bold rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined font-black">add</span>
               New Job
@@ -675,7 +675,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
         )}
 
         {/* Filter Tabs */}
-        <div className="bg-slate-900 border border-white/15 rounded-2xl p-2">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-2">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(tab => (
               <button
@@ -684,8 +684,8 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 className={`
                   flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all
                   ${currentFilter === tab.value
-                    ? 'bg-slate-800 text-white border border-white/20'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'}
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/20 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800'}
                 `}
               >
                 <span className={`material-symbols-outlined text-sm ${currentFilter === tab.value ? tab.color : ''}`}>
@@ -693,8 +693,8 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
                 </span>
                 <span>{tab.label}</span>
                 <span className={`
-                  ml-1 px-2 py-0.5 rounded-md text-[10px] font-black
-                  ${currentFilter === tab.value ? 'bg-white/10 text-white' : 'bg-slate-800 text-slate-400'}
+                  ml-1 px-2 py-0.5 rounded-md text-[10px] font-bold
+                  ${currentFilter === tab.value ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}
                 `}>
                   {filterCounts[tab.value]}
                 </span>
@@ -705,7 +705,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
         {/* Search Input */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-xl">
             search
           </span>
           <input
@@ -713,7 +713,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             placeholder="Search by job title, client, technician, or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-slate-900 border border-white/15 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-primary/50 text-sm"
+            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary/50 text-sm"
           />
           {searchQuery && (
             <button
@@ -727,7 +727,7 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
 
         {/* Empty State */}
         {filteredJobs.length === 0 ? (
-          <div className="bg-slate-900 border border-white/15 rounded-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl">
             <EmptyState
               icon={searchQuery ? 'search_off' : 'inbox'}
               title={searchQuery ? 'No Jobs Found' : 'No Jobs'}
@@ -759,26 +759,26 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
             {/* Desktop Table - Virtualized */}
             <div
               ref={containerRef}
-              className="hidden lg:block bg-slate-900 border border-white/15 rounded-[2rem] overflow-hidden shadow-2xl"
+              className="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2rem] overflow-hidden shadow-2xl"
               style={{ height: 'auto', minHeight: `${containerHeight + HEADER_HEIGHT}px` }}
               data-testid="virtualized-list"
             >
-              <div className="px-8 py-5 border-b border-white/15 bg-white/[0.02]">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              <div className="px-8 py-5 border-b border-slate-200 dark:border-white/15 bg-slate-50/50 dark:bg-white/[0.02]">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                   {currentFilter === 'all' ? 'All Jobs' : filterTabs.find(t => t.value === currentFilter)?.label}
                 </h3>
               </div>
 
               {/* Table Header */}
-              <div className="bg-slate-950/50 border-b border-white/15">
+              <div className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-white/15">
                 <div className="flex items-center h-[60px]">
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Job</div>
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Client</div>
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Technician</div>
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Status</div>
-                  <div className="px-8 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Date</div>
-                  <div className="px-4 py-5 flex-1 text-[11px] font-black uppercase tracking-widest text-white">Actions</div>
-                  <div className="px-4 py-5 w-24 text-[11px] font-black uppercase tracking-widest text-white text-right">Sync</div>
+                  <div className="px-8 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Job</div>
+                  <div className="px-8 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Client</div>
+                  <div className="px-8 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Technician</div>
+                  <div className="px-8 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Status</div>
+                  <div className="px-8 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Date</div>
+                  <div className="px-4 py-5 flex-1 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white">Actions</div>
+                  <div className="px-4 py-5 w-24 text-[11px] font-bold uppercase tracking-widest text-slate-700 dark:text-white text-right">Sync</div>
                 </div>
               </div>
 

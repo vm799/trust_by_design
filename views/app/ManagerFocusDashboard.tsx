@@ -22,7 +22,7 @@ import { useData } from '../../lib/DataContext';
 import { getMagicLinksForJob } from '../../lib/db';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client, Technician, TechnicianSummary, AttentionItem, JobStatus } from '../../types';
-import { fadeInUp, staggerContainer } from '../../lib/animations';
+import { fadeInUp, fadeInScale, staggerContainer } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
 import QuickAssignModal from '../../components/modals/QuickAssignModal';
@@ -356,9 +356,9 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
+      initial={fadeInUp.hidden}
+      animate={fadeInUp.visible}
+      exit={fadeInUp.hidden}
       className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
@@ -368,8 +368,8 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
       tabIndex={0}
     >
       <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
+        initial={fadeInScale.hidden}
+        animate={fadeInScale.visible}
         className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
         role="presentation"
         onClick={e => e.stopPropagation()}
@@ -645,8 +645,8 @@ const ManagerFocusDashboard: React.FC = () => {
       <PageContent>
         <Card className="text-center py-8">
           <span className="material-symbols-outlined text-4xl text-red-400 mb-4">error</span>
-          <p className="text-white font-medium mb-2">Failed to load data</p>
-          <p className="text-slate-400 text-sm mb-4">{error}</p>
+          <p className="text-slate-900 dark:text-white font-medium mb-2">Failed to load data</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{error}</p>
           <ActionButton variant="secondary" onClick={refresh} icon="refresh">
             Retry
           </ActionButton>
@@ -658,7 +658,7 @@ const ManagerFocusDashboard: React.FC = () => {
   return (
     <div className="overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header with clickable status chips */}
-      <div className="px-4 lg:px-8 py-4 border-b border-white/15 flex items-center justify-between">
+      <div className="px-4 lg:px-8 py-4 border-b border-slate-200 dark:border-white/15 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <StatusRing
             totalJobs={jobs.length}
@@ -667,7 +667,7 @@ const ManagerFocusDashboard: React.FC = () => {
             pendingJobs={metrics.pendingJobs}
             className="hidden sm:inline-flex"
           />
-          <h1 className="text-lg font-bold text-white">Mission Control</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Mission Control</h1>
           {/* Desktop status chips */}
           <div className="hidden sm:flex items-center gap-2 text-xs">
             <button
@@ -728,11 +728,11 @@ const ManagerFocusDashboard: React.FC = () => {
         >
           {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
           <motion.section variants={fadeInUp}>
-            <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase mb-3">Quick Actions</h2>
+            <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide mb-3">Quick Actions</h2>
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
               >
                 <span className="material-symbols-outlined text-lg text-slate-400">search</span>
@@ -751,7 +751,7 @@ const ManagerFocusDashboard: React.FC = () => {
               </button>
               <Link
                 to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="View all jobs"
               >
                 <span className="material-symbols-outlined text-lg text-slate-400">list_alt</span>
@@ -778,8 +778,8 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* JOB STATUS PILLS - Color-coded filter system */}
           <motion.section variants={fadeInUp}>
-            <div className="border-b border-white/15 pb-4 mb-6">
-              <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Job Status</h2>
+            <div className="border-b border-slate-200 dark:border-white/15 pb-4 mb-6">
+              <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Job Status</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {JOB_PILLS.map(pill => {
@@ -825,10 +825,10 @@ const ManagerFocusDashboard: React.FC = () => {
                         <Link
                           key={job.id}
                           to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 hover:bg-slate-700/50 border border-white/15 transition-colors"
+                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-200 dark:border-white/15 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                               {job.title || `Job #${job.id.slice(0, 6)}`}
                             </p>
                             <p className="text-xs text-slate-400 truncate">
@@ -894,13 +894,13 @@ const ManagerFocusDashboard: React.FC = () => {
           {/* ATTENTION QUEUE - Critical exceptions only — hidden when no issues */}
           {attentionItems.length > 0 && (
             <motion.section variants={fadeInUp}>
-              <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
+              <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-white/15 pb-4">
                 <div className="size-8 rounded-xl bg-red-500/20 flex items-center justify-center">
                   <span className="material-symbols-outlined text-red-400">priority_high</span>
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Needs Attention</h2>
-                  <p className="text-xs text-slate-300">
+                  <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Needs Attention</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
                     {attentionItems.length} item{attentionItems.length !== 1 ? 's' : ''} requiring action
                   </p>
                 </div>
@@ -936,7 +936,7 @@ const ManagerFocusDashboard: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white truncate">
+                        <p className="font-medium text-slate-900 dark:text-white truncate">
                           {item.technicianName || item.jobTitle}
                         </p>
                         <p className="text-sm text-slate-400 truncate">{item.message}</p>
@@ -951,13 +951,13 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* TECHNICIAN STATUS GRID - Categorized, mobile-first */}
           <motion.section variants={fadeInUp}>
-            <div className="flex items-center gap-3 mb-4 border-b border-white/15 pb-4">
+            <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-white/15 pb-4">
               <div className="size-8 rounded-xl bg-primary/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary">group</span>
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Technicians</h2>
-                <p className="text-xs text-slate-300">
+                <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Technicians</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-300">
                   {technicians.length} team member{technicians.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -989,12 +989,12 @@ const ManagerFocusDashboard: React.FC = () => {
                 <div className="size-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
                   <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                   {metrics.linksAwaiting > 0
                     ? `${metrics.linksAwaiting} Link${metrics.linksAwaiting !== 1 ? 's' : ''} Awaiting Response`
                     : 'No Blockers'}
                 </h3>
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   {metrics.onSiteTechs > 0
                     ? `${metrics.onSiteTechs} technician${metrics.onSiteTechs !== 1 ? 's' : ''} on-site. No issues detected.`
                     : metrics.linksAwaiting > 0
