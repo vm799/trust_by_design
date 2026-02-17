@@ -19,6 +19,7 @@ import { PageContent } from '../../components/layout';
 import { Card, ActionButton, LoadingSkeleton, StatusRing, FocusStack, FocusJobRenderProps, QueueJobRenderProps, CollapsedJobRenderProps } from '../../components/ui';
 import { ProofGapBar, TechnicianStatusGrid, StatusBreakdownModal } from '../../components/dashboard';
 import { useData } from '../../lib/DataContext';
+import { getMagicLinksForJob } from '../../lib/db';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client, Technician, TechnicianSummary, AttentionItem, JobStatus } from '../../types';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
@@ -543,16 +544,27 @@ const ManagerFocusDashboard: React.FC = () => {
     ).length;
 
     // Dispatched: jobs with a magic link sent but tech hasn't started work yet
-    const dispatchedJobs = jobs.filter(j =>
+    const dispatchedJobsList = jobs.filter(j =>
       j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
-    ).length;
+    );
+    const dispatchedJobs = dispatchedJobsList.length;
+
+    // Check which dispatched links have been opened (reads localStorage directly)
+    let linksOpened = 0;
+    let linksAwaiting = 0;
+    for (const job of dispatchedJobsList) {
+      const links = getMagicLinksForJob(job.id);
+      const anyOpened = links.some(l => (l as any).first_accessed_at);
+      if (anyOpened) linksOpened++;
+      else linksAwaiting++;
+    }
 
     // Needs link: jobs with a technician assigned but no link generated yet
     const needsLink = jobs.filter(j =>
       (j.technicianId || j.techId) && !j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
     ).length;
 
-    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs, dispatchedJobs, needsLink };
+    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs, dispatchedJobs, linksOpened, linksAwaiting, needsLink };
   }, [technicians, jobs, now]);
 
   // On-site technicians with job details for pulse modal
@@ -634,17 +646,29 @@ const ManagerFocusDashboard: React.FC = () => {
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-bold">{metrics.onSiteTechs}</span> on-site
             </button>
-            {metrics.dispatchedJobs > 0 && (
+            {metrics.linksAwaiting > 0 && (
+              <Link
+                to={`${ROUTES.JOBS}?filter=dispatched`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors min-h-[32px]"
+              >
+                <span className="material-symbols-outlined text-xs">schedule_send</span>
+                <span className="font-bold">{metrics.linksAwaiting}</span> awaiting
+              </Link>
+            )}
+            {metrics.linksOpened > 0 && (
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400">
-                <span className="material-symbols-outlined text-xs">send</span>
-                <span className="font-bold">{metrics.dispatchedJobs}</span> dispatched
+                <span className="material-symbols-outlined text-xs">mark_email_read</span>
+                <span className="font-bold">{metrics.linksOpened}</span> link{metrics.linksOpened !== 1 ? 's' : ''} opened
               </span>
             )}
             {metrics.needsLink > 0 && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400">
-                <span className="material-symbols-outlined text-xs">link</span>
+              <Link
+                to={`${ROUTES.JOBS}?filter=needs_link`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-500/15 text-slate-400 hover:bg-slate-500/25 transition-colors min-h-[32px]"
+              >
+                <span className="material-symbols-outlined text-xs">link_off</span>
                 <span className="font-bold">{metrics.needsLink}</span> need{metrics.needsLink !== 1 ? '' : 's'} link
-              </span>
+              </Link>
             )}
             {metrics.hasIssues ? (
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400">
@@ -805,7 +829,7 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* MOBILE TECHNICIAN PULSE — Visible only on small screens */}
           <motion.section variants={fadeInUp} className="sm:hidden">
-            <div className={`grid gap-2 ${metrics.dispatchedJobs > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <div className={`grid gap-2 ${metrics.linksAwaiting > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <button
                 onClick={() => setIsTechPulseOpen(true)}
                 className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]"
@@ -813,11 +837,14 @@ const ManagerFocusDashboard: React.FC = () => {
                 <span className="text-lg font-bold text-emerald-400">{metrics.onSiteTechs}</span>
                 <span className="text-xs text-emerald-400/80">On-Site</span>
               </button>
-              {metrics.dispatchedJobs > 0 && (
-                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-blue-500/10 border-2 border-blue-500/20 min-h-[56px]">
-                  <span className="text-lg font-bold text-blue-400">{metrics.dispatchedJobs}</span>
-                  <span className="text-xs text-blue-400/80">Dispatched</span>
-                </div>
+              {metrics.linksAwaiting > 0 && (
+                <Link
+                  to={`${ROUTES.JOBS}?filter=dispatched`}
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl bg-amber-500/10 border-2 border-amber-500/20 min-h-[56px]"
+                >
+                  <span className="text-lg font-bold text-amber-400">{metrics.linksAwaiting}</span>
+                  <span className="text-xs text-amber-400/80">Awaiting</span>
+                </Link>
               )}
               {metrics.hasIssues ? (
                 <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-red-500/10 border-2 border-red-500/20 min-h-[56px]">
