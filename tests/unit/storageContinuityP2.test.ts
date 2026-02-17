@@ -223,3 +223,79 @@ describe('OfflineAction type completeness (from P0 fix)', () => {
     }
   });
 });
+
+// ============================================================
+// P1: TOCTOU FIX — Atomic appendToFailedSyncQueue
+// All escalation paths must use the shared helper instead of
+// inline read→modify→write on jobproof_failed_sync_queue
+// ============================================================
+
+describe('TOCTOU Fix - Atomic appendToFailedSyncQueue', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+  const syncContent = readFile('lib/offline/sync.ts');
+  const debouncedContent = readFile('lib/debouncedSync.ts');
+
+  it('syncQueue.ts should export appendToFailedSyncQueue helper', () => {
+    expect(syncQueueContent).toContain('export const appendToFailedSyncQueue');
+  });
+
+  it('appendToFailedSyncQueue should do synchronous read→modify→write', () => {
+    // Find the function body
+    const funcStart = syncQueueContent.indexOf('export const appendToFailedSyncQueue');
+    const funcBody = syncQueueContent.slice(funcStart, funcStart + 600);
+    // Must read, push, and write in one synchronous block
+    expect(funcBody).toContain("localStorage.getItem('jobproof_failed_sync_queue')");
+    expect(funcBody).toContain('queue.push(item)');
+    expect(funcBody).toContain("localStorage.setItem('jobproof_failed_sync_queue'");
+  });
+
+  it('retryFailedSyncs escalation should use appendToFailedSyncQueue', () => {
+    // Find the retryFailedSyncs function
+    const funcStart = syncQueueContent.indexOf('export const retryFailedSyncs');
+    const funcEnd = syncQueueContent.indexOf('export const addToSyncQueue');
+    const funcBody = syncQueueContent.slice(funcStart, funcEnd);
+    expect(funcBody).toContain('appendToFailedSyncQueue(');
+    // Should NOT have inline read→modify→write pattern
+    expect(funcBody).not.toContain("JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')");
+  });
+
+  it('Dexie queue escalation should use appendToFailedSyncQueue', () => {
+    expect(syncContent).toContain("import { appendToFailedSyncQueue } from '../syncQueue'");
+    // The pushQueue escalation should call the helper
+    expect(syncContent).toContain('appendToFailedSyncQueue({');
+    // Should NOT have inline read→modify→write for failed sync queue
+    const pushQueueSection = syncContent.split('_pushQueueImpl')[1]?.split('async function processUpdateJob')[0] || '';
+    expect(pushQueueSection).not.toContain("JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')");
+  });
+
+  it('debounced queue escalation should use appendToFailedSyncQueue', () => {
+    expect(debouncedContent).toContain("import { appendToFailedSyncQueue } from './syncQueue'");
+    // Should use the helper
+    expect(debouncedContent).toContain('appendToFailedSyncQueue({');
+    // Should NOT have inline read→modify→write for failed sync queue
+    const processSection = debouncedContent.split('processOfflineQueue')[1]?.split('export function getPendingCount')[0] || '';
+    expect(processSection).not.toContain("JSON.parse(localStorage.getItem('jobproof_failed_sync_queue')");
+  });
+});
+
+// ============================================================
+// P2: Dexie corruption guard for SEAL_JOB
+// If queueAction('SEAL_JOB') fails (Dexie corrupted), escalate
+// to localStorage failed queue instead of silently losing it
+// ============================================================
+
+describe('P2: Dexie corruption guard - SEAL_JOB fallback', () => {
+  const syncContent = readFile('lib/offline/sync.ts');
+
+  it('auto-seal Dexie fallback should escalate to appendToFailedSyncQueue', () => {
+    // The catch block for queueAction('SEAL_JOB') should call appendToFailedSyncQueue
+    // Previously it was just "// Last resort: seal action lost"
+    expect(syncContent).toContain('Dexie queue unavailable, escalated to failed sync queue');
+    expect(syncContent).toContain("actionType: 'SEAL_JOB'");
+  });
+
+  it('auto-seal Dexie fallback should NOT silently lose the seal action', () => {
+    // The old "Last resort" comment should be gone
+    expect(syncContent).not.toContain('seal action lost');
+  });
+});

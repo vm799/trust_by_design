@@ -237,4 +237,94 @@ describe('OfflineIndicator - Sync Recovery', () => {
       expect(mockRetryFailedSyncItem).not.toHaveBeenCalled();
     });
   });
+
+  // ============================================================
+  // P1: Item-level detail in sync failure banner
+  // Field workers need to know WHICH items failed, not just a count
+  // ============================================================
+
+  it('shows individual failed item names with type labels', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: { title: 'HVAC Repair' }, retryCount: 7 },
+      { id: 'client-1', type: 'client', data: { name: 'Acme Corp' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    // Should show individual item details
+    expect(screen.getByText(/HVAC Repair/)).toBeTruthy();
+    expect(screen.getByText(/Acme Corp/)).toBeTruthy();
+  });
+
+  it('shows job type label for job items', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: { title: 'Plumbing Fix' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText(/Job:/)).toBeTruthy();
+    expect(screen.getByText(/Plumbing Fix/)).toBeTruthy();
+  });
+
+  it('shows client type label for client items', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'client-1', type: 'client', data: { name: 'BuildCo Ltd' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText(/Client:/)).toBeTruthy();
+    expect(screen.getByText(/BuildCo Ltd/)).toBeTruthy();
+  });
+
+  it('shows technician type label for technician items', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'tech-1', type: 'technician', data: { name: 'Mike Smith' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText(/Tech:/)).toBeTruthy();
+    expect(screen.getByText(/Mike Smith/)).toBeTruthy();
+  });
+
+  it('truncates long list with +N more indicator', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 5 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: { title: 'Job Alpha' }, retryCount: 7 },
+      { id: 'job-2', type: 'job', data: { title: 'Job Beta' }, retryCount: 7 },
+      { id: 'job-3', type: 'job', data: { title: 'Job Gamma' }, retryCount: 7 },
+      { id: 'job-4', type: 'job', data: { title: 'Job Delta' }, retryCount: 7 },
+      { id: 'job-5', type: 'job', data: { title: 'Job Epsilon' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    // First 3 shown
+    expect(screen.getByText(/Job Alpha/)).toBeTruthy();
+    expect(screen.getByText(/Job Beta/)).toBeTruthy();
+    expect(screen.getByText(/Job Gamma/)).toBeTruthy();
+    // Items 4 and 5 NOT shown individually
+    expect(screen.queryByText(/Job Delta/)).toBeNull();
+    expect(screen.queryByText(/Job Epsilon/)).toBeNull();
+    // "+2 more" indicator shown
+    expect(screen.getByText(/\+2 more/)).toBeTruthy();
+  });
+
+  it('falls back to item ID when title/name is missing', () => {
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 1 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-abc-123', type: 'job', data: {}, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    // Should show the ID as fallback
+    expect(screen.getByText(/job-abc-123/)).toBeTruthy();
+  });
 });

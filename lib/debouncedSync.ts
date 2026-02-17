@@ -14,6 +14,7 @@
  */
 
 import { getSupabase, isSupabaseAvailable } from './supabase';
+import { appendToFailedSyncQueue } from './syncQueue';
 import { toSnakeCaseKeys } from './caseConvert';
 import { setCache, invalidateCache } from './cacheFirst';
 
@@ -258,9 +259,8 @@ export async function processOfflineQueue(): Promise<void> {
       if (error) {
         const retryCount = (item.retryCount || 0) + 1;
         if (retryCount >= DEBOUNCED_QUEUE_MAX_RETRIES) {
-          // Escalate to failed sync queue for user visibility
-          const failedSyncQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
-          failedSyncQueue.push({
+          // TOCTOU FIX: Use atomic append instead of inline read→modify→write
+          appendToFailedSyncQueue({
             id: item.id || `debounced-${Date.now()}`,
             type: 'job',
             data: item.data,
@@ -269,7 +269,6 @@ export async function processOfflineQueue(): Promise<void> {
             failedAt: new Date().toISOString(),
             reason: `Debounced queue: ${item.table} upsert failed after ${DEBOUNCED_QUEUE_MAX_RETRIES} retries`
           });
-          localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedSyncQueue));
         } else {
           failed.push({ ...item, retryCount });
         }
@@ -277,8 +276,8 @@ export async function processOfflineQueue(): Promise<void> {
     } catch {
       const retryCount = (item.retryCount || 0) + 1;
       if (retryCount >= DEBOUNCED_QUEUE_MAX_RETRIES) {
-        const failedSyncQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
-        failedSyncQueue.push({
+        // TOCTOU FIX: Use atomic append instead of inline read→modify→write
+        appendToFailedSyncQueue({
           id: item.id || `debounced-${Date.now()}`,
           type: 'job',
           data: item.data,
@@ -287,7 +286,6 @@ export async function processOfflineQueue(): Promise<void> {
           failedAt: new Date().toISOString(),
           reason: `Debounced queue: exception after ${DEBOUNCED_QUEUE_MAX_RETRIES} retries`
         });
-        localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedSyncQueue));
       } else {
         failed.push({ ...item, retryCount });
       }
