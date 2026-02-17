@@ -190,9 +190,9 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
           transition-all duration-200
           ${isResetting
             ? 'bg-red-600 text-white animate-pulse'
-            : 'bg-slate-800/90 text-slate-400 hover:bg-slate-700/90 hover:text-slate-300'
+            : 'bg-slate-100/90 dark:bg-slate-800/90 text-slate-500 dark:text-slate-400 hover:bg-slate-200/90 dark:hover:bg-slate-700/90 hover:text-slate-600 dark:hover:text-slate-300'
           }
-          backdrop-blur-sm border border-slate-600/50
+          backdrop-blur-sm border border-slate-300/50 dark:border-slate-600/50
         `}
         title="Build info (hold 5s to reset)"
       >
@@ -209,7 +209,7 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
               } ${swStatus.updateAvailable ? 'animate-pulse' : ''}`}
             />
             <span>{buildInfo.commit.slice(0, 7)}</span>
-            <span className="text-slate-400">v{buildInfo.schemaVersion}</span>
+            <span className="text-slate-500 dark:text-slate-400">v{buildInfo.schemaVersion}</span>
           </>
         )}
       </button>
@@ -221,18 +221,18 @@ const BuildFingerprint: React.FC<BuildFingerprintProps> = memo(({
             absolute ${position.includes('bottom') ? 'bottom-full mb-2' : 'top-full mt-2'}
             ${position.includes('right') ? 'right-0' : 'left-0'}
             w-64 p-3 rounded-lg
-            bg-slate-800/95 backdrop-blur-sm border border-slate-600/50
-            text-xs font-mono text-slate-300
+            bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-300/50 dark:border-slate-600/50
+            text-xs font-mono text-slate-600 dark:text-slate-300
             shadow-xl
           `}
         >
           <div className="space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-600 pb-2 mb-2">
-              <span className="font-semibold text-slate-200">Build Info</span>
+            <div className="flex justify-between items-center border-b border-slate-300 dark:border-slate-600 pb-2 mb-2">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">Build Info</span>
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-slate-400 hover:text-slate-300"
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 ✕
               </button>

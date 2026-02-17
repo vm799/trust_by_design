@@ -164,7 +164,7 @@ const TechJobDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 py-6">
+      <div className="min-h-screen bg-white dark:bg-slate-950 px-4 py-6 transition-colors">
         <LoadingSkeleton variant="card" count={2} />
       </div>
     );
@@ -172,7 +172,7 @@ const TechJobDetail: React.FC = () => {
 
   if (dataError) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4 transition-colors">
         <ErrorState message={dataError} onRetry={refresh} />
       </div>
     );
@@ -180,7 +180,7 @@ const TechJobDetail: React.FC = () => {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4 transition-colors">
         <EmptyState
           icon="work_off"
           title="Job not found"
@@ -192,18 +192,18 @@ const TechJobDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col transition-colors">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/15 px-4 py-4">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/15 px-4 py-4">
         <div className="flex items-center gap-4">
-          <Link to="/tech" aria-label="Back to jobs list" className="p-1 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <Link to="/tech" aria-label="Back to jobs list" className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
             <span className="material-symbols-outlined">arrow_back</span>
           </Link>
           <div className="flex-1">
-            <h1 className="font-medium text-white truncate">
+            <h1 className="font-medium text-slate-900 dark:text-white truncate">
               {job.title || `Job #${job.id.slice(0, 6)}`}
             </h1>
-            <p className="text-xs text-slate-400">{client?.name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{client?.name}</p>
           </div>
           <OfflineIndicator />
         </div>
@@ -224,7 +224,7 @@ const TechJobDetail: React.FC = () => {
                       ? i < currentWorkflowStep
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : 'bg-primary/20 text-primary ring-2 ring-primary/30'
-                      : 'bg-slate-800 text-slate-600'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
                     }
                   `}>
                     <span className="material-symbols-outlined text-sm">
@@ -232,14 +232,14 @@ const TechJobDetail: React.FC = () => {
                     </span>
                   </div>
                   <span className={`text-[10px] font-medium ${
-                    i <= currentWorkflowStep ? 'text-slate-300' : 'text-slate-600'
+                    i <= currentWorkflowStep ? 'text-slate-600 dark:text-slate-300' : 'text-slate-600'
                   }`}>
                     {step.label}
                   </span>
                 </div>
                 {i < WORKFLOW_STEPS.length - 1 && (
                   <div className={`flex-1 h-0.5 rounded-full mt-[-18px] ${
-                    i < currentWorkflowStep ? 'bg-emerald-500/40' : 'bg-slate-800'
+                    i < currentWorkflowStep ? 'bg-emerald-500/40' : 'bg-slate-200 dark:bg-slate-800'
                   }`} />
                 )}
               </React.Fragment>
@@ -252,13 +252,13 @@ const TechJobDetail: React.FC = () => {
               p-4 rounded-2xl flex items-center gap-4
               ${isSealed ? 'bg-emerald-500/10 border border-emerald-500/20' :
                 isActive ? 'bg-primary/10 border border-primary/20' :
-                'bg-slate-800 border border-white/15'}
+                'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15'}
             `}>
               <div className={`
                 size-12 rounded-xl flex items-center justify-center
                 ${isSealed ? 'bg-emerald-500/20 text-emerald-400' :
                   isActive ? 'bg-primary/20 text-primary' :
-                  'bg-slate-700 text-slate-400'}
+                  'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}
               `}>
                 <span className="material-symbols-outlined text-2xl">
                   {isSealed ? 'lock' : isActive ? 'play_circle' : 'schedule'}
@@ -266,18 +266,18 @@ const TechJobDetail: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-slate-900 dark:text-white">
                     {isSealed ? 'Evidence Sealed' : isSubmitted ? 'Submitted' : isActive ? 'Job In Progress' : 'Ready to Start'}
                   </p>
                   <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                     isSealed ? 'bg-emerald-500/20 text-emerald-400' :
                     isActive ? 'bg-primary/20 text-primary' :
-                    'bg-slate-600 text-slate-300'
+                    'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                   }`}>
                     {job.status}
                   </span>
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {isSealed
                     ? 'Evidence cryptographically sealed and locked'
                     : isSubmitted
@@ -302,7 +302,7 @@ const TechJobDetail: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-red-400">{actionError.message}</p>
-                  <p className="text-sm text-slate-400">Tap to try again</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Tap to try again</p>
                 </div>
                 <span className="material-symbols-outlined text-red-400">refresh</span>
               </button>
@@ -315,10 +315,10 @@ const TechJobDetail: React.FC = () => {
               <div className="space-y-4">
                 {/* Date & Time */}
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-400">schedule</span>
+                  <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">schedule</span>
                   <div>
-                    <p className="text-white">{formatDateUTC(job.date)}</p>
-                    <p className="text-sm text-slate-400">{formatTimeUTC(job.date)}</p>
+                    <p className="text-slate-900 dark:text-white">{formatDateUTC(job.date)}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{formatTimeUTC(job.date)}</p>
                   </div>
                 </div>
 
@@ -327,22 +327,22 @@ const TechJobDetail: React.FC = () => {
                   <button
                     onClick={openMaps}
                     aria-label="Open address in Google Maps"
-                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-white/10 transition-colors text-left min-h-[44px]"
+                    className="w-full flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-left min-h-[44px]"
                   >
                     <span className="material-symbols-outlined text-primary">location_on</span>
                     <div className="flex-1">
-                      <p className="text-white">{job.address}</p>
+                      <p className="text-slate-900 dark:text-white">{job.address}</p>
                       <p className="text-sm text-primary">Open in Maps</p>
                     </div>
-                    <span className="material-symbols-outlined text-slate-400">open_in_new</span>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">open_in_new</span>
                   </button>
                 )}
 
                 {/* Description */}
                 {job.description && (
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-slate-400">description</span>
-                    <p className="text-white">{job.description}</p>
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">description</span>
+                    <p className="text-slate-900 dark:text-white">{job.description}</p>
                   </div>
                 )}
               </div>
@@ -352,10 +352,10 @@ const TechJobDetail: React.FC = () => {
           {/* Evidence Section */}
           <motion.section variants={fadeInUp}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 Evidence
               </h3>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {photos.length} photo{photos.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -364,17 +364,17 @@ const TechJobDetail: React.FC = () => {
             {photos.length > 0 && (
               <div className="flex gap-2 mb-4">
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  beforePhotos.length > 0 ? 'bg-blue-500/20 text-blue-300' : 'bg-slate-800 text-slate-600'
+                  beforePhotos.length > 0 ? 'bg-blue-500/20 text-blue-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
                 }`}>
                   {beforePhotos.length} Before
                 </span>
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  duringPhotos.length > 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-600'
+                  duringPhotos.length > 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
                 }`}>
                   {duringPhotos.length} During
                 </span>
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  afterPhotos.length > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-600'
+                  afterPhotos.length > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
                 }`}>
                   {afterPhotos.length} After
                 </span>
@@ -386,16 +386,16 @@ const TechJobDetail: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-4 rounded-full bg-blue-500" />
-                  <h4 className="font-medium text-white">Before</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white">Before</h4>
                 </div>
-                <span className={`text-xs ${beforePhotos.length > 0 ? 'text-blue-400' : 'text-slate-400'}`}>
+                <span className={`text-xs ${beforePhotos.length > 0 ? 'text-blue-400' : 'text-slate-500 dark:text-slate-400'}`}>
                   {beforePhotos.length} captured
                 </span>
               </div>
               {beforePhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {beforePhotos.map((photo) => (
-                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-blue-500/20">
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-blue-500/20">
                       <img
                         src={photo.url || photo.localPath}
                         alt={`Before - ${job.title}`}
@@ -405,7 +405,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No before photos captured yet</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No before photos captured yet</p>
               )}
             </Card>
 
@@ -414,16 +414,16 @@ const TechJobDetail: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-4 rounded-full bg-amber-500" />
-                  <h4 className="font-medium text-white">During</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white">During</h4>
                 </div>
-                <span className={`text-xs ${duringPhotos.length > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
+                <span className={`text-xs ${duringPhotos.length > 0 ? 'text-amber-400' : 'text-slate-500 dark:text-slate-400'}`}>
                   {duringPhotos.length} captured
                 </span>
               </div>
               {duringPhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {duringPhotos.map((photo) => (
-                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-amber-500/20">
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-amber-500/20">
                       <img
                         src={photo.url || photo.localPath}
                         alt={`During - ${job.title}`}
@@ -433,7 +433,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No during photos captured yet</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No during photos captured yet</p>
               )}
             </Card>
 
@@ -442,16 +442,16 @@ const TechJobDetail: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-4 rounded-full bg-emerald-500" />
-                  <h4 className="font-medium text-white">After</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white">After</h4>
                 </div>
-                <span className={`text-xs ${afterPhotos.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                <span className={`text-xs ${afterPhotos.length > 0 ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                   {afterPhotos.length} captured
                 </span>
               </div>
               {afterPhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {afterPhotos.map((photo) => (
-                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-800 overflow-hidden border border-emerald-500/20">
+                    <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-emerald-500/20">
                       <img
                         src={photo.url || photo.localPath}
                         alt={`After - ${job.title}`}
@@ -461,7 +461,7 @@ const TechJobDetail: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No after photos captured yet</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No after photos captured yet</p>
               )}
             </Card>
           </motion.section>
@@ -474,7 +474,7 @@ const TechJobDetail: React.FC = () => {
                   <span className="material-symbols-outlined text-amber-400">edit_note</span>
                   <div className="flex-1">
                     <h4 className="font-medium text-amber-400 text-sm mb-1">Completion Notes</h4>
-                    <p className="text-slate-300 text-sm whitespace-pre-wrap">{job.completionNotes}</p>
+                    <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-wrap">{job.completionNotes}</p>
                   </div>
                 </div>
               </Card>
@@ -491,7 +491,7 @@ const TechJobDetail: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-emerald-400">Client Confirmed</p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Signed {formatDateUTC(job.clientConfirmation.timestamp)} at {formatTimeUTC(job.clientConfirmation.timestamp)}
                     </p>
                   </div>
@@ -503,7 +503,7 @@ const TechJobDetail: React.FC = () => {
       </main>
 
       {/* Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 px-4 py-4 pb-safe">
         <div className="flex gap-3">
           {!isActive && !isSubmitted && !isSealed ? (
             <ActionButton
@@ -541,7 +541,7 @@ const TechJobDetail: React.FC = () => {
           ) : null}
         </div>
         {isActive && !canComplete && (
-          <p className="text-xs text-slate-400 text-center mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
             Capture at least 1 before and 1 after photo to review
           </p>
         )}

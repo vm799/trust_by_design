@@ -43,7 +43,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-slate-950 transition-colors">
       {/* Desktop Sidebar - hidden on mobile */}
       <Sidebar
         className="hidden lg:flex"
@@ -65,9 +65,9 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
         >
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl" />
           <div
-            className="relative h-full w-72 bg-slate-900 border-r border-white/10 animate-in slide-in-from-left"
+            className="relative h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-white/10 animate-in slide-in-from-left"
             role="presentation"
             onClick={e => e.stopPropagation()}
             onKeyDown={e => e.stopPropagation()}
@@ -86,12 +86,12 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Mobile hamburger + context */}
-        <header className="h-14 lg:h-16 border-b border-white/15 flex items-center justify-between px-4 lg:px-8 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
+        <header className="h-14 lg:h-16 border-b border-slate-200 dark:border-white/15 flex items-center justify-between px-4 lg:px-8 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40 transition-colors">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
+              className="lg:hidden p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               aria-label="Open menu"
             >
               <span className="material-symbols-outlined">menu</span>
@@ -103,7 +103,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <OfflineIndicator />
 
             {/* Notifications */}
-            <button className="p-2 text-slate-400 hover:text-white transition-colors relative" aria-label="Notifications">
+            <button className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors relative" aria-label="Notifications">
               <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
               {/* Notification badge - show when there are unread */}
               {/* <span className="absolute top-1 right-1 size-2 bg-primary rounded-full" /> */}

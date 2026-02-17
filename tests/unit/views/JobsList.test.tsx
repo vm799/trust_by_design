@@ -340,7 +340,7 @@ describe('JobsList Virtual Scrolling', () => {
       );
 
       // Filter tabs should exist in the filter container
-      const filterContainer = container.querySelector('.bg-slate-900.border');
+      const filterContainer = container.querySelector('[class*="bg-slate"][class*="border"]');
       expect(filterContainer).toBeInTheDocument();
 
       // Verify filter buttons exist
@@ -372,8 +372,12 @@ describe('JobsList Virtual Scrolling', () => {
       );
 
       // Filter count badges should be visible in filter tabs
-      const filterTabs = container.querySelector('.bg-slate-900.border');
-      expect(filterTabs?.textContent).toContain('30'); // All count
+      const allButtons = screen.getAllByRole('button');
+      const filterButtons = allButtons.filter(btn => btn.textContent?.includes('All'));
+      expect(filterButtons.length).toBeGreaterThan(0);
+      // Verify at least one filter button shows a count
+      const hasCount = allButtons.some(btn => btn.textContent?.includes('30'));
+      expect(hasCount).toBe(true);
     });
   });
 

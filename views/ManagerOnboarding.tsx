@@ -162,14 +162,14 @@ const ManagerOnboarding: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="animate-spin size-12 border-4 border-primary/30 border-t-primary rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 md:p-6">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-xl">
         {/* Progress Indicator */}
         <div className="mb-8">
@@ -185,7 +185,7 @@ const ManagerOnboarding: React.FC = () => {
                       ? 'bg-success text-white'
                       : s === step
                       ? 'bg-primary text-white scale-110'
-                      : 'bg-slate-800 text-slate-400'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   {s < step ? (
@@ -197,29 +197,29 @@ const ManagerOnboarding: React.FC = () => {
                 {s < 3 && (
                   <div
                     className={`flex-1 h-1 mx-2 rounded-full transition-all ${
-                      s < step ? 'bg-success' : 'bg-slate-800'
+                      s < step ? 'bg-success' : 'bg-slate-200 dark:bg-slate-800'
                     }`}
                   />
                 )}
               </div>
             ))}
           </div>
-          <p className="text-center text-slate-400 text-xs font-medium tracking-widest">
+          <p className="text-center text-slate-500 dark:text-slate-400 text-xs font-medium tracking-widest">
             Step {step} of 3
           </p>
         </div>
 
         {/* Step 1: Company Setup */}
         {step === 1 && (
-          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-primary/10 size-16 rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
                 <span className="material-symbols-outlined text-primary text-4xl">business</span>
               </div>
-              <h1 className="text-2xl font-black text-white uppercase tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                 Company Setup
               </h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Let&apos;s configure your workspace for field operations.
               </p>
             </div>
@@ -227,7 +227,7 @@ const ManagerOnboarding: React.FC = () => {
             <div className="space-y-5">
               {/* Company Name - Primary Focus */}
               <div className="space-y-2">
-                <label htmlFor="onboarding-company-name" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="onboarding-company-name" className="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                   Company Name *
                 </label>
                 <input
@@ -237,21 +237,21 @@ const ManagerOnboarding: React.FC = () => {
                   required
                   value={companyData.companyName}
                   onChange={(e) => setCompanyData({ ...companyData, companyName: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white text-lg font-medium outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white text-lg font-medium outline-none transition-all"
                   placeholder="Your Company Ltd"
                 />
               </div>
 
               {/* Country */}
               <div className="space-y-2">
-                <label htmlFor="onboarding-country" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="onboarding-country" className="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                   Country
                 </label>
                 <select
                   id="onboarding-country"
                   value={companyData.country}
                   onChange={(e) => setCompanyData({ ...companyData, country: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.name}</option>
@@ -261,7 +261,7 @@ const ManagerOnboarding: React.FC = () => {
 
               {/* Work Hours */}
               <div className="space-y-2">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                   Default Work Hours
                 </span>
                 <div className="grid grid-cols-2 gap-4">
@@ -271,7 +271,7 @@ const ManagerOnboarding: React.FC = () => {
                       type="time"
                       value={companyData.workHoursStart}
                       onChange={(e) => setCompanyData({ ...companyData, workHoursStart: e.target.value })}
-                      className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                      className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">START</span>
                   </div>
@@ -280,7 +280,7 @@ const ManagerOnboarding: React.FC = () => {
                       type="time"
                       value={companyData.workHoursEnd}
                       onChange={(e) => setCompanyData({ ...companyData, workHoursEnd: e.target.value })}
-                      className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all"
+                      className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">END</span>
                   </div>
@@ -289,7 +289,7 @@ const ManagerOnboarding: React.FC = () => {
 
               {/* Safety Requirements */}
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                   Default Safety Requirements
                 </span>
                 <div className="grid grid-cols-2 gap-2">
@@ -300,14 +300,14 @@ const ManagerOnboarding: React.FC = () => {
                       onClick={() => handleSafetyToggle(safety.id)}
                       className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                         companyData.defaultSafetyRequirements.includes(safety.id)
-                          ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-600'
+                          ? 'bg-primary/10 border-primary text-slate-900 dark:text-white'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
                         companyData.defaultSafetyRequirements.includes(safety.id)
                           ? 'text-primary'
-                          : 'text-slate-400'
+                          : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {safety.icon}
                       </span>
@@ -330,44 +330,44 @@ const ManagerOnboarding: React.FC = () => {
 
         {/* Step 2: Role Confirmation */}
         {step === 2 && (
-          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-success/10 size-16 rounded-2xl flex items-center justify-center mx-auto border border-success/20">
                 <span className="material-symbols-outlined text-success text-4xl">verified_user</span>
               </div>
-              <h1 className="text-2xl font-black text-white uppercase tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                 Confirm Your Role
               </h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 This determines how JobProof works for you.
               </p>
             </div>
 
-            <div className="bg-slate-800 border-2 border-primary rounded-2xl p-6 space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-800 border-2 border-primary rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="bg-primary/20 size-14 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-3xl">manage_accounts</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-black text-lg uppercase tracking-tight">Manager</h3>
-                  <p className="text-slate-400 text-sm">Create, dispatch, and review jobs</p>
+                  <h3 className="text-slate-900 dark:text-white font-black text-lg uppercase tracking-tight">Manager</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">Create, dispatch, and review jobs</p>
                 </div>
               </div>
 
-              <div className="border-t border-slate-600 pt-4 space-y-2">
-                <div className="flex items-center gap-2 text-slate-300 text-sm">
+              <div className="border-t border-slate-200 dark:border-slate-600 pt-4 space-y-2">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
                   <span className="material-symbols-outlined text-success text-lg">check_circle</span>
                   Create and assign jobs to technicians
                 </div>
-                <div className="flex items-center gap-2 text-slate-300 text-sm">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
                   <span className="material-symbols-outlined text-success text-lg">check_circle</span>
                   Generate magic links for field access
                 </div>
-                <div className="flex items-center gap-2 text-slate-300 text-sm">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
                   <span className="material-symbols-outlined text-success text-lg">check_circle</span>
                   Review submitted job proofs
                 </div>
-                <div className="flex items-center gap-2 text-slate-300 text-sm">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
                   <span className="material-symbols-outlined text-success text-lg">check_circle</span>
                   Manage clients and technicians
                 </div>
@@ -398,7 +398,7 @@ const ManagerOnboarding: React.FC = () => {
               </button>
               <button
                 onClick={() => setStep(1)}
-                className="w-full py-3 text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-white transition-all"
+                className="w-full py-3 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all"
               >
                 Go Back
               </button>
@@ -408,30 +408,30 @@ const ManagerOnboarding: React.FC = () => {
 
         {/* Step 3: Create First Job CTA */}
         {step === 3 && (
-          <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
             <div className="text-center space-y-3">
               <div className="bg-success/10 size-20 rounded-2xl flex items-center justify-center mx-auto border border-success/20">
                 <span className="material-symbols-outlined text-success text-5xl">rocket_launch</span>
               </div>
-              <h1 className="text-2xl font-black text-white uppercase tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                 You&apos;re All Set!
               </h1>
-              <p className="text-slate-400 text-sm max-w-sm mx-auto">
-                <span className="text-white font-bold">{companyData.companyName}</span> is ready to go.
+              <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
+                <span className="text-slate-900 dark:text-white font-bold">{companyData.companyName}</span> is ready to go.
                 Create your first job to see JobProof in action.
               </p>
             </div>
 
-            <div className="bg-slate-800 rounded-2xl p-6 space-y-4 border border-white/15">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">What happens next</h4>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6 space-y-4 border border-slate-200 dark:border-white/15">
+              <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">What happens next</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="bg-primary/20 size-8 rounded-lg flex items-center justify-center shrink-0">
                     <span className="text-primary font-black text-sm">1</span>
                   </div>
                   <div>
-                    <p className="text-white font-bold text-sm">Create a job</p>
-                    <p className="text-slate-400 text-xs">Define the work scope and safety requirements</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm">Create a job</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Define the work scope and safety requirements</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -439,8 +439,8 @@ const ManagerOnboarding: React.FC = () => {
                     <span className="text-primary font-black text-sm">2</span>
                   </div>
                   <div>
-                    <p className="text-white font-bold text-sm">Send magic link</p>
-                    <p className="text-slate-400 text-xs">Technician gets instant browser access</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm">Send magic link</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Technician gets instant browser access</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -448,8 +448,8 @@ const ManagerOnboarding: React.FC = () => {
                     <span className="text-primary font-black text-sm">3</span>
                   </div>
                   <div>
-                    <p className="text-white font-bold text-sm">Get proof</p>
-                    <p className="text-slate-400 text-xs">Review timestamped photos and confirmations</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm">Get proof</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Review timestamped photos and confirmations</p>
                   </div>
                 </div>
               </div>
@@ -465,7 +465,7 @@ const ManagerOnboarding: React.FC = () => {
               </button>
               <button
                 onClick={handleSkipToDashboard}
-                className="w-full py-3 text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-white transition-all"
+                className="w-full py-3 text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all"
               >
                 Skip to Dashboard
               </button>

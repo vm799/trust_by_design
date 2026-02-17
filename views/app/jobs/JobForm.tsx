@@ -452,7 +452,7 @@ const JobForm: React.FC = () => {
 
               {/* Priority Selection */}
               <div>
-                <label htmlFor="job-priority" className="block text-sm font-medium text-slate-300 mb-3">
+                <label htmlFor="job-priority" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
                   Priority
                 </label>
                 <input id="job-priority" type="hidden" value={formData.priority} />
@@ -463,7 +463,7 @@ const JobForm: React.FC = () => {
                     className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                       formData.priority === 'normal'
                         ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/10'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">schedule</span>
@@ -475,7 +475,7 @@ const JobForm: React.FC = () => {
                     className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                       formData.priority === 'urgent'
                         ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-white/10'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10'
                     }`}
                   >
                     <span className="material-symbols-outlined text-lg">priority_high</span>
@@ -486,7 +486,7 @@ const JobForm: React.FC = () => {
 
               {/* Job Title */}
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Job Title <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -497,8 +497,8 @@ const JobForm: React.FC = () => {
                   onChange={handleChange('title')}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), clientRef.current?.focus())}
                   placeholder="e.g. Boiler Service, Roof Inspection"
-                  className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                    errors.title ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                  className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                    errors.title ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-white/10'
                   }`}
                 />
                 {errors.title && <p className="mt-1 text-sm text-red-400">{errors.title}</p>}
@@ -507,7 +507,7 @@ const JobForm: React.FC = () => {
               {/* Client with inline add */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="clientId" className="text-sm font-medium text-slate-300">
+                  <label htmlFor="clientId" className="text-sm font-medium text-slate-600 dark:text-slate-300">
                     Client <span className="text-red-400">*</span>
                   </label>
                   <button
@@ -523,7 +523,7 @@ const JobForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddClient(true)}
-                    className="w-full px-4 py-3 bg-slate-800 border border-dashed border-white/20 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-slate-500 dark:text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined">add</span>
                     Add your first client
@@ -534,8 +534,8 @@ const JobForm: React.FC = () => {
                     id="clientId"
                     value={formData.clientId}
                     onChange={(e) => handleClientChange(e.target.value)}
-                    className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                      errors.clientId ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.clientId ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-white/10'
                     }`}
                   >
                     <option value="">Select a client...</option>
@@ -550,7 +550,7 @@ const JobForm: React.FC = () => {
               {/* Technician with inline add */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="technicianId" className="text-sm font-medium text-slate-300">
+                  <label htmlFor="technicianId" className="text-sm font-medium text-slate-600 dark:text-slate-300">
                     Assign Technician
                   </label>
                   <button
@@ -566,7 +566,7 @@ const JobForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddTech(true)}
-                    className="w-full px-4 py-3 bg-slate-800 border border-dashed border-white/20 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-slate-500 dark:text-slate-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined">add</span>
                     Add your first technician
@@ -580,7 +580,7 @@ const JobForm: React.FC = () => {
                       handleChange('technicianId')(e);
                       if (e.target.value) setTimeout(() => dateRef.current?.focus(), 100);
                     }}
-                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   >
                     <option value="">Assign later...</option>
                     {technicians.map(tech => (
@@ -593,7 +593,7 @@ const JobForm: React.FC = () => {
               {/* Date & Time - Responsive grid for mobile (stacked) vs desktop (side-by-side) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-slate-300 mb-2">
+                  <label htmlFor="date" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                     Date <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -602,14 +602,14 @@ const JobForm: React.FC = () => {
                     type="date"
                     value={formData.date}
                     onChange={handleChange('date')}
-                    className={`w-full px-4 py-4 min-h-[56px] bg-slate-800 border rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                      errors.date ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    className={`w-full px-4 py-4 min-h-[56px] bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.date ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-white/10'
                     }`}
                   />
                   {errors.date && <p className="mt-1 text-sm text-red-400">{errors.date}</p>}
                 </div>
                 <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-slate-300 mb-2">
+                  <label htmlFor="time" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                     Time
                   </label>
                   <input
@@ -620,14 +620,14 @@ const JobForm: React.FC = () => {
                       handleChange('time')(e);
                       setTimeout(() => addressRef.current?.focus(), 100);
                     }}
-                    className="w-full px-4 py-4 min-h-[56px] bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full px-4 py-4 min-h-[56px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 </div>
               </div>
 
               {/* Address */}
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="address" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Address
                 </label>
                 <input
@@ -637,13 +637,13 @@ const JobForm: React.FC = () => {
                   value={formData.address}
                   onChange={handleChange('address')}
                   placeholder="Job location address"
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="description" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Description
                 </label>
                 <textarea
@@ -652,25 +652,25 @@ const JobForm: React.FC = () => {
                   onChange={handleChange('description')}
                   placeholder="Job details, scope of work, special instructions..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                 />
               </div>
 
               {/* Total */}
               <div>
-                <label htmlFor="total" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="total" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Total Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">£</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-bold">£</span>
                   <input
                     id="total"
                     type="text"
                     value={formData.total}
                     onChange={handleChange('total')}
                     placeholder="0.00"
-                    className={`w-full pl-8 pr-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                      errors.total ? 'border-red-500 bg-red-500/5' : 'border-white/10'
+                    className={`w-full pl-8 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      errors.total ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-white/10'
                     }`}
                   />
                 </div>
@@ -678,12 +678,12 @@ const JobForm: React.FC = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-white/15">
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-white/15">
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
                   disabled={saving}
-                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -714,7 +714,7 @@ const JobForm: React.FC = () => {
         <Modal isOpen={showAddClient} onClose={() => setShowAddClient(false)} title="Quick Add Client" size="sm">
           <div className="space-y-4">
             <div>
-              <label htmlFor="new-client-name" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-client-name" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Client Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -723,12 +723,12 @@ const JobForm: React.FC = () => {
                 value={newClientName}
                 onChange={(e) => setNewClientName(e.target.value)}
                 placeholder="Company or person name"
-                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddClient()}
               />
             </div>
             <div>
-              <label htmlFor="new-client-email" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-client-email" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Email (optional)
               </label>
               <input
@@ -737,14 +737,14 @@ const JobForm: React.FC = () => {
                 value={newClientEmail}
                 onChange={(e) => setNewClientEmail(e.target.value)}
                 placeholder="client@company.com"
-                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setShowAddClient(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
+                className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
               >
                 Cancel
               </button>
@@ -771,7 +771,7 @@ const JobForm: React.FC = () => {
         <Modal isOpen={showAddTech} onClose={() => setShowAddTech(false)} title="Quick Add Technician" size="sm">
           <div className="space-y-4">
             <div>
-              <label htmlFor="new-tech-name" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-tech-name" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Technician Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -780,12 +780,12 @@ const JobForm: React.FC = () => {
                 value={newTechName}
                 onChange={(e) => setNewTechName(e.target.value)}
                 placeholder="Full name"
-                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
               />
             </div>
             <div>
-              <label htmlFor="new-tech-email" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="new-tech-email" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Email (optional)
               </label>
               <input
@@ -794,14 +794,14 @@ const JobForm: React.FC = () => {
                 value={newTechEmail}
                 onChange={(e) => setNewTechEmail(e.target.value)}
                 placeholder="tech@company.com"
-                className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setShowAddTech(false)}
-                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
+                className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase transition-all active:scale-[0.98]"
               >
                 Cancel
               </button>

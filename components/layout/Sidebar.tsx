@@ -59,9 +59,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`w-64 flex-col border-r border-white/15 bg-slate-950/50 ${className}`}>
+    <aside className={`w-64 flex-col border-r border-slate-200 dark:border-white/15 bg-white/50 dark:bg-slate-950/50 transition-colors ${className}`}>
       {/* Logo */}
-      <div className="p-6 border-b border-white/15">
+      <div className="p-6 border-b border-slate-200 dark:border-white/15">
         <Link to="/app" onClick={handleClick}>
           <JobProofLogo variant="full" size="md" />
         </Link>
@@ -70,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 py-2">
-          <span className="text-xs font-bold text-blue-400/70 uppercase tracking-widest">
+          <span className="text-xs font-semibold text-slate-500 dark:text-blue-400/70 uppercase tracking-wider">
             Management
           </span>
         </div>
@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
 
         <div className="px-3 py-2 mt-6">
-          <span className="text-xs font-bold text-blue-400/70 uppercase tracking-widest">
+          <span className="text-xs font-semibold text-slate-500 dark:text-blue-400/70 uppercase tracking-wider">
             Settings
           </span>
         </div>
@@ -101,18 +101,18 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Profile Footer */}
-      <div className="p-4 border-t border-white/15 space-y-2">
+      <div className="p-4 border-t border-slate-200 dark:border-white/15 space-y-2">
         <Link
           to="/app/settings"
           onClick={handleClick}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 transition-colors"
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
         >
           <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold">
             {userInitials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">{userEmail}</p>
-            <p className="text-xs text-slate-300">Manage account</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userEmail}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300">Manage account</p>
           </div>
         </Link>
         {onLogout && (
@@ -144,7 +144,7 @@ const NavLink = memo<NavLinkProps>(({ to, icon, label, badge, active, onClick })
       flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
       ${active
         ? 'bg-primary/10 text-primary border border-primary/20'
-        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
       }
     `}
   >

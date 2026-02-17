@@ -602,8 +602,8 @@ const ManagerFocusDashboard: React.FC = () => {
       <PageContent>
         <Card className="text-center py-8">
           <span className="material-symbols-outlined text-4xl text-red-400 mb-4">error</span>
-          <p className="text-white font-medium mb-2">Failed to load data</p>
-          <p className="text-slate-400 text-sm mb-4">{error}</p>
+          <p className="text-slate-900 dark:text-white font-medium mb-2">Failed to load data</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{error}</p>
           <ActionButton variant="secondary" onClick={refresh} icon="refresh">
             Retry
           </ActionButton>
@@ -624,7 +624,7 @@ const ManagerFocusDashboard: React.FC = () => {
             pendingJobs={metrics.pendingJobs}
             className="hidden sm:inline-flex"
           />
-          <h1 className="text-lg font-bold text-white">Mission Control</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Mission Control</h1>
           {/* Desktop status chips */}
           <div className="hidden sm:flex items-center gap-2 text-xs">
             <button
@@ -842,7 +842,7 @@ const ManagerFocusDashboard: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Needs Attention</h2>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
                     {attentionItems.length} item{attentionItems.length !== 1 ? 's' : ''} requiring action
                   </p>
                 </div>
@@ -896,7 +896,7 @@ const ManagerFocusDashboard: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Technicians</h2>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-500 dark:text-slate-300">
                   {technicians.length} team member{technicians.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -928,8 +928,8 @@ const ManagerFocusDashboard: React.FC = () => {
                 <div className="size-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
                   <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">Ready for Dispatch</h3>
-                <p className="text-slate-400 text-sm">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Ready for Dispatch</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   {metrics.onSiteTechs > 0
                     ? `${metrics.onSiteTechs} technician${metrics.onSiteTechs !== 1 ? 's' : ''} on-site. No issues detected.`
                     : 'All technicians available. No issues detected.'
