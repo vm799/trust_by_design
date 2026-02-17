@@ -236,11 +236,11 @@ describe('ManagerFocusDashboard (Mission Control)', () => {
       expect(onSiteButton?.textContent).toContain('1');
     });
 
-    it('should show "Ready for Dispatch" when no issues', () => {
+    it('should show "All Clear" when no issues and no dispatched jobs', () => {
       mockTechnicians = [createTechnician()];
       mockJobs = [createJob({ syncStatus: 'synced', status: 'Pending', lastUpdated: Date.now() })];
       renderDashboard();
-      expect(screen.getByText('Ready for Dispatch')).toBeDefined();
+      expect(screen.getByText('All Clear')).toBeDefined();
     });
   });
 

@@ -136,8 +136,8 @@ describe('Role-Specific Color System', () => {
       expect(['primary', 'emerald-500']).toContain('emerald-500');
     });
 
-    it('should apply manager-accent to AdminDashboard CTAs', () => {
-      // AdminDashboard should use violet-500 (#8B5CF6) for "New Job" button
+    it('should apply manager-accent to ManagerFocusDashboard CTAs', () => {
+      // ManagerFocusDashboard should use violet-500 (#8B5CF6) for "New Job" button
       expect(['primary', 'violet-500']).toContain('violet-500');
     });
 
@@ -165,7 +165,7 @@ describe('Role-Specific Color System', () => {
       // Each dashboard should use its own role color consistently
       const componentRoleMap = {
         'TechPortal': 'tech-accent',
-        'AdminDashboard': 'manager-accent',
+        'ManagerFocusDashboard': 'manager-accent',
         'ContractorDashboard': 'solo-accent',
       };
 

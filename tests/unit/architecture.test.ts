@@ -111,7 +111,6 @@ describe('Architecture Compliance', () => {
       // Views that should be lazy loaded
       const requiredLazyLoads = [
         'LandingPage',
-        'AdminDashboard',
         'ContractorDashboard',
         'TechnicianPortal',
         'JobReport',
@@ -264,7 +263,6 @@ describe('Architecture Compliance', () => {
      */
     it('dashboard views should not match technicians by name or email string', () => {
       const dashboardFiles = [
-        'views/AdminDashboard.tsx',
         'views/ContractorDashboard.tsx',
         'views/app/ManagerFocusDashboard.tsx',
         'views/app/SoloContractorDashboard.tsx',
@@ -298,7 +296,6 @@ describe('Architecture Compliance', () => {
 
     it('dashboard views should use techId or technicianId for job filtering', () => {
       const dashboardFiles = [
-        'views/AdminDashboard.tsx',
         'views/ContractorDashboard.tsx',
         'views/app/ManagerFocusDashboard.tsx',
         'views/app/SoloContractorDashboard.tsx',

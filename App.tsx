@@ -28,8 +28,6 @@ const getStorageQuota = () => import('./lib/storageQuota');
 
 // Lazy load all route components for optimal code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test
-const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
 const ManagerFocusDashboard = lazy(() => import('./views/app/ManagerFocusDashboard'));
 // CreateJob removed - unified into JobCreationWizard at /admin/create
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by architecture compliance test

@@ -542,7 +542,17 @@ const ManagerFocusDashboard: React.FC = () => {
       ['Pending', 'Draft'].includes(j.status)
     ).length;
 
-    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs };
+    // Dispatched: jobs with a magic link sent but tech hasn't started work yet
+    const dispatchedJobs = jobs.filter(j =>
+      j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
+    ).length;
+
+    // Needs link: jobs with a technician assigned but no link generated yet
+    const needsLink = jobs.filter(j =>
+      (j.technicianId || j.techId) && !j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
+    ).length;
+
+    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs, dispatchedJobs, needsLink };
   }, [technicians, jobs, now]);
 
   // On-site technicians with job details for pulse modal
@@ -624,15 +634,27 @@ const ManagerFocusDashboard: React.FC = () => {
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-bold">{metrics.onSiteTechs}</span> on-site
             </button>
+            {metrics.dispatchedJobs > 0 && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400">
+                <span className="material-symbols-outlined text-xs">send</span>
+                <span className="font-bold">{metrics.dispatchedJobs}</span> dispatched
+              </span>
+            )}
+            {metrics.needsLink > 0 && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400">
+                <span className="material-symbols-outlined text-xs">link</span>
+                <span className="font-bold">{metrics.needsLink}</span> need{metrics.needsLink !== 1 ? '' : 's'} link
+              </span>
+            )}
             {metrics.hasIssues ? (
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400">
                 <span className="material-symbols-outlined text-xs">warning</span>
                 <span className="font-bold">{metrics.failedSyncs + metrics.overdueJobs}</span> issue{metrics.failedSyncs + metrics.overdueJobs !== 1 ? 's' : ''}
               </span>
-            ) : (
+            ) : metrics.dispatchedJobs === 0 && metrics.needsLink === 0 && (
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400/80">
                 <span className="material-symbols-outlined text-xs">check_circle</span>
-                Ready for Dispatch
+                All Clear
               </span>
             )}
           </div>
@@ -783,7 +805,7 @@ const ManagerFocusDashboard: React.FC = () => {
 
           {/* MOBILE TECHNICIAN PULSE — Visible only on small screens */}
           <motion.section variants={fadeInUp} className="sm:hidden">
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${metrics.dispatchedJobs > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <button
                 onClick={() => setIsTechPulseOpen(true)}
                 className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]"
@@ -791,6 +813,12 @@ const ManagerFocusDashboard: React.FC = () => {
                 <span className="text-lg font-bold text-emerald-400">{metrics.onSiteTechs}</span>
                 <span className="text-xs text-emerald-400/80">On-Site</span>
               </button>
+              {metrics.dispatchedJobs > 0 && (
+                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-blue-500/10 border-2 border-blue-500/20 min-h-[56px]">
+                  <span className="text-lg font-bold text-blue-400">{metrics.dispatchedJobs}</span>
+                  <span className="text-xs text-blue-400/80">Dispatched</span>
+                </div>
+              )}
               {metrics.hasIssues ? (
                 <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-red-500/10 border-2 border-red-500/20 min-h-[56px]">
                   <span className="text-lg font-bold text-red-400">{metrics.failedSyncs + metrics.overdueJobs}</span>

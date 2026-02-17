@@ -1124,12 +1124,6 @@ export interface MagicLinkInfo {
   creator_user_id?: string;      // Who created the job (for notifications)
 }
 
-// Alert threshold constants
-export const LINK_ALERT_THRESHOLDS = {
-  UNOPENED_WARNING: 2 * 60 * 60 * 1000,    // 2 hours - flag if not opened
-  UNOPENED_URGENT: 4 * 60 * 60 * 1000,     // 4 hours - urgent flag
-  STALE_JOB: 24 * 60 * 60 * 1000,          // 24 hours - job started but not completed
-} as const;
 
 /**
  * Revoke a specific magic link token
@@ -1530,80 +1524,6 @@ export const markLinkAsSent = (
   return updateLinkLifecycle(token, 'sent', { sent_via: sentVia });
 };
 
-/**
- * Check for links that need attention (unopened after threshold)
- * Returns links that should be flagged to the job creator
- */
-export const getLinksNeedingAttention = (): MagicLinkInfo[] => {
-  const now = Date.now();
-  const needsAttention: MagicLinkInfo[] = [];
-
-  // Helper to check a link
-  const checkLink = (token: string, data: any) => {
-    // Skip if already opened, revoked, or job is complete
-    if (data.first_accessed_at || data.is_sealed || data.lifecycle_stage === 'job_completed') {
-      return;
-    }
-
-    // Skip if already acknowledged
-    if (data.flag_acknowledged_at) {
-      return;
-    }
-
-    // Check if sent_at or created_at exists to calculate age
-    const sentAt = data.sent_at || data.created_at;
-    if (!sentAt) return;
-
-    const ageMs = now - new Date(sentAt).getTime();
-
-    // Check if past the 2-hour threshold and not expired
-    const expiresAt = new Date(data.expires_at).getTime();
-    if (ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_WARNING && now < expiresAt) {
-      const isUrgent = ageMs >= LINK_ALERT_THRESHOLDS.UNOPENED_URGENT;
-
-      needsAttention.push({
-        token,
-        job_id: data.job_id,
-        workspace_id: data.workspace_id,
-        expires_at: data.expires_at,
-        status: 'active',
-        created_at: data.created_at,
-        sent_at: data.sent_at,
-        sent_via: data.sent_via,
-        lifecycle_stage: data.lifecycle_stage || 'sent',
-        flagged_at: data.flagged_at || new Date().toISOString(),
-        flag_reason: isUrgent
-          ? `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours - URGENT`
-          : `Link unopened for ${Math.floor(ageMs / (60 * 60 * 1000))} hours`,
-        assigned_to_tech_id: data.assigned_to_tech_id,
-        creator_user_id: data.creator_user_id,
-      });
-    }
-  };
-
-  // Check mockDatabase
-  mockDatabase.magicLinks.forEach((data, token) => checkLink(token, data));
-
-  // Check localStorage
-  try {
-    const localLinks = JSON.parse(localStorage.getItem('jobproof_magic_links') || '{}');
-    Object.entries(localLinks).forEach(([token, data]: [string, any]) => {
-      // Avoid duplicates
-      if (!needsAttention.find(l => l.token === token)) {
-        checkLink(token, data);
-      }
-    });
-  } catch (e) {
-    // Ignore
-  }
-
-  // Sort by age (oldest first - most urgent)
-  return needsAttention.sort((a, b) => {
-    const aTime = new Date(a.sent_at || a.created_at || 0).getTime();
-    const bTime = new Date(b.sent_at || b.created_at || 0).getTime();
-    return aTime - bTime;
-  });
-};
 
 /**
  * Acknowledge a flag (manager has seen it)
@@ -1645,7 +1565,9 @@ export const acknowledgeLinkFlag = (token: string): DbResult<void> => {
 };
 
 /**
- * Get full lifecycle status summary for display
+ * Get full lifecycle status summary for display.
+ * Derives "job_started" and "job_completed" from actual job status when
+ * explicit timestamps are missing, so the lifecycle display reflects reality.
  */
 export const getLinkLifecycleSummary = (token: string): {
   stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[];
@@ -1670,13 +1592,39 @@ export const getLinkLifecycleSummary = (token: string): {
 
   const data = linkData as any;
 
+  // Look up the actual job to derive lifecycle stages from real status
+  let jobStarted = !!data.job_started_at;
+  let jobCompleted = !!data.job_completed_at;
+  let jobStartedTimestamp = data.job_started_at;
+  let jobCompletedTimestamp = data.job_completed_at;
+
+  const jobId = data.job_id;
+  if (jobId && (!jobStarted || !jobCompleted)) {
+    try {
+      const jobs = JSON.parse(localStorage.getItem('jobproof_jobs_v2') || '[]');
+      const job = jobs.find((j: any) => j.id === jobId);
+      if (job) {
+        // "In Progress" or further means work has started
+        if (!jobStarted && ['In Progress', 'Complete', 'Submitted', 'Archived'].includes(job.status)) {
+          jobStarted = true;
+          jobStartedTimestamp = job.lastUpdated ? new Date(job.lastUpdated).toISOString() : undefined;
+        }
+        // "Complete", "Submitted", or sealed means job is done
+        if (!jobCompleted && (['Complete', 'Submitted', 'Archived'].includes(job.status) || job.sealedAt)) {
+          jobCompleted = true;
+          jobCompletedTimestamp = job.completedAt || job.sealedAt || (job.lastUpdated ? new Date(job.lastUpdated).toISOString() : undefined);
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
   const stages: { stage: LinkLifecycleStage; timestamp?: string; completed: boolean }[] = [
     { stage: 'sent', timestamp: data.sent_at || data.created_at, completed: !!(data.sent_at || data.created_at) },
-    { stage: 'delivered', timestamp: data.delivered_at, completed: !!data.delivered_at },
     { stage: 'opened', timestamp: data.first_accessed_at, completed: !!data.first_accessed_at },
-    { stage: 'job_started', timestamp: data.job_started_at, completed: !!data.job_started_at },
-    { stage: 'job_completed', timestamp: data.job_completed_at, completed: !!data.job_completed_at },
-    { stage: 'report_sent', timestamp: data.report_sent_at, completed: !!data.report_sent_at },
+    { stage: 'job_started', timestamp: jobStartedTimestamp, completed: jobStarted },
+    { stage: 'job_completed', timestamp: jobCompletedTimestamp, completed: jobCompleted },
   ];
 
   // Determine current stage
@@ -1688,8 +1636,8 @@ export const getLinkLifecycleSummary = (token: string): {
     }
   }
 
-  // Check if needs attention
-  const needsAttention = !!data.flagged_at && !data.flag_acknowledged_at && !data.first_accessed_at;
+  // Needs attention if link was sent but not opened
+  const needsAttention = !data.first_accessed_at && !!(data.sent_at || data.created_at);
 
   return {
     stages,
