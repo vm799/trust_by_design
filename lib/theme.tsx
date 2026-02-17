@@ -20,11 +20,11 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 // TYPE DEFINITIONS (Strict - No 'any')
 // ============================================
 
-/** Theme mode options - Light mode removed due to poor contrast */
-type ThemeMode = 'dark' | 'system' | 'daylight';
+/** Theme mode options - light mode restored per UX audit (outdoor readability) */
+type ThemeMode = 'light' | 'dark' | 'system' | 'daylight';
 
 /** Resolved theme after system preference evaluation */
-type ResolvedTheme = 'dark' | 'daylight';
+type ResolvedTheme = 'light' | 'dark' | 'daylight';
 
 /** Theme state machine states */
 type ThemeState = 'idle' | 'hydrating' | 'ready' | 'transitioning';
@@ -44,6 +44,8 @@ interface ThemeContextType {
   setTheme: (theme: ThemeMode) => void;
   /** Resolved theme after system/auto evaluation */
   resolvedTheme: ResolvedTheme;
+  /** Whether resolved theme is light (not dark, not daylight) */
+  isLightMode: boolean;
   /** Whether it's evening (6PM-6AM local time) */
   isEvening: boolean;
   /** Toggle between day/night modes */
@@ -136,8 +138,10 @@ function getIsDaytimeOutdoor(): boolean {
 // SYSTEM PREFERENCE DETECTION
 // ============================================
 
-function getSystemPreference(): 'dark' {
-  // Always return dark - light mode removed due to poor contrast
+function getSystemPreference(): 'light' | 'dark' {
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+    return 'light';
+  }
   return 'dark';
 }
 
@@ -164,7 +168,7 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
   // Core theme state
   const [theme, setThemeInternal] = useState<ThemeMode>(() => {
     if (forceTheme) return forceTheme;
-    return storage.get<ThemeMode>(STORAGE_KEYS.THEME, 'dark');
+    return storage.get<ThemeMode>(STORAGE_KEYS.THEME, 'system');
   });
 
   // Daylight mode state
@@ -188,6 +192,8 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
     if (isDaylightMode) return 'daylight';
 
     switch (theme) {
+      case 'light':
+        return 'light';
       case 'dark':
         return 'dark';
       case 'daylight':
@@ -195,7 +201,7 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
       case 'system':
         return getSystemPreference();
       default:
-        return 'dark';
+        return 'light';
     }
   }, [theme, isDaylightMode]);
 
@@ -224,13 +230,13 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
 
   const toggleDayNight = useCallback(() => {
     if (isDaylightMode) {
-      // From daylight -> dark
+      // From daylight -> system preference
       setIsDaylightMode(false);
       storage.set(STORAGE_KEYS.DAYLIGHT_ENABLED, false);
-      setThemeInternal('dark');
-      storage.set(STORAGE_KEYS.THEME, 'dark');
+      setThemeInternal('system');
+      storage.set(STORAGE_KEYS.THEME, 'system');
     } else {
-      // From dark -> daylight (high visibility outdoor mode)
+      // From current -> daylight (high visibility outdoor mode)
       setIsDaylightMode(true);
       storage.set(STORAGE_KEYS.DAYLIGHT_ENABLED, true);
       setThemeInternal('daylight');
@@ -246,9 +252,9 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
       setThemeInternal('daylight');
       storage.set(STORAGE_KEYS.THEME, 'daylight');
     } else {
-      // Reset to dark when disabling daylight mode
-      setThemeInternal('dark');
-      storage.set(STORAGE_KEYS.THEME, 'dark');
+      // Reset to system preference when disabling daylight mode
+      setThemeInternal('system');
+      storage.set(STORAGE_KEYS.THEME, 'system');
     }
   }, []);
 
@@ -271,7 +277,7 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
       return;
     }
 
-    const storedTheme = storage.get<ThemeMode>(STORAGE_KEYS.THEME, 'dark');
+    const storedTheme = storage.get<ThemeMode>(STORAGE_KEYS.THEME, 'system');
     const storedDaylight = storage.get<boolean>(STORAGE_KEYS.DAYLIGHT_ENABLED, false);
     const storedDaylightAuto = storage.get<boolean>(STORAGE_KEYS.DAYLIGHT_AUTO, false);
 
@@ -303,8 +309,8 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Remove all theme classes (light mode removed)
-    root.classList.remove('dark', 'daylight');
+    // Remove all theme classes
+    root.classList.remove('light', 'dark', 'daylight');
 
     // Apply resolved theme class
     root.classList.add(resolvedTheme);
@@ -331,10 +337,13 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
   // CONTEXT VALUE
   // ==========================================
 
+  const isLightMode = resolvedTheme === 'light';
+
   const contextValue = useMemo((): ThemeContextType => ({
     theme,
     setTheme,
     resolvedTheme,
+    isLightMode,
     isEvening,
     toggleDayNight,
     setDaylightMode,
@@ -346,6 +355,7 @@ export function ThemeProvider({ children, forceTheme }: ThemeProviderProps) {
     theme,
     setTheme,
     resolvedTheme,
+    isLightMode,
     isEvening,
     toggleDayNight,
     setDaylightMode,

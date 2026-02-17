@@ -18,23 +18,15 @@ import {
 /**
  * Landing Page - Modern gradient design with glassmorphism
  *
- * Phase 4.5: Force dark mode always - no auto-detect or toggle on landing
+ * Respects user's theme preference (light/dark/system)
  */
 const LandingPage: React.FC = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const { setTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
-  // Phase 4.5: Force dark mode on landing page
-  useEffect(() => {
-    // Set dark mode on mount
-    setTheme('dark');
-    // Add dark class to html element immediately for instant dark
-    document.documentElement.classList.add('dark');
-  }, [setTheme]);
-
-  // Always dark on landing
-  const isDark = true;
+  // Responsive to actual resolved theme
+  const isDark = resolvedTheme === 'dark';
 
   // PWA Install prompt detection
   useEffect(() => {
