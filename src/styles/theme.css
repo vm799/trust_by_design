@@ -467,8 +467,40 @@
   border-radius: 8px;
 }
 
-/* Light mode removed - poor contrast for field work
-   Use dark mode (default) or daylight mode (outdoor high-visibility) */
+/* Light Mode - Professional clean theme for office/indoor use */
+.light,
+[data-theme="light"] {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --accent: 14 91% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 222.2 47.4% 11.2%;
+
+  --danger: 0 84.2% 60.2%;
+  --danger-foreground: 0 0% 100%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221 83% 53%;
+}
 
 /* ============================================
    DAYLIGHT MODE UTILITY CLASSES
