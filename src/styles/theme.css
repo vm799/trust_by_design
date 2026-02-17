@@ -649,6 +649,33 @@
 }
 
 /* ============================================
+   REDUCED MOTION - WCAG 2.3.3 Accessibility
+   Respect user preference for less animation
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin {
+    animation: spin 3s linear infinite !important;
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  .press-spring:active {
+    transform: none;
+  }
+}
+
+/* ============================================
    PHASE 11: UI OVERFLOW FIXES
    Prevent layout overflow and text clipping
    ============================================ */
