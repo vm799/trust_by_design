@@ -59,12 +59,12 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
         </nav>
 
         <div className="p-6 border-t border-slate-200 dark:border-white/15">
-          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-white/10 border-white/15 hover:bg-white/10'}`}>
+          <Link to="/admin/profile" className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${location.pathname === '/admin/profile' ? 'bg-primary/10 border-primary/20' : 'bg-slate-100/50 dark:bg-white/10 border-slate-200 dark:border-white/15 hover:bg-slate-100/70 dark:hover:bg-white/10'}`}>
             <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-black text-white">
               {user?.name?.[0] || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate text-white">{user?.name || 'User'}</p>
+              <p className="text-sm font-bold truncate text-slate-900 dark:text-white">{user?.name || 'User'}</p>
               <div className="flex items-center gap-2">
                 <p className="text-[11px] text-slate-400 dark:text-slate-300 truncate capitalize font-medium">
                   {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
@@ -111,7 +111,7 @@ const Layout: React.FC<LayoutProps> = React.memo(({ children, user, isAdmin = tr
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name || 'User'}</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-400 truncate capitalize font-medium">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate capitalize font-medium">
                     {user?.persona?.replace(/_/g, ' ') || user?.role || 'Member'}
                   </p>
                   {user?.persona && (

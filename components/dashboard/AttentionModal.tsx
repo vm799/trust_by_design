@@ -231,8 +231,8 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
 
             {/* Evidence Status (if job data available) */}
             {job && (
-              <div className="bg-slate-800 rounded-xl p-4 mb-4 border border-white/15">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 mb-4 border border-slate-200 dark:border-white/15">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
                   Evidence Status
                 </p>
                 <div className="grid grid-cols-3 gap-3">
@@ -240,19 +240,19 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
                     <p className={`text-2xl font-bold ${job.photos.length > 0 ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.photos.length}
                     </p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Photos</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Photos</p>
                   </div>
                   <div className="text-center">
                     <p className={`text-2xl font-bold ${job.signature ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.signature ? '\u2713' : '\u2014'}
                     </p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Signed</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Signed</p>
                   </div>
                   <div className="text-center">
                     <p className={`text-2xl font-bold ${job.sealedAt ? 'text-emerald-500' : 'text-slate-600'}`}>
                       {job.sealedAt ? '\u2713' : '\u2014'}
                     </p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Sealed</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Sealed</p>
                   </div>
                 </div>
               </div>
@@ -312,8 +312,8 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
               </button>
               <button
                 onClick={onDismiss}
-                className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl
-                           transition-all border border-white/10 min-h-[56px] active:scale-[0.98]"
+                className="px-6 py-4 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl
+                           transition-all border border-slate-200 dark:border-white/10 min-h-[56px] active:scale-[0.98]"
               >
                 Later
               </button>

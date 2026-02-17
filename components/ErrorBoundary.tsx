@@ -118,14 +118,14 @@ class ErrorBoundary extends Component<Props, State> {
             </p>
             {/* Show error details for diagnosis */}
             {error && (
-              <div className="bg-slate-800 rounded-xl p-3 mb-4 text-left">
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-3 mb-4 text-left">
                 <p className="text-red-400 text-xs font-mono break-all">
                   {error.name}: {error.message}
                 </p>
                 {error.stack && (
                   <details className="mt-2">
-                    <summary className="text-slate-400 text-[10px] cursor-pointer">Stack trace</summary>
-                    <pre className="text-slate-400 text-[10px] mt-1 whitespace-pre-wrap break-all max-h-32 overflow-auto">
+                    <summary className="text-slate-500 dark:text-slate-400 text-[10px] cursor-pointer">Stack trace</summary>
+                    <pre className="text-slate-500 dark:text-slate-400 text-[10px] mt-1 whitespace-pre-wrap break-all max-h-32 overflow-auto">
                       {error.stack}
                     </pre>
                   </details>
@@ -133,8 +133,8 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
             {!isNetworkError && this.state.cachedPlan && (
-              <div className="bg-slate-800 rounded-xl p-3 mb-4">
-                <p className="text-slate-300 text-xs">
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-3 mb-4">
+                <p className="text-slate-700 dark:text-slate-300 text-xs">
                   <span className="text-primary font-bold">Plan:</span>{' '}
                   {this.state.cachedPlan}
                 </p>
@@ -149,7 +149,7 @@ class ErrorBoundary extends Component<Props, State> {
               </button>
               <button
                 onClick={() => clearAllAndReload()}
-                className="w-full min-h-[44px] py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-sm uppercase transition-colors"
+                className="w-full min-h-[44px] py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold text-sm uppercase transition-colors"
               >
                 Clear Cache & Reload
               </button>
@@ -167,7 +167,7 @@ class ErrorBoundary extends Component<Props, State> {
                   window.location.href = window.location.pathname + '#/auth';
                   window.location.reload();
                 }}
-                className="w-full min-h-[44px] py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs uppercase transition-colors"
+                className="w-full min-h-[44px] py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs uppercase transition-colors"
               >
                 Sign Out & Reset
               </button>

@@ -321,7 +321,7 @@ const PriceCard = ({
             {price > 0 && (
               <span
                 className={`text-sm font-bold ${
-                  active ? 'text-blue-100' : 'text-slate-400'
+                  active ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 /{billingPeriod === 'annual' ? 'mo' : 'mo'}
@@ -337,7 +337,7 @@ const PriceCard = ({
 
         <p
           className={`text-sm leading-relaxed font-medium ${
-            active ? 'text-blue-50' : 'text-slate-400'
+            active ? 'text-blue-50' : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           {desc}
@@ -348,7 +348,7 @@ const PriceCard = ({
             <li
               key={f}
               className={`flex items-start gap-3 text-sm font-bold ${
-                active ? 'text-white' : 'text-slate-300'
+                active ? 'text-white' : 'text-slate-700 dark:text-slate-300'
               }`}
             >
               <span className={`material-symbols-outlined text-lg ${
@@ -378,7 +378,7 @@ const PriceCard = ({
         className={`w-full py-4 lg:py-5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-widest mt-8 lg:mt-12 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
           active
             ? 'bg-white text-primary hover:bg-blue-50'
-            : 'bg-white/10 text-white hover:bg-white/10 border border-white/10'
+            : 'bg-slate-100/70 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-slate-100/70 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
         }`}
       >
         {loading ? (

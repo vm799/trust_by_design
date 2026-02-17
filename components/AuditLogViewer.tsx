@@ -27,7 +27,7 @@ const EVENT_METADATA: Record<AuditEventType, {
   severity: 'info' | 'success' | 'warning' | 'danger';
 }> = {
   // Job lifecycle
-  JOB_ACCESSED: { icon: 'login', label: 'Job Accessed', color: 'text-slate-400', severity: 'info' },
+  JOB_ACCESSED: { icon: 'login', label: 'Job Accessed', color: 'text-slate-500 dark:text-slate-400', severity: 'info' },
   JOB_STARTED: { icon: 'play_arrow', label: 'Job Started', color: 'text-primary', severity: 'info' },
   JOB_SUBMITTED: { icon: 'check_circle', label: 'Job Submitted', color: 'text-success', severity: 'success' },
   JOB_SEALED: { icon: 'lock', label: 'Job Sealed', color: 'text-success', severity: 'success' },
@@ -50,7 +50,7 @@ const EVENT_METADATA: Record<AuditEventType, {
   CHECKLIST_ITEM_CHECKED: { icon: 'check_box', label: 'Checklist Completed', color: 'text-success', severity: 'success' },
   CHECKLIST_ITEM_UNCHECKED: { icon: 'check_box_outline_blank', label: 'Checklist Unchecked', color: 'text-warning', severity: 'warning' },
   // Notes
-  NOTES_UPDATED: { icon: 'edit_note', label: 'Notes Updated', color: 'text-slate-400', severity: 'info' },
+  NOTES_UPDATED: { icon: 'edit_note', label: 'Notes Updated', color: 'text-slate-500 dark:text-slate-400', severity: 'info' },
   // Sync events
   SYNC_STARTED: { icon: 'sync', label: 'Sync Started', color: 'text-primary', severity: 'info' },
   SYNC_COMPLETED: { icon: 'cloud_done', label: 'Sync Completed', color: 'text-success', severity: 'success' },
@@ -168,7 +168,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             const ts = formatTimestamp(event.timestamp);
             return (
               <div key={event.id} className="flex items-center gap-3 text-xs">
-                <span className={`material-symbols-outlined text-sm ${meta?.color || 'text-slate-400'}`}>
+                <span className={`material-symbols-outlined text-sm ${meta?.color || 'text-slate-500 dark:text-slate-400'}`}>
                   {meta?.icon || 'info'}
                 </span>
                 <span className="flex-1 text-slate-700 dark:text-slate-300 truncate">{meta?.label || event.eventType}</span>
@@ -299,7 +299,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                         meta?.severity === 'success' ? 'bg-success/20' :
                         'bg-gray-100 dark:bg-slate-800'
                       }`}>
-                        <span className={`material-symbols-outlined ${meta?.color || 'text-slate-400'}`}>
+                        <span className={`material-symbols-outlined ${meta?.color || 'text-slate-500 dark:text-slate-400'}`}>
                           {meta?.icon || 'info'}
                         </span>
                       </div>
@@ -317,7 +317,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                         </div>
 
                         {event.technicianName && (
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             By: {event.technicianName}
                           </p>
                         )}
@@ -334,7 +334,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                             {event.syncStatus}
                           </span>
                           {event.location?.lat && (
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
                               GPS: {event.location.lat.toFixed(4)}, {event.location.lng?.toFixed(4)}
                             </span>
                           )}
@@ -342,35 +342,35 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
                         {/* Expanded details */}
                         {isExpanded && (
-                          <div className="mt-4 p-3 bg-slate-900 rounded-lg space-y-2">
+                          <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg space-y-2">
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-400">Event ID:</span>
-                              <span className="text-slate-300 font-mono text-[10px]">{event.id}</span>
+                              <span className="text-slate-500 dark:text-slate-400">Event ID:</span>
+                              <span className="text-slate-700 dark:text-slate-300 font-mono text-[10px]">{event.id}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-400">Event Hash:</span>
-                              <span className="text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
+                              <span className="text-slate-500 dark:text-slate-400">Event Hash:</span>
+                              <span className="text-slate-700 dark:text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
                                 {event.eventHash.substring(0, 16)}...
                               </span>
                             </div>
                             {event.previousEventHash && (
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-400">Previous Hash:</span>
-                                <span className="text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
+                                <span className="text-slate-500 dark:text-slate-400">Previous Hash:</span>
+                                <span className="text-slate-700 dark:text-slate-300 font-mono text-[10px] truncate max-w-[200px]">
                                   {event.previousEventHash.substring(0, 16)}...
                                 </span>
                               </div>
                             )}
                             <div className="flex justify-between text-xs">
-                              <span className="text-slate-400">Device:</span>
-                              <span className="text-slate-300 text-[10px] truncate max-w-[200px]">
+                              <span className="text-slate-500 dark:text-slate-400">Device:</span>
+                              <span className="text-slate-700 dark:text-slate-300 text-[10px] truncate max-w-[200px]">
                                 {event.deviceInfo.platform}
                               </span>
                             </div>
                             {Object.keys(event.metadata).length > 0 && (
-                              <div className="pt-2 border-t border-slate-800">
-                                <p className="text-[10px] text-slate-400 mb-1">Metadata:</p>
-                                <pre className="text-[10px] text-slate-400 font-mono overflow-x-auto">
+                              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-1">Metadata:</p>
+                                <pre className="text-[10px] text-slate-500 dark:text-slate-400 font-mono overflow-x-auto">
                                   {JSON.stringify(event.metadata, null, 2)}
                                 </pre>
                               </div>
@@ -380,7 +380,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       </div>
 
                       {/* Expand indicator */}
-                      <span className={`material-symbols-outlined text-slate-400 transition-transform ${
+                      <span className={`material-symbols-outlined text-slate-500 dark:text-slate-400 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}>
                         expand_more
@@ -394,8 +394,8 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:p-6 border-t border-white/10 bg-slate-900">
-          <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>
               Showing {filteredEvents.length} of {events.length} events
             </span>

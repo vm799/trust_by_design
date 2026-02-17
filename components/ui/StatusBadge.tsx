@@ -245,7 +245,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <span className={`size-2 rounded-full ${dotColor}`} />
-        <span className="text-xs text-slate-300">{config.label}</span>
+        <span className="text-xs text-slate-700 dark:text-slate-300">{config.label}</span>
       </div>
     );
   }

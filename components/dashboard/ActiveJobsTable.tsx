@@ -171,7 +171,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
 
         {/* Search */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">
             search
           </span>
           <input
@@ -272,7 +272,7 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
                   </div>
 
                     {/* Arrow */}
-                    <span className="material-symbols-outlined flex-shrink-0 text-slate-400 group-hover:translate-x-1 transition-transform">
+                    <span className="material-symbols-outlined flex-shrink-0 text-slate-500 dark:text-slate-400 group-hover:translate-x-1 transition-transform">
                       chevron_right
                     </span>
                   </div>

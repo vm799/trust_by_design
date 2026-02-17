@@ -610,8 +610,8 @@ const TechProofScreen: React.FC = () => {
           </h3>
 
           {/* Sign-off declaration text */}
-          <div className="bg-slate-800 border border-slate-600 rounded-xl p-3">
-            <p className="text-sm text-slate-300 leading-relaxed font-medium">
+          <div className="bg-gray-100 dark:bg-slate-800 border border-slate-600 rounded-xl p-3">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
               &quot;I have inspected the completed work and confirm that I am fully satisfied with its completion to my requirements.&quot;
             </p>
           </div>
@@ -621,7 +621,7 @@ const TechProofScreen: React.FC = () => {
             value={proofData.clientName}
             onChange={(e) => setProofData(prev => ({ ...prev, clientName: e.target.value }))}
             placeholder="Client's printed name"
-            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm"
+            className="w-full p-3 bg-gray-100 dark:bg-slate-800 border border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm"
           />
 
           <SignaturePad
@@ -633,13 +633,13 @@ const TechProofScreen: React.FC = () => {
 
         {/* GPS & W3W Status */}
         <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
             <span className={`size-2 rounded-full ${proofData.gpsLat ? 'bg-success' : 'bg-warning animate-pulse'}`} />
             {proofData.gpsLat
               ? `GPS: ${proofData.gpsLat.toFixed(4)}, ${proofData.gpsLng?.toFixed(4)}`
               : 'Acquiring GPS...'}
             <Tooltip content="GPS coordinates prove you were physically at the job site. Combined with timestamps, this creates location-verified evidence that can't be faked." position="top">
-              <span className="material-symbols-outlined text-slate-400 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xs cursor-help hover:text-slate-700 dark:hover:text-slate-300 transition-colors">info</span>
             </Tooltip>
           </div>
           {proofData.w3w && (
@@ -656,11 +656,11 @@ const TechProofScreen: React.FC = () => {
 
         {/* Submit Button - 72px */}
         <div className="space-y-2">
-          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
             <span className="material-symbols-outlined text-primary text-sm">verified</span>
             <span>Evidence will be cryptographically sealed upon submission</span>
             <Tooltip content="Sealing creates a tamper-proof mathematical fingerprint of all your evidence. If photos or data are ever altered, the seal will break—proving the original evidence was genuine." position="top">
-              <span className="material-symbols-outlined text-slate-400 text-xs cursor-help hover:text-slate-300 transition-colors">info</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xs cursor-help hover:text-slate-700 dark:hover:text-slate-300 transition-colors">info</span>
             </Tooltip>
           </div>
           <ActionButton

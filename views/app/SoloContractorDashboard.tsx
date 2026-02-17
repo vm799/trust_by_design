@@ -145,7 +145,7 @@ const SoloContractorDashboard: React.FC = () => {
               </div>
             )}
             {job.lastUpdated && (
-              <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <span className="material-symbols-outlined text-base">schedule</span>
                 <span>Last activity: {formatRelativeTime(job.lastUpdated)}</span>
               </div>
@@ -207,7 +207,7 @@ const SoloContractorDashboard: React.FC = () => {
               <p className="font-medium text-slate-900 dark:text-white truncate">
                 {job.title || `Job #${job.id.slice(0, 6)}`}
               </p>
-              <p className="text-sm text-slate-400 truncate">{client?.name || 'Unknown'}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{client?.name || 'Unknown'}</p>
               {/* Compact evidence bar */}
               <div className="mt-1.5">
                 <EvidenceProgressBar job={job} compact />
@@ -219,7 +219,7 @@ const SoloContractorDashboard: React.FC = () => {
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {new Date(job.date).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {new Date(job.date).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
               </p>
             </div>
@@ -246,7 +246,7 @@ const SoloContractorDashboard: React.FC = () => {
           <span className="mx-2 opacity-50">&middot;</span>
           <span>{client?.name || 'Unknown'}</span>
         </span>
-        <span className="text-xs text-slate-400 shrink-0 ml-2">
+        <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0 ml-2">
           {new Date(job.date).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
         </span>
       </div>
@@ -457,7 +457,7 @@ const SoloContractorDashboard: React.FC = () => {
               </button>
               <Link
                 to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="View all jobs"
               >
                 <span className="material-symbols-outlined text-lg">list_alt</span>

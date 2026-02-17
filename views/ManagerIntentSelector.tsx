@@ -120,14 +120,14 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
       {/* Header */}
       <header className="p-6 pb-0">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/admin')}
-              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring"
+              className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-xl hover:bg-slate-100/70 dark:hover:bg-white/10 press-spring"
               aria-label="Back to dashboard"
             >
               <span className="material-symbols-outlined">arrow_back</span>
@@ -135,11 +135,11 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
             <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-xl">verified_user</span>
             </div>
-            <span className="text-sm font-bold text-white">JobProof</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-white">JobProof</span>
           </div>
           <button
             onClick={() => navigate('/admin/profile')}
-            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/10 press-spring"
+            className="min-w-[48px] min-h-[48px] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-xl hover:bg-slate-100/70 dark:hover:bg-white/10 press-spring"
             aria-label="Profile settings"
           >
             <span className="material-symbols-outlined">account_circle</span>
@@ -152,10 +152,10 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
         <div className="max-w-lg mx-auto w-full space-y-8">
           {/* Welcome Message */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black text-white tracking-tight">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               {isFirstTimeUser ? `Welcome to JobProof` : `Welcome back, ${displayName}`}
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {dateString} • {timeString}
             </p>
             {isFirstTimeUser && (
@@ -179,7 +179,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
           {/* Intent Question */}
           <div className="text-center">
-            <p className="text-lg font-medium text-slate-300">
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
               What do you need to do now?
             </p>
           </div>
@@ -196,7 +196,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                   active:scale-[0.98]
                   ${option.primary
                     ? 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50'
-                    : 'bg-slate-900 border-white/10 hover:bg-slate-900 hover:border-white/20'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-white/20'
                   }
                 `}
               >
@@ -204,11 +204,11 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                   {/* Icon */}
                   <div className={`
                     size-14 rounded-2xl flex items-center justify-center flex-shrink-0
-                    ${option.primary ? 'bg-primary/20' : 'bg-white/10'}
+                    ${option.primary ? 'bg-primary/20' : 'bg-slate-100/70 dark:bg-white/10'}
                   `}>
                     <span className={`
                       material-symbols-outlined text-3xl
-                      ${option.primary ? 'text-primary' : 'text-slate-400 group-hover:text-white'}
+                      ${option.primary ? 'text-primary' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}
                     `}>
                       {option.icon}
                     </span>
@@ -224,18 +224,18 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <h2 className={`
                         text-lg font-medium tracking-tight
-                        ${option.primary ? 'text-white' : 'text-slate-200 group-hover:text-white'}
+                        ${option.primary ? 'text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'}
                       `}>
                         {option.title}
                       </h2>
-                      <span className="material-symbols-outlined text-slate-600 group-hover:text-slate-400 transition-colors">
+                      <span className="material-symbols-outlined text-slate-400 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
                         arrow_forward
                       </span>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       {option.description}
                     </p>
-                    <p className="text-xs text-slate-400 mt-2 border-t border-white/15 pt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 border-t border-slate-200 dark:border-white/15 pt-2">
                       {option.examples}
                     </p>
                   </div>
@@ -243,7 +243,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
                 {/* Keyboard Shortcut Hint */}
                 <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <kbd className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-mono">
+                  <kbd className="text-[10px] text-slate-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono">
                     {option.shortcut}
                   </kbd>
                 </div>
@@ -253,10 +253,10 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
 
           {/* Quick Stats (Optional) */}
           {pendingJobsCount > 0 && (
-            <div className="bg-slate-900 border border-white/15 rounded-xl p-4">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-xl p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Active jobs requiring attention</span>
-                <span className="text-white font-bold">{pendingJobsCount}</span>
+                <span className="text-slate-500 dark:text-slate-400">Active jobs requiring attention</span>
+                <span className="text-slate-900 dark:text-white font-bold">{pendingJobsCount}</span>
               </div>
             </div>
           )}
@@ -264,7 +264,7 @@ const ManagerIntentSelector: React.FC<ManagerIntentSelectorProps> = ({
       </main>
 
       {/* Footer Navigation */}
-      <footer className="p-4 border-t border-white/15">
+      <footer className="p-4 border-t border-slate-200 dark:border-white/15">
         <div className="flex items-center justify-center gap-8 max-w-lg mx-auto">
           <button
             onClick={() => navigate('/admin')}

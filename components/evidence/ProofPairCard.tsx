@@ -148,13 +148,13 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
       className={`
         rounded-2xl overflow-hidden
         bg-[#121212] border-2 transition-all duration-300
-        ${isSealed ? 'border-[#00FFCC]/40' : hasIssue ? 'border-amber-500/40' : 'border-white/10'}
+        ${isSealed ? 'border-[#00FFCC]/40' : hasIssue ? 'border-amber-500/40' : 'border-slate-200 dark:border-white/10'}
         ${isSealed ? config.glow : hasIssue ? 'shadow-[0_0_15px_rgba(245,158,11,0.3)]' : ''}
         ${className}
       `}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/10 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-100/70 dark:bg-white/10 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-3 min-w-0">
           <div className={`size-8 rounded-lg ${config.bg} flex items-center justify-center shrink-0`}>
             <span className={`material-symbols-outlined text-lg ${config.color}`}>
@@ -162,8 +162,8 @@ const ProofPairCard: React.FC<ProofPairCardProps> = ({
             </span>
           </div>
           <div className="min-w-0">
-            <p className="font-mono text-xs text-slate-400 truncate">{jobId}</p>
-            <p className="font-bold text-white truncate">{clientName}</p>
+            <p className="font-mono text-xs text-slate-500 dark:text-slate-400 truncate">{jobId}</p>
+            <p className="font-bold text-slate-900 dark:text-white truncate">{clientName}</p>
           </div>
         </div>
 

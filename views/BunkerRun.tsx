@@ -1766,14 +1766,14 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
         />
         {/* Sign here affordance overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex items-center gap-2 text-slate-300">
+          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-300">
             <span className="material-symbols-outlined text-4xl">draw</span>
             <span className="text-xl font-medium tracking-wide">Sign here</span>
           </div>
         </div>
       </div>
       <div className="flex gap-3">
-        <button onClick={clear} className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Clear</button>
+        <button onClick={clear} className="flex-1 py-3 bg-gray-200 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg">Clear</button>
         <button onClick={() => onSave(canvasRef.current!.toDataURL('image/png'))} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">Save Signature</button>
       </div>
     </div>
@@ -1782,12 +1782,12 @@ function SignatureCanvas({ onSave }: { onSave: (dataUrl: string) => void }) {
 
 function PhotoMeta({ photo }: { photo: Photo }) {
   return (
-    <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-      <span className="px-2 py-1 bg-slate-800 rounded">{new Date(photo.timestamp).toLocaleString()}</span>
+    <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">{new Date(photo.timestamp).toLocaleString()}</span>
       {photo.lat && photo.lng && (
-        <span className="px-2 py-1 bg-slate-800 rounded">📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</span>
+        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</span>
       )}
-      <span className="px-2 py-1 bg-slate-800 rounded">{(photo.sizeBytes / 1024).toFixed(0)} KB</span>
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">{(photo.sizeBytes / 1024).toFixed(0)} KB</span>
     </div>
   );
 }

@@ -303,7 +303,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Clear search"
             >
               <span className="material-symbols-outlined text-sm">close</span>
@@ -312,16 +312,16 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
         </div>
 
         {showAdd && (
-          <form onSubmit={handleSubmit} className="bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
-            <input required placeholder="Technician Name" aria-label="Technician Name" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
-            <input required type="email" placeholder="Technician Email" aria-label="Technician Email" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
+          <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 animate-in shadow-2xl">
+            <input required placeholder="Technician Name" aria-label="Technician Name" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newTech.name} onChange={e => setNewTech({ ...newTech, name: e.target.value })} />
+            <input required type="email" placeholder="Technician Email" aria-label="Technician Email" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newTech.email} onChange={e => setNewTech({ ...newTech, email: e.target.value })} />
             <button type="submit" className="md:col-span-2 bg-primary text-white font-black py-3 rounded-xl uppercase tracking-widest text-xs">Add Technician</button>
           </form>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTechs.length === 0 ? (
-            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/15 rounded-3xl text-center opacity-40">
+            <div className="col-span-full py-20 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-white/15 rounded-3xl text-center opacity-40">
               <span className="material-symbols-outlined text-5xl mb-2 font-black">engineering</span>
               <p className="font-black uppercase tracking-widest text-[10px]">
                 {searchQuery ? 'No technicians match your search.' : 'No field workforce registered.'}
@@ -354,7 +354,7 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             tabIndex={0}
           >
             <div
-              className="bg-slate-900 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
+              className="bg-slate-50 dark:bg-slate-900 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
               role="presentation"
               onClick={e => e.stopPropagation()}
               onKeyDown={e => e.stopPropagation()}
@@ -364,17 +364,17 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
                   <span className="material-symbols-outlined text-red-400 text-2xl">warning</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">Confirm Delete</h3>
-                  <p className="text-sm text-slate-400">This action cannot be undone.</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white">Confirm Delete</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">This action cannot be undone.</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-300">
-                Are you sure you want to delete technician <strong className="text-white">{techs.find(t => t.id === confirmDeleteId)?.name}</strong>?
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Are you sure you want to delete technician <strong className="text-slate-900 dark:text-white">{techs.find(t => t.id === confirmDeleteId)?.name}</strong>?
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDeleteId(null)}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
+                  className="flex-1 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>

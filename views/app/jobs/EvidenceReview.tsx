@@ -231,19 +231,19 @@ const EvidenceReview: React.FC = () => {
             <div className={`rounded-2xl p-6 border-2 ${
               isSealed
                 ? 'bg-gradient-to-br from-emerald-950/50 to-slate-900 border-emerald-500/30'
-                : 'bg-gradient-to-br from-slate-900 to-slate-800 border-white/10'
+                : 'bg-gradient-to-br from-slate-50 dark:from-slate-900 to-gray-100 dark:to-slate-800 border-slate-200 dark:border-white/10'
             }`}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className={`material-symbols-outlined text-3xl ${isSealed ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    <span className={`material-symbols-outlined text-3xl ${isSealed ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                       {isSealed ? 'verified' : 'description'}
                     </span>
                     <div>
-                      <h2 className="text-xl font-black text-white tracking-tight uppercase">
+                      <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
                         {job.title || 'Untitled Job'}
                       </h2>
-                      <p className="text-xs text-slate-400 font-mono">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         REF: {job.id.slice(0, 8).toUpperCase()}
                       </p>
                     </div>
@@ -254,7 +254,7 @@ const EvidenceReview: React.FC = () => {
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     : job.status === 'Submitted'
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'bg-slate-700 text-slate-300 border border-white/10'
+                    : 'bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
                 }`}>
                   {isSealed ? 'Cryptographically Sealed' : job.status === 'Submitted' ? 'Awaiting Seal' : 'Under Review'}
                 </div>
@@ -267,14 +267,14 @@ const EvidenceReview: React.FC = () => {
           {/* ============================================================ */}
           <motion.div variants={fadeInUp}>
             <Card>
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                 Job Summary
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Date */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Date</p>
-                  <p className="text-sm text-white font-medium">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Date</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">
                     {new Date(job.date).toLocaleDateString('en-GB', {
                       weekday: 'long',
                       day: 'numeric',
@@ -286,45 +286,45 @@ const EvidenceReview: React.FC = () => {
 
                 {/* Client */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Client</p>
-                  <p className="text-sm text-white font-medium">{client?.name || job.client || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Client</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{client?.name || job.client || 'N/A'}</p>
                   {client?.email && (
-                    <p className="text-xs text-slate-400">{client.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{client.email}</p>
                   )}
                 </div>
 
                 {/* Technician */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Technician</p>
-                  <p className="text-sm text-white font-medium">{technician?.name || job.technician || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Technician</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{technician?.name || job.technician || 'N/A'}</p>
                   {technician?.email && (
-                    <p className="text-xs text-slate-400">{technician.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{technician.email}</p>
                   )}
                 </div>
 
                 {/* Location */}
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</p>
-                  <p className="text-sm text-white font-medium">{job.address || 'N/A'}</p>
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{job.address || 'N/A'}</p>
                   {job.w3w && (
-                    <p className="text-xs text-emerald-400 font-mono">{'///'}{job.w3w}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">{'///'}{job.w3w}</p>
                   )}
                 </div>
               </div>
 
               {/* Description */}
               {(job.description || job.notes) && (
-                <div className="mt-4 pt-4 border-t border-white/15">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Description</p>
-                  <p className="text-sm text-slate-300">{job.description || job.notes}</p>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/15">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Description</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{job.description || job.notes}</p>
                 </div>
               )}
 
               {/* Amount */}
               {(job.total || job.price) && (
-                <div className="mt-4 pt-4 border-t border-white/15 flex items-center justify-between">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
-                  <p className="text-lg font-black text-white">£{(job.total || job.price || 0).toFixed(2)}</p>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/15 flex items-center justify-between">
+                  <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Amount</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-white">£{(job.total || job.price || 0).toFixed(2)}</p>
                 </div>
               )}
             </Card>
@@ -335,7 +335,7 @@ const EvidenceReview: React.FC = () => {
           {/* ============================================================ */}
           <motion.div variants={fadeInUp}>
             <Card>
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4">
                 Evidence Integrity
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">

@@ -310,17 +310,14 @@ const LandingPage: React.FC = () => {
               Your Unbreakable Shield
             </span>
             <h2
-              className={`
-                text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               Three Layers of<br />
               <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent">
                 Bulletproof Protection
               </span>
             </h2>
-            <p className={`text-base max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className="text-base max-w-2xl mx-auto text-slate-600 dark:text-slate-400">
               Every photo, every signature, every timestamp - locked down tighter than a bank vault.
             </p>
           </motion.div>
@@ -353,11 +350,7 @@ const LandingPage: React.FC = () => {
 
       {/* How It Works - Glassmorphism section */}
       <section
-        className={`
-          relative py-12 sm:py-16 px-4 sm:px-6
-          ${isDark ? 'bg-slate-900/30' : 'bg-white/30'}
-          backdrop-blur-sm
-        `}
+        className="relative py-12 sm:py-16 px-4 sm:px-6 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm"
       >
         <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
           <motion.div
@@ -367,14 +360,11 @@ const LandingPage: React.FC = () => {
             className="text-center space-y-3"
           >
             <h2
-              className={`
-                text-2xl sm:text-3xl font-bold tracking-tight
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               How It Works
             </h2>
-            <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
               From job start to payment in 4 bulletproof steps
             </p>
           </motion.div>
@@ -392,54 +382,42 @@ const LandingPage: React.FC = () => {
 
       {/* ROA Value Proposition */}
       <section
-        className={`
-          relative py-10 sm:py-14 px-4 sm:px-6
-          ${isDark ? 'bg-emerald-950/30' : 'bg-emerald-50/50'}
-        `}
+        className="relative py-10 sm:py-14 px-4 sm:px-6 bg-emerald-50/50 dark:bg-emerald-950/30"
       >
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`
-              p-6 sm:p-8 rounded-2xl border text-center space-y-4
-              ${isDark
-                ? 'bg-slate-900 border-emerald-500/30'
-                : 'bg-white/80 border-emerald-200'
-              }
-            `}
+            className="p-6 sm:p-8 rounded-2xl border text-center space-y-4 bg-white/80 border-emerald-200 dark:bg-slate-900 dark:border-emerald-500/30"
           >
             <span className="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-400 text-xs font-medium tracking-widest">
               Return on Admin (ROA)
             </span>
             <h2
-              className={`
-                text-2xl sm:text-3xl font-bold tracking-tight
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               One Saved Dispute =<br />
               <span className="text-emerald-500">3 Years Paid For</span>
             </h2>
-            <p className={`text-base max-w-xl mx-auto ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+            <p className="text-base max-w-xl mx-auto text-slate-600 dark:text-slate-300">
               Average dispute costs contractors <strong>£800</strong>. JobProof Team costs <strong>£49/month</strong> (£588/year).
               Save <em>one</em> dispute and you&apos;ve covered <strong>36 months</strong> of protection.
             </p>
             <div className="flex justify-center gap-8 pt-2">
               <div className="text-center">
-                <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£800</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Avg. Dispute Cost</div>
+                <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">£800</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-400">Avg. Dispute Cost</div>
               </div>
-              <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>÷</div>
+              <div className="text-3xl font-light text-slate-300 dark:text-slate-600">÷</div>
               <div className="text-center">
-                <div className={`text-3xl sm:text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>£49</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Monthly Cost</div>
+                <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">£49</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-400">Monthly Cost</div>
               </div>
-              <div className={`text-3xl font-light ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>=</div>
+              <div className="text-3xl font-light text-slate-300 dark:text-slate-600">=</div>
               <div className="text-center">
                 <div className="text-3xl sm:text-4xl font-black text-emerald-500">16×</div>
-                <div className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>ROI</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-400">ROI</div>
               </div>
             </div>
           </motion.div>
@@ -454,14 +432,11 @@ const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className={`
-                text-3xl sm:text-4xl font-black tracking-tight uppercase
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-3xl sm:text-4xl font-black tracking-tight uppercase text-slate-900 dark:text-white"
             >
               Simple Pricing
             </motion.h2>
-            <p className={`text-base sm:text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
               Protection that pays for itself. One dispute saved = years of coverage.
             </p>
           </div>

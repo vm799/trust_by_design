@@ -1484,7 +1484,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 />
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-2">Photos saved locally and uploading in background</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Photos saved locally and uploading in background</p>
           </div>
         )}
 
@@ -1493,8 +1493,8 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
               JOB REF: {job.id}
             </h2>
-            <h3 className="text-3xl font-bold text-white tracking-tight leading-none">{job.title}</h3>
-            <p className="text-xs text-slate-300 font-medium tracking-tight">{job.client} • {job.address}</p>
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{job.title}</h3>
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium tracking-tight">{job.client} • {job.address}</p>
           </div>
           <div className="text-right flex items-center gap-3">
             <button
@@ -1502,7 +1502,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                 saveDraftState({ step, photos, checklist, notes, signerName, signerRole, w3w, coords, locationStatus, locationVerified });
                 showAlert('Progress Saved', 'Your work has been saved locally. You can close this page and return via the same link to continue.', 'info');
               }}
-              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              className="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
               aria-label="Save Progress"
               title="Save & Exit Later"
             >
@@ -1510,7 +1510,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             </button>
             <button
               onClick={() => setShowHelp(true)}
-              className="size-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              className="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
               aria-label="Help"
             >
               <span className="material-symbols-outlined text-lg">help</span>
@@ -1529,7 +1529,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <p className="text-xs font-black text-primary uppercase tracking-widest">
                 Step {step} of 4
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
                 {step === 1 && 'Safety & Location'}
                 {step === 2 && 'Capture Evidence'}
                 {step === 3 && 'Review Summary'}
@@ -1544,10 +1544,10 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               const isCurrent = step === stepNum;
               return (
                 <div key={label} className="flex-1 space-y-2">
-                  <div className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? (isLocked ? 'bg-slate-500' : 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]') : 'bg-slate-800'}`} />
+                  <div className={`h-1.5 rounded-full transition-all duration-500 ${isCompleted ? (isLocked ? 'bg-slate-500' : 'bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]') : 'bg-gray-100 dark:bg-slate-800'}`} />
                   <div className="flex items-center justify-center gap-1">
-                    {isLocked && <span className="material-symbols-outlined text-[8px] text-slate-400">lock</span>}
-                    <p className={`text-[8px] font-black uppercase tracking-widest text-center ${isCurrent ? 'text-primary' : isLocked ? 'text-slate-400' : 'text-slate-400'}`}>{label}</p>
+                    {isLocked && <span className="material-symbols-outlined text-[8px] text-slate-500 dark:text-slate-400">lock</span>}
+                    <p className={`text-[8px] font-black uppercase tracking-widest text-center ${isCurrent ? 'text-primary' : isLocked ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>{label}</p>
                   </div>
                 </div>
               );
@@ -1562,70 +1562,70 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
               <div className="bg-primary/20 size-20 rounded-[2.5rem] flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-primary text-5xl font-black">assignment</span>
               </div>
-              <h2 className="text-4xl font-semibold tracking-tight leading-none text-white">Job Assignment</h2>
-              <p className="text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
+              <h2 className="text-4xl font-semibold tracking-tight leading-none text-slate-900 dark:text-white">Job Assignment</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-normal tracking-tight max-w-md mx-auto">Review the job details before you start.</p>
             </header>
 
-            <div className="bg-slate-900 border border-white/15 rounded-[3rem] overflow-hidden shadow-2xl">
-              <div className="px-8 py-6 border-b border-white/15 bg-white/[0.02]">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Job Details</p>
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[3rem] overflow-hidden shadow-lg dark:shadow-2xl">
+              <div className="px-8 py-6 border-b border-slate-200 dark:border-white/15 bg-slate-100/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">Job Details</p>
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Service Description</p>
-                  <p className="text-2xl font-bold text-white tracking-tight">{job.title}</p>
+                  <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Service Description</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{job.title}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Client</p>
-                    <p className="text-sm font-medium text-white">{job.client}</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Client</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{job.client}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Reference</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Reference</p>
                     <p className="text-sm font-mono text-primary font-black">{job.id}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Location</p>
-                  <div className="bg-slate-800 p-4 rounded-2xl border border-white/15">
-                    <p className="text-sm font-medium text-white tracking-tight leading-relaxed">{job.address}</p>
+                  <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Location</p>
+                  <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-white/15">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white tracking-tight leading-relaxed">{job.address}</p>
                   </div>
                 </div>
 
                 {job.notes && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Special Instructions</p>
+                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Special Instructions</p>
                     <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl">
-                      <p className="text-sm text-white tracking-tight leading-relaxed">{job.notes}</p>
+                      <p className="text-sm text-slate-900 dark:text-white tracking-tight leading-relaxed">{job.notes}</p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-white/15 rounded-[2.5rem] p-8">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-[2.5rem] p-8">
               <div className="flex items-center gap-4 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl font-black">info</span>
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">What You Need To Do</p>
+                <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">What You Need To Do</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Location verification via GPS + what3words</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Location verification via GPS + what3words</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Safety checklist completion required</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Safety checklist completion required</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Photo evidence capture (Before/During/After)</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Photo evidence capture (Before/During/After)</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-success text-sm mt-0.5 font-black">check_circle</span>
-                  <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">Client signature for completion seal</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">Client signature for completion seal</p>
                 </li>
               </ul>
             </div>

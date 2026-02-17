@@ -158,7 +158,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
             initial={slideUpModal.hidden}
             animate={slideUpModal.visible}
             exit={slideUpModal.exit}
-            className="bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden border border-white/10"
+            className="bg-slate-50 dark:bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden border border-slate-200 dark:border-white/10"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -168,25 +168,25 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
                   <span className={`material-symbols-outlined ${config.color}`}>{config.icon}</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">{status}</h3>
-                  <p className="text-sm text-slate-400">
+                  <h3 className="font-bold text-slate-900 dark:text-white">{status}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="size-10 rounded-xl bg-slate-800 flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-700 transition-colors"
+                className="size-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="Close"
               >
-                <span className="material-symbols-outlined text-slate-400">close</span>
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
               </button>
             </div>
 
             {/* Job list */}
             <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
               {filteredJobs.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                   <span className="material-symbols-outlined text-3xl mb-2">inbox</span>
                   <p className="text-sm">No {status.toLowerCase()} jobs</p>
                 </div>
@@ -200,7 +200,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
                   return (
                     <div
                       key={job.id}
-                      className={`rounded-xl border ${config.borderColor} bg-slate-800 p-3`}
+                      className={`rounded-xl border ${config.borderColor} bg-gray-100 dark:bg-slate-800 p-3`}
                     >
                       {/* Job info */}
                       <div className="flex items-start gap-3 mb-3">
@@ -210,10 +210,10 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">
+                          <p className="font-medium text-slate-900 dark:text-white truncate">
                             {job.title || `Job #${job.id.slice(0, 6)}`}
                           </p>
-                          <p className="text-xs text-slate-400 truncate">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                             {client?.name || 'Unknown client'}
                             {tech ? ` • ${tech.name}` : ''}
                           </p>
@@ -251,7 +251,7 @@ const StatusBreakdownModal: React.FC<StatusBreakdownModalProps> = ({
                         {(status === 'Complete' || status === 'Submitted') && onArchiveJob && (
                           <button
                             onClick={() => onArchiveJob(job.id)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-700 text-slate-300 text-xs font-bold min-h-[44px] hover:bg-slate-600 transition-colors"
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold min-h-[44px] hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                           >
                             <span className="material-symbols-outlined text-sm">inventory_2</span>
                             Archive

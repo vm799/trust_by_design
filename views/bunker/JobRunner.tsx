@@ -1186,56 +1186,56 @@ export default function JobRunner() {
       <div className="grid grid-cols-2 gap-4">
         {state.job?.beforePhoto && (
           <div>
-            <p className="text-xs text-slate-400 mb-1">BEFORE</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">BEFORE</p>
             <img
               src={state.job.beforePhoto.dataUrl}
               alt="Before"
-              className="w-full rounded-lg border border-slate-600"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600"
             />
           </div>
         )}
         {state.job?.afterPhoto && (
           <div>
-            <p className="text-xs text-slate-400 mb-1">AFTER</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">AFTER</p>
             <img
               src={state.job.afterPhoto.dataUrl}
               alt="After"
-              className="w-full rounded-lg border border-slate-600"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600"
             />
           </div>
         )}
       </div>
 
       {state.job?.signature && (
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
-          <p className="text-xs text-slate-400 mb-2">CLIENT SIGNATURE</p>
+        <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-600">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">CLIENT SIGNATURE</p>
           <img
             src={state.job.signature.dataUrl}
             alt="Signature"
             className="w-full max-w-xs rounded-lg bg-white"
           />
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Signed by: {state.job.signature.signerName}
           </p>
         </div>
       )}
 
-      <div className="bg-slate-800 p-4 rounded-xl border border-slate-600">
-        <h3 className="text-sm font-medium text-slate-300 mb-2">Job Details</h3>
-        <p className="text-white font-medium">{state.job?.title}</p>
-        <p className="text-slate-400 text-sm">{state.job?.client}</p>
+      <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-600">
+        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Job Details</h3>
+        <p className="text-slate-900 dark:text-white font-medium">{state.job?.title}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{state.job?.client}</p>
         {state.job?.address && (
-          <p className="text-slate-400 text-sm">{state.job.address}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{state.job.address}</p>
         )}
       </div>
 
       {/* Sync Status */}
       <div className={`p-4 rounded-xl border ${
         state.job?.syncStatus === 'synced'
-          ? 'bg-green-900/30 border-green-700'
+          ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700'
           : state.job?.syncStatus === 'failed'
-          ? 'bg-red-900/30 border-red-700'
-          : 'bg-yellow-900/30 border-yellow-700'
+          ? 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700'
+          : 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-4 h-4 rounded-full ${
@@ -1243,14 +1243,14 @@ export default function JobRunner() {
             state.job?.syncStatus === 'failed' ? 'bg-red-500' :
             'bg-yellow-500 animate-pulse'
           }`} />
-          <span className="font-medium text-white">
+          <span className="font-medium text-slate-900 dark:text-white">
             {state.job?.syncStatus === 'synced' ? 'Data Safely Synced to Cloud' :
              state.job?.syncStatus === 'failed' ? 'Sync Failed - Will Retry' :
              'Pending Cloud Sync'}
           </span>
         </div>
         {state.job?.syncStatus !== 'synced' && (
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Your data is safely stored locally and will sync when online.
           </p>
         )}
@@ -1259,7 +1259,7 @@ export default function JobRunner() {
       <div className="flex gap-3">
         <button
           onClick={() => goToStep('signature')}
-          className="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+          className="py-3 px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg"
         >
           ← Back
         </button>
@@ -1290,14 +1290,14 @@ export default function JobRunner() {
 
   if (isJobFinished && state.job) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
         {/* Navigation Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-600">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-600">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-slate-400">Job Complete</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">Job Complete</span>
             <a
               href="/#/job-log"
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+              className="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium"
             >
               View Job Log
             </a>
@@ -1310,18 +1310,18 @@ export default function JobRunner() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-green-600/20 rounded-full mb-4">
               <span className="text-5xl">✅</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Mission Accomplished!</h1>
-            <p className="text-slate-400">Your job evidence has been synced to the cloud.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Mission Accomplished!</h1>
+            <p className="text-slate-500 dark:text-slate-400">Your job evidence has been synced to the cloud.</p>
           </div>
 
           {/* Job Summary */}
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 mb-6">
-            <p className="text-xs text-slate-400">JOB</p>
-            <p className="text-lg font-bold text-white">{state.job.title}</p>
-            <p className="text-sm text-slate-400">{state.job.client}</p>
-            {state.job.address && <p className="text-sm text-slate-400">{state.job.address}</p>}
+          <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-600 mb-6">
+            <p className="text-xs text-slate-500 dark:text-slate-400">JOB</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{state.job.title}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{state.job.client}</p>
+            {state.job.address && <p className="text-sm text-slate-500 dark:text-slate-400">{state.job.address}</p>}
             {state.job.completedAt && (
-              <p className="text-xs text-green-400 mt-2">
+              <p className="text-xs text-green-600 dark:text-green-400 mt-2">
                 Completed: {new Date(state.job.completedAt).toLocaleString()}
               </p>
             )}
@@ -1331,14 +1331,14 @@ export default function JobRunner() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             {state.job.beforePhoto && (
               <div>
-                <p className="text-xs text-slate-400 mb-1">BEFORE</p>
-                <img src={state.job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-600" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">BEFORE</p>
+                <img src={state.job.beforePhoto.dataUrl} alt="Before" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
               </div>
             )}
             {state.job.afterPhoto && (
               <div>
-                <p className="text-xs text-slate-400 mb-1">AFTER</p>
-                <img src={state.job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-600" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">AFTER</p>
+                <img src={state.job.afterPhoto.dataUrl} alt="After" className="w-full rounded-lg border border-slate-200 dark:border-slate-600" />
               </div>
             )}
           </div>
@@ -1356,9 +1356,9 @@ export default function JobRunner() {
           )}
 
           {state.job.managerEmail && (
-            <div className="bg-green-900/30 border border-green-700 p-4 rounded-xl mb-6">
-              <p className="text-sm text-green-400">
-                ✓ Report sent to <span className="font-medium text-white">{state.job.managerEmail}</span>
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700 p-4 rounded-xl mb-6">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ Report sent to <span className="font-medium text-slate-900 dark:text-white">{state.job.managerEmail}</span>
               </p>
             </div>
           )}
@@ -1367,7 +1367,7 @@ export default function JobRunner() {
           <div className="flex gap-3">
             <a
               href="/#/job-log"
-              className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold text-center"
+              className="flex-1 py-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold text-center"
             >
               View Job Log
             </a>
@@ -1388,14 +1388,14 @@ export default function JobRunner() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       {/* Navigation Header with Job Log Link */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-600">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-600">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="text-sm text-slate-400">Bunker Mode</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">Bunker Mode</span>
           <a
             href="/#/job-log"
-            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium"
+            className="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium"
           >
             My Jobs
           </a>
@@ -1441,8 +1441,8 @@ function StepHeader({ step, title, subtitle }: { step: number; title: string; su
       <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600/20 rounded-full text-blue-400 text-sm font-medium mb-2">
         Step {step} of 4
       </div>
-      <h2 className="text-xl font-bold text-white">{title}</h2>
-      <p className="text-slate-400 text-sm">{subtitle}</p>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
+      <p className="text-slate-500 dark:text-slate-400 text-sm">{subtitle}</p>
     </div>
   );
 }
@@ -1457,7 +1457,7 @@ function ProgressBar({ currentStep }: { currentStep: WizardStep }) {
         <React.Fragment key={step}>
           <div
             className={`flex-1 h-2 rounded-full transition-colors ${
-              index <= currentIndex ? 'bg-blue-500' : 'bg-slate-700'
+              index <= currentIndex ? 'bg-blue-500' : 'bg-gray-200 dark:bg-slate-700'
             }`}
           />
         </React.Fragment>
@@ -1468,16 +1468,16 @@ function ProgressBar({ currentStep }: { currentStep: WizardStep }) {
 
 function PhotoMeta({ photo }: { photo: BunkerPhoto }) {
   return (
-    <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-      <span className="px-2 py-1 bg-slate-800 rounded">
+    <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">
         {new Date(photo.timestamp).toLocaleString()}
       </span>
       {photo.lat && photo.lng && (
-        <span className="px-2 py-1 bg-slate-800 rounded">
+        <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">
           📍 {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}
         </span>
       )}
-      <span className="px-2 py-1 bg-slate-800 rounded">
+      <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">
         {(photo.sizeBytes / 1024).toFixed(0)} KB
       </span>
     </div>

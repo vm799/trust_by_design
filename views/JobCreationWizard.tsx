@@ -634,7 +634,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-work-description" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Work Description *
                 </label>
                 <textarea
@@ -643,15 +643,15 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                   required
                   value={formData.workDescription}
                   onChange={(e) => setFormData({ ...formData, workDescription: e.target.value })}
-                  className="w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white outline-none transition-all resize-none"
+                  className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all resize-none"
                   rows={4}
                   placeholder="• Check boiler pressure&#10;• Inspect flue&#10;• Test safety valve"
                 />
-                <p className="text-[10px] text-slate-400">Use bullet points for clarity</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Use bullet points for clarity</p>
               </div>
 
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Safety Requirements
                 </span>
                 <div className="space-y-2">
@@ -669,12 +669,12 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       }}
                       className={`w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
                         formData.safetyRequirements.includes(req.id)
-                          ? 'bg-amber-500/10 border-amber-500/50 text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400'
+                          ? 'bg-amber-500/10 border-amber-500/50 text-slate-900 dark:text-white'
+                          : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
-                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-400'
+                        formData.safetyRequirements.includes(req.id) ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {formData.safetyRequirements.includes(req.id) ? 'check_box' : 'check_box_outline_blank'}
                       </span>
@@ -685,7 +685,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               <div className="space-y-3">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Required PPE
                 </span>
                 <div className="grid grid-cols-4 gap-2">
@@ -703,8 +703,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       }}
                       className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
                         formData.requiredPPE.includes(ppe.id)
-                          ? 'bg-primary/10 border-primary text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400'
+                          ? 'bg-primary/10 border-primary text-slate-900 dark:text-white'
+                          : 'bg-gray-100 dark:bg-slate-800 border-slate-600 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
@@ -723,7 +723,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-5 duration-300">
               <div className="text-center space-y-2 mb-8">
                 <span className="material-symbols-outlined text-primary text-4xl">person_add</span>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   Who&apos;s doing the work?
                 </h3>
               </div>
@@ -735,7 +735,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     <span className="material-symbols-outlined text-warning text-xl">warning</span>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Clients Found</p>
-                      <p className="text-xs text-slate-400 mt-1">You need to create a client first before creating a job.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">You need to create a client first before creating a job.</p>
                       <Link
                         to={`/admin/clients/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
@@ -754,7 +754,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                     <span className="material-symbols-outlined text-warning text-xl">warning</span>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-warning">No Technicians Found</p>
-                      <p className="text-xs text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">You need to add a technician first before assigning a job.</p>
                       <Link
                         to={`/admin/technicians/new?returnTo=${encodeURIComponent('/admin/create')}`}
                         className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-primary uppercase tracking-wide hover:underline"
@@ -768,7 +768,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-client" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Client *
                 </label>
                 <select
@@ -784,7 +784,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       setFormData({ ...formData, clientId: e.target.value });
                     }
                   }}
-                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                  className={`w-full bg-gray-100 dark:bg-slate-800 border-2 rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all ${
                     clients.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
@@ -797,7 +797,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <label htmlFor="wizard-technician" className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                   Technician <span className="text-slate-500 normal-case">(optional)</span>
                 </label>
                 <select
@@ -811,7 +811,7 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       setFormData({ ...formData, techId: e.target.value });
                     }
                   }}
-                  className={`w-full bg-slate-800 border-2 rounded-xl py-4 px-5 text-white outline-none transition-all ${
+                  className={`w-full bg-gray-100 dark:bg-slate-800 border-2 rounded-xl py-4 px-5 text-slate-900 dark:text-white outline-none transition-all ${
                     technicians.length === 0 ? 'border-warning/50' : 'border-slate-600 focus:border-primary'
                   }`}
                 >
@@ -824,8 +824,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
               </div>
 
               {selectedTech && (
-                <div className="bg-slate-800 rounded-xl p-4 border border-white/15 animate-in">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-white/15 animate-in">
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                     Selected Technician
                   </p>
                   <div className="flex items-center gap-3">
@@ -833,8 +833,8 @@ const JobCreationWizard: React.FC<JobCreationWizardProps> = () => {
                       <span className="material-symbols-outlined text-primary text-2xl">person</span>
                     </div>
                     <div>
-                      <p className="text-white font-bold">{selectedTech.name}</p>
-                      <p className="text-slate-400 text-sm">{selectedTech.specialty || 'Field Technician'}</p>
+                      <p className="text-slate-900 dark:text-white font-bold">{selectedTech.name}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">{selectedTech.specialty || 'Field Technician'}</p>
                     </div>
                   </div>
                 </div>

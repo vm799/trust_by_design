@@ -107,7 +107,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
             className="
               fixed bottom-0 left-0 right-0 z-50
               bg-white dark:bg-slate-900
-              rounded-t-3xl border-t border-white/10
+              rounded-t-3xl border-t border-slate-200 dark:border-white/10
               flex flex-col overflow-hidden
               shadow-2xl
             "
@@ -124,7 +124,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
                 {subtitle && (
-                  <p className="text-sm text-slate-400">{subtitle}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
                 )}
               </div>
               <button

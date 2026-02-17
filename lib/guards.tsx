@@ -25,7 +25,7 @@ export const RequireAuth: React.FC<GuardProps> = ({ children }) => {
   // Show loading while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="animate-spin size-8 border-2 border-primary/30 border-t-primary rounded-full" />
       </div>
     );
@@ -51,7 +51,7 @@ export const RequireGuest: React.FC<GuardProps> = ({ children }) => {
   // Show loading while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="animate-spin size-8 border-2 border-primary/30 border-t-primary rounded-full" />
       </div>
     );

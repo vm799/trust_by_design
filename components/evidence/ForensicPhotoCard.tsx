@@ -285,17 +285,17 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
                     )}
                   </span>
                 ) : (
-                  <span className="text-slate-400">No W3W address</span>
+                  <span className="text-slate-500 dark:text-slate-400">No W3W address</span>
                 )}
               </div>
 
               {/* Hash */}
               {hash && (
                 <div className="flex items-center gap-2">
-                  <span className={`material-symbols-outlined text-sm ${hashVerified ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  <span className={`material-symbols-outlined text-sm ${hashVerified ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                     fingerprint
                   </span>
-                  <span className="text-slate-400">{truncateHash(hash)}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{truncateHash(hash)}</span>
                   {hashVerified && (
                     <span className="text-emerald-400 text-[10px]">VERIFIED</span>
                   )}
@@ -304,8 +304,8 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
 
               {/* Chain of custody */}
               {custody.length > 0 && (
-                <div className="pt-2 mt-2 border-t border-white/10">
-                  <p className="text-[10px] text-slate-400 uppercase mb-1">Chain of Custody</p>
+                <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/10">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase mb-1">Chain of Custody</p>
                   {custody.map((event) => (
                     <div key={`custody-${event.action}-${event.timestamp}`} className="flex items-center gap-2 text-[10px]">
                       <span className={`size-1.5 rounded-full ${
@@ -314,7 +314,7 @@ const ForensicPhotoCard: React.FC<ForensicPhotoCardProps> = ({
                         event.action === 'synced' ? 'bg-cyan-400' :
                         'bg-amber-400'
                       }`} />
-                      <span className="text-slate-400 capitalize">{event.action}</span>
+                      <span className="text-slate-500 dark:text-slate-400 capitalize">{event.action}</span>
                       <span className="text-slate-600">{formatTimestamp(event.timestamp)}</span>
                     </div>
                   ))}

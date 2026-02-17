@@ -283,16 +283,16 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
 
         {showAdd && (
           <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900 border border-primary/20 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in">
-            <input required placeholder="Client Name" aria-label="Client Name" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
-            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
+            <input required placeholder="Client Name" aria-label="Client Name" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <input required type="email" placeholder="Verification Email" aria-label="Verification Email" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <input required placeholder="Operational Address" aria-label="Operational Address" className="bg-gray-100 dark:bg-slate-800 border-slate-600 rounded-lg p-3 text-sm text-slate-900 dark:text-white outline-none" value={newClient.address} onChange={e => setNewClient({ ...newClient, address: e.target.value })} />
             <button type="submit" className="md:col-span-3 bg-primary text-white font-black py-3 rounded-xl uppercase text-xs tracking-widest">Commit Registry Entry</button>
           </form>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClients.length === 0 ? (
-            <div className="col-span-full py-20 bg-slate-900 border border-dashed border-white/15 rounded-3xl text-center opacity-40">
+            <div className="col-span-full py-20 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-white/15 rounded-3xl text-center opacity-40">
               <span className="material-symbols-outlined text-5xl mb-2 font-black">person_add</span>
               <p className="font-black uppercase tracking-widest text-[10px]">
                 {searchQuery ? 'No clients match your search.' : 'Registry is empty.'}
@@ -318,7 +318,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
             onClick={() => setConfirmDeleteId(null)}
           >
             <div
-              className="bg-slate-800 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
+              className="bg-gray-100 dark:bg-slate-800 border-2 border-red-500/30 rounded-2xl p-6 max-w-sm w-full space-y-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">
@@ -326,17 +326,17 @@ const ClientsView: React.FC<ClientsViewProps> = ({ user, clients, onAdd, onDelet
                   <span className="material-symbols-outlined text-red-400 text-2xl">warning</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">Confirm Delete</h3>
-                  <p className="text-sm text-slate-400">This action cannot be undone.</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white">Confirm Delete</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">This action cannot be undone.</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-300">
-                Are you sure you want to delete client <strong className="text-white">{clients.find(c => c.id === confirmDeleteId)?.name}</strong>?
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Are you sure you want to delete client <strong className="text-slate-900 dark:text-white">{clients.find(c => c.id === confirmDeleteId)?.name}</strong>?
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDeleteId(null)}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
+                  className="flex-1 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-3 rounded-xl text-sm transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>

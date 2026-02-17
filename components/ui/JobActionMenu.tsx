@@ -308,10 +308,10 @@ export function getJobActions(job: Job, compact: boolean = false): JobActionConf
  */
 const variantStyles: Record<string, string> = {
   primary: 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/20',
-  secondary: 'bg-slate-700 hover:bg-slate-600 text-white',
+  secondary: 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white',
   danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20',
   warning: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20',
-  ghost: 'bg-white/10 hover:bg-white/10 text-slate-300',
+  ghost: 'bg-slate-100/50 dark:bg-white/10 hover:bg-slate-100/70 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300',
 };
 
 const JobActionMenu: React.FC<JobActionMenuProps> = ({

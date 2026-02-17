@@ -250,21 +250,21 @@ export default function QuickCreateJob() {
   };
 
   // Shared input classes for consistency
-  const inputClasses = 'w-full bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-white placeholder-slate-500 outline-none transition-all min-h-[56px]';
-  const labelClasses = 'text-[10px] font-black text-slate-300 uppercase tracking-widest block mb-2';
+  const inputClasses = 'w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-primary rounded-xl py-4 px-5 text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all min-h-[56px]';
+  const labelClasses = 'text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest block mb-2';
 
   // Success state
   if (createdJob) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-6">
           {/* Success Header */}
           <div className="text-center">
             <div className="bg-success/20 size-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
             </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Job Created</h1>
-            <p className="text-slate-400 text-sm mt-2">Share this link with your technician</p>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Job Created</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Share this link with your technician</p>
           </div>
 
           {/* Sync Status */}
@@ -278,9 +278,9 @@ export default function QuickCreateJob() {
           )}
 
           {/* Job ID */}
-          <div className="bg-slate-900 p-4 rounded-xl border border-white/15">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Job ID</p>
-            <p className="text-lg font-mono font-bold text-white">{createdJob.id}</p>
+          <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-white/15">
+            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Job ID</p>
+            <p className="text-lg font-mono font-bold text-slate-900 dark:text-white">{createdJob.id}</p>
           </div>
 
           {/* Bunker Link */}
@@ -291,7 +291,7 @@ export default function QuickCreateJob() {
                 type="text"
                 value={createdJob.bunkerLink}
                 readOnly
-                className="flex-1 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white text-sm font-mono"
+                className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm font-mono"
               />
               <button
                 onClick={copyToClipboard}
@@ -307,18 +307,18 @@ export default function QuickCreateJob() {
           </div>
 
           {/* QR Code */}
-          <div className="bg-slate-900 p-6 rounded-xl border border-white/15 text-center">
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-white/15 text-center">
             <div className="inline-block p-4 bg-white rounded-xl mb-3">
               <QRCodeSVG value={createdJob.bunkerLink} size={128} level="M" />
             </div>
-            <p className="text-xs text-slate-400 font-medium">Scan to open on technician&apos;s phone</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Scan to open on technician&apos;s phone</p>
           </div>
 
           {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={createAnother}
-              className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98] min-h-[56px]"
+              className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98] min-h-[56px]"
             >
               Create Another
             </button>
@@ -333,9 +333,9 @@ export default function QuickCreateJob() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-slate-900/50 p-4 rounded-xl border border-white/10">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Next Steps</h3>
-            <ol className="text-sm text-slate-400 space-y-1 list-decimal list-inside">
+          <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-white/10">
+            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Next Steps</h3>
+            <ol className="text-sm text-slate-500 dark:text-slate-400 space-y-1 list-decimal list-inside">
               <li>Send this link to your technician</li>
               <li>They open it on their phone (works offline)</li>
               <li>They capture before/after photos + signature</li>
@@ -350,13 +350,13 @@ export default function QuickCreateJob() {
 
   // Form state
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       <div className="max-w-md mx-auto p-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <span className="material-symbols-outlined text-primary text-4xl mb-2">bolt</span>
-          <h1 className="text-2xl font-black text-white uppercase tracking-tight">Quick Create Job</h1>
-          <p className="text-slate-400 text-sm">Create a job and get a bunker-proof link</p>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Quick Create Job</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Create a job and get a bunker-proof link</p>
           {!isOnline && (
             <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/30 border border-amber-700/50 rounded-xl">
               <span className="material-symbols-outlined text-amber-400 text-sm">cloud_off</span>
@@ -375,8 +375,8 @@ export default function QuickCreateJob() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Job Details */}
-          <div className="bg-slate-900 p-6 rounded-[2rem] border border-white/15 space-y-4">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Job Details</h2>
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-white/15 space-y-4">
+            <h2 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Job Details</h2>
 
             <div>
               <label htmlFor="qcj-job-name" className={labelClasses}>

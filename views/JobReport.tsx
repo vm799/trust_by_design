@@ -1089,7 +1089,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                     <button
                                        onClick={handleRegenerateLink}
                                        disabled={linkActionLoading}
-                                       className="w-full py-3 bg-white/10 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                       className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                        <span className="material-symbols-outlined text-xs">refresh</span>
                                        {magicLinkInfo ? 'Regenerate Link' : 'Generate New Link'}
@@ -1102,21 +1102,21 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.SHORT)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +24h
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.STANDARD)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +7 days
                                              </button>
                                              <button
                                                 onClick={() => handleExtendLink(LINK_EXPIRATION.EXTENDED)}
                                                 disabled={linkActionLoading}
-                                                className="py-2 bg-white/10 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="py-2 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                                              >
                                                 +30 days
                                              </button>
@@ -1148,8 +1148,8 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         </div>
                      )}
 
-                     <div className="pt-8 border-t border-white/15">
-                        <h3 className="text-[10px] font-black text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
+                     <div className="pt-8 border-t border-slate-200 dark:border-white/15">
+                        <h3 className="text-[10px] font-black text-slate-900 dark:text-white mb-4 uppercase tracking-[0.2em]">Evidence Status</h3>
                         <div className="space-y-3">
                            <StatusLine
                               label="Photos"
@@ -1174,20 +1174,20 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          </div>
          {showShareModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowShareModal(false)}>
-               <div className="bg-slate-800 border border-white/15 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-10 rounded-[3.5rem] max-w-lg w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-primary/20 size-16 rounded-[2.5rem] flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-primary text-4xl font-black">share</span>
                      </div>
-                     <h3 className="text-2xl font-black text-white tracking-tighter uppercase">Share Evidence Report</h3>
+                     <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Share Evidence Report</h3>
                   </div>
 
                   <div className="bg-white p-6 rounded-3xl flex items-center justify-center">
                      <QRCodeSVG value={getReportUrl(job.id)} size={192} level="M" />
                   </div>
 
-                  <div className="bg-slate-800 rounded-2xl p-4 border border-white/15">
-                     <p className="text-xs font-mono text-white break-all text-center">{getReportUrl(job.id)}</p>
+                  <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-white/15">
+                     <p className="text-xs font-mono text-slate-900 dark:text-white break-all text-center">{getReportUrl(job.id)}</p>
                   </div>
 
                   <div className="flex flex-col gap-3">
@@ -1198,7 +1198,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <span className="material-symbols-outlined text-sm font-black">content_copy</span>
                         Copy Link
                      </button>
-                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
+                     <button onClick={() => setShowShareModal(false)} className="w-full py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-2xl font-black uppercase tracking-widest transition-all">
                         Close
                      </button>
                   </div>
@@ -1209,14 +1209,14 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
          {/* Reassign Technician Modal */}
          {showReassignModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in" onClick={() => setShowReassignModal(false)}>
-               <div className="bg-slate-800 border border-white/15 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
+               <div className="bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/15 p-8 rounded-[3rem] max-w-md w-full shadow-2xl space-y-6" onClick={(e) => e.stopPropagation()}>
                   <div className="text-center space-y-3">
                      <div className="bg-warning/20 size-14 rounded-2xl flex items-center justify-center mx-auto">
                         <span className="material-symbols-outlined text-warning text-3xl font-black">swap_horiz</span>
                      </div>
-                     <h3 className="text-xl font-black text-white tracking-tighter uppercase">Reassign Technician</h3>
-                     <p className="text-xs text-slate-400 uppercase tracking-widest">
-                        Current: <span className="text-white font-bold">{job.technician}</span>
+                     <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Reassign Technician</h3>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                        Current: <span className="text-slate-900 dark:text-white font-bold">{job.technician}</span>
                      </p>
                   </div>
 
@@ -1225,7 +1225,7 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                         <span className="material-symbols-outlined text-warning text-lg">warning</span>
                         <div className="space-y-1">
                            <p className="text-[10px] font-black text-warning uppercase tracking-widest">Important</p>
-                           <p className="text-xs text-slate-300">
+                           <p className="text-xs text-slate-700 dark:text-slate-300">
                               Reassigning will revoke the current technician&apos;s access and generate a new link for the selected technician.
                            </p>
                         </div>
@@ -1233,29 +1233,29 @@ const JobReport: React.FC<JobReportProps> = ({ user, jobs, invoices, technicians
                   </div>
 
                   <div className="space-y-3">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select New Technician</p>
+                     <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Select New Technician</p>
                      <div className="space-y-2 max-h-60 overflow-y-auto">
                         {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').map(tech => (
                            <button
                               key={tech.id}
                               onClick={() => handleReassignJob(tech.id, tech.name)}
                               disabled={linkActionLoading}
-                              className="w-full flex items-center gap-4 p-4 bg-slate-800 hover:bg-slate-800 border border-white/15 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
+                              className="w-full flex items-center gap-4 p-4 bg-gray-100 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/15 hover:border-primary/30 rounded-2xl transition-all group disabled:opacity-50"
                            >
                               <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
                                  {tech.name[0]}
                               </div>
                               <div className="flex-1 text-left">
-                                 <p className="text-sm font-black text-white uppercase tracking-tight">{tech.name}</p>
-                                 <p className="text-[10px] text-slate-400 uppercase tracking-widest">{tech.status}</p>
+                                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{tech.name}</p>
+                                 <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">{tech.status}</p>
                               </div>
-                              <span className="material-symbols-outlined text-slate-400 group-hover:text-primary text-lg transition-colors">
+                              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary text-lg transition-colors">
                                  arrow_forward
                               </span>
                            </button>
                         ))}
                         {technicians.filter(t => t.id !== job.techId && t.status !== 'Off Duty').length === 0 && (
-                           <div className="text-center py-8 text-slate-400">
+                           <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                               <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
                               <p className="text-xs uppercase tracking-widest">No available technicians</p>
                            </div>

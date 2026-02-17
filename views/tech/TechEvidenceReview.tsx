@@ -613,10 +613,10 @@ const TechEvidenceReview: React.FC = () => {
                         <span className="material-symbols-outlined text-emerald-400">verified</span>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-2">
+                        <h3 className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wide mb-2">
                           Client Satisfaction Confirmation
                         </h3>
-                        <p className="text-base text-white leading-relaxed font-medium">
+                        <p className="text-base text-slate-900 dark:text-white leading-relaxed font-medium">
                           {SATISFACTION_STATEMENT}
                         </p>
                       </div>
@@ -661,7 +661,7 @@ const TechEvidenceReview: React.FC = () => {
 
       {/* Bottom Navigation - Step Controls */}
       {!showSignaturePad && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-safe">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 px-4 py-4 pb-safe">
           <div className="flex gap-3">
             {currentStep > 0 && (
               <ActionButton
@@ -712,7 +712,7 @@ const TechEvidenceReview: React.FC = () => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-0 z-50 bg-slate-950/95 flex flex-col"
+            className="fixed inset-0 z-50 bg-white/95 dark:bg-slate-950/95 flex flex-col"
             role="dialog"
             aria-modal="true"
             aria-label="Photo viewer"
@@ -731,7 +731,7 @@ const TechEvidenceReview: React.FC = () => {
               </span>
               <button
                 aria-label="Close photo viewer"
-                className="p-2 text-white hover:bg-white/10 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 text-white hover:bg-slate-100/70 dark:hover:bg-white/10 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={() => setSelectedPhoto(null)}
               >
                 <span className="material-symbols-outlined">close</span>
@@ -750,7 +750,7 @@ const TechEvidenceReview: React.FC = () => {
             {/* Metadata bar */}
             <div className="px-4 py-3 bg-black/50 flex items-center gap-4">
               {selectedPhoto.timestamp && (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   {new Date(selectedPhoto.timestamp).toLocaleString('en-GB')}
                 </span>
               )}
@@ -827,7 +827,7 @@ const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, color, onClick }
       onClick={onClick}
       whileTap={tapShrink}
       aria-label={`View ${photo.type || 'evidence'} photo`}
-      className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-white/10 hover:border-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+      className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
     >
       <img
         src={photo.url || photo.localPath}
@@ -841,7 +841,7 @@ const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photo, color, onClick }
       {/* Timestamp */}
       {photo.timestamp && (
         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2 pt-6">
-          <p className="text-[10px] text-slate-300 font-mono">
+          <p className="text-[10px] text-slate-700 dark:text-slate-300 font-mono">
             {new Date(photo.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
