@@ -675,7 +675,7 @@ const ManagerFocusDashboard: React.FC = () => {
                 <span className="material-symbols-outlined text-xs">warning</span>
                 <span className="font-bold">{metrics.failedSyncs + metrics.overdueJobs}</span> issue{metrics.failedSyncs + metrics.overdueJobs !== 1 ? 's' : ''}
               </span>
-            ) : metrics.dispatchedJobs === 0 && metrics.needsLink === 0 && (
+            ) : metrics.linksAwaiting === 0 && metrics.needsLink === 0 && (
               <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400/80">
                 <span className="material-symbols-outlined text-xs">check_circle</span>
                 All Clear
