@@ -49,13 +49,13 @@ const JobItem: React.FC<JobItemProps> = ({ job, onClick }) => {
         <p className="font-bold text-slate-900 dark:text-white truncate">
           {job.title || job.id}
         </p>
-        <p className="text-sm text-slate-400 truncate">
+        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
           {job.client || 'No client'} • {evidenceStatus.photoCount} photo{evidenceStatus.photoCount !== 1 ? 's' : ''}
         </p>
       </div>
 
       {/* Arrow */}
-      <span className="material-symbols-outlined text-slate-400 flex-shrink-0">
+      <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 flex-shrink-0">
         chevron_right
       </span>
     </button>
@@ -99,7 +99,7 @@ const ReadyToInvoiceSection: React.FC = () => {
             <h3 className="font-bold text-slate-900 dark:text-white">
               Ready to Invoice
             </h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {readyJobs.length} job{readyJobs.length !== 1 ? 's' : ''}
               {totalValue > 0 && ` • $${totalValue.toLocaleString()}`}
             </p>

@@ -83,6 +83,10 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
     return filtered;
   }, [jobs, clients, filter, searchTerm]);
 
+  // Memoized lookup maps to avoid .find() in render loop
+  const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.name])), [clients]);
+  const techMap = useMemo(() => new Map(technicians.map(t => [t.id, t.name])), [technicians]);
+
   const getJobStatus = (job: Job) => {
     const dueDate = new Date(job.date);
     const now = new Date();
@@ -216,8 +220,8 @@ const ActiveJobsTable: React.FC<ActiveJobsTableProps> = React.memo(({
           >
             {displayJobs.map((job, index) => {
               const statusColor = getStatusColor(job);
-              const clientName = clients.find(c => c.id === job.clientId)?.name || 'Unknown Client';
-              const techName = technicians.find(t => t.id === job.technicianId)?.name || 'Unassigned';
+              const clientName = clientMap.get(job.clientId) || 'Unknown Client';
+              const techName = techMap.get(job.technicianId) || 'Unassigned';
 
               return (
                 <motion.button

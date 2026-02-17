@@ -59,38 +59,22 @@ const LandingPage: React.FC = () => {
 
   return (
     <div
-      className={`
-        min-h-screen selection:bg-primary/30 selection:text-white
-        transition-colors duration-500
-        ${isDark
-          ? 'bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950'
-          : 'bg-gradient-to-br from-slate-50 via-blue-50/50 to-slate-50'
-        }
-      `}
+      className="min-h-screen selection:bg-primary/30 selection:text-white transition-colors duration-500 bg-gradient-to-br from-slate-50 via-blue-50/50 to-slate-50 dark:from-slate-950 dark:via-indigo-950/50 dark:to-slate-950"
     >
       {/* Animated background orbs - REMEDIATION ITEM 11: Using memoized animation objects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className={`
-            absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl
-            ${isDark ? 'bg-primary/20' : 'bg-amber-300/30'}
-          `}
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl bg-amber-300/30 dark:bg-primary/20"
           animate={bgOrb1Animate}
           transition={bgOrb1Transition}
         />
         <motion.div
-          className={`
-            absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl
-            ${isDark ? 'bg-indigo-500/20' : 'bg-blue-300/20'}
-          `}
+          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl bg-blue-300/20 dark:bg-indigo-500/20"
           animate={bgOrb2Animate}
           transition={bgOrb2Transition}
         />
         <motion.div
-          className={`
-            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl
-            ${isDark ? 'bg-violet-500/10' : 'bg-rose-200/20'}
-          `}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl bg-rose-200/20 dark:bg-violet-500/10"
           animate={bgOrbCenterAnimate}
           transition={bgOrbCenterTransition}
         />
@@ -131,13 +115,7 @@ const LandingPage: React.FC = () => {
 
       {/* Navbar - Glassmorphism */}
       <nav
-        className={`
-          fixed w-full z-50 backdrop-blur-xl border-b transition-colors duration-500
-          ${isDark
-            ? 'bg-slate-950/70 border-white/15'
-            : 'bg-white/70 border-slate-200/50'
-          }
-        `}
+        className="fixed w-full z-50 backdrop-blur-xl border-b transition-colors duration-500 bg-white/70 border-slate-200/50 dark:bg-slate-950/70 dark:border-white/15"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/home">
@@ -147,13 +125,7 @@ const LandingPage: React.FC = () => {
             {/* Phase 4.5: Removed theme toggle from landing - always dark */}
             <Link
               to="/pricing"
-              className={`
-                hidden sm:block text-sm font-medium tracking-widest transition-colors
-                ${isDark
-                  ? 'text-slate-400 hover:text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-                }
-              `}
+              className="hidden sm:block text-sm font-medium tracking-widest transition-colors text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
               Pricing
             </Link>
@@ -186,10 +158,7 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className={`
-              text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-[0.9] uppercase
-              ${isDark ? 'text-white' : 'text-slate-900'}
-            `}
+            className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-[0.9] uppercase text-slate-900 dark:text-white"
           >
             End &quot;He Said,<br />She Said&quot;
             <span className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_auto]">
@@ -202,13 +171,10 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className={`
-              text-base sm:text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed font-medium px-2
-              ${isDark ? 'text-slate-300' : 'text-slate-600'}
-            `}
+            className="text-base sm:text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed font-medium px-2 text-slate-600 dark:text-slate-300"
           >
             The{' '}
-            <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <span className="font-bold text-slate-900 dark:text-white">
               unbreakable digital shield
             </span>
             {' '}that proves your work, protects your reputation, and gets you paid faster.
@@ -230,15 +196,7 @@ const LandingPage: React.FC = () => {
             </Link>
             <Link
               to="/track-lookup"
-              className={`
-                w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-sm sm:text-base
-                transition-all flex items-center justify-center gap-2 sm:gap-3 uppercase tracking-widest
-                active:scale-95 press-spring backdrop-blur-sm
-                ${isDark
-                  ? 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'
-                  : 'bg-slate-900/10 hover:bg-slate-900/20 border border-slate-200 text-slate-900'
-                }
-              `}
+              className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 sm:gap-3 uppercase tracking-widest active:scale-95 press-spring backdrop-blur-sm bg-slate-900/10 hover:bg-slate-900/20 border border-slate-200 text-slate-900 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 dark:text-white"
             >
               <span className="material-symbols-outlined text-lg sm:text-xl">engineering</span>
               Technician Portal
@@ -249,7 +207,7 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}
+            className="text-xs sm:text-sm text-slate-400 dark:text-slate-400"
           >
             No credit card required • 14-day free trial • Cancel anytime
           </motion.p>
@@ -258,10 +216,7 @@ const LandingPage: React.FC = () => {
 
       {/* Problem Section - Agitate the Pain */}
       <section
-        className={`
-          relative py-12 sm:py-16 px-4 sm:px-6
-          ${isDark ? 'bg-red-950/20' : 'bg-red-50/50'}
-        `}
+        className="relative py-12 sm:py-16 px-4 sm:px-6 bg-red-50/50 dark:bg-red-950/20"
       >
         <div className="max-w-4xl mx-auto space-y-8">
           <motion.div
@@ -274,10 +229,7 @@ const LandingPage: React.FC = () => {
               The Contractor Tax
             </span>
             <h2
-              className={`
-                text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight
-                ${isDark ? 'text-white' : 'text-slate-900'}
-              `}
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white"
             >
               Every Unpaid Dispute<br />
               <span className="text-red-500">Costs You £800</span>
@@ -290,19 +242,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0 }}
-              className={`
-                p-6 rounded-xl border text-center space-y-3
-                ${isDark
-                  ? 'bg-slate-900 border-red-500/20'
-                  : 'bg-white/50 border-red-200'
-                }
-              `}
+              className="p-6 rounded-xl border text-center space-y-3 bg-white/50 border-red-200 dark:bg-slate-900 dark:border-red-500/20"
             >
               <span className="material-symbols-outlined text-4xl text-red-500">chat_error</span>
-              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-lg uppercase text-slate-900 dark:text-white">
                 &quot;I Never Approved That&quot;
               </h3>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Client claims they didn&apos;t agree to the extra work. You have no proof. You eat the cost.
               </p>
             </motion.div>
@@ -312,19 +258,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className={`
-                p-6 rounded-xl border text-center space-y-3
-                ${isDark
-                  ? 'bg-slate-900 border-red-500/20'
-                  : 'bg-white/50 border-red-200'
-                }
-              `}
+              className="p-6 rounded-xl border text-center space-y-3 bg-white/50 border-red-200 dark:bg-slate-900 dark:border-red-500/20"
             >
               <span className="material-symbols-outlined text-4xl text-red-500">schedule</span>
-              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-lg uppercase text-slate-900 dark:text-white">
                 &quot;You Were Only Here 2 Hours&quot;
               </h3>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 You spent 5 hours on site. Client disputes your invoice. Your word against theirs.
               </p>
             </motion.div>
@@ -334,19 +274,13 @@ const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className={`
-                p-6 rounded-xl border text-center space-y-3
-                ${isDark
-                  ? 'bg-slate-900 border-red-500/20'
-                  : 'bg-white/50 border-red-200'
-                }
-              `}
+              className="p-6 rounded-xl border text-center space-y-3 bg-white/50 border-red-200 dark:bg-slate-900 dark:border-red-500/20"
             >
               <span className="material-symbols-outlined text-4xl text-red-500">image_not_supported</span>
-              <h3 className={`font-black text-lg uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className="font-black text-lg uppercase text-slate-900 dark:text-white">
                 &quot;That Damage Was Already There&quot;
               </h3>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Pre-existing damage blamed on your team. Without before photos, you&apos;re liable.
               </p>
             </motion.div>
@@ -356,7 +290,7 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className={`text-center text-lg font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+            className="text-center text-lg font-bold text-slate-700 dark:text-slate-300"
           >
             3 disputes per year = <span className="text-red-500">£2,400 stolen from your pocket.</span>
           </motion.p>

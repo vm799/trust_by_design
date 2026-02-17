@@ -29,7 +29,7 @@ const PricingView: React.FC = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 
   return (
-    <div className="min-h-screen bg-slate-950 selection:bg-primary/30 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12">
+    <div className="min-h-screen bg-white dark:bg-slate-950 selection:bg-primary/30 px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-12">
       <div className="max-w-7xl mx-auto space-y-12">
         <header className="text-center space-y-4">
           <Link
@@ -41,12 +41,12 @@ const PricingView: React.FC = () => {
             </span>
             Back to Product
           </Link>
-          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none">
+          <h1 className="text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
             Simple, <span className="text-primary">Transparent</span>
             <br />
             Pricing
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
+          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto font-medium">
             Choose the plan that fits your field service operation. All plans include a 14-day free trial.
           </p>
 
@@ -57,7 +57,7 @@ const PricingView: React.FC = () => {
               className={`px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
                 billingPeriod === 'monthly'
                   ? 'bg-primary text-white'
-                  : 'bg-white/10 text-slate-400 hover:bg-white/10'
+                  : 'bg-slate-100/70 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/10'
               }`}
             >
               Monthly
@@ -67,7 +67,7 @@ const PricingView: React.FC = () => {
               className={`px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all relative ${
                 billingPeriod === 'annual'
                   ? 'bg-primary text-white'
-                  : 'bg-white/10 text-slate-400 hover:bg-white/10'
+                  : 'bg-slate-100/70 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/10'
               }`}
             >
               Annual
@@ -125,7 +125,7 @@ const PricingView: React.FC = () => {
 
         {/* Trust Indicators */}
         <div className="text-center space-y-6 pt-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-400 text-xs font-medium tracking-widest">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-slate-500 dark:text-slate-400 text-xs font-medium tracking-widest">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-emerald-500">verified</span>
               14-Day Free Trial
@@ -294,7 +294,7 @@ const PriceCard = ({
       className={`p-8 lg:p-12 rounded-[2rem] lg:rounded-[3.5rem] border transition-all flex flex-col relative ${
         active
           ? 'bg-primary border-primary shadow-2xl md:scale-105 z-10'
-          : 'bg-slate-900 border-white/15 hover:border-white/10'
+          : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-white/15 hover:border-slate-200 dark:hover:border-white/10'
       }`}
     >
       {active && (
@@ -309,13 +309,13 @@ const PriceCard = ({
         <div>
           <h3
             className={`text-lg lg:text-xl font-bold tracking-tighter mb-2 ${
-              active ? 'text-white' : 'text-slate-400'
+              active ? 'text-white' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {tier}
           </h3>
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl lg:text-5xl font-black text-white">
+            <span className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white">
               {price === 0 ? 'Free' : `£${price}`}
             </span>
             {price > 0 && (

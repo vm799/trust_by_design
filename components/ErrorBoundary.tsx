@@ -101,17 +101,17 @@ class ErrorBoundary extends Component<Props, State> {
       const error = this.state.error;
 
       return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-          <div className="max-w-md bg-slate-900 border border-danger/20 rounded-3xl p-8 text-center">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-6">
+          <div className="max-w-md bg-slate-50 dark:bg-slate-900 border border-danger/20 rounded-3xl p-8 text-center">
             <div className="bg-danger/10 size-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-danger text-3xl">
                 {isNetworkError ? 'wifi_off' : 'error'}
               </span>
             </div>
-            <h2 className="text-2xl font-black text-white uppercase mb-2">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase mb-2">
               {isNetworkError ? 'Connection Issue' : 'Error'}
             </h2>
-            <p className="text-slate-400 text-sm mb-4">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
               {isNetworkError
                 ? 'Failed to load app resources. Check your internet connection.'
                 : 'Something went wrong. Using cached data.'}

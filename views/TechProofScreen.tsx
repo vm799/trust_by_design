@@ -383,7 +383,7 @@ const TechProofScreen: React.FC = () => {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</label>
           <button
             type="button"
             onClick={clearSignature}
@@ -420,10 +420,10 @@ const TechProofScreen: React.FC = () => {
   // Loading state
   if (screenState === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
         <div className="text-center">
           <LoadingSkeleton count={3} />
-          <p className="text-slate-400 text-sm mt-4">Validating access...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-4">Validating access...</p>
         </div>
       </div>
     );
@@ -432,14 +432,14 @@ const TechProofScreen: React.FC = () => {
   // Error state
   if (screenState === 'error') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-6 text-center">
           <div className="size-16 bg-danger/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-danger text-3xl">error</span>
           </div>
-          <h2 className="text-xl font-black text-white mb-2">Access Error</h2>
-          <p className="text-slate-400 text-sm">{error}</p>
-          <p className="text-[10px] text-slate-400 mt-4">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Access Error</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{error}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-4">
             Contact your manager for a new link
           </p>
         </Card>
@@ -450,16 +450,16 @@ const TechProofScreen: React.FC = () => {
   // Submitted state
   if (screenState === 'submitted') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-6 text-center">
           <div className="size-16 bg-success/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-success text-3xl">check_circle</span>
           </div>
-          <h2 className="text-xl font-black text-white mb-2">Proof Submitted!</h2>
-          <p className="text-slate-400 text-sm mb-4">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Proof Submitted!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
             Your proof has been submitted and the manager has been notified.
           </p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">
             Submitted: {new Date().toLocaleString()}
           </p>
         </Card>
@@ -469,23 +469,23 @@ const TechProofScreen: React.FC = () => {
 
   // Main proof capture screen
   return (
-    <div className="min-h-screen bg-slate-950 pb-safe">
+    <div className="min-h-screen bg-white dark:bg-slate-950 pb-safe">
       {/* Header - 32px bold job info */}
       <motion.div
         variants={fadeInUp}
         initial="initial"
         animate="animate"
-        className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 p-4"
+        className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 p-4"
       >
         <div className="flex items-center gap-3">
           <div className="size-10 bg-success/20 rounded-xl flex items-center justify-center">
             <span className="material-symbols-outlined text-success">verified</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-black text-white uppercase tracking-tight truncate">
+            <h1 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
               {job?.title}
             </h1>
-            <p className="text-[10px] text-slate-400 truncate">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
               {job?.client} • {job?.address}
             </p>
           </div>
@@ -496,11 +496,11 @@ const TechProofScreen: React.FC = () => {
       <div className="p-4 space-y-6">
         {/* Before Section - 64px capture button */}
         <Card className="p-4 space-y-4">
-          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-warning text-sm">photo_camera</span>
             Before Photo
             <Tooltip content="Capture the job site BEFORE starting work. This proves the original condition and protects you from pre-existing damage claims." position="bottom">
-              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm cursor-help hover:text-slate-700 dark:hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 
@@ -521,10 +521,10 @@ const TechProofScreen: React.FC = () => {
           ) : (
             <button
               onClick={() => handlePhotoCapture('before')}
-              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
+              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <span className="material-symbols-outlined text-2xl text-slate-400">add_a_photo</span>
-              <span className="text-sm text-slate-400 font-bold uppercase">Capture Before</span>
+              <span className="material-symbols-outlined text-2xl text-slate-500 dark:text-slate-400">add_a_photo</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase">Capture Before</span>
             </button>
           )}
 
@@ -532,14 +532,14 @@ const TechProofScreen: React.FC = () => {
             value={proofData.notesBefore}
             onChange={(e) => setProofData(prev => ({ ...prev, notesBefore: e.target.value }))}
             placeholder="Notes before work (optional)"
-            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm resize-none"
+            className="w-full p-3 bg-gray-100 dark:bg-slate-800 border border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm resize-none"
             rows={2}
           />
         </Card>
 
         {/* Signature Pad - 55vh */}
         <Card className="p-4 space-y-4">
-          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-sm">draw</span>
             Tech Signature
           </h3>
@@ -552,11 +552,11 @@ const TechProofScreen: React.FC = () => {
 
         {/* After Section */}
         <Card className="p-4 space-y-4">
-          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-success text-sm">photo_camera</span>
             After Photo
             <Tooltip content="Capture the completed work. GPS location is automatically recorded to prove you were on-site. This photo + before photo = undeniable proof of work done." position="bottom">
-              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm cursor-help hover:text-slate-700 dark:hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 
@@ -583,10 +583,10 @@ const TechProofScreen: React.FC = () => {
           ) : (
             <button
               onClick={() => handlePhotoCapture('after')}
-              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors"
+              className="w-full h-[64px] border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <span className="material-symbols-outlined text-2xl text-slate-400">add_a_photo</span>
-              <span className="text-sm text-slate-400 font-bold uppercase">Capture After</span>
+              <span className="material-symbols-outlined text-2xl text-slate-500 dark:text-slate-400">add_a_photo</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase">Capture After</span>
             </button>
           )}
 
@@ -594,18 +594,18 @@ const TechProofScreen: React.FC = () => {
             value={proofData.notesAfter}
             onChange={(e) => setProofData(prev => ({ ...prev, notesAfter: e.target.value }))}
             placeholder="Completion notes (optional)"
-            className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white text-sm resize-none"
+            className="w-full p-3 bg-gray-100 dark:bg-slate-800 border border-slate-600 rounded-xl text-slate-900 dark:text-white text-sm resize-none"
             rows={2}
           />
         </Card>
 
         {/* Client Signature - 15vh */}
         <Card className="p-4 space-y-4">
-          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
             <span className="material-symbols-outlined text-accent text-sm">person</span>
             Client Sign-Off
             <Tooltip content="Client signature confirms they have reviewed and accepted the completed work." position="bottom">
-              <span className="material-symbols-outlined text-slate-400 text-sm cursor-help hover:text-slate-300 transition-colors">help</span>
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm cursor-help hover:text-slate-700 dark:hover:text-slate-300 transition-colors">help</span>
             </Tooltip>
           </h3>
 

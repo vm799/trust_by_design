@@ -181,7 +181,7 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
           initial={fadeOverlay.hidden}
           animate={fadeOverlay.visible}
           exit={fadeOverlay.exit}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm"
           onClick={onDismiss}
         >
           <motion.div
@@ -189,7 +189,7 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
             animate={fadeInScaleUp.animate}
             exit={fadeInScaleUp.exit}
             transition={transitionSpringSnappy}
-            className={`bg-gradient-to-b ${styles.gradient} bg-slate-900 rounded-3xl p-6 max-w-md w-full border ${styles.border} shadow-2xl`}
+            className={`bg-gradient-to-b ${styles.gradient} bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full border ${styles.border} shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -204,27 +204,27 @@ const AttentionModal: React.FC<AttentionModalProps> = ({
                 <p className={`text-xs font-medium tracking-widest ${styles.icon} mb-1`}>
                   {entity.reason}
                 </p>
-                <h2 className="text-xl font-bold text-white truncate">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">
                   {entity.title}
                 </h2>
                 {entity.subtitle && (
-                  <p className="text-sm text-slate-400 truncate">{entity.subtitle}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{entity.subtitle}</p>
                 )}
               </div>
               <button
                 onClick={onDismiss}
-                className="size-10 rounded-xl bg-white/10 hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="size-10 rounded-xl bg-slate-100/50 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/10 flex items-center justify-center transition-colors"
               >
-                <span className="material-symbols-outlined text-slate-400">close</span>
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
               </button>
             </div>
 
             {/* Why Section */}
             <div className={`rounded-xl p-4 mb-4 ${styles.bg} border ${styles.border}`}>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                 Why This Needs Attention
               </p>
-              <p className="text-sm text-white leading-relaxed">
+              <p className="text-sm text-slate-900 dark:text-white leading-relaxed">
                 {getDetailedReason(entity)}
               </p>
             </div>

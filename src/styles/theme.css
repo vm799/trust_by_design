@@ -879,6 +879,129 @@
   background: #9CA3AF;
 }
 
+/* --- Missing Background Opacity Variants --- */
+.light .bg-slate-600 {
+  background-color: #D1D5DB;
+}
+.light .bg-slate-800\/30 {
+  background-color: rgba(243, 244, 246, 0.6);
+}
+.light .bg-slate-900\/60 {
+  background-color: rgba(249, 250, 251, 0.85);
+}
+.light .bg-slate-900\/95 {
+  background-color: rgba(249, 250, 251, 0.98);
+}
+.light .bg-emerald-950,
+.light .bg-emerald-950\/20 {
+  background-color: rgba(5, 150, 105, 0.08);
+}
+
+/* --- Missing Text Variants --- */
+.light .text-blue-200 {
+  color: #1D4ED8;
+}
+.light .text-amber-100,
+.light .text-amber-100\/80 {
+  color: #B45309;
+}
+.light .text-red-100 {
+  color: #DC2626;
+}
+.light .text-emerald-100 {
+  color: #047857;
+}
+
+/* --- Missing Border Variants --- */
+.light .border-emerald-800 {
+  border-color: #059669;
+}
+.light .border-blue-200 {
+  border-color: #BFDBFE;
+}
+.light .border-red-800 {
+  border-color: #991B1B;
+}
+.light .border-orange-200 {
+  border-color: #FED7AA;
+}
+.light .border-orange-500\/20 {
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+/* --- Missing Shadow Variants --- */
+.light .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+}
+.light .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.12);
+}
+.light .shadow-blue-500\/10 {
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.1);
+}
+.light .shadow-blue-500\/20 {
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.15);
+}
+.light .shadow-blue-500\/30 {
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.2);
+}
+.light .shadow-orange-500\/10,
+.light .shadow-orange-500\/20 {
+  box-shadow: 0 4px 12px -2px rgba(249, 115, 22, 0.15);
+}
+.light .shadow-emerald-500\/20 {
+  box-shadow: 0 4px 12px -2px rgba(34, 197, 94, 0.15);
+}
+
+/* --- Missing Gradient From/Via/To Variants --- */
+.light .from-emerald-950\/60 {
+  --tw-gradient-from: rgba(5, 150, 105, 0.15) var(--tw-gradient-from-position);
+}
+.light .from-emerald-900\/50 {
+  --tw-gradient-from: rgba(6, 78, 59, 0.1) var(--tw-gradient-from-position);
+}
+.light .from-emerald-600 {
+  --tw-gradient-from: #059669 var(--tw-gradient-from-position);
+}
+.light .from-orange-500 {
+  --tw-gradient-from: #F97316 var(--tw-gradient-from-position);
+}
+.light .from-red-600 {
+  --tw-gradient-from: #DC2626 var(--tw-gradient-from-position);
+}
+.light .to-emerald-400 {
+  --tw-gradient-to: #34D399 var(--tw-gradient-to-position);
+}
+.light .to-emerald-600\/10 {
+  --tw-gradient-to: rgba(5, 150, 105, 0.1) var(--tw-gradient-to-position);
+}
+.light .to-emerald-800\/30 {
+  --tw-gradient-to: rgba(6, 78, 59, 0.1) var(--tw-gradient-to-position);
+}
+.light .to-cyan-500\/20 {
+  --tw-gradient-to: rgba(6, 182, 212, 0.15) var(--tw-gradient-to-position);
+}
+.light .to-red-500 {
+  --tw-gradient-to: #EF4444 var(--tw-gradient-to-position);
+}
+.light .to-orange-600 {
+  --tw-gradient-to: #EA580C var(--tw-gradient-to-position);
+}
+.light .via-indigo-500 {
+  --tw-gradient-via: #6366F1 var(--tw-gradient-via-position);
+}
+.light .via-indigo-600 {
+  --tw-gradient-via: #4F46E5 var(--tw-gradient-via-position);
+}
+.light .via-amber-500 {
+  --tw-gradient-via: #F59E0B var(--tw-gradient-via-position);
+}
+
+/* --- Missing Hover State Variants --- */
+.light .hover\:bg-slate-600:hover {
+  background-color: #D1D5DB;
+}
+
 /* ============================================
    DAYLIGHT MODE UTILITY CLASSES
    Neobrutalist design for outdoor visibility

@@ -67,8 +67,8 @@ const ErrorState = memo<ErrorStateProps>(({
       <div className={`flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl ${className}`}>
         <span className="material-symbols-outlined text-red-400">{icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white">{title}</p>
-          {message && <p className="text-xs text-slate-400">{message}</p>}
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{title}</p>
+          {message && <p className="text-xs text-slate-500 dark:text-slate-400">{message}</p>}
         </div>
         {onRetry && (
           <button
@@ -100,8 +100,8 @@ const ErrorState = memo<ErrorStateProps>(({
         <div className="size-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3">
           <span className="material-symbols-outlined text-2xl text-red-400">{icon}</span>
         </div>
-        <p className="text-sm font-medium text-white mb-1">{title}</p>
-        {message && <p className="text-xs text-slate-400 max-w-xs mb-4">{message}</p>}
+        <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">{title}</p>
+        {message && <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mb-4">{message}</p>}
         {onRetry && (
           <button
             onClick={handleRetry}
@@ -134,11 +134,11 @@ const ErrorState = memo<ErrorStateProps>(({
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-medium text-white mb-1">{title}</h3>
+      <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">{title}</h3>
 
       {/* Message */}
       {message && (
-        <p className="text-sm text-slate-400 max-w-sm mb-6">{message}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6">{message}</p>
       )}
 
       {/* Actions */}

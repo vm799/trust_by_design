@@ -21,7 +21,7 @@ import { List } from 'react-window';
 import { QueueItem } from '../../lib/dashboardState';
 import QuickActionCard, { StatusColor, QuickAction } from './QuickActionCard';
 import SyncStatusBadge from './SyncStatusBadge';
-import { fadeInUp, staggerContainer } from '../../lib/animations';
+import { fadeInUp, staggerContainer, hoverLiftSmall, tapScaleSubtle } from '../../lib/animations';
 
 interface QueueListProps {
   /** Queue items to display (should be pre-sorted by urgency) */
@@ -143,7 +143,7 @@ const QueueList: React.FC<QueueListProps> = ({
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className={`bg-slate-900/60 backdrop-blur-md border border-white/15 rounded-2xl p-4 ${className}`}
+        className={`bg-slate-50/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-white/15 rounded-2xl p-4 ${className}`}
       >
         <QueueHeader count={items.length} />
         <div className="space-y-2">
@@ -408,8 +408,8 @@ const QueueItemCard: React.FC<QueueItemCardProps> = React.memo(({
     <motion.button
       variants={fadeInUp}
       onClick={onClick}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={hoverLiftSmall}
+      whileTap={tapScaleSubtle}
       className={`
         w-full flex items-center gap-3 p-4
         ${colourConfig.container}

@@ -1201,7 +1201,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
           <div className="size-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-400 text-sm font-semibold tracking-widest">Loading Job...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold tracking-widest">Loading Job...</p>
         </div>
       </Layout>
     );
@@ -1245,18 +1245,18 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-white/15 shadow-2xl relative`}>
+          <div className={`size-32 rounded-[2.5rem] bg-${config.colour}/10 flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative`}>
             <span className={`material-symbols-outlined text-7xl font-black text-${config.colour}`}>{config.icon}</span>
           </div>
           <div className="space-y-3">
-            <h2 className={`text-4xl font-black text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
-            <p className="text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
-            <div className="bg-slate-900 border border-white/15 rounded-2xl p-4 mt-4">
+            <h2 className={`text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none`}>{config.title}</h2>
+            <p className="text-slate-700 dark:text-slate-300 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">{config.message}</p>
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl p-4 mt-4">
               <p className="text-xs text-primary font-bold uppercase tracking-wide">{config.action}</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl min-h-[48px]">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 min-h-[48px] flex items-center justify-center gap-2"
@@ -1275,15 +1275,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in">
-          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-white/15 shadow-2xl relative">
+          <div className="size-32 rounded-[2.5rem] bg-danger/10 text-danger flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative">
             <span className="material-symbols-outlined text-7xl font-black text-danger">error</span>
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
-            <p className="text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none text-danger">Job Not Found</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[420px] mx-auto font-medium leading-relaxed">The job ID in this link is invalid or has been removed. Please check the URL or contact your administrator for a valid magic link.</p>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button onClick={() => navigate('/home')} className="w-full py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
+            <button onClick={() => navigate('/home')} className="w-full py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl">Return to Home</button>
             <button
               onClick={() => setShowQuickJobForm(true)}
               className="w-full py-5 bg-primary px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] text-white shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
@@ -1357,15 +1357,15 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
     return (
       <Layout isAdmin={false}>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in px-4">
-          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-white/15 shadow-2xl relative animate-success-pop">
+          <div className="size-32 rounded-[2.5rem] bg-success/10 text-success flex items-center justify-center border border-slate-200 dark:border-white/15 shadow-lg dark:shadow-2xl relative animate-success-pop">
             <span className="material-symbols-outlined text-7xl font-black text-success">verified</span>
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
-            <p className="text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none text-success">Job Sealed</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[320px] mx-auto font-medium leading-relaxed uppercase tracking-tight">Evidence bundle committed to local persistence and queued for hub synchronization.</p>
             {job?.evidenceHash && (
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-3 mt-4">
-                <p className="text-[9px] text-slate-400 uppercase tracking-wide">Evidence Hash</p>
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-3 mt-4">
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Evidence Hash</p>
                 <p className="text-[10px] font-mono text-success truncate">{job.evidenceHash}</p>
               </div>
             )}
@@ -1373,31 +1373,31 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
           {/* UAT Fix #12: Report sharing options */}
           <div className="w-full max-w-xs space-y-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Share Report</p>
+            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Share Report</p>
             <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={handleEmailReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Send report via email"
               >
                 <span className="material-symbols-outlined text-primary text-xl">email</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Email</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Email</span>
               </button>
               <button
                 onClick={handlePrintReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Print or save as PDF"
               >
                 <span className="material-symbols-outlined text-primary text-xl">print</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">PDF</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">PDF</span>
               </button>
               <button
                 onClick={handleShareReport}
-                className="py-3 bg-white/10 hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-white/15"
+                className="py-3 bg-slate-100/70 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border border-slate-200 dark:border-white/15"
                 title="Share report link"
               >
                 <span className="material-symbols-outlined text-primary text-xl">share</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Share</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">Share</span>
               </button>
               <button
                 onClick={() => setShowCertificate(true)}
@@ -1419,7 +1419,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
             />
           )}
 
-          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-white/15 hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
+          <button onClick={() => navigate('/home')} className="w-full max-w-xs py-5 bg-slate-100/70 dark:bg-white/10 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.3em] border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
         </div>
       </Layout>
     );
@@ -1427,7 +1427,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
   return (
     <Layout isAdmin={false}>
-      <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-900">
+      <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 flex bg-slate-50 dark:bg-slate-900">
         <div
           className={`h-full transition-all duration-1000 ${isOnline ? (isSyncing ? 'bg-primary animate-pulse' : 'bg-success') : 'bg-warning'}`}
           style={{ width: `${(step / 4) * 100}%` }}
@@ -1459,13 +1459,13 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
 
         {/* Visual Sync Queue Status */}
         {photos.some(p => p.syncStatus === 'pending') && (
-          <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 animate-in">
+          <div className="bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-2xl p-4 animate-in">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="size-3 bg-primary rounded-full animate-pulse"></div>
-                <p className="text-xs font-bold text-white uppercase tracking-wide">Photo Upload Queue</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">Photo Upload Queue</p>
               </div>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
                 {photos.filter(p => p.syncStatus === 'synced' || !p.isIndexedDBRef).length}/{photos.length} synced
               </span>
             </div>
@@ -1478,7 +1478,7 @@ const TechnicianPortal: React.FC<{ jobs: Job[], onUpdateJob: (j: Job) => void, o
                       ? 'bg-success'
                       : p.syncStatus === 'syncing'
                       ? 'bg-primary animate-pulse'
-                      : 'bg-slate-700'
+                      : 'bg-gray-200 dark:bg-slate-700'
                   }`}
                   title={`${p.type}: ${p.syncStatus || 'pending'}`}
                 />

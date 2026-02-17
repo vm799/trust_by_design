@@ -125,7 +125,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       case 'success': return 'bg-success/10';
       case 'warning': return 'bg-warning/10';
       case 'danger': return 'bg-danger/10';
-      default: return 'bg-slate-800';
+      default: return 'bg-gray-100 dark:bg-slate-800';
     }
   };
 
@@ -140,11 +140,11 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
   if (compact) {
     // Compact view for inline display
     return (
-      <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 space-y-4">
+      <div className="bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">history</span>
-            <span className="text-xs font-bold text-white uppercase tracking-wide">Audit Trail</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">Audit Trail</span>
           </div>
           <div className="flex items-center gap-2">
             {chainValid !== null && (
@@ -157,7 +157,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 {chainValid ? 'Valid' : 'Broken'}
               </div>
             )}
-            <span className="text-[10px] text-slate-400">{events.length} events</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">{events.length} events</span>
           </div>
         </div>
 
@@ -171,8 +171,8 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <span className={`material-symbols-outlined text-sm ${meta?.color || 'text-slate-400'}`}>
                   {meta?.icon || 'info'}
                 </span>
-                <span className="flex-1 text-slate-300 truncate">{meta?.label || event.eventType}</span>
-                <span className="text-slate-400 text-[10px]">{ts.time}</span>
+                <span className="flex-1 text-slate-700 dark:text-slate-300 truncate">{meta?.label || event.eventType}</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[10px]">{ts.time}</span>
               </div>
             );
           })}
@@ -190,26 +190,26 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
   // Full view
   return (
-    <div className="fixed inset-0 z-[150] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
-      <div className="bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-[150] bg-white/90 dark:bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
+      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl sm:rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-white/10">
+        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary">history</span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Audit Trail</h2>
-                <p className="text-xs text-slate-400">Job: {jobId}</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Audit Trail</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Job: {jobId}</p>
               </div>
             </div>
             {onClose && (
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors"
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
               >
-                <span className="material-symbols-outlined text-slate-400">close</span>
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
               </button>
             )}
           </div>
@@ -228,7 +228,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 {chainValid ? 'Chain Integrity Verified' : 'Chain Integrity Broken'}
               </div>
             )}
-            <span className="text-xs text-slate-400">{chainEventCount} events in chain</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{chainEventCount} events in chain</span>
             {warningCount > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning/10 text-warning text-xs">
                 <span className="material-symbols-outlined text-xs">warning</span>
@@ -239,7 +239,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         </div>
 
         {/* Filters */}
-        <div className="px-4 sm:px-6 py-3 border-b border-white/15 flex gap-2 overflow-x-auto">
+        <div className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-white/15 flex gap-2 overflow-x-auto">
           {[
             { id: 'all', label: 'All' },
             { id: 'photos', label: 'Photos' },
@@ -254,7 +254,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors whitespace-nowrap ${
                 filter === f.id
                   ? 'bg-primary text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
+                  : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {f.label}
@@ -267,7 +267,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           {filteredEvents.length === 0 ? (
             <div className="text-center py-12">
               <span className="material-symbols-outlined text-4xl text-slate-600 mb-2">history</span>
-              <p className="text-slate-400 text-sm">No audit events found</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">No audit events found</p>
             </div>
           ) : (
             filteredEvents.map((event, index) => {
@@ -280,15 +280,15 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <div key={event.id} className="relative">
                   {/* Timeline connector */}
                   {!isLast && (
-                    <div className="absolute left-5 top-12 w-px h-[calc(100%-2rem)] bg-slate-800" />
+                    <div className="absolute left-5 top-12 w-px h-[calc(100%-2rem)] bg-gray-100 dark:bg-slate-800" />
                   )}
 
                   <button
                     onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
                     className={`w-full text-left p-4 rounded-xl border transition-all ${
                       isExpanded
-                        ? 'bg-slate-800 border-white/20'
-                        : `${getSeverityBg(meta?.severity || 'info')} border-white/15 hover:border-white/10`
+                        ? 'bg-gray-100 dark:bg-slate-800 border-slate-300 dark:border-white/20'
+                        : `${getSeverityBg(meta?.severity || 'info')} border-slate-200 dark:border-white/15 hover:border-slate-200 dark:hover:border-white/10`
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -297,7 +297,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                         meta?.severity === 'danger' ? 'bg-danger/20' :
                         meta?.severity === 'warning' ? 'bg-warning/20' :
                         meta?.severity === 'success' ? 'bg-success/20' :
-                        'bg-slate-800'
+                        'bg-gray-100 dark:bg-slate-800'
                       }`}>
                         <span className={`material-symbols-outlined ${meta?.color || 'text-slate-400'}`}>
                           {meta?.icon || 'info'}
@@ -307,12 +307,12 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-bold text-white truncate">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
                             {meta?.label || event.eventType}
                           </span>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-[10px] text-slate-400">{ts.date}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{ts.time}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">{ts.date}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{ts.time}</span>
                           </div>
                         </div>
 

@@ -268,8 +268,8 @@ const SoloContractorDashboard: React.FC = () => {
       <PageContent>
         <Card className="text-center py-8">
           <span className="material-symbols-outlined text-4xl text-red-400 mb-4">error</span>
-          <p className="text-white font-medium mb-2">Failed to load data</p>
-          <p className="text-slate-400 text-sm mb-4">{error}</p>
+          <p className="text-slate-900 dark:text-white font-medium mb-2">Failed to load data</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{error}</p>
           <ActionButton variant="secondary" onClick={refresh} icon="refresh">
             Retry
           </ActionButton>
@@ -286,8 +286,8 @@ const SoloContractorDashboard: React.FC = () => {
           <div className="size-20 rounded-[2rem] bg-primary/20 flex items-center justify-center mb-6">
             <span className="material-symbols-outlined text-4xl text-primary">add_task</span>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Ready to work?</h3>
-          <p className="text-slate-400 text-sm mb-6 max-w-xs">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Ready to work?</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-xs">
             Create your first job to start capturing evidence and building your audit trail.
           </p>
           <ActionButton variant="primary" icon="add" to={ROUTES.JOB_CREATE}>
@@ -301,9 +301,9 @@ const SoloContractorDashboard: React.FC = () => {
   return (
     <div>
       {/* Header */}
-      <div className="px-4 lg:px-8 py-4 border-b border-white/15 flex items-center justify-between">
+      <div className="px-4 lg:px-8 py-4 border-b border-slate-200 dark:border-white/15 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-white">My Jobs</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">My Jobs</h1>
           {syncPending > 0 && (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-500/20 rounded-lg">
               <span className="material-symbols-outlined text-sm text-amber-400 animate-pulse">sync</span>
@@ -336,7 +336,7 @@ const SoloContractorDashboard: React.FC = () => {
             sortQueue={sortQueueJobs}
             showCollapsed={true}
             queueHeader={
-              <div className="border-b border-white/15 pb-4 mb-6">
+              <div className="border-b border-slate-200 dark:border-white/15 pb-4 mb-6">
                 <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">queue</span>
                   Up Next
@@ -350,17 +350,17 @@ const SoloContractorDashboard: React.FC = () => {
           {completedCount > 0 && (
             <motion.section
               variants={fadeInUp}
-              className="pt-4 border-t border-white/15"
+              className="pt-4 border-t border-slate-200 dark:border-white/15"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-emerald-500">check_circle</span>
                   <span className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Completed</span>
-                  <span className="text-xs text-slate-300 font-bold">({completedCount})</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">({completedCount})</span>
                 </div>
                 <Link
                   to={`${ROUTES.JOBS}?status=review`}
-                  className="text-xs text-slate-400 hover:text-white transition-colors min-h-[44px] flex items-center gap-1"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px] flex items-center gap-1"
                 >
                   View all <span className="material-symbols-outlined text-xs">chevron_right</span>
                 </Link>
@@ -382,10 +382,10 @@ const SoloContractorDashboard: React.FC = () => {
                             <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                               {job.title || `Job #${job.id.slice(0, 6)}`}
                             </p>
-                            <p className="text-xs text-slate-400 truncate">{client?.name || 'Unknown'}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{client?.name || 'Unknown'}</p>
                           </div>
                         </div>
                         {/* Actions row - actions first, report conditional */}
@@ -394,7 +394,7 @@ const SoloContractorDashboard: React.FC = () => {
                             onClick={() => {
                               updateJob({ ...job, status: 'Archived', archivedAt: new Date().toISOString(), isArchived: true });
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-xs font-medium min-h-[44px] hover:bg-slate-600 transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium min-h-[44px] hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                           >
                             <span className="material-symbols-outlined text-sm">inventory_2</span>
                             Archive
@@ -419,7 +419,7 @@ const SoloContractorDashboard: React.FC = () => {
                           ) : (
                             <Link
                               to={route(ROUTES.JOB_DETAIL, { id: job.id })}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium min-h-[44px] hover:bg-slate-700 transition-colors ml-auto"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium min-h-[44px] hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors ml-auto"
                             >
                               <span className="material-symbols-outlined text-sm">visibility</span>
                               View
@@ -435,7 +435,7 @@ const SoloContractorDashboard: React.FC = () => {
 
           {/* Contextual Actions: 3 max, 56px touch targets */}
           <motion.section variants={fadeInUp}>
-            <div className="border-b border-white/15 pb-4 mb-6">
+            <div className="border-b border-slate-200 dark:border-white/15 pb-4 mb-6">
               <h2 className="text-sm font-semibold text-blue-300/80 tracking-wider uppercase">Quick Actions</h2>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -449,7 +449,7 @@ const SoloContractorDashboard: React.FC = () => {
               </Link>
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[56px] px-3 py-2 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white text-sm font-semibold rounded-xl transition-colors flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Search jobs (Ctrl+K)"
               >
                 <span className="material-symbols-outlined text-lg">search</span>

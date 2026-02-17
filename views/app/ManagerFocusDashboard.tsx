@@ -21,7 +21,7 @@ import { ProofGapBar, TechnicianStatusGrid, StatusBreakdownModal } from '../../c
 import { useData } from '../../lib/DataContext';
 import { route, ROUTES } from '../../lib/routes';
 import { Job, Client, Technician, TechnicianSummary, AttentionItem, JobStatus } from '../../types';
-import { fadeInUp, staggerContainer } from '../../lib/animations';
+import { fadeInUp, fadeInScale, staggerContainer } from '../../lib/animations';
 import { useGlobalKeyboardShortcuts } from '../../hooks/useGlobalKeyboardShortcuts';
 import QuickSearchModal from '../../components/modals/QuickSearchModal';
 import QuickAssignModal from '../../components/modals/QuickAssignModal';
@@ -324,9 +324,9 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
+      initial={fadeInUp.hidden}
+      animate={fadeInUp.visible}
+      exit={fadeInUp.hidden}
       className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
@@ -336,8 +336,8 @@ const TechnicianDrillDown: React.FC<TechnicianDrillDownProps> = ({
       tabIndex={0}
     >
       <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
+        initial={fadeInScale.hidden}
+        animate={fadeInScale.visible}
         className="bg-white dark:bg-slate-800 border border-white/20 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
         role="presentation"
         onClick={e => e.stopPropagation()}

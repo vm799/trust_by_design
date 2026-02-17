@@ -27,51 +27,51 @@ const TechniciansSkeleton = React.memo(() => (
     {/* Header skeleton */}
     <div className="flex justify-between items-end">
       <div className="space-y-2">
-        <div className="h-8 w-40 bg-slate-800 rounded animate-pulse" />
-        <div className="h-3 w-48 bg-slate-800 rounded animate-pulse" />
+        <div className="h-8 w-40 bg-gray-100 dark:bg-slate-800 rounded animate-pulse" />
+        <div className="h-3 w-48 bg-gray-100 dark:bg-slate-800 rounded animate-pulse" />
       </div>
-      <div className="h-11 w-40 bg-slate-800 rounded-xl animate-pulse" />
+      <div className="h-11 w-40 bg-gray-100 dark:bg-slate-800 rounded-xl animate-pulse" />
     </div>
     {/* Search skeleton */}
-    <div className="h-11 w-full bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
+    <div className="h-11 w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 rounded-xl animate-pulse" />
     {/* Card grid skeleton */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={`skeleton-tech-${i}`}
-          className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 animate-pulse"
+          className="bg-gradient-to-br from-slate-50 dark:from-slate-900 to-white dark:to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 animate-pulse"
         >
           {/* ID Badge and Status */}
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <div className="h-2 w-12 bg-slate-800 rounded" />
-              <div className="h-3 w-16 bg-slate-800 rounded" />
+              <div className="h-2 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-3 w-16 bg-gray-100 dark:bg-slate-800 rounded" />
             </div>
-            <div className="h-6 w-16 bg-slate-800 rounded-full" />
+            <div className="h-6 w-16 bg-gray-100 dark:bg-slate-800 rounded-full" />
           </div>
           {/* Avatar and Name */}
           <div className="flex gap-3">
-            <div className="size-16 rounded-2xl bg-slate-800 shrink-0" />
+            <div className="size-16 rounded-2xl bg-gray-100 dark:bg-slate-800 shrink-0" />
             <div className="flex-1 min-w-0 space-y-2 pt-1">
-              <div className="h-4 w-2/3 bg-slate-800 rounded" />
-              <div className="h-3 w-3/4 bg-slate-800 rounded" />
+              <div className="h-4 w-2/3 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-3 w-3/4 bg-gray-100 dark:bg-slate-800 rounded" />
             </div>
           </div>
           {/* Stats Row */}
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-600/50">
             <div className="space-y-1">
-              <div className="h-2 w-20 bg-slate-800 rounded" />
-              <div className="h-5 w-8 bg-slate-800 rounded" />
+              <div className="h-2 w-20 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-gray-100 dark:bg-slate-800 rounded" />
             </div>
             <div className="space-y-1">
-              <div className="h-2 w-12 bg-slate-800 rounded" />
-              <div className="h-5 w-8 bg-slate-800 rounded" />
+              <div className="h-2 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+              <div className="h-5 w-8 bg-gray-100 dark:bg-slate-800 rounded" />
             </div>
           </div>
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
-            <div className="flex-1 h-11 bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
           </div>
         </div>
       ))}
@@ -104,28 +104,28 @@ const TechCard = React.memo(({
       {...handlers}
       role="group"
       aria-label={`Technician: ${tech.name}`}
-      className={`bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
+      className={`bg-gradient-to-br from-slate-50 dark:from-slate-900 to-white dark:to-slate-950 border-2 border-blue-500/20 p-6 rounded-3xl space-y-4 hover:border-blue-500/50 transition-all group relative shadow-lg shadow-blue-500/10 ${isPressed ? 'scale-[0.98] opacity-90' : ''}`}
     >
       {/* ID Badge and Status */}
       <div className="flex justify-between items-start">
         <div className="space-y-1 flex-1">
           <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.15em] font-mono">Tech ID</p>
-          <p className="text-xs font-black text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
+          <p className="text-xs font-black text-slate-900 dark:text-white font-mono">{tech.id.toUpperCase().substring(0, 8)}</p>
         </div>
         <div className="flex flex-col items-end ml-2">
           <span className={`text-[8px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest whitespace-nowrap ${
-            tech.status === 'Registered' ? 'bg-slate-600/20 text-slate-300 border-slate-500/30' :
+            tech.status === 'Registered' ? 'bg-slate-600/20 text-slate-700 dark:text-slate-300 border-slate-500/30' :
             tech.status === 'Authorised' ? 'bg-success/10 text-success border-success/30' :
             tech.status === 'Available' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
             tech.status === 'On Site' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
             tech.status === 'In Transit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-            tech.status === 'Off Duty' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+            tech.status === 'Off Duty' ? 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/30' :
             tech.status === 'Offline' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-            'bg-slate-700/50 text-slate-300 border-slate-600/30'
+            'bg-gray-200/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-600/30'
           }`}>
             {tech.status}
           </span>
-          <span className="text-[7px] text-slate-400 mt-0.5 tracking-wide">Status set manually</span>
+          <span className="text-[7px] text-slate-500 dark:text-slate-400 mt-0.5 tracking-wide">Status set manually</span>
         </div>
       </div>
 
@@ -135,7 +135,7 @@ const TechCard = React.memo(({
           {tech.name[0]}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-black text-white uppercase text-sm tracking-tight group-hover:text-blue-400 transition-colors">{tech.name}</h3>
+          <h3 className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-tight group-hover:text-blue-400 transition-colors">{tech.name}</h3>
           <p className="text-[10px] text-blue-300 font-mono truncate">{tech.email}</p>
         </div>
       </div>
@@ -143,12 +143,12 @@ const TechCard = React.memo(({
       {/* Stats Row */}
       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-600/50">
         <div className="space-y-0.5">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Jobs Completed</p>
-          <p className="text-lg font-black text-white">{tech.jobsCompleted || 0}</p>
+          <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Jobs Completed</p>
+          <p className="text-lg font-black text-slate-900 dark:text-white">{tech.jobsCompleted || 0}</p>
         </div>
         {tech.rating > 0 && (
           <div className="space-y-0.5">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+            <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1">
               <span className="material-symbols-outlined text-xs text-amber-500">star</span>
               Rating
             </p>
@@ -263,11 +263,11 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
             <span className="material-symbols-outlined text-danger flex-shrink-0">error</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-danger">Failed to delete technician</p>
-              <p className="text-xs text-slate-300 mt-1">{deleteError}</p>
+              <p className="text-xs text-slate-700 dark:text-slate-300 mt-1">{deleteError}</p>
             </div>
             <button
               onClick={() => setDeleteError(null)}
-              className="text-slate-400 hover:text-white transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Dismiss error"
             >
               <span className="material-symbols-outlined">close</span>
@@ -277,8 +277,8 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Workforce</h2>
-            <p className="text-slate-400">Your team of technicians.</p>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Workforce</h2>
+            <p className="text-slate-500 dark:text-slate-400">Your team of technicians.</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
@@ -291,14 +291,14 @@ const TechniciansView: React.FC<TechniciansViewProps> = ({ user, techs, onAdd, o
 
         {/* Search bar */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg">search</span>
           <input
             type="text"
             placeholder="Search by name, email, or status..."
             aria-label="Search technicians"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-2 border-slate-600 focus:border-blue-500/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-white outline-none transition-colors placeholder:text-slate-400"
+            className="w-full bg-gray-100 dark:bg-slate-800 border-2 border-slate-600 focus:border-blue-500/50 rounded-xl pl-10 pr-4 py-3 min-h-[44px] text-sm text-slate-900 dark:text-white outline-none transition-colors placeholder:text-slate-500 dark:placeholder:text-slate-400"
           />
           {searchQuery && (
             <button

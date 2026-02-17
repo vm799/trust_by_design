@@ -312,7 +312,7 @@ const TechEvidenceReview: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 py-6">
+      <div className="min-h-screen bg-white dark:bg-slate-950 px-4 py-6">
         <LoadingSkeleton variant="card" count={2} />
       </div>
     );
@@ -320,7 +320,7 @@ const TechEvidenceReview: React.FC = () => {
 
   if (dataError) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4">
         <ErrorState message={dataError} onRetry={refresh} />
       </div>
     );
@@ -328,7 +328,7 @@ const TechEvidenceReview: React.FC = () => {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4">
         <EmptyState
           icon="work_off"
           title="Job not found"
@@ -340,22 +340,22 @@ const TechEvidenceReview: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-white/15 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/15 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => currentStep > 0 ? handlePrevStep() : navigate(`/tech/job/${job.id}`)}
             aria-label={currentStep > 0 ? 'Go to previous step' : 'Back to job details'}
-            className="p-2 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-100/70 dark:hover:bg-white/10 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-semibold text-white text-sm truncate">
+            <h1 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
               {COMPLETION_STEPS[currentStep].label}
             </h1>
-            <p className="text-xs text-slate-400 truncate">
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
               {job.title} {client ? `\u2022 ${client.name}` : ''}
             </p>
           </div>
@@ -378,13 +378,13 @@ const TechEvidenceReview: React.FC = () => {
                     ? 'bg-emerald-500'
                     : i === currentStep
                     ? step.id === 'review' ? 'bg-blue-500' : step.id === 'notes' ? 'bg-amber-500' : 'bg-emerald-500'
-                    : 'bg-slate-800'
+                    : 'bg-gray-100 dark:bg-slate-800'
                   }
                 `} />
               </div>
               <span className={`
                 text-[10px] font-medium transition-colors
-                ${i <= currentStep ? 'text-slate-300' : 'text-slate-600'}
+                ${i <= currentStep ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600'}
               `}>
                 {step.label}
               </span>
@@ -413,8 +413,8 @@ const TechEvidenceReview: React.FC = () => {
                     <span className="material-symbols-outlined text-blue-400">photo_library</span>
                   </div>
                   <div className="flex-1">
-                    <h2 className="font-semibold text-white">Evidence Summary</h2>
-                    <p className="text-xs text-slate-400">
+                    <h2 className="font-semibold text-slate-900 dark:text-white">Evidence Summary</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {totalPhotos} photo{totalPhotos !== 1 ? 's' : ''} captured
                     </p>
                   </div>
@@ -501,8 +501,8 @@ const TechEvidenceReview: React.FC = () => {
                     <span className="material-symbols-outlined text-amber-400">edit_note</span>
                   </div>
                   <div className="flex-1">
-                    <h2 className="font-semibold text-white">Completion Notes</h2>
-                    <p className="text-xs text-slate-400">
+                    <h2 className="font-semibold text-slate-900 dark:text-white">Completion Notes</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Document work performed, issues found, or follow-up needed
                     </p>
                   </div>
@@ -519,7 +519,7 @@ const TechEvidenceReview: React.FC = () => {
                       px-3.5 py-2 rounded-xl text-sm font-medium transition-all min-h-[44px]
                       ${activeNotePrompt === prompt
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-slate-800 text-slate-400 border border-white/15 hover:bg-slate-700'
+                        : 'bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/15 hover:bg-gray-200 dark:hover:bg-slate-700'
                       }
                     `}
                   >
@@ -539,7 +539,7 @@ const TechEvidenceReview: React.FC = () => {
                   }}
                   placeholder="Describe the work completed, any issues found, or important notes for the client and office..."
                   rows={8}
-                  className="w-full bg-slate-900 border-2 border-slate-600 focus:border-amber-500/50 rounded-2xl p-4 text-white text-base placeholder:text-slate-600 resize-none focus:outline-none transition-colors leading-relaxed"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-600 focus:border-amber-500/50 rounded-2xl p-4 text-slate-900 dark:text-white text-base placeholder:text-slate-600 resize-none focus:outline-none transition-colors leading-relaxed"
                 />
                 <div className="absolute bottom-3 right-3 text-xs text-slate-600">
                   {completionNotes.length > 0 ? `${completionNotes.length} chars` : 'Optional'}
@@ -547,9 +547,9 @@ const TechEvidenceReview: React.FC = () => {
               </div>
 
               {/* Helpful tip */}
-              <div className="mt-4 flex items-start gap-2.5 bg-slate-900 border border-white/15 rounded-xl p-3">
+              <div className="mt-4 flex items-start gap-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-xl p-3">
                 <span className="material-symbols-outlined text-sm text-amber-400 mt-0.5">lightbulb</span>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Good notes help with invoicing, dispute resolution, and follow-up scheduling. Include what was done, any problems discovered, and recommended next steps.
                 </p>
               </div>
@@ -576,10 +576,10 @@ const TechEvidenceReview: React.FC = () => {
                         phone_forwarded
                       </span>
                     </div>
-                    <h2 className="text-xl font-bold text-white mb-2">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                       Hand Device to Client
                     </h2>
-                    <p className="text-slate-300 text-sm mb-1">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm mb-1">
                       Please pass the device to
                     </p>
                     <p className="text-emerald-400 text-lg font-bold">
@@ -588,19 +588,19 @@ const TechEvidenceReview: React.FC = () => {
                   </div>
 
                   {/* Evidence Summary for Client */}
-                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 mb-6">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6">
+                    <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                       Evidence to be sealed
                     </h3>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-sm text-blue-400">photo_camera</span>
-                        <span className="text-sm text-white font-medium">{totalPhotos} photos</span>
+                        <span className="text-sm text-slate-900 dark:text-white font-medium">{totalPhotos} photos</span>
                       </div>
                       {completionNotes && (
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-sm text-amber-400">description</span>
-                          <span className="text-sm text-white font-medium">Notes attached</span>
+                          <span className="text-sm text-slate-900 dark:text-white font-medium">Notes attached</span>
                         </div>
                       )}
                     </div>
