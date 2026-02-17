@@ -22,7 +22,8 @@
 // v2.2.0: Fixed index.html cache strategy - network-first prevents stale asset refs
 // v2.3.0: Added schema version tracking, dev mode support, enhanced reset
 // v2.4.0: Added automatic version detection and paid user auto-updates
-const CACHE_VERSION = 'bunker-v2.4';
+// v2.5.0: Fixed stale cache on deploy - never cache index.html, force revalidation
+const CACHE_VERSION = 'bunker-v2.5';
 // Schema version must match lib/offline/db.ts DB_SCHEMA_VERSION
 const SCHEMA_VERSION = 4;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
@@ -162,9 +163,10 @@ self.addEventListener('fetch', (event) => {
   } else if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
   } else if (isNavigationRequest(request, url)) {
-    // CRITICAL: index.html must be network-first to get latest asset references
-    // This prevents stale cached HTML from requesting old hashed assets that 404
-    event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
+    // CRITICAL: index.html must ALWAYS come from network when online.
+    // Stale cached HTML references dead hashed asset URLs → "Unexpected token '<'" error.
+    // Only fall back to cache when truly offline.
+    event.respondWith(navigationStrategy(request));
   } else if (isMediaRequest(url)) {
     event.respondWith(cacheFirstStrategy(request, MEDIA_CACHE));
   } else {
@@ -262,6 +264,35 @@ async function cacheFirstStrategy(request, cacheName) {
     return networkResponse;
   } catch (error) {
     console.log('[SW] Network failed, no cache available:', request.url);
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+/**
+ * Navigation strategy - network-only with offline fallback
+ * NEVER serves cached index.html when online, because stale HTML
+ * references dead hashed assets causing "Unexpected token '<'" errors.
+ */
+async function navigationStrategy(request) {
+  try {
+    const networkResponse = await fetch(request, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (networkResponse.ok) {
+      // Update the offline fallback cache
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    // Truly offline — use cached version as last resort
+    console.log('[SW] Offline: serving cached index.html');
+    const cache = await caches.open(STATIC_CACHE);
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     return new Response('Offline', { status: 503, statusText: 'Offline' });
   }
 }
