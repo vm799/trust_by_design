@@ -96,10 +96,10 @@ const OnboardingStepLoader: React.FC = () => {
   }, [persona, step, navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-950 transition-colors">
       <div className="text-center space-y-4">
         <div className="size-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
-        <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading...</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">Loading...</p>
       </div>
     </div>
   );
@@ -107,10 +107,10 @@ const OnboardingStepLoader: React.FC = () => {
 
 // Loading fallback component
 const LoadingFallback: React.FC = () => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+  <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center transition-colors">
     <div className="text-center space-y-4">
       <div className="size-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
-      <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading...</p>
+      <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">Loading...</p>
     </div>
   </div>
 );
@@ -434,10 +434,10 @@ const AppContent: React.FC = () => {
   const profileNotReadyForUser = isAuthenticated && !!sessionUserId && profileLoadedRef.current !== sessionUserId;
   if (authLoading || profileLoading || profileNotReadyForUser) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center transition-colors">
         <div className="text-center space-y-4">
           <div className="size-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Loading...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">Loading...</p>
         </div>
       </div>
     );
@@ -556,7 +556,7 @@ const AppContent: React.FC = () => {
                 </Layout>
               </RouteErrorBoundary>
             ) : (
-              <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+              <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center transition-colors">
                 <div className="size-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
               </div>
             )
