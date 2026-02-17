@@ -215,7 +215,20 @@ export async function flushPendingUpdates(): Promise<void> {
 }
 
 /**
+ * Max retries for debounced queue items before escalation to the
+ * failed sync queue where the OfflineIndicator makes them visible.
+ *
+ * Without this cap, items retry forever with no counter, no cap,
+ * and no user visibility — a silent data black hole.
+ */
+const DEBOUNCED_QUEUE_MAX_RETRIES = 10;
+
+/**
  * Process queued offline updates (call when back online)
+ *
+ * FAILSAFE FIX: Items now track retryCount. After DEBOUNCED_QUEUE_MAX_RETRIES
+ * failures, they are escalated to jobproof_failed_sync_queue where the
+ * OfflineIndicator shows a "Retry All" button. Previously they looped forever.
  */
 export async function processOfflineQueue(): Promise<void> {
   if (!navigator.onLine || !isSupabaseAvailable()) return;
@@ -243,14 +256,45 @@ export async function processOfflineQueue(): Promise<void> {
         });
 
       if (error) {
-        failed.push(item);
+        const retryCount = (item.retryCount || 0) + 1;
+        if (retryCount >= DEBOUNCED_QUEUE_MAX_RETRIES) {
+          // Escalate to failed sync queue for user visibility
+          const failedSyncQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
+          failedSyncQueue.push({
+            id: item.id || `debounced-${Date.now()}`,
+            type: 'job',
+            data: item.data,
+            retryCount,
+            lastAttempt: Date.now(),
+            failedAt: new Date().toISOString(),
+            reason: `Debounced queue: ${item.table} upsert failed after ${DEBOUNCED_QUEUE_MAX_RETRIES} retries`
+          });
+          localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedSyncQueue));
+        } else {
+          failed.push({ ...item, retryCount });
+        }
       }
     } catch {
-      failed.push(item);
+      const retryCount = (item.retryCount || 0) + 1;
+      if (retryCount >= DEBOUNCED_QUEUE_MAX_RETRIES) {
+        const failedSyncQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
+        failedSyncQueue.push({
+          id: item.id || `debounced-${Date.now()}`,
+          type: 'job',
+          data: item.data,
+          retryCount,
+          lastAttempt: Date.now(),
+          failedAt: new Date().toISOString(),
+          reason: `Debounced queue: exception after ${DEBOUNCED_QUEUE_MAX_RETRIES} retries`
+        });
+        localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(failedSyncQueue));
+      } else {
+        failed.push({ ...item, retryCount });
+      }
     }
   }
 
-  // Update queue with only failed items
+  // Update queue with only failed items still under max retries
   if (failed.length > 0) {
     localStorage.setItem(queueKey, JSON.stringify(failed));
   } else {

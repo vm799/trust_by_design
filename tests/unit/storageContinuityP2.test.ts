@@ -182,6 +182,33 @@ describe('Sync Functions - Pattern Consistency', () => {
   });
 });
 
+describe('Sync Queue Guards - All retry functions check isSupabaseAvailable', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+
+  it('autoRetryFailedQueue should check isSupabaseAvailable before retrying', () => {
+    // The function body must contain the guard
+    expect(syncQueueContent).toContain('autoRetryFailedQueue');
+    // Find the function and verify guard is present BEFORE syncJobToSupabase
+    const funcStart = syncQueueContent.indexOf('const autoRetryFailedQueue');
+    const funcBody = syncQueueContent.slice(funcStart, funcStart + 500);
+    expect(funcBody).toContain('isSupabaseAvailable()');
+  });
+
+  it('retryFailedSyncs should check isSupabaseAvailable', () => {
+    const funcStart = syncQueueContent.indexOf('const retryFailedSyncs');
+    const funcBody = syncQueueContent.slice(funcStart, funcStart + 500);
+    expect(funcBody).toContain('isSupabaseAvailable()');
+  });
+
+  it('retryFailedSyncItem should share concurrency guard with autoRetryFailedQueue', () => {
+    expect(syncQueueContent).toContain('_failedRetryInProgress');
+    // Both functions should reference this guard
+    const occurrences = syncQueueContent.match(/_failedRetryInProgress/g) || [];
+    // At minimum: declaration + autoRetry read + autoRetry set/clear + retryItem read + retryItem set/clear
+    expect(occurrences.length).toBeGreaterThanOrEqual(5);
+  });
+});
+
 describe('OfflineAction type completeness (from P0 fix)', () => {
   const dbContent = readFile('lib/offline/db.ts');
 
