@@ -236,6 +236,52 @@ describe('Storage Continuity - Offline sync handlers', () => {
   });
 });
 
+describe('Storage Continuity - Escalation type mapping', () => {
+  const syncContent = readFile('lib/offline/sync.ts');
+
+  it('should map JOB actions to job type in failed sync queue', () => {
+    expect(syncContent).toContain("action.type.includes('JOB')");
+    expect(syncContent).toContain("? 'job'");
+  });
+
+  it('should map CLIENT actions to client type in failed sync queue', () => {
+    expect(syncContent).toContain("action.type.includes('CLIENT')");
+    expect(syncContent).toContain("? 'client'");
+  });
+
+  it('should map TECHNICIAN actions to technician type in failed sync queue', () => {
+    expect(syncContent).toContain("action.type.includes('TECHNICIAN')");
+    expect(syncContent).toContain("? 'technician'");
+  });
+
+  it('should preserve original action type in escalated item', () => {
+    expect(syncContent).toContain('actionType: action.type');
+  });
+});
+
+describe('Storage Continuity - Signature upload failsafe', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+
+  it('should throw on signature data not found in IndexedDB', () => {
+    expect(syncQueueContent).toContain('Signature data not found in IndexedDB');
+    // Must throw, not silently continue
+    expect(syncQueueContent).toContain("throw new Error(`Signature data not found");
+  });
+
+  it('should throw on signature upload failure', () => {
+    expect(syncQueueContent).toContain('Signature upload failed');
+    expect(syncQueueContent).toContain("throw new Error(`Signature upload failed");
+  });
+});
+
+describe('Storage Continuity - Retry guard exports', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+
+  it('should export isRetryInProgress for UI consumption', () => {
+    expect(syncQueueContent).toContain('export const isRetryInProgress');
+  });
+});
+
 describe('Storage Continuity - debouncedSync escalation', () => {
   const debouncedContent = readFile('lib/debouncedSync.ts');
 

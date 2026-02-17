@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { getFailedSyncQueue, getSyncQueueStatus, retryFailedSyncItem } from '../lib/syncQueue';
+import { getFailedSyncQueue, getSyncQueueStatus, retryFailedSyncItem, isRetryInProgress } from '../lib/syncQueue';
 
 interface OfflineIndicatorProps {
   syncStatus?: {
@@ -65,9 +65,17 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
   }, [retryResults]);
 
   // Retry all failed sync items, then refresh status
+  // UX FIX: If auto-retry is already running (bunker exit), show "already syncing"
+  // instead of hammering the same items and showing fake "X still failing" results.
   const handleRetryAll = useCallback(async () => {
     const failedItems = getFailedSyncQueue();
     if (failedItems.length === 0 || isRetrying) return;
+
+    // Check if background auto-retry is already handling these items
+    if (isRetryInProgress()) {
+      setRetryResults({ succeeded: 0, failed: 0 });
+      return;
+    }
 
     setIsRetrying(true);
     setRetryResults(null);
@@ -76,6 +84,9 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
     let failed = 0;
 
     for (const item of failedItems) {
+      // If auto-retry started mid-loop, stop to avoid double-processing
+      if (isRetryInProgress()) break;
+
       const success = await retryFailedSyncItem(item.id);
       if (success) {
         succeeded++;

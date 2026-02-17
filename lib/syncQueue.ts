@@ -563,6 +563,12 @@ export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
 };
 
 /**
+ * Check if a retry operation is currently in progress.
+ * Used by UI to show "already syncing" instead of triggering duplicate retries.
+ */
+export const isRetryInProgress = (): boolean => _failedRetryInProgress;
+
+/**
  * Clear all failed sync items
  *
  * WARNING: This will permanently discard failed sync data.

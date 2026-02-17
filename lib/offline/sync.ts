@@ -399,10 +399,20 @@ async function _pushQueueImpl() {
 
                 if (newRetryCount >= DEXIE_QUEUE_MAX_RETRIES) {
                     // Escalate to failed sync queue for user visibility
+                    // Map Dexie action type to sync queue item type
+                    const itemType = action.type.includes('JOB') || action.type === 'SEAL_JOB' || action.type === 'UPLOAD_PHOTO'
+                        ? 'job'
+                        : action.type.includes('CLIENT')
+                            ? 'client'
+                            : action.type.includes('TECHNICIAN')
+                                ? 'technician'
+                                : 'job';
+
                     const failedQueue = JSON.parse(localStorage.getItem('jobproof_failed_sync_queue') || '[]');
                     failedQueue.push({
                         id: action.payload?.id || `dexie-${action.id}`,
-                        type: action.type.includes('JOB') ? 'job' : 'job',
+                        type: itemType,
+                        actionType: action.type,
                         data: action.payload,
                         retryCount: newRetryCount,
                         lastAttempt: Date.now(),
@@ -418,7 +428,7 @@ async function _pushQueueImpl() {
                     showPersistentNotification({
                         type: 'error',
                         title: 'Sync Failed',
-                        message: `A ${action.type.replace('_', ' ').toLowerCase()} failed to sync after multiple attempts. Check the sync status banner.`,
+                        message: `A ${itemType} failed to sync after multiple attempts. Check the sync status banner.`,
                         persistent: true
                     });
                 } else {
