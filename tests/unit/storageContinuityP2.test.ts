@@ -299,3 +299,100 @@ describe('P2: Dexie corruption guard - SEAL_JOB fallback', () => {
     expect(syncContent).not.toContain('seal action lost');
   });
 });
+
+// ============================================================
+// processOfflineQueue concurrency guard
+// Prevents duplicate 'online' events from double-processing
+// ============================================================
+
+describe('processOfflineQueue concurrency guard', () => {
+  const debouncedContent = readFile('lib/debouncedSync.ts');
+
+  it('should have _processQueueInProgress guard variable', () => {
+    expect(debouncedContent).toContain('let _processQueueInProgress = false');
+  });
+
+  it('processOfflineQueue should check guard before proceeding', () => {
+    const funcStart = debouncedContent.indexOf('export async function processOfflineQueue');
+    const funcBody = debouncedContent.slice(funcStart, funcStart + 300);
+    expect(funcBody).toContain('if (_processQueueInProgress) return');
+  });
+
+  it('processOfflineQueue should set guard to true before processing', () => {
+    const funcStart = debouncedContent.indexOf('export async function processOfflineQueue');
+    const funcBody = debouncedContent.slice(funcStart, funcStart + 500);
+    expect(funcBody).toContain('_processQueueInProgress = true');
+  });
+
+  it('processOfflineQueue should clear guard in finally block', () => {
+    const funcStart = debouncedContent.indexOf('export async function processOfflineQueue');
+    const funcEnd = debouncedContent.indexOf('export function getPendingCount');
+    const funcBody = debouncedContent.slice(funcStart, funcEnd);
+    expect(funcBody).toContain('finally');
+    expect(funcBody).toContain('_processQueueInProgress = false');
+  });
+});
+
+// ============================================================
+// Auto-retry progress export
+// ============================================================
+
+describe('Auto-retry progress tracking', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+
+  it('should export getAutoRetryProgress function', () => {
+    expect(syncQueueContent).toContain('export const getAutoRetryProgress');
+  });
+
+  it('autoRetryFailedQueue should update progress during loop', () => {
+    const funcStart = syncQueueContent.indexOf('export const autoRetryFailedQueue');
+    const funcEnd = syncQueueContent.indexOf('/**\n * Start background sync worker');
+    const funcBody = syncQueueContent.slice(funcStart, funcEnd);
+    // Should set isRunning: true at start
+    expect(funcBody).toContain('isRunning: true');
+    // Should update recovered count in loop
+    expect(funcBody).toContain('_autoRetryProgress = { total: failedItems.length, recovered, isRunning: true }');
+    // Should clear in finally
+    expect(funcBody).toContain('isRunning: false');
+  });
+});
+
+// ============================================================
+// Orphan photo escalation to failed sync queue
+// Unrecoverable orphans (5 retries) escalate instead of staying stuck
+// ============================================================
+
+describe('Orphan photo metadata escalation', () => {
+  const syncContent = readFile('lib/offline/sync.ts');
+
+  it('should escalate orphan photos after max recovery attempts', () => {
+    expect(syncContent).toContain("actionType: 'ORPHAN_PHOTO'");
+    expect(syncContent).toContain('Orphan photo:');
+  });
+
+  it('should include full metadata in escalated orphan item', () => {
+    const escalationStart = syncContent.indexOf("actionType: 'ORPHAN_PHOTO'");
+    // Look at the data block AFTER the actionType (it follows immediately)
+    const escalationBlock = syncContent.slice(escalationStart, escalationStart + 600);
+    expect(escalationBlock).toContain('photoId:');
+    expect(escalationBlock).toContain('jobId:');
+    expect(escalationBlock).toContain('jobTitle:');
+    expect(escalationBlock).toContain('lat:');
+    expect(escalationBlock).toContain('lng:');
+    expect(escalationBlock).toContain('timestamp:');
+  });
+
+  it('should delete orphan from IndexedDB after escalation to prevent re-escalation', () => {
+    const escalationStart = syncContent.indexOf("actionType: 'ORPHAN_PHOTO'");
+    const afterEscalation = syncContent.slice(escalationStart, escalationStart + 1000);
+    expect(afterEscalation).toContain('deleteOrphanPhoto');
+  });
+
+  it('should NOT silently skip unrecoverable orphans', () => {
+    const funcStart = syncContent.indexOf('async function _retryOrphanPhotosImpl');
+    const funcBody = syncContent.slice(funcStart, funcStart + 1500);
+    const maxRetryCheck = funcBody.indexOf('recoveryAttempts >= MAX_ORPHAN_RECOVERY_ATTEMPTS');
+    const afterCheck = funcBody.slice(maxRetryCheck, maxRetryCheck + 600);
+    expect(afterCheck).toContain('appendToFailedSyncQueue');
+  });
+});

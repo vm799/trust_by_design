@@ -421,6 +421,18 @@ export const getSyncQueueStatus = (): { pending: number; failed: number } => {
  * the same items, corrupt the queue, or cause double API calls.
  */
 let _failedRetryInProgress = false;
+let _autoRetryProgress = { total: 0, recovered: 0, isRunning: false };
+
+/**
+ * Get real-time auto-retry progress for UI consumption.
+ *
+ * Allows OfflineIndicator to show "Auto-Syncing 2/5..." instead of
+ * going silent during the recovery loop.
+ */
+export const getAutoRetryProgress = (): { total: number; recovered: number; isRunning: boolean } => ({
+  ..._autoRetryProgress
+});
+
 export const autoRetryFailedQueue = async (): Promise<void> => {
   if (_failedRetryInProgress) return;
   if (!navigator.onLine) return;
@@ -430,6 +442,7 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
   if (failedItems.length === 0) return;
 
   _failedRetryInProgress = true;
+  _autoRetryProgress = { total: failedItems.length, recovered: 0, isRunning: true };
   try {
     let recovered = 0;
 
@@ -445,6 +458,7 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
         const updatedQueue = currentQueue.filter(i => i.id !== item.id);
         localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify(updatedQueue));
         recovered++;
+        _autoRetryProgress = { total: failedItems.length, recovered, isRunning: true };
       }
     }
 
@@ -460,6 +474,7 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
     console.error('Failed to auto-retry failed queue:', error);
   } finally {
     _failedRetryInProgress = false;
+    _autoRetryProgress = { total: 0, recovered: 0, isRunning: false };
   }
 };
 

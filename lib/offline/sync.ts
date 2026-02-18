@@ -836,6 +836,35 @@ async function _retryOrphanPhotosImpl() {
 
     for (const orphan of orphans) {
         if (orphan.recoveryAttempts >= MAX_ORPHAN_RECOVERY_ATTEMPTS) {
+            // ESCALATION FIX: Orphan exceeded max retries — escalate metadata
+            // to failed sync queue so OfflineIndicator makes it visible and
+            // admins know which photos need re-capture. Previously this was
+            // a silent `continue` — metadata stuck in IndexedDB forever with
+            // no cloud backup. If device dies, evidence metadata is lost.
+            appendToFailedSyncQueue({
+                id: orphan.id,
+                type: 'job',
+                actionType: 'ORPHAN_PHOTO',
+                data: {
+                    photoId: orphan.id,
+                    jobId: orphan.jobId,
+                    jobTitle: orphan.jobTitle,
+                    photoType: orphan.type,
+                    timestamp: orphan.timestamp,
+                    lat: orphan.lat,
+                    lng: orphan.lng,
+                    w3w: orphan.w3w,
+                    reason: orphan.reason,
+                    orphanedAt: orphan.orphanedAt,
+                },
+                retryCount: orphan.recoveryAttempts,
+                lastAttempt: Date.now(),
+                failedAt: new Date().toISOString(),
+                reason: `Orphan photo: ${orphan.reason || 'binary lost'} after ${MAX_ORPHAN_RECOVERY_ATTEMPTS} recovery attempts`,
+            });
+            // Remove from orphan table to prevent re-escalation on next cycle
+            await deleteOrphanPhoto(orphan.id);
+            failed++;
             continue;
         }
 
@@ -845,7 +874,9 @@ async function _retryOrphanPhotosImpl() {
             // Check if local media data still exists in IndexedDB
             const dataUrl = await getMediaLocal(orphan.id);
             if (!dataUrl) {
-                // Binary data is gone — cannot recover
+                // Binary data is gone — cannot recover this cycle
+                // Will be escalated once recoveryAttempts reaches max
+                failed++;
                 continue;
             }
 
