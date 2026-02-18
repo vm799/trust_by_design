@@ -34,11 +34,13 @@ const mockRetryFailedSyncItem = vi.fn();
 const mockGetFailedSyncQueue = vi.fn();
 const mockGetSyncQueueStatus = vi.fn();
 const mockIsRetryInProgress = vi.fn();
+const mockGetAutoRetryProgress = vi.fn();
 vi.mock('../../../lib/syncQueue', () => ({
   getFailedSyncQueue: (...args: unknown[]) => mockGetFailedSyncQueue(...args),
   getSyncQueueStatus: (...args: unknown[]) => mockGetSyncQueueStatus(...args),
   retryFailedSyncItem: (...args: unknown[]) => mockRetryFailedSyncItem(...args),
   isRetryInProgress: (...args: unknown[]) => mockIsRetryInProgress(...args),
+  getAutoRetryProgress: (...args: unknown[]) => mockGetAutoRetryProgress(...args),
 }));
 
 import { OfflineIndicator } from '../../../components/OfflineIndicator';
@@ -53,6 +55,7 @@ describe('OfflineIndicator - Sync Recovery', () => {
     mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 0 });
     mockRetryFailedSyncItem.mockResolvedValue(false);
     mockIsRetryInProgress.mockReturnValue(false);
+    mockGetAutoRetryProgress.mockReturnValue({ total: 0, recovered: 0, isRunning: false });
   });
 
   afterEach(() => {
@@ -326,5 +329,51 @@ describe('OfflineIndicator - Sync Recovery', () => {
 
     // Should show the ID as fallback
     expect(screen.getByText(/job-abc-123/)).toBeTruthy();
+  });
+
+  // ============================================================
+  // Auto-retry progress banner
+  // Shows "Auto-Syncing Evidence: Recovering 2/5..." during background auto-retry
+  // ============================================================
+
+  it('shows auto-syncing progress banner when auto-retry is running', () => {
+    mockGetAutoRetryProgress.mockReturnValue({ total: 5, recovered: 2, isRunning: true });
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 3 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.getByText(/Auto-Syncing Evidence/)).toBeTruthy();
+    expect(screen.getByText(/Recovering 2 of 5/)).toBeTruthy();
+  });
+
+  it('hides failed banner when auto-retry is running', () => {
+    mockGetAutoRetryProgress.mockReturnValue({ total: 3, recovered: 1, isRunning: true });
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: {}, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    // Should show auto-syncing, NOT the failed banner
+    expect(screen.getByText(/Auto-Syncing Evidence/)).toBeTruthy();
+    expect(screen.queryByText(/Sync Issues Detected/)).toBeNull();
+  });
+
+  it('shows failed banner again when auto-retry finishes', () => {
+    mockGetAutoRetryProgress.mockReturnValue({ total: 0, recovered: 0, isRunning: false });
+    mockGetSyncQueueStatus.mockReturnValue({ pending: 0, failed: 2 });
+    mockGetFailedSyncQueue.mockReturnValue([
+      { id: 'job-1', type: 'job', data: { title: 'Stuck Job' }, retryCount: 7 },
+      { id: 'job-2', type: 'job', data: { title: 'Another Job' }, retryCount: 7 },
+    ]);
+
+    render(<OfflineIndicator />);
+
+    expect(screen.queryByText(/Auto-Syncing Evidence/)).toBeNull();
+    expect(screen.getByText(/Sync Issues Detected/)).toBeTruthy();
   });
 });

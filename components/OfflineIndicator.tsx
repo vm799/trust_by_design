@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { getFailedSyncQueue, getSyncQueueStatus, retryFailedSyncItem, isRetryInProgress } from '../lib/syncQueue';
+import { getFailedSyncQueue, getSyncQueueStatus, retryFailedSyncItem, isRetryInProgress, getAutoRetryProgress } from '../lib/syncQueue';
 
 interface OfflineIndicatorProps {
   syncStatus?: {
@@ -34,11 +34,13 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryResults, setRetryResults] = useState<{ succeeded: number; failed: number } | null>(null);
   const [liveStatus, setLiveStatus] = useState<{ pending: number; failed: number }>({ pending: 0, failed: 0 });
+  const [autoRetryState, setAutoRetryState] = useState<{ total: number; recovered: number; isRunning: boolean }>({ total: 0, recovered: 0, isRunning: false });
 
-  // Poll sync queue status directly — no parent passes this prop
+  // Poll sync queue status AND auto-retry progress directly
   useEffect(() => {
     const poll = () => {
       setLiveStatus(getSyncQueueStatus());
+      setAutoRetryState(getAutoRetryProgress());
     };
 
     // Initial read
@@ -160,8 +162,25 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = React.memo(({ syncStat
         </div>
       )}
 
+      {/* Auto-Syncing Progress Banner — shown during background auto-retry */}
+      {isOnline && autoRetryState.isRunning && (
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-4">
+          <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined text-primary text-xl animate-spin">sync</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-black uppercase text-primary tracking-tight">
+              Auto-Syncing Evidence
+            </h3>
+            <p className="text-xs text-slate-300 font-medium">
+              Recovering {autoRetryState.recovered} of {autoRetryState.total} failed {autoRetryState.total === 1 ? 'item' : 'items'}...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Sync Failed Banner with Retry (if online and has failures) */}
-      {isOnline && hasFailed && !hasPending && (
+      {isOnline && hasFailed && !hasPending && !autoRetryState.isRunning && (
         <div className="bg-danger/10 border border-danger/20 rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-4">
             <div className="size-10 bg-danger/20 rounded-xl flex items-center justify-center flex-shrink-0">

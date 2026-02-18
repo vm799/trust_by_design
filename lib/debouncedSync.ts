@@ -224,14 +224,22 @@ export async function flushPendingUpdates(): Promise<void> {
  */
 const DEBOUNCED_QUEUE_MAX_RETRIES = 10;
 
+// Concurrency guard: prevents duplicate 'online' events from double-processing
+let _processQueueInProgress = false;
+
 /**
  * Process queued offline updates (call when back online)
  *
  * FAILSAFE FIX: Items now track retryCount. After DEBOUNCED_QUEUE_MAX_RETRIES
  * failures, they are escalated to jobproof_failed_sync_queue where the
  * OfflineIndicator shows a "Retry All" button. Previously they looped forever.
+ *
+ * RACE FIX: Added _processQueueInProgress guard. Without this, two 'online'
+ * events in quick succession (common on flaky connections) could both read
+ * the same localStorage snapshot and double-process every item.
  */
 export async function processOfflineQueue(): Promise<void> {
+  if (_processQueueInProgress) return;
   if (!navigator.onLine || !isSupabaseAvailable()) return;
 
   const queueKey = 'jobproof_debounced_queue';
@@ -242,6 +250,8 @@ export async function processOfflineQueue(): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
 
+  _processQueueInProgress = true;
+  try {
   const failed: typeof queue = [];
 
   for (const item of queue) {
@@ -297,6 +307,10 @@ export async function processOfflineQueue(): Promise<void> {
     localStorage.setItem(queueKey, JSON.stringify(failed));
   } else {
     localStorage.removeItem(queueKey);
+  }
+
+  } finally {
+    _processQueueInProgress = false;
   }
 }
 
