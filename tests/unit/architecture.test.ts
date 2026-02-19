@@ -242,6 +242,28 @@ describe('Architecture Compliance', () => {
       expect(content).toContain('path="/auth/callback"');
       expect(content).toContain('<AuthCallback');
     });
+
+    // CRITICAL REGRESSION TEST: TOKEN_REFRESHED must NOT trigger navigation
+    // in AuthCallback. Supabase fires TOKEN_REFRESHED events rapidly during
+    // initial session establishment. If AuthCallback navigates on TOKEN_REFRESHED,
+    // it creates a cascade: navigate → re-mount → new listener → TOKEN_REFRESHED
+    // fires again → navigate again → 100+ calls in 10 seconds.
+    // AuthContext already handles TOKEN_REFRESHED correctly (ref update, no re-render).
+    it('AuthCallback onAuthStateChange must NOT navigate on TOKEN_REFRESHED', () => {
+      const content = readFile('views/AuthCallback.tsx');
+      // Find the if-condition inside the onAuthStateChange listener
+      // The condition that triggers navigation must NOT include TOKEN_REFRESHED
+      const listenerStart = content.indexOf('supabase.auth.onAuthStateChange');
+      expect(listenerStart).toBeGreaterThan(-1);
+      const listenerBlock = content.slice(listenerStart, listenerStart + 800);
+      // Find the actual if-condition line (starts with "if ((event ===")
+      const ifLines = listenerBlock.split('\n').filter(l => l.trim().startsWith('if ((event ==='));
+      expect(ifLines.length).toBeGreaterThan(0);
+      // The navigation-triggering condition must NOT include TOKEN_REFRESHED
+      for (const line of ifLines) {
+        expect(line).not.toContain('TOKEN_REFRESHED');
+      }
+    });
   });
 
   describe('Security: Redirect Allowlist', () => {

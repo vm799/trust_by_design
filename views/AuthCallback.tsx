@@ -170,7 +170,12 @@ const AuthCallback: React.FC = () => {
       // Prevent double redirect
       if (hasRedirected.current) return;
 
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
+      // CRITICAL FIX: Do NOT navigate on TOKEN_REFRESHED.
+      // Supabase fires TOKEN_REFRESHED rapidly during session establishment.
+      // Navigating on each one creates a cascade: navigate → re-mount → new
+      // listener → TOKEN_REFRESHED fires → navigate → 100+ calls in 10 seconds.
+      // AuthContext handles TOKEN_REFRESHED correctly (ref update, no re-render).
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         // UX Flow Contract: Resume navigation intent if one exists
         const targetPath = resumeIntentAndGetPath();
         hasRedirected.current = true;

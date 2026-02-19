@@ -59,9 +59,18 @@ const OAuthSetup: React.FC = () => {
   const { userId, userEmail, session, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isInstallable, promptInstall } = useInstallPrompt();
 
-  // Extract metadata values to stable primitives
-  const metadataFullName = session?.user?.user_metadata?.full_name || '';
-  const metadataName = session?.user?.user_metadata?.name || '';
+  // CRITICAL FIX: Memoize metadata extraction to prevent effect re-triggers.
+  // session object reference changes on token refresh; extracting inside render
+  // means new string references every time session updates — even when the
+  // actual values haven't changed. useMemo ensures stable references.
+  const metadataFullName = React.useMemo(
+    () => session?.user?.user_metadata?.full_name || '',
+    [session?.user?.id] // Only recompute when user changes, not token refresh
+  );
+  const metadataName = React.useMemo(
+    () => session?.user?.user_metadata?.name || '',
+    [session?.user?.id] // Only recompute when user changes, not token refresh
+  );
 
   // Multi-step state
   const [step, setStep] = useState<Step>('name');
