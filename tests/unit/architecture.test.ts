@@ -244,25 +244,40 @@ describe('Architecture Compliance', () => {
     });
 
     // CRITICAL REGRESSION TEST: TOKEN_REFRESHED must NOT trigger navigation
-    // in AuthCallback. Supabase fires TOKEN_REFRESHED events rapidly during
-    // initial session establishment. If AuthCallback navigates on TOKEN_REFRESHED,
-    // it creates a cascade: navigate → re-mount → new listener → TOKEN_REFRESHED
-    // fires again → navigate again → 100+ calls in 10 seconds.
-    // AuthContext already handles TOKEN_REFRESHED correctly (ref update, no re-render).
     it('AuthCallback onAuthStateChange must NOT navigate on TOKEN_REFRESHED', () => {
       const content = readFile('views/AuthCallback.tsx');
-      // Find the if-condition inside the onAuthStateChange listener
-      // The condition that triggers navigation must NOT include TOKEN_REFRESHED
       const listenerStart = content.indexOf('supabase.auth.onAuthStateChange');
       expect(listenerStart).toBeGreaterThan(-1);
       const listenerBlock = content.slice(listenerStart, listenerStart + 800);
-      // Find the actual if-condition line (starts with "if ((event ===")
       const ifLines = listenerBlock.split('\n').filter(l => l.trim().startsWith('if ((event ==='));
       expect(ifLines.length).toBeGreaterThan(0);
-      // The navigation-triggering condition must NOT include TOKEN_REFRESHED
       for (const line of ifLines) {
         expect(line).not.toContain('TOKEN_REFRESHED');
       }
+    });
+
+    // P0: Token extraction path must check hasRedirected before navigating.
+    // setSession() fires onAuthStateChange synchronously — the listener may
+    // have already navigated. Without this guard, BOTH paths call navigate().
+    it('AuthCallback token extraction must check hasRedirected before navigate', () => {
+      const content = readFile('views/AuthCallback.tsx');
+      // Find the "else if (data.session)" block
+      const sessionCheckStart = content.indexOf('else if (data.session)');
+      expect(sessionCheckStart).toBeGreaterThan(-1);
+      const blockAfter = content.slice(sessionCheckStart, sessionCheckStart + 700);
+      // Must check hasRedirected.current BEFORE calling navigate
+      expect(blockAfter).toContain('if (hasRedirected.current) return');
+    });
+
+    // P1: OAuthSetup must set hasCheckedRef synchronously before async work
+    it('OAuthSetup sets hasCheckedRef before async checkUser', () => {
+      const content = readFile('views/OAuthSetup.tsx');
+      // hasCheckedRef.current = true should appear BEFORE "const checkUser = async"
+      const guardIndex = content.indexOf('hasCheckedRef.current = true');
+      const asyncIndex = content.indexOf('const checkUser = async');
+      expect(guardIndex).toBeGreaterThan(-1);
+      expect(asyncIndex).toBeGreaterThan(-1);
+      expect(guardIndex).toBeLessThan(asyncIndex);
     });
   });
 

@@ -138,6 +138,13 @@ const AuthCallback: React.FC = () => {
             // for a more personal experience where they can enter their name
             // and company name. App.tsx routing will redirect new users to /auth/setup.
 
+            // CRITICAL: Check hasRedirected BEFORE navigating.
+            // setSession() above fires onAuthStateChange synchronously, which may
+            // have already navigated via the listener (line 178). Without this check,
+            // BOTH the listener AND this code path call navigate() — double navigation
+            // causing a brief re-mount and wasted render.
+            if (hasRedirected.current) return;
+
             hasRedirected.current = true;
             setProcessing(false);
 
@@ -214,10 +221,13 @@ const AuthCallback: React.FC = () => {
     };
   }, [navigate, searchParams]);
 
-  // Fallback: Once authenticated via AuthContext, redirect
+  // Fallback: Once authenticated via AuthContext, redirect.
+  // This catches cases where the primary paths (token extraction or
+  // onAuthStateChange listener) didn't fire — e.g., user navigated to
+  // /auth/callback while already logged in, or non-standard auth flows.
   useEffect(() => {
     if (!isLoading && isAuthenticated && !hasRedirected.current) {
-      // UX Flow Contract: Resume navigation intent if one exists
+      // Only consume intent if nobody else has navigated yet
       const targetPath = resumeIntentAndGetPath();
       hasRedirected.current = true;
       setProcessing(false);

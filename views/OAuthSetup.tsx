@@ -87,6 +87,12 @@ const OAuthSetup: React.FC = () => {
     if (authLoading) return;
     if (hasCheckedRef.current) return;
 
+    // RACE FIX: Set guard SYNCHRONOUSLY before any async work.
+    // Without this, if the effect fires twice in rapid succession
+    // (e.g., authLoading + metadataFullName change in the same batch),
+    // two concurrent checkUser() calls could race to Supabase.
+    hasCheckedRef.current = true;
+
     const checkUser = async () => {
       // CRITICAL FIX: Don't redirect to /auth if user has already started setup
       // This prevents race condition where auth state changes mid-flow
@@ -95,7 +101,6 @@ const OAuthSetup: React.FC = () => {
       }
 
       if (!isAuthenticated || !userId) {
-        hasCheckedRef.current = true;
         navigate('/auth');
         return;
       }
@@ -103,7 +108,6 @@ const OAuthSetup: React.FC = () => {
       // CRITICAL FIX: Mark setup as started immediately once authenticated
       // This prevents any subsequent auth state changes from causing redirects
       setupStartedRef.current = true;
-      hasCheckedRef.current = true;
 
       const supabase = getSupabase();
       if (!supabase) return;
