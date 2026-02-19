@@ -59,9 +59,18 @@ const OAuthSetup: React.FC = () => {
   const { userId, userEmail, session, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isInstallable, promptInstall } = useInstallPrompt();
 
-  // Extract metadata values to stable primitives
-  const metadataFullName = session?.user?.user_metadata?.full_name || '';
-  const metadataName = session?.user?.user_metadata?.name || '';
+  // CRITICAL FIX: Memoize metadata extraction to prevent effect re-triggers.
+  // session object reference changes on token refresh; extracting inside render
+  // means new string references every time session updates — even when the
+  // actual values haven't changed. useMemo ensures stable references.
+  const metadataFullName = React.useMemo(
+    () => session?.user?.user_metadata?.full_name || '',
+    [session?.user?.id] // Only recompute when user changes, not token refresh
+  );
+  const metadataName = React.useMemo(
+    () => session?.user?.user_metadata?.name || '',
+    [session?.user?.id] // Only recompute when user changes, not token refresh
+  );
 
   // Multi-step state
   const [step, setStep] = useState<Step>('name');
@@ -78,6 +87,12 @@ const OAuthSetup: React.FC = () => {
     if (authLoading) return;
     if (hasCheckedRef.current) return;
 
+    // RACE FIX: Set guard SYNCHRONOUSLY before any async work.
+    // Without this, if the effect fires twice in rapid succession
+    // (e.g., authLoading + metadataFullName change in the same batch),
+    // two concurrent checkUser() calls could race to Supabase.
+    hasCheckedRef.current = true;
+
     const checkUser = async () => {
       // CRITICAL FIX: Don't redirect to /auth if user has already started setup
       // This prevents race condition where auth state changes mid-flow
@@ -86,7 +101,6 @@ const OAuthSetup: React.FC = () => {
       }
 
       if (!isAuthenticated || !userId) {
-        hasCheckedRef.current = true;
         navigate('/auth');
         return;
       }
@@ -94,7 +108,6 @@ const OAuthSetup: React.FC = () => {
       // CRITICAL FIX: Mark setup as started immediately once authenticated
       // This prevents any subsequent auth state changes from causing redirects
       setupStartedRef.current = true;
-      hasCheckedRef.current = true;
 
       const supabase = getSupabase();
       if (!supabase) return;
