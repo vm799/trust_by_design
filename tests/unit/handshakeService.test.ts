@@ -696,5 +696,76 @@ describe('lib/handshakeService - HandshakeService', () => {
       expect(secondValidation.context?.jobId).toBe(jobId);
       expect(secondValidation.context?.isLocked).toBe(true);
     });
+
+    it('should auto-clear stale locks older than 7 days when accessing different job', () => {
+      // Commit a handshake for first job
+      const firstJobId = 'JOB-STALE001';
+      const firstAccessCode = HandshakeService.generateAccessCode(firstJobId, 'manager@test.com');
+      const firstValidation = HandshakeService.validate(firstAccessCode);
+      expect(firstValidation.success).toBe(true);
+      HandshakeService.commit(firstValidation.context!);
+
+      // Manually age the lock beyond 7 days by modifying storage
+      const staleContext = JSON.parse(mockStorage['handshake_context']);
+      staleContext.createdAt = Date.now() - (8 * 24 * 60 * 60 * 1000); // 8 days ago
+      mockStorage['handshake_context'] = JSON.stringify(staleContext);
+
+      // Now try to access a different job - should succeed because lock is stale
+      const secondJobId = 'JOB-NEW002';
+      const secondAccessCode = HandshakeService.generateAccessCode(secondJobId, 'other@test.com');
+      const result = HandshakeService.validate(secondAccessCode);
+
+      expect(result.success).toBe(true);
+      expect(result.context?.jobId).toBe(secondJobId);
+    });
+
+    it('should NOT auto-clear recent locks when accessing different job', () => {
+      // Commit a handshake for first job (recent - within 7 days)
+      const firstJobId = 'JOB-RECENT001';
+      const firstAccessCode = HandshakeService.generateAccessCode(firstJobId, 'manager@test.com');
+      const firstValidation = HandshakeService.validate(firstAccessCode);
+      expect(firstValidation.success).toBe(true);
+      HandshakeService.commit(firstValidation.context!);
+
+      // Try to access a different job - should be blocked (lock is recent)
+      const secondJobId = 'JOB-BLOCKED002';
+      const secondAccessCode = HandshakeService.generateAccessCode(secondJobId, 'other@test.com');
+      const result = HandshakeService.validate(secondAccessCode);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('LOCKED');
+    });
+
+    it('should use 7-day link expiry matching the invite table', () => {
+      // Create an access code with a createdAt timestamp 6 days ago
+      const jobId = 'JOB-EXPIRY6D';
+      const payload = {
+        jobId,
+        checksum: `chk_PIRY6D`, // matches mock: chk_ + last 6 chars
+        deliveryEmail: 'manager@test.com',
+        createdAt: Date.now() - (6 * 24 * 60 * 60 * 1000), // 6 days ago
+      };
+      const accessCode = btoa(JSON.stringify(payload));
+
+      // Should still be valid (within 7 days)
+      const result = HandshakeService.validate(accessCode);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject links older than 7 days', () => {
+      // Create an access code with a createdAt timestamp 8 days ago
+      const jobId = 'JOB-EXPIRY8D';
+      const payload = {
+        jobId,
+        checksum: `chk_PIRY8D`, // matches mock: chk_ + last 6 chars
+        deliveryEmail: 'manager@test.com',
+        createdAt: Date.now() - (8 * 24 * 60 * 60 * 1000), // 8 days ago
+      };
+      const accessCode = btoa(JSON.stringify(payload));
+
+      const result = HandshakeService.validate(accessCode);
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('EXPIRED_LINK');
+    });
   });
 });

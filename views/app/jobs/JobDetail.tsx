@@ -14,6 +14,7 @@ import { PageHeader, PageContent } from '../../../components/layout';
 import { Card, StatusBadge, ActionButton, EmptyState, LoadingSkeleton, ConfirmDialog, Modal } from '../../../components/ui';
 import { useData } from '../../../lib/DataContext';
 import { generateMagicLink, getMagicLinksForJob } from '../../../lib/db';
+import { getValidatedHandshakeUrl } from '../../../lib/redirects';
 import { useAuth } from '../../../lib/AuthContext';
 import { Job } from '../../../types';
 import { route, ROUTES } from '../../../lib/routes';
@@ -85,6 +86,16 @@ const JobDetail: React.FC = () => {
       setMagicLink(job.magicLinkUrl);
     }
   }, [job, magicLink]);
+
+  // FIX: Generate fresh URL for sharing/QR display (avoids stale createdAt timestamps)
+  const freshMagicLink = useMemo(() => {
+    if (!magicLink || !job?.id || !userEmail) return magicLink;
+    try {
+      return getValidatedHandshakeUrl(job.id, userEmail);
+    } catch {
+      return magicLink;
+    }
+  }, [magicLink, job?.id, userEmail]);
 
   // Load link tracking info from localStorage for real-time status
   const linkTrackingInfo = useMemo(() => {
@@ -277,14 +288,19 @@ const JobDetail: React.FC = () => {
   };
 
   // Copy magic link to clipboard (with seal-on-dispatch)
+  // FIX: Always generate a fresh URL to avoid stale createdAt timestamps
   const handleCopyLink = async () => {
-    if (!magicLink) return;
+    if (!magicLink || !job) return;
 
     const sealed = await performSealOnDispatch();
     if (!sealed) return;
 
     try {
-      await navigator.clipboard.writeText(magicLink);
+      // Generate fresh URL with current timestamp instead of using stale stored URL
+      const freshUrl = userEmail
+        ? getValidatedHandshakeUrl(job.id, userEmail)
+        : magicLink;
+      await navigator.clipboard.writeText(freshUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (error) {
@@ -293,12 +309,18 @@ const JobDetail: React.FC = () => {
   };
 
   // Send email to technician (with seal-on-dispatch)
+  // FIX: Always generate a fresh URL to avoid stale createdAt timestamps
   const handleSendEmail = async () => {
     if (!magicLink || !technician || !job) return;
 
     setSealError(null);
     const sealed = await performSealOnDispatch();
     if (!sealed) return;
+
+    // Generate fresh URL with current timestamp
+    const freshUrl = userEmail
+      ? getValidatedHandshakeUrl(job.id, userEmail)
+      : magicLink;
 
     const subject = encodeURIComponent(`Job Assignment: ${job?.title || 'New Job'}`);
     const body = encodeURIComponent(
@@ -309,7 +331,7 @@ const JobDetail: React.FC = () => {
       `Address: ${job?.address || 'N/A'}\n` +
       `Date: ${job?.date ? new Date(job.date).toLocaleDateString('en-GB') : 'N/A'}\n\n` +
       `Click the link below to access the job and start capturing evidence:\n\n` +
-      `${magicLink}\n\n` +
+      `${freshUrl}\n\n` +
       `This link expires in 7 days.\n\n` +
       `Thanks,\n` +
       `JobProof`
@@ -317,23 +339,28 @@ const JobDetail: React.FC = () => {
 
     const email = technician.email || '';
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
-    // Note: This only opens the mail client - we cannot confirm if user actually sends
     setMailClientOpened(true);
     setTimeout(() => setMailClientOpened(false), 3000);
   };
 
   // Share via Web Share API (with seal-on-dispatch)
+  // FIX: Always generate a fresh URL to avoid stale createdAt timestamps
   const handleShare = async () => {
-    if (!magicLink || !navigator.share) return;
+    if (!magicLink || !navigator.share || !job) return;
 
     const sealed = await performSealOnDispatch();
     if (!sealed) return;
+
+    // Generate fresh URL with current timestamp
+    const freshUrl = userEmail
+      ? getValidatedHandshakeUrl(job.id, userEmail)
+      : magicLink;
 
     try {
       await navigator.share({
         title: `Job: ${job?.title || 'New Job'}`,
         text: `Access your assigned job: ${job?.title}`,
-        url: magicLink,
+        url: freshUrl,
       });
     } catch (error) {
       // User cancelled or share failed
@@ -846,7 +873,7 @@ const JobDetail: React.FC = () => {
               {/* Magic Link Display with Dynamic Expiry */}
               <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-xl">
                 <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-2">Job Access Link</p>
-                <p className="text-sm text-slate-900 dark:text-white font-mono break-all">{magicLink}</p>
+                <p className="text-sm text-slate-900 dark:text-white font-mono break-all">{freshMagicLink || magicLink}</p>
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   expiryInfo.isExpired ? 'text-red-400' :
                   expiryInfo.isUrgent ? 'text-amber-400' :
@@ -882,10 +909,10 @@ const JobDetail: React.FC = () => {
                 )}
               </button>
 
-              {/* QR Code */}
+              {/* QR Code - uses fresh URL to avoid stale timestamps */}
               <div className="flex justify-center">
                 <div className="rounded-xl bg-white p-2">
-                  <QRCodeSVG value={magicLink} size={150} level="M" />
+                  <QRCodeSVG value={freshMagicLink || magicLink} size={150} level="M" />
                 </div>
               </div>
 
