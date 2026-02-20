@@ -282,8 +282,7 @@ const JobDetail: React.FC = () => {
   const handleCopyLink = async () => {
     if (!magicLink || !job) return;
 
-    const sealed = await performSealOnDispatch();
-    if (!sealed) return;
+    await performSealOnDispatch();
 
     try {
       // Generate fresh URL with current timestamp instead of using stale stored URL
@@ -303,8 +302,7 @@ const JobDetail: React.FC = () => {
   const handleSendEmail = async () => {
     if (!magicLink || !technician || !job) return;
 
-    const sealed = await performSealOnDispatch();
-    if (!sealed) return;
+    await performSealOnDispatch();
 
     // Generate fresh URL with current timestamp
     const freshUrl = userEmail
@@ -337,8 +335,7 @@ const JobDetail: React.FC = () => {
   const handleShare = async () => {
     if (!magicLink || !navigator.share || !job) return;
 
-    const sealed = await performSealOnDispatch();
-    if (!sealed) return;
+    await performSealOnDispatch();
 
     // Generate fresh URL with current timestamp
     const freshUrl = userEmail
