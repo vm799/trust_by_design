@@ -510,6 +510,10 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
 
   const debouncedSave = useRef(debounce(saveToLocalStorage, 1000));
 
+  useEffect(() => {
+    debouncedSave.current = debounce(saveToLocalStorage, 1000);
+  }, [saveToLocalStorage]);
+
   // Save on data changes
   useEffect(() => {
     if (isInitialized) {

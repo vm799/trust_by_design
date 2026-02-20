@@ -53,10 +53,6 @@ const JobDetail: React.FC = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [mailClientOpened, setMailClientOpened] = useState(false);
 
-  // Seal-on-dispatch state (Phase C.3)
-  const [, setSealingOnDispatch] = useState(false);
-  const [, setSealError] = useState<string | null>(null);
-
   // Report generation state
   const [generatingReport, setGeneratingReport] = useState(false);
   const [reportSent, setReportSent] = useState(false);
@@ -196,6 +192,7 @@ const JobDetail: React.FC = () => {
           ...job,
           magicLinkToken: result.data.token,
           magicLinkUrl: result.data.url,
+          magicLinkCreatedAt: new Date().toISOString(),
         };
         contextUpdateJob(updatedJob);
       } else {
@@ -209,31 +206,24 @@ const JobDetail: React.FC = () => {
     }
   };
 
-  // Seal-on-dispatch helper - seals evidence before any dispatch action
+  // Seal-on-dispatch helper - best-effort sealing before dispatch, never blocks sharing
   const performSealOnDispatch = async (): Promise<boolean> => {
     if (!job || !isFeatureEnabled('SEAL_ON_DISPATCH') || job.sealedAt) return true;
 
-    setSealingOnDispatch(true);
-    setSealError(null);
     try {
       const sealResult = await sealEvidence(job.id);
-      if (!sealResult.success) {
-        setSealError(sealResult.error || 'Failed to seal evidence before dispatch');
-        return false;
+      if (sealResult.success) {
+        const updatedJob: Job = {
+          ...job,
+          sealedAt: sealResult.sealedAt,
+          evidenceHash: sealResult.evidenceHash,
+        };
+        contextUpdateJob(updatedJob);
       }
-      const updatedJob: Job = {
-        ...job,
-        sealedAt: sealResult.sealedAt,
-        evidenceHash: sealResult.evidenceHash,
-      };
-      contextUpdateJob(updatedJob);
       return true;
     } catch (error) {
       console.error('[JobDetail] Seal-on-dispatch error:', error);
-      setSealError(error instanceof Error ? error.message : 'Sealing failed');
-      return false;
-    } finally {
-      setSealingOnDispatch(false);
+      return true;
     }
   };
 
@@ -313,7 +303,6 @@ const JobDetail: React.FC = () => {
   const handleSendEmail = async () => {
     if (!magicLink || !technician || !job) return;
 
-    setSealError(null);
     const sealed = await performSealOnDispatch();
     if (!sealed) return;
 
