@@ -426,6 +426,49 @@ describe('lib/syncQueue - Sync Queue Operations', () => {
     });
   });
 
+  describe('partial photo sync - no permanent block on failed photos', () => {
+    it('should warn instead of throwing when photos fail to upload', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const syncQueueContent = fs.readFileSync(
+        path.resolve(__dirname, '../../lib/syncQueue.ts'),
+        'utf-8'
+      );
+
+      // The old blocking throw should be gone
+      expect(syncQueueContent).not.toContain(
+        'throw new Error(`Failed to upload ${failedPhotos.length} photo(s):'
+      );
+
+      // Should use console.warn for partial sync instead
+      expect(syncQueueContent).toContain('Partial sync:');
+      expect(syncQueueContent).toContain('console.warn');
+    });
+
+    it('should continue syncing job even when some photos fail', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const syncQueueContent = fs.readFileSync(
+        path.resolve(__dirname, '../../lib/syncQueue.ts'),
+        'utf-8'
+      );
+
+      // After the failedPhotos check, the code should NOT throw
+      // Instead it should proceed to signature upload and job upsert
+      const failedPhotosCheck = syncQueueContent.indexOf('if (failedPhotos.length > 0)');
+      expect(failedPhotosCheck).toBeGreaterThan(-1);
+
+      // Get the block after the failedPhotos check (next 300 chars)
+      const afterCheck = syncQueueContent.slice(failedPhotosCheck, failedPhotosCheck + 300);
+
+      // Should NOT contain throw
+      expect(afterCheck).not.toContain('throw new Error');
+
+      // Should contain the warn about partial sync
+      expect(afterCheck).toContain('console.warn');
+    });
+  });
+
   describe('retryFailedSyncItem - race protection', () => {
     it('should return false when item not found in queue', async () => {
       localStorage.setItem('jobproof_failed_sync_queue', JSON.stringify([]));

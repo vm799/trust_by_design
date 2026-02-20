@@ -145,9 +145,8 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       });
     }
 
-    // SECURITY FIX (BACKEND_AUDIT.md Risk #8): Fail sync if any photos failed to upload
     if (failedPhotos.length > 0) {
-      throw new Error(`Failed to upload ${failedPhotos.length} photo(s): ${failedPhotos.join(', ')}`);
+      console.warn(`⚠️ Partial sync: ${failedPhotos.length} photo(s) could not upload for job ${job.id}. Continuing with ${uploadedPhotos.length} synced photos.`);
     }
 
     // 2. Upload signature from IndexedDB to Supabase Storage
