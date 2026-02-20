@@ -1,6 +1,6 @@
 /**
  * Link Expiry Validation Tests
- * Tests that technician links expire after 24 hours
+ * Tests that technician links expire after 7 days (matching invite table + UI display)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -8,7 +8,7 @@ import { HandshakeService } from '../../lib/handshakeService';
 import { getValidatedHandshakeUrl } from '../../lib/redirects';
 
 describe('Link Expiry Validation', () => {
-  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -80,7 +80,7 @@ describe('Link Expiry Validation', () => {
   });
 
   describe('HandshakeService.validate', () => {
-    it('should accept fresh links (within 24 hours)', () => {
+    it('should accept fresh links (within 7 days)', () => {
       const now = Date.now();
       vi.setSystemTime(now);
 
@@ -99,7 +99,7 @@ describe('Link Expiry Validation', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('should reject expired links (older than 24 hours)', () => {
+    it('should reject expired links (older than 7 days)', () => {
       const linkCreatedAt = Date.now();
       vi.setSystemTime(linkCreatedAt);
 
@@ -111,8 +111,8 @@ describe('Link Expiry Validation', () => {
       const accessCodeMatch = url.match(/\/#\/go\/(.+)$/);
       const accessCode = decodeURIComponent(accessCodeMatch![1]);
 
-      // Fast-forward time by 25 hours
-      vi.setSystemTime(linkCreatedAt + TWENTY_FOUR_HOURS_MS + (60 * 60 * 1000));
+      // Fast-forward time by 7 days + 1 hour
+      vi.setSystemTime(linkCreatedAt + SEVEN_DAYS_MS + (60 * 60 * 1000));
 
       const result = HandshakeService.validate(accessCode);
 
@@ -122,7 +122,27 @@ describe('Link Expiry Validation', () => {
       expect(result.error?.message).toContain('request a new link');
     });
 
-    it('should accept links at exactly 24 hours (boundary case)', () => {
+    it('should accept links within 7 days (25 hours old is still valid)', () => {
+      const linkCreatedAt = Date.now();
+      vi.setSystemTime(linkCreatedAt);
+
+      const url = getValidatedHandshakeUrl(
+        'JP-25h-123',
+        'manager@example.com'
+      );
+
+      const accessCodeMatch = url.match(/\/#\/go\/(.+)$/);
+      const accessCode = decodeURIComponent(accessCodeMatch![1]);
+
+      // Fast-forward time by 25 hours (still within 7 days)
+      vi.setSystemTime(linkCreatedAt + (25 * 60 * 60 * 1000));
+
+      const result = HandshakeService.validate(accessCode);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept links at exactly 7 days (boundary case)', () => {
       const linkCreatedAt = Date.now();
       vi.setSystemTime(linkCreatedAt);
 
@@ -134,12 +154,12 @@ describe('Link Expiry Validation', () => {
       const accessCodeMatch = url.match(/\/#\/go\/(.+)$/);
       const accessCode = decodeURIComponent(accessCodeMatch![1]);
 
-      // Fast-forward time to exactly 24 hours (should still be valid)
-      vi.setSystemTime(linkCreatedAt + TWENTY_FOUR_HOURS_MS);
+      // Fast-forward time to exactly 7 days (should still be valid)
+      vi.setSystemTime(linkCreatedAt + SEVEN_DAYS_MS);
 
       const result = HandshakeService.validate(accessCode);
 
-      // At exactly 24 hours, should still be valid
+      // At exactly 7 days, should still be valid
       expect(result.success).toBe(true);
     });
 
@@ -176,8 +196,8 @@ describe('Link Expiry Validation', () => {
       const accessCodeMatch = url.match(/\/#\/go\/(.+)$/);
       const accessCode = decodeURIComponent(accessCodeMatch![1]);
 
-      // Fast-forward time by 48 hours
-      vi.setSystemTime(linkCreatedAt + (48 * 60 * 60 * 1000));
+      // Fast-forward time by 8 days (past 7-day expiry)
+      vi.setSystemTime(linkCreatedAt + (8 * 24 * 60 * 60 * 1000));
 
       const result = HandshakeService.validate(accessCode);
 

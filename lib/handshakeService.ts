@@ -93,8 +93,11 @@ import { generateChecksum, validateChecksum as validateChecksumFn } from './redi
 // LINK EXPIRY CONFIGURATION
 // ============================================================================
 
-/** Link expiry window: 24 hours in milliseconds */
-const LINK_EXPIRY_MS = 24 * 60 * 60 * 1000;
+/** Link expiry window: 7 days in milliseconds (matches invite table + UI display) */
+const LINK_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Lock expiry window: 7 days - auto-clear stale locks that block new job access */
+const LOCK_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ============================================================================
 // HANDSHAKE SERVICE CLASS
@@ -162,18 +165,26 @@ class HandshakeServiceClass {
     // Check if already locked with different job
     const existingContext = this.get();
     if (existingContext?.isLocked) {
-      const parsed = this.parseAccessCode(accessCode);
-      if (parsed && parsed.jobId !== existingContext.jobId) {
-        return {
-          success: false,
-          error: {
-            type: 'LOCKED',
-            message: `Cannot access new job while current job (${existingContext.jobId}) is in progress. Complete or cancel current job first.`,
-          },
-        };
+      // Auto-clear stale locks older than LOCK_EXPIRY_MS
+      // This prevents users from being permanently blocked by abandoned jobs
+      const lockAge = Date.now() - existingContext.createdAt;
+      if (lockAge > LOCK_EXPIRY_MS) {
+        this.clear();
+        // Fall through to normal validation below
+      } else {
+        const parsed = this.parseAccessCode(accessCode);
+        if (parsed && parsed.jobId !== existingContext.jobId) {
+          return {
+            success: false,
+            error: {
+              type: 'LOCKED',
+              message: `Cannot access new job while current job (${existingContext.jobId}) is in progress. Complete or cancel current job first.`,
+            },
+          };
+        }
+        // Same job, return existing context
+        return { success: true, context: existingContext };
       }
-      // Same job, return existing context
-      return { success: true, context: existingContext };
     }
 
     // Parse the access code
