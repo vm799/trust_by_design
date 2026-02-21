@@ -14,6 +14,44 @@ import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/
 import { prepareJobForSync } from './utils/technicianIdNormalization';
 import { logConflict, isConflictError, getConflictTypeFromError } from './conflictTelemetry';
 
+// ============================================================================
+// CROSS-TAB SYNC COORDINATION
+// Uses BroadcastChannel to prevent multiple tabs from double-processing
+// the same queue items. Without this, each tab runs its own sync loop,
+// causing duplicate API calls and race conditions on the queue.
+// ============================================================================
+
+let _crossTabSyncActive = false;
+let _syncChannel: BroadcastChannel | null = null;
+
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    _syncChannel = new BroadcastChannel('jobproof-sync-coordination');
+    _syncChannel.onmessage = (event) => {
+      if (event.data === 'sync-started') {
+        _crossTabSyncActive = true;
+      } else if (event.data === 'sync-finished') {
+        _crossTabSyncActive = false;
+      }
+    };
+  }
+} catch {
+  // BroadcastChannel not available (e.g., older browsers, SSR)
+  // Falls back to single-tab coordination only
+}
+
+/**
+ * Broadcast sync state to other tabs.
+ * No-op if BroadcastChannel is unavailable.
+ */
+function broadcastSyncState(state: 'sync-started' | 'sync-finished'): void {
+  try {
+    _syncChannel?.postMessage(state);
+  } catch {
+    // Channel may be closed or unavailable
+  }
+}
+
 interface SyncQueueItem {
   id: string;
   type: 'job' | 'photo' | 'signature';
@@ -289,7 +327,8 @@ let _retryInProgress = false;
  * and race on the final write — causing double API calls and lost updates.
  */
 export const retryFailedSyncs = async (): Promise<void> => {
-  if (_retryInProgress) return; // Another call is already processing
+  if (_retryInProgress) return; // Another call in this tab is already processing
+  if (_crossTabSyncActive) return; // Another tab is already processing
   if (!isSupabaseAvailable()) return;
   if (!navigator.onLine) return; // Skip retries when offline
 
@@ -297,6 +336,7 @@ export const retryFailedSyncs = async (): Promise<void> => {
   if (!queueJson) return;
 
   _retryInProgress = true;
+  broadcastSyncState('sync-started');
   try {
     const queue: SyncQueueItem[] = JSON.parse(queueJson);
     const now = Date.now();
@@ -362,6 +402,7 @@ export const retryFailedSyncs = async (): Promise<void> => {
     console.error('Failed to process sync queue:', error);
   } finally {
     _retryInProgress = false;
+    broadcastSyncState('sync-finished');
   }
 };
 
