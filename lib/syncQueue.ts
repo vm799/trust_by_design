@@ -7,7 +7,7 @@
 
 import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
-import { getMediaLocal as getMedia } from './offline/db';
+import { getMediaLocal as getMedia, getDatabase } from './offline/db';
 import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
 import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
@@ -83,6 +83,36 @@ export const isPermanentError = (error: unknown): boolean => {
 
   return false;
 };
+
+// ============================================================================
+// DEXIE QUEUE VISIBILITY
+// Cached count of pending items in the Dexie queue (database.queue table).
+// getSyncQueueStatus() includes this in its pending total so the UI shows
+// ALL pending items — not just the localStorage retry queue.
+// ============================================================================
+
+let _dexiePendingCount = 0;
+
+/**
+ * Refresh the cached Dexie pending count from IndexedDB.
+ * Called periodically by startSyncWorker() and after queue operations.
+ */
+export async function updateDexiePendingCount(): Promise<void> {
+  try {
+    const database = await getDatabase();
+    _dexiePendingCount = await database.queue.where('synced').equals(0).count();
+  } catch {
+    // Non-critical — IndexedDB may not be available (SSR, test env)
+  }
+}
+
+/**
+ * Set Dexie pending count directly (for testing only).
+ * @internal
+ */
+export function _setDexiePendingCountForTest(count: number): void {
+  _dexiePendingCount = count;
+}
 
 interface SyncQueueItem {
   id: string;
@@ -523,6 +553,9 @@ export const getSyncQueueStatus = (): { pending: number; failed: number } => {
     // Graceful fallback on corrupted localStorage
   }
 
+  // Include cached Dexie queue pending items
+  pending += _dexiePendingCount;
+
   return { pending, failed };
 };
 
@@ -615,6 +648,11 @@ export const startSyncWorker = (): void => {
     // Delay failed queue retry by 2s to let active queue process first
     setTimeout(() => autoRetryFailedQueue(), 2000);
   }
+
+  // DEXIE VISIBILITY: Update Dexie pending count on startup and every 10s.
+  // getSyncQueueStatus() includes this count so the UI shows ALL pending items.
+  updateDexiePendingCount();
+  setInterval(updateDexiePendingCount, 10000);
 
   // Retry active queue every 5 minutes
   setInterval(() => {
