@@ -52,6 +52,38 @@ function broadcastSyncState(state: 'sync-started' | 'sync-finished'): void {
   }
 }
 
+/**
+ * Categorize errors as permanent (no point retrying) vs transient (retry).
+ *
+ * Permanent errors (escalate immediately):
+ * - 400 Bad Request: validation error, won't fix itself
+ * - 401 Unauthorized: auth expired, needs re-login
+ * - 403 Forbidden: RLS policy, no permission
+ * - 404 Not Found: resource deleted on server
+ * - 409 Conflict: version mismatch (needs manual resolution)
+ * - 422 Unprocessable: semantic error in payload
+ *
+ * Transient errors (worth retrying):
+ * - 408 Request Timeout
+ * - 429 Too Many Requests
+ * - 500/502/503/504 Server errors
+ * - Network errors (no status code)
+ */
+export const isPermanentError = (error: unknown): boolean => {
+  if (!error) return false;
+
+  const message = error instanceof Error ? error.message : String(error);
+  const statusMatch = message.match(/\b(400|401|403|404|409|422)\b/);
+  if (statusMatch) return true;
+
+  // Supabase PostgREST error patterns
+  if (message.includes('row-level security')) return true;
+  if (message.includes('JWT expired')) return true;
+  if (message.includes('invalid input syntax')) return true;
+
+  return false;
+};
+
 interface SyncQueueItem {
   id: string;
   type: 'job' | 'photo' | 'signature';
