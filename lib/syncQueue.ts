@@ -29,6 +29,20 @@ export const RETRY_DELAYS = [2000, 4000, 8000, 15000, 30000, 60000, 60000];
 const MAX_RETRIES = 7;
 
 /**
+ * Get retry delay with jitter to prevent thundering herd.
+ *
+ * When multiple devices regain connectivity simultaneously (e.g., regional
+ * outage recovery), identical fixed backoff schedules cause all devices to
+ * hit the server at the same instant. Adding ±25% random jitter spreads
+ * the load and prevents server overload.
+ */
+export const getRetryDelay = (attempt: number): number => {
+  const baseDelay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
+  const jitter = baseDelay * 0.25 * (Math.random() * 2 - 1);
+  return Math.max(0, baseDelay + jitter);
+};
+
+/**
  * Sync a complete job to Supabase
  * Uploads photos, signature, and job metadata
  */
@@ -289,8 +303,8 @@ export const retryFailedSyncs = async (): Promise<void> => {
     const updatedQueue: SyncQueueItem[] = [];
 
     for (const item of queue) {
-      // Check if enough time has passed since last attempt
-      const delay = RETRY_DELAYS[Math.min(item.retryCount, RETRY_DELAYS.length - 1)];
+      // Check if enough time has passed since last attempt (jitter applied)
+      const delay = getRetryDelay(item.retryCount);
       if (now - item.lastAttempt < delay) {
         updatedQueue.push(item);
         continue;
@@ -487,6 +501,15 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
  */
 export const startSyncWorker = (): void => {
   if (!isSupabaseAvailable()) return;
+
+  // IMMEDIATE SYNC: Process queued items right away on startup.
+  // Previously only ran on a 5-minute timer, so field workers restarting
+  // the app waited up to 5 minutes for pending items to sync.
+  if (navigator.onLine) {
+    retryFailedSyncs();
+    // Delay failed queue retry by 2s to let active queue process first
+    setTimeout(() => autoRetryFailedQueue(), 2000);
+  }
 
   // Retry active queue every 5 minutes
   setInterval(() => {
