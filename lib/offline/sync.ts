@@ -1,6 +1,6 @@
 import { getDatabase, queueAction, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
-import { appendToFailedSyncQueue } from '../syncQueue';
+import { appendToFailedSyncQueue, isPermanentError } from '../syncQueue';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
@@ -495,6 +495,33 @@ async function _pushQueueImpl() {
             }
         } catch (error) {
             console.error(`[Sync] Action ${action.id} failed:`, error);
+
+            // PERMANENT ERROR CHECK: Classify caught exceptions same as
+            // retryFailedSyncs does for the localStorage queue. Without this,
+            // permanent errors (401/403/RLS) waste all 10 retries.
+            if (isPermanentError(error)) {
+                const itemType = action.type.includes('JOB') || action.type === 'SEAL_JOB' || action.type === 'UPLOAD_PHOTO'
+                    ? 'job'
+                    : action.type.includes('CLIENT')
+                        ? 'client'
+                        : action.type.includes('TECHNICIAN')
+                            ? 'technician'
+                            : 'job';
+
+                appendToFailedSyncQueue({
+                    id: action.payload?.id || `dexie-${action.id}`,
+                    type: itemType,
+                    actionType: action.type,
+                    data: action.payload,
+                    retryCount: action.retryCount || 0,
+                    lastAttempt: Date.now(),
+                    failedAt: new Date().toISOString(),
+                    reason: `Permanent error in Dexie queue: ${error instanceof Error ? error.message : String(error)}`
+                });
+
+                await database.queue.delete(action.id!);
+                console.error(`[Sync] ${action.type} ${action.id} permanent error — escalated immediately`);
+            }
         }
     }
 }

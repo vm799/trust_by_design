@@ -260,7 +260,8 @@ describe('TOCTOU Fix - Atomic appendToFailedSyncQueue', () => {
   });
 
   it('Dexie queue escalation should use appendToFailedSyncQueue', () => {
-    expect(syncContent).toContain("import { appendToFailedSyncQueue } from '../syncQueue'");
+    expect(syncContent).toContain("appendToFailedSyncQueue");
+    expect(syncContent).toContain("from '../syncQueue'");
     // The pushQueue escalation should call the helper
     expect(syncContent).toContain('appendToFailedSyncQueue({');
     // Should NOT have inline read→modify→write for failed sync queue
