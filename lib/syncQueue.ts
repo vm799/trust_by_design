@@ -373,7 +373,10 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       );
     }
 
-    return false;
+    // RE-THROW: Let callers (retryFailedSyncs, autoRetryFailedQueue) catch
+    // and classify via isPermanentError. Previously returned false, which
+    // meant isPermanentError never received the error object — dead code.
+    throw error;
   }
 };
 
@@ -599,8 +602,13 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
 
     for (const item of failedItems) {
       let success = false;
-      if (item.type === 'job') {
-        success = await syncJobToSupabase(item.data);
+      try {
+        if (item.type === 'job') {
+          success = await syncJobToSupabase(item.data);
+        }
+      } catch {
+        // syncJobToSupabase now throws on failure — catch and continue
+        success = false;
       }
 
       if (success) {
@@ -734,10 +742,14 @@ export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
       return false;
     }
 
-    // Attempt sync
+    // Attempt sync — syncJobToSupabase now throws on failure
     let success = false;
-    if (item.type === 'job') {
-      success = await syncJobToSupabase(item.data);
+    try {
+      if (item.type === 'job') {
+        success = await syncJobToSupabase(item.data);
+      }
+    } catch {
+      success = false;
     }
 
     if (success) {
