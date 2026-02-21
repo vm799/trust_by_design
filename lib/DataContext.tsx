@@ -24,6 +24,7 @@ import { useAuth } from './AuthContext';
 import { normalizeJobs, normalizeJobTechnicianId } from './utils/technicianIdNormalization';
 import { getWorkspaceStorageKey } from './testingControlPlane';
 import { safeSetItem, safeRemoveItem } from './utils/safeLocalStorage';
+import { getSyncQueueStatus } from './syncQueue';
 
 // Safe JSON parse: returns fallback on corrupted/truncated localStorage data
 function safeJsonParse<T>(json: string | null, fallback: T): T {
@@ -90,6 +91,9 @@ interface DataContextType {
   isInitialized: boolean;
   error: string | null;
 
+  // Sync queue status: reactive counts of pending/failed items
+  syncStatus: { pending: number; failed: number };
+
   // Job mutations
   addJob: (job: Job) => void;
   updateJob: (job: Job) => void;
@@ -145,6 +149,24 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
   const [isRefreshing, setIsRefreshing] = useState(false);  // REMEDIATION ITEM 8
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync queue status: reactive counts polled every 3 seconds
+  const SYNC_POLL_INTERVAL = 3000;
+  const [syncStatus, setSyncStatus] = useState<{ pending: number; failed: number }>({ pending: 0, failed: 0 });
+
+  useEffect(() => {
+    const poll = () => {
+      const status = getSyncQueueStatus();
+      setSyncStatus(prev =>
+        prev.pending !== status.pending || prev.failed !== status.failed
+          ? status
+          : prev
+      );
+    };
+    poll(); // Immediate read
+    const id = setInterval(poll, SYNC_POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, []);
 
   // Track loaded workspace to prevent duplicate loads
   const loadedWorkspaceRef = useRef<string | null>(null);
@@ -903,6 +925,9 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     isRefreshing,
     isInitialized,
     error,
+
+    // Sync queue status
+    syncStatus,
 
     // Mutations
     addJob,
