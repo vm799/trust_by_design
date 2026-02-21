@@ -448,6 +448,15 @@ async function _pushQueueImpl() {
                 case 'SEAL_JOB':
                     success = await processSealJob(action.payload);
                     break;
+                case 'DELETE_JOB':
+                    success = await processDeleteJob(action.payload);
+                    break;
+                case 'DELETE_CLIENT':
+                    success = await processDeleteClient(action.payload);
+                    break;
+                case 'DELETE_TECHNICIAN':
+                    success = await processDeleteTechnician(action.payload);
+                    break;
             }
 
             if (success) {
@@ -689,6 +698,69 @@ async function processUpdateTechnician(tech: any) {
 
     if (error) {
         console.error('[Sync] UPDATE_TECHNICIAN failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+// ============================================================================
+// OFFLINE DELETE: Process queued deletions when back online
+// Queued by DataContext when user deletes while offline.
+// ============================================================================
+
+/**
+ * Process DELETE_JOB: Delete a job from Supabase.
+ * Respects sealed/invoiced guards — server RLS may also reject.
+ */
+async function processDeleteJob(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_JOB failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process DELETE_CLIENT: Delete a client from Supabase.
+ */
+async function processDeleteClient(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_CLIENT failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process DELETE_TECHNICIAN: Delete a technician from Supabase.
+ */
+async function processDeleteTechnician(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('technicians')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_TECHNICIAN failed:', error.message);
         return false;
     }
     return true;
@@ -1024,12 +1096,21 @@ async function _pullClientsImpl(workspaceId: string) {
     if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        // INCREMENTAL: Only fetch clients modified since last pull
+        const lastSyncAt = getLastSyncAt(`clients_${workspaceId}`);
+        let query = supabase
             .from('clients')
             .select('*')
             .eq('workspace_id', workspaceId);
 
+        if (lastSyncAt) {
+            query = query.gt('updated_at', lastSyncAt);
+        }
+
+        const { data, error } = await query;
         if (error || !data) return;
+
+        const pullTimestamp = new Date().toISOString();
 
         const localClients = data.map((row: any) => ({
             id: row.id,
@@ -1046,6 +1127,7 @@ async function _pullClientsImpl(workspaceId: string) {
         }));
 
         await saveClientsBatch(localClients);
+        setLastSyncAt(`clients_${workspaceId}`, pullTimestamp);
     } catch (err) {
         console.error('[Sync] pullClients failed:', err);
     }
@@ -1071,12 +1153,21 @@ async function _pullTechniciansImpl(workspaceId: string) {
     if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        // INCREMENTAL: Only fetch technicians modified since last pull
+        const lastSyncAt = getLastSyncAt(`technicians_${workspaceId}`);
+        let query = supabase
             .from('technicians')
             .select('*')
             .eq('workspace_id', workspaceId);
 
+        if (lastSyncAt) {
+            query = query.gt('updated_at', lastSyncAt);
+        }
+
+        const { data, error } = await query;
         if (error || !data) return;
+
+        const pullTimestamp = new Date().toISOString();
 
         const localTechs = data.map((row: any) => ({
             id: row.id,
@@ -1093,6 +1184,7 @@ async function _pullTechniciansImpl(workspaceId: string) {
         }));
 
         await saveTechniciansBatch(localTechs);
+        setLastSyncAt(`technicians_${workspaceId}`, pullTimestamp);
     } catch (err) {
         console.error('[Sync] pullTechnicians failed:', err);
     }

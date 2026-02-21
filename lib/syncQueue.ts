@@ -589,6 +589,7 @@ export const getAutoRetryProgress = (): { total: number; recovered: number; isRu
 
 export const autoRetryFailedQueue = async (): Promise<void> => {
   if (_failedRetryInProgress) return;
+  if (_crossTabSyncActive) return; // Another tab is already processing
   if (!navigator.onLine) return;
   if (!isSupabaseAvailable()) return;
 
@@ -596,6 +597,7 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
   if (failedItems.length === 0) return;
 
   _failedRetryInProgress = true;
+  broadcastSyncState('sync-started');
   _autoRetryProgress = { total: failedItems.length, recovered: 0, isRunning: true };
   try {
     let recovered = 0;
@@ -632,6 +634,7 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
   } catch (error) {
     console.error('Failed to auto-retry failed queue:', error);
   } finally {
+    broadcastSyncState('sync-finished');
     _failedRetryInProgress = false;
     _autoRetryProgress = { total: 0, recovered: 0, isRunning: false };
   }

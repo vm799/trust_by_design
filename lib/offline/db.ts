@@ -16,9 +16,9 @@ export interface LocalJob extends Job {
 
 export interface OfflineAction {
     id?: number;
-    type: 'CREATE_JOB' | 'UPDATE_JOB' | 'UPLOAD_PHOTO' | 'SEAL_JOB'
-        | 'CREATE_CLIENT' | 'UPDATE_CLIENT'
-        | 'CREATE_TECHNICIAN' | 'UPDATE_TECHNICIAN';
+    type: 'CREATE_JOB' | 'UPDATE_JOB' | 'DELETE_JOB' | 'UPLOAD_PHOTO' | 'SEAL_JOB'
+        | 'CREATE_CLIENT' | 'UPDATE_CLIENT' | 'DELETE_CLIENT'
+        | 'CREATE_TECHNICIAN' | 'UPDATE_TECHNICIAN' | 'DELETE_TECHNICIAN';
     payload: any;
     createdAt: number;
     synced: boolean;
@@ -229,6 +229,10 @@ export async function getDatabase(): Promise<JobProofDatabase> {
 
 const RESCUE_KEY = 'jobproof_db_rescue';
 
+// Max rescue payload size: 2MB leaves headroom under the ~5MB localStorage quota
+// for other keys (sync queue, lastSyncAt, conflict history, etc.)
+const MAX_RESCUE_PAYLOAD_BYTES = 2 * 1024 * 1024;
+
 interface RescuePayload {
     pendingJobs: LocalJob[];       // Jobs with syncStatus 'pending'
     queueItems: OfflineAction[];   // Unsynced queue items
@@ -239,6 +243,10 @@ interface RescuePayload {
 /**
  * Rescue critical data from the database before purging.
  * Saves pending jobs, queue items, and form drafts to localStorage.
+ *
+ * SIZE LIMIT: Estimates payload size before writing. If over 2MB,
+ * progressively drops formDrafts, then queueItems — pendingJobs
+ * are preserved as highest priority (unsaved field evidence).
  */
 async function rescueDataBeforePurge(): Promise<void> {
     if (!dbInstance || !dbInstance.isOpen()) return;
@@ -249,12 +257,12 @@ async function rescueDataBeforePurge(): Promise<void> {
             .toArray()
             .catch(() => [] as LocalJob[]);
 
-        const queueItems = await dbInstance.queue
+        let queueItems = await dbInstance.queue
             .where('synced').equals(0)
             .toArray()
             .catch(() => [] as OfflineAction[]);
 
-        const formDrafts = await dbInstance.formDrafts
+        let formDrafts = await dbInstance.formDrafts
             .toArray()
             .catch(() => [] as FormDraft[]);
 
@@ -263,15 +271,39 @@ async function rescueDataBeforePurge(): Promise<void> {
             return;
         }
 
-        const payload: RescuePayload = {
+        let payload: RescuePayload = {
             pendingJobs,
             queueItems,
             formDrafts,
             rescuedAt: Date.now(),
         };
 
-        localStorage.setItem(RESCUE_KEY, JSON.stringify(payload));
-        console.warn(`[DB] Rescued ${pendingJobs.length} pending jobs, ${queueItems.length} queue items, ${formDrafts.length} form drafts before purge`);
+        // SIZE CHECK: Estimate and truncate if too large for localStorage
+        let serialized = JSON.stringify(payload);
+        if (serialized.length > MAX_RESCUE_PAYLOAD_BYTES) {
+            // Drop formDrafts first (least critical)
+            console.warn(`[DB] Rescue payload too large (${serialized.length} bytes). Truncating formDrafts.`);
+            formDrafts = [];
+            payload = { ...payload, formDrafts };
+            serialized = JSON.stringify(payload);
+        }
+        if (serialized.length > MAX_RESCUE_PAYLOAD_BYTES) {
+            // Still too large — drop queueItems (can be re-created from pending jobs)
+            console.warn(`[DB] Rescue payload still too large (${serialized.length} bytes). Truncating queueItems.`);
+            queueItems = [];
+            payload = { ...payload, queueItems };
+            serialized = JSON.stringify(payload);
+        }
+        if (serialized.length > MAX_RESCUE_PAYLOAD_BYTES) {
+            // Last resort: keep only the newest pending jobs
+            const halfCount = Math.floor(pendingJobs.length / 2);
+            console.warn(`[DB] Rescue payload still too large. Keeping ${halfCount} newest pending jobs.`);
+            payload = { ...payload, pendingJobs: pendingJobs.slice(-halfCount) };
+            serialized = JSON.stringify(payload);
+        }
+
+        localStorage.setItem(RESCUE_KEY, serialized);
+        console.warn(`[DB] Rescued ${payload.pendingJobs.length} pending jobs, ${payload.queueItems.length} queue items, ${payload.formDrafts.length} form drafts before purge`);
     } catch (error) {
         console.error('[DB] Failed to rescue data before purge:', error);
         // Non-fatal: purge proceeds even if rescue fails
