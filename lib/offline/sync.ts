@@ -1024,12 +1024,21 @@ async function _pullClientsImpl(workspaceId: string) {
     if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        // INCREMENTAL: Only fetch clients modified since last pull
+        const lastSyncAt = getLastSyncAt(`clients_${workspaceId}`);
+        let query = supabase
             .from('clients')
             .select('*')
             .eq('workspace_id', workspaceId);
 
+        if (lastSyncAt) {
+            query = query.gt('updated_at', lastSyncAt);
+        }
+
+        const { data, error } = await query;
         if (error || !data) return;
+
+        const pullTimestamp = new Date().toISOString();
 
         const localClients = data.map((row: any) => ({
             id: row.id,
@@ -1046,6 +1055,7 @@ async function _pullClientsImpl(workspaceId: string) {
         }));
 
         await saveClientsBatch(localClients);
+        setLastSyncAt(`clients_${workspaceId}`, pullTimestamp);
     } catch (err) {
         console.error('[Sync] pullClients failed:', err);
     }
@@ -1071,12 +1081,21 @@ async function _pullTechniciansImpl(workspaceId: string) {
     if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        // INCREMENTAL: Only fetch technicians modified since last pull
+        const lastSyncAt = getLastSyncAt(`technicians_${workspaceId}`);
+        let query = supabase
             .from('technicians')
             .select('*')
             .eq('workspace_id', workspaceId);
 
+        if (lastSyncAt) {
+            query = query.gt('updated_at', lastSyncAt);
+        }
+
+        const { data, error } = await query;
         if (error || !data) return;
+
+        const pullTimestamp = new Date().toISOString();
 
         const localTechs = data.map((row: any) => ({
             id: row.id,
@@ -1093,6 +1112,7 @@ async function _pullTechniciansImpl(workspaceId: string) {
         }));
 
         await saveTechniciansBatch(localTechs);
+        setLastSyncAt(`technicians_${workspaceId}`, pullTimestamp);
     } catch (err) {
         console.error('[Sync] pullTechnicians failed:', err);
     }
