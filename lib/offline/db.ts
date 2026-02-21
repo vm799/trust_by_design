@@ -355,6 +355,22 @@ async function purgeAndRecreateDatabase(): Promise<void> {
         // Ignore localStorage errors
     }
 
+    // Clear lastSyncAt keys to force full pull after purge.
+    // Without this, incremental sync uses a stale timestamp and misses
+    // records that existed before the purge — phantom data loss.
+    try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('jobproof_last_sync_at_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+    } catch (e) {
+        // Ignore localStorage errors
+    }
+
     // Create fresh instance
     dbInstance = new JobProofDatabase();
     await dbInstance.open();
