@@ -217,10 +217,120 @@ export async function getDatabase(): Promise<JobProofDatabase> {
     }
 }
 
+// ============================================================================
+// SAFE SCHEMA UPGRADE: Rescue critical data before purge
+// Previously, purgeAndRecreateDatabase() wiped ALL local data — including
+// pending sync queue items, unsynced photos, form drafts, and locally-created
+// jobs that hadn't synced to the server yet. This caused silent data loss.
+//
+// Now: Before purging, we export critical data to localStorage as a rescue
+// payload. After recreating the database, we reimport it.
+// ============================================================================
+
+const RESCUE_KEY = 'jobproof_db_rescue';
+
+interface RescuePayload {
+    pendingJobs: LocalJob[];       // Jobs with syncStatus 'pending'
+    queueItems: OfflineAction[];   // Unsynced queue items
+    formDrafts: FormDraft[];       // Partially filled forms
+    rescuedAt: number;             // Timestamp for staleness detection
+}
+
 /**
- * Purge corrupted/outdated database and recreate fresh
+ * Rescue critical data from the database before purging.
+ * Saves pending jobs, queue items, and form drafts to localStorage.
+ */
+async function rescueDataBeforePurge(): Promise<void> {
+    if (!dbInstance || !dbInstance.isOpen()) return;
+
+    try {
+        const pendingJobs = await dbInstance.jobs
+            .where('syncStatus').equals('pending')
+            .toArray()
+            .catch(() => [] as LocalJob[]);
+
+        const queueItems = await dbInstance.queue
+            .where('synced').equals(0)
+            .toArray()
+            .catch(() => [] as OfflineAction[]);
+
+        const formDrafts = await dbInstance.formDrafts
+            .toArray()
+            .catch(() => [] as FormDraft[]);
+
+        // Only rescue if there's actually data to save
+        if (pendingJobs.length === 0 && queueItems.length === 0 && formDrafts.length === 0) {
+            return;
+        }
+
+        const payload: RescuePayload = {
+            pendingJobs,
+            queueItems,
+            formDrafts,
+            rescuedAt: Date.now(),
+        };
+
+        localStorage.setItem(RESCUE_KEY, JSON.stringify(payload));
+        console.warn(`[DB] Rescued ${pendingJobs.length} pending jobs, ${queueItems.length} queue items, ${formDrafts.length} form drafts before purge`);
+    } catch (error) {
+        console.error('[DB] Failed to rescue data before purge:', error);
+        // Non-fatal: purge proceeds even if rescue fails
+    }
+}
+
+/**
+ * Reimport rescued data into the freshly created database.
+ * Called after purgeAndRecreateDatabase() succeeds.
+ */
+async function reimportRescuedData(): Promise<void> {
+    const rescueJson = localStorage.getItem(RESCUE_KEY);
+    if (!rescueJson || !dbInstance) return;
+
+    try {
+        const payload: RescuePayload = JSON.parse(rescueJson);
+
+        // Don't reimport stale rescue data (older than 24 hours)
+        if (Date.now() - payload.rescuedAt > 24 * 60 * 60 * 1000) {
+            console.warn('[DB] Rescue payload is stale (>24h), discarding');
+            localStorage.removeItem(RESCUE_KEY);
+            return;
+        }
+
+        // Reimport pending jobs
+        if (payload.pendingJobs.length > 0) {
+            await dbInstance.jobs.bulkPut(payload.pendingJobs);
+            console.info(`[DB] Reimported ${payload.pendingJobs.length} pending jobs`);
+        }
+
+        // Reimport queue items
+        if (payload.queueItems.length > 0) {
+            await dbInstance.queue.bulkAdd(payload.queueItems);
+            console.info(`[DB] Reimported ${payload.queueItems.length} queue items`);
+        }
+
+        // Reimport form drafts
+        if (payload.formDrafts.length > 0) {
+            await dbInstance.formDrafts.bulkPut(payload.formDrafts);
+            console.info(`[DB] Reimported ${payload.formDrafts.length} form drafts`);
+        }
+
+        // Clean up rescue payload
+        localStorage.removeItem(RESCUE_KEY);
+        console.info('[DB] Rescue data reimported successfully');
+    } catch (error) {
+        console.error('[DB] Failed to reimport rescued data:', error);
+        // Don't remove rescue key — allows manual recovery
+    }
+}
+
+/**
+ * Purge corrupted/outdated database and recreate fresh.
+ * Now rescues critical data before wiping.
  */
 async function purgeAndRecreateDatabase(): Promise<void> {
+
+    // RESCUE: Export critical data before destroying the database
+    await rescueDataBeforePurge();
 
     // Close existing instance if open
     if (dbInstance) {
@@ -245,9 +355,28 @@ async function purgeAndRecreateDatabase(): Promise<void> {
         // Ignore localStorage errors
     }
 
+    // Clear lastSyncAt keys to force full pull after purge.
+    // Without this, incremental sync uses a stale timestamp and misses
+    // records that existed before the purge — phantom data loss.
+    try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('jobproof_last_sync_at_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+    } catch (e) {
+        // Ignore localStorage errors
+    }
+
     // Create fresh instance
     dbInstance = new JobProofDatabase();
     await dbInstance.open();
+
+    // REIMPORT: Restore rescued data into the fresh database
+    await reimportRescuedData();
 
     // Store current schema version
     try {

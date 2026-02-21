@@ -1,10 +1,43 @@
 import { getDatabase, queueAction, LocalJob, getAllOrphanPhotos, getMediaLocal, deleteOrphanPhoto, incrementOrphanRecoveryAttempts, saveClientsBatch, saveTechniciansBatch } from './db';
 import { getSupabase, isSupabaseAvailable } from '../supabase';
-import { appendToFailedSyncQueue } from '../syncQueue';
+import { appendToFailedSyncQueue, isPermanentError } from '../syncQueue';
 import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
 import { showPersistentNotification } from '../utils/syncUtils';
+
+// ============================================================================
+// INCREMENTAL SYNC: lastSyncAt tracking per workspace
+// Stores the timestamp of the last successful pull so subsequent pulls
+// only fetch records modified since then. Reduces bandwidth dramatically
+// on large workspaces (1000+ jobs).
+// ============================================================================
+
+const LAST_SYNC_AT_PREFIX = 'jobproof_last_sync_at_';
+
+/**
+ * Get the timestamp of the last successful pull for a workspace.
+ * Returns null if no prior sync (triggers a full pull).
+ */
+export function getLastSyncAt(workspaceId: string): string | null {
+    try {
+        return localStorage.getItem(`${LAST_SYNC_AT_PREFIX}${workspaceId}`);
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Store the timestamp of the last successful pull for a workspace.
+ * Called after a successful sync to enable incremental pulls next time.
+ */
+export function setLastSyncAt(workspaceId: string, timestamp: string): void {
+    try {
+        localStorage.setItem(`${LAST_SYNC_AT_PREFIX}${workspaceId}`, timestamp);
+    } catch {
+        // localStorage quota or unavailable — non-critical
+    }
+}
 
 /**
  * PULL: Fetch latest jobs from Supabase and update local DB
@@ -104,19 +137,38 @@ export function detectConflicts(localJob: LocalJob, remoteJob: LocalJob): SyncCo
 }
 
 /**
- * Internal implementation of pullJobs with conflict resolution
+ * Internal implementation of pullJobs with conflict resolution.
+ *
+ * INCREMENTAL SYNC: Uses lastSyncAt to only fetch records modified since
+ * the last successful pull. Falls back to full pull on first load or when
+ * lastSyncAt is missing. Orphan detection only runs on full pulls since
+ * incremental pulls don't return the complete server dataset.
  */
 async function _pullJobsImpl(workspaceId: string) {
     const supabase = getSupabase();
     if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        // Determine if this is a full or incremental pull
+        const lastSyncAt = getLastSyncAt(workspaceId);
+        const isFullPull = !lastSyncAt;
+
+        // Build query — incremental pulls only fetch changed records
+        let query = supabase
             .from('jobs')
             .select('*')
             .eq('workspace_id', workspaceId);
 
+        if (!isFullPull) {
+            query = query.gt('updated_at', lastSyncAt);
+        }
+
+        const { data, error } = await query;
+
         if (error) throw error;
+
+        // Record pull timestamp (server time approximation: use now)
+        const pullTimestamp = new Date().toISOString();
 
         if (data) {
             const serverJobs: LocalJob[] = data.map(row => ({
@@ -214,29 +266,35 @@ async function _pullJobsImpl(workspaceId: string) {
                 jobsToUpdate.push(serverJob);
             }
 
-            // ORPHANED RECORDS DETECTION: Remove jobs deleted on server
-            // Compare local vs server job IDs and delete orphaned records
-            const allLocalJobs = await database.jobs.where('workspaceId').equals(workspaceId).toArray();
-            const serverJobIds = new Set(serverJobs.map(j => j.id));
-            const orphanedJobs = allLocalJobs.filter(job => !serverJobIds.has(job.id));
+            // ORPHANED RECORDS DETECTION: Only on fullPull
+            // Incremental pulls only return changed records, not the complete set.
+            // Comparing against an incomplete set would incorrectly delete jobs
+            // that simply weren't modified. Orphan detection requires the full
+            // server dataset to safely identify locally-cached jobs that were
+            // deleted on the server.
+            if (isFullPull) {
+                const allLocalJobs = await database.jobs.where('workspaceId').equals(workspaceId).toArray();
+                const serverJobIds = new Set(serverJobs.map(j => j.id));
+                const orphanedJobs = allLocalJobs.filter(job => !serverJobIds.has(job.id));
 
-            // Delete orphaned jobs (except sealed ones - they're immutable)
-            const deletedOrphanIds: string[] = [];
-            for (const orphanedJob of orphanedJobs) {
-                // CRITICAL: Preserve sealed jobs - they represent immutable evidence
-                if (orphanedJob.sealedAt || orphanedJob.isSealed) {
-                    continue;
+                for (const orphanedJob of orphanedJobs) {
+                    // CRITICAL: Preserve sealed jobs - they represent immutable evidence
+                    if (orphanedJob.sealedAt || orphanedJob.isSealed) {
+                        continue;
+                    }
+
+                    // Safe to delete: not sealed
+                    await database.jobs.delete(orphanedJob.id);
                 }
-
-                // Safe to delete: not sealed
-                await database.jobs.delete(orphanedJob.id);
-                deletedOrphanIds.push(orphanedJob.id);
             }
 
             // Apply updates
             if (jobsToUpdate.length > 0) {
                 await database.jobs.bulkPut(jobsToUpdate);
             }
+
+            // Persist lastSyncAt on successful pull
+            setLastSyncAt(workspaceId, pullTimestamp);
 
             // Store conflicts and notify user (Sprint 1 Task 1.4)
             if (conflicts.length > 0) {
@@ -437,6 +495,33 @@ async function _pushQueueImpl() {
             }
         } catch (error) {
             console.error(`[Sync] Action ${action.id} failed:`, error);
+
+            // PERMANENT ERROR CHECK: Classify caught exceptions same as
+            // retryFailedSyncs does for the localStorage queue. Without this,
+            // permanent errors (401/403/RLS) waste all 10 retries.
+            if (isPermanentError(error)) {
+                const itemType = action.type.includes('JOB') || action.type === 'SEAL_JOB' || action.type === 'UPLOAD_PHOTO'
+                    ? 'job'
+                    : action.type.includes('CLIENT')
+                        ? 'client'
+                        : action.type.includes('TECHNICIAN')
+                            ? 'technician'
+                            : 'job';
+
+                appendToFailedSyncQueue({
+                    id: action.payload?.id || `dexie-${action.id}`,
+                    type: itemType,
+                    actionType: action.type,
+                    data: action.payload,
+                    retryCount: action.retryCount || 0,
+                    lastAttempt: Date.now(),
+                    failedAt: new Date().toISOString(),
+                    reason: `Permanent error in Dexie queue: ${error instanceof Error ? error.message : String(error)}`
+                });
+
+                await database.queue.delete(action.id!);
+                console.error(`[Sync] ${action.type} ${action.id} permanent error — escalated immediately`);
+            }
         }
     }
 }

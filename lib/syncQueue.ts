@@ -7,7 +7,7 @@
 
 import { Job, Photo } from '../types';
 import { getSupabase, uploadPhoto, uploadSignature, isSupabaseAvailable } from './supabase';
-import { getMediaLocal as getMedia } from './offline/db';
+import { getMediaLocal as getMedia, getDatabase } from './offline/db';
 import { showPersistentNotification } from './utils/syncUtils';
 import { SYNC_STATUS } from './constants';
 import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/db';
@@ -83,6 +83,36 @@ export const isPermanentError = (error: unknown): boolean => {
 
   return false;
 };
+
+// ============================================================================
+// DEXIE QUEUE VISIBILITY
+// Cached count of pending items in the Dexie queue (database.queue table).
+// getSyncQueueStatus() includes this in its pending total so the UI shows
+// ALL pending items — not just the localStorage retry queue.
+// ============================================================================
+
+let _dexiePendingCount = 0;
+
+/**
+ * Refresh the cached Dexie pending count from IndexedDB.
+ * Called periodically by startSyncWorker() and after queue operations.
+ */
+export async function updateDexiePendingCount(): Promise<void> {
+  try {
+    const database = await getDatabase();
+    _dexiePendingCount = await database.queue.where('synced').equals(0).count();
+  } catch {
+    // Non-critical — IndexedDB may not be available (SSR, test env)
+  }
+}
+
+/**
+ * Set Dexie pending count directly (for testing only).
+ * @internal
+ */
+export function _setDexiePendingCountForTest(count: number): void {
+  _dexiePendingCount = count;
+}
 
 interface SyncQueueItem {
   id: string;
@@ -343,7 +373,10 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       );
     }
 
-    return false;
+    // RE-THROW: Let callers (retryFailedSyncs, autoRetryFailedQueue) catch
+    // and classify via isPermanentError. Previously returned false, which
+    // meant isPermanentError never received the error object — dead code.
+    throw error;
   }
 };
 
@@ -382,14 +415,46 @@ export const retryFailedSyncs = async (): Promise<void> => {
         continue;
       }
 
-      // Attempt sync
+      // Attempt sync — capture error for classification
       let success = false;
-      if (item.type === 'job') {
-        success = await syncJobToSupabase(item.data);
+      let syncError: unknown = null;
+      try {
+        if (item.type === 'job') {
+          success = await syncJobToSupabase(item.data);
+        }
+      } catch (err) {
+        syncError = err;
+        success = false;
       }
 
       if (!success) {
-        // Increment retry count
+        // CHECK: Is this a permanent error? (401, 403, 404, RLS, JWT expired)
+        // Permanent errors will never succeed on retry — escalate immediately
+        // instead of wasting up to 7 retry cycles.
+        if (syncError && isPermanentError(syncError)) {
+          console.error(`🚫 Permanent error for ${item.type} ${item.id} — skipping retries:`, syncError);
+
+          appendToFailedSyncQueue({
+            ...item,
+            failedAt: new Date().toISOString(),
+            reason: `Permanent error: ${syncError instanceof Error ? syncError.message : String(syncError)}`
+          });
+
+          const failedJobId = item.id;
+          showPersistentNotification({
+            type: 'error',
+            title: 'Sync Failed',
+            message: `Job ${failedJobId} cannot sync: ${syncError instanceof Error ? syncError.message : 'permanent error'}. Please contact support.`,
+            persistent: true,
+            actionLabel: 'View Job',
+            onAction: () => {
+              window.location.hash = `#/app/jobs/${failedJobId}`;
+            }
+          });
+          continue; // Skip retry — go to next queue item
+        }
+
+        // Transient error — increment retry count
         item.retryCount++;
         item.lastAttempt = now;
 
@@ -491,6 +556,9 @@ export const getSyncQueueStatus = (): { pending: number; failed: number } => {
     // Graceful fallback on corrupted localStorage
   }
 
+  // Include cached Dexie queue pending items
+  pending += _dexiePendingCount;
+
   return { pending, failed };
 };
 
@@ -534,8 +602,13 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
 
     for (const item of failedItems) {
       let success = false;
-      if (item.type === 'job') {
-        success = await syncJobToSupabase(item.data);
+      try {
+        if (item.type === 'job') {
+          success = await syncJobToSupabase(item.data);
+        }
+      } catch {
+        // syncJobToSupabase now throws on failure — catch and continue
+        success = false;
       }
 
       if (success) {
@@ -583,6 +656,11 @@ export const startSyncWorker = (): void => {
     // Delay failed queue retry by 2s to let active queue process first
     setTimeout(() => autoRetryFailedQueue(), 2000);
   }
+
+  // DEXIE VISIBILITY: Update Dexie pending count on startup and every 10s.
+  // getSyncQueueStatus() includes this count so the UI shows ALL pending items.
+  updateDexiePendingCount();
+  setInterval(updateDexiePendingCount, 10000);
 
   // Retry active queue every 5 minutes
   setInterval(() => {
@@ -664,10 +742,14 @@ export const retryFailedSyncItem = async (itemId: string): Promise<boolean> => {
       return false;
     }
 
-    // Attempt sync
+    // Attempt sync — syncJobToSupabase now throws on failure
     let success = false;
-    if (item.type === 'job') {
-      success = await syncJobToSupabase(item.data);
+    try {
+      if (item.type === 'job') {
+        success = await syncJobToSupabase(item.data);
+      }
+    } catch {
+      success = false;
     }
 
     if (success) {
