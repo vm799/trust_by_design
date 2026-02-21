@@ -448,6 +448,15 @@ async function _pushQueueImpl() {
                 case 'SEAL_JOB':
                     success = await processSealJob(action.payload);
                     break;
+                case 'DELETE_JOB':
+                    success = await processDeleteJob(action.payload);
+                    break;
+                case 'DELETE_CLIENT':
+                    success = await processDeleteClient(action.payload);
+                    break;
+                case 'DELETE_TECHNICIAN':
+                    success = await processDeleteTechnician(action.payload);
+                    break;
             }
 
             if (success) {
@@ -689,6 +698,69 @@ async function processUpdateTechnician(tech: any) {
 
     if (error) {
         console.error('[Sync] UPDATE_TECHNICIAN failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+// ============================================================================
+// OFFLINE DELETE: Process queued deletions when back online
+// Queued by DataContext when user deletes while offline.
+// ============================================================================
+
+/**
+ * Process DELETE_JOB: Delete a job from Supabase.
+ * Respects sealed/invoiced guards — server RLS may also reject.
+ */
+async function processDeleteJob(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_JOB failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process DELETE_CLIENT: Delete a client from Supabase.
+ */
+async function processDeleteClient(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_CLIENT failed:', error.message);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Process DELETE_TECHNICIAN: Delete a technician from Supabase.
+ */
+async function processDeleteTechnician(payload: { id: string }): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase || !payload.id) return false;
+
+    const { error } = await supabase
+        .from('technicians')
+        .delete()
+        .eq('id', payload.id);
+
+    if (error) {
+        console.error('[Sync] DELETE_TECHNICIAN failed:', error.message);
         return false;
     }
     return true;
