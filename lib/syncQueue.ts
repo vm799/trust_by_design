@@ -14,6 +14,76 @@ import { saveOrphanPhoto, countOrphanPhotos, type OrphanPhoto } from './offline/
 import { prepareJobForSync } from './utils/technicianIdNormalization';
 import { logConflict, isConflictError, getConflictTypeFromError } from './conflictTelemetry';
 
+// ============================================================================
+// CROSS-TAB SYNC COORDINATION
+// Uses BroadcastChannel to prevent multiple tabs from double-processing
+// the same queue items. Without this, each tab runs its own sync loop,
+// causing duplicate API calls and race conditions on the queue.
+// ============================================================================
+
+let _crossTabSyncActive = false;
+let _syncChannel: BroadcastChannel | null = null;
+
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    _syncChannel = new BroadcastChannel('jobproof-sync-coordination');
+    _syncChannel.onmessage = (event) => {
+      if (event.data === 'sync-started') {
+        _crossTabSyncActive = true;
+      } else if (event.data === 'sync-finished') {
+        _crossTabSyncActive = false;
+      }
+    };
+  }
+} catch {
+  // BroadcastChannel not available (e.g., older browsers, SSR)
+  // Falls back to single-tab coordination only
+}
+
+/**
+ * Broadcast sync state to other tabs.
+ * No-op if BroadcastChannel is unavailable.
+ */
+function broadcastSyncState(state: 'sync-started' | 'sync-finished'): void {
+  try {
+    _syncChannel?.postMessage(state);
+  } catch {
+    // Channel may be closed or unavailable
+  }
+}
+
+/**
+ * Categorize errors as permanent (no point retrying) vs transient (retry).
+ *
+ * Permanent errors (escalate immediately):
+ * - 400 Bad Request: validation error, won't fix itself
+ * - 401 Unauthorized: auth expired, needs re-login
+ * - 403 Forbidden: RLS policy, no permission
+ * - 404 Not Found: resource deleted on server
+ * - 409 Conflict: version mismatch (needs manual resolution)
+ * - 422 Unprocessable: semantic error in payload
+ *
+ * Transient errors (worth retrying):
+ * - 408 Request Timeout
+ * - 429 Too Many Requests
+ * - 500/502/503/504 Server errors
+ * - Network errors (no status code)
+ */
+export const isPermanentError = (error: unknown): boolean => {
+  if (!error) return false;
+
+  const message = error instanceof Error ? error.message : String(error);
+  const statusMatch = message.match(/\b(400|401|403|404|409|422)\b/);
+  if (statusMatch) return true;
+
+  // Supabase PostgREST error patterns
+  if (message.includes('row-level security')) return true;
+  if (message.includes('JWT expired')) return true;
+  if (message.includes('invalid input syntax')) return true;
+
+  return false;
+};
+
 interface SyncQueueItem {
   id: string;
   type: 'job' | 'photo' | 'signature';
@@ -27,6 +97,20 @@ interface SyncQueueItem {
 // Users need feedback within 3 minutes, not 12 minutes
 export const RETRY_DELAYS = [2000, 4000, 8000, 15000, 30000, 60000, 60000];
 const MAX_RETRIES = 7;
+
+/**
+ * Get retry delay with jitter to prevent thundering herd.
+ *
+ * When multiple devices regain connectivity simultaneously (e.g., regional
+ * outage recovery), identical fixed backoff schedules cause all devices to
+ * hit the server at the same instant. Adding ±25% random jitter spreads
+ * the load and prevents server overload.
+ */
+export const getRetryDelay = (attempt: number): number => {
+  const baseDelay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
+  const jitter = baseDelay * 0.25 * (Math.random() * 2 - 1);
+  return Math.max(0, baseDelay + jitter);
+};
 
 /**
  * Sync a complete job to Supabase
@@ -275,7 +359,8 @@ let _retryInProgress = false;
  * and race on the final write — causing double API calls and lost updates.
  */
 export const retryFailedSyncs = async (): Promise<void> => {
-  if (_retryInProgress) return; // Another call is already processing
+  if (_retryInProgress) return; // Another call in this tab is already processing
+  if (_crossTabSyncActive) return; // Another tab is already processing
   if (!isSupabaseAvailable()) return;
   if (!navigator.onLine) return; // Skip retries when offline
 
@@ -283,14 +368,15 @@ export const retryFailedSyncs = async (): Promise<void> => {
   if (!queueJson) return;
 
   _retryInProgress = true;
+  broadcastSyncState('sync-started');
   try {
     const queue: SyncQueueItem[] = JSON.parse(queueJson);
     const now = Date.now();
     const updatedQueue: SyncQueueItem[] = [];
 
     for (const item of queue) {
-      // Check if enough time has passed since last attempt
-      const delay = RETRY_DELAYS[Math.min(item.retryCount, RETRY_DELAYS.length - 1)];
+      // Check if enough time has passed since last attempt (jitter applied)
+      const delay = getRetryDelay(item.retryCount);
       if (now - item.lastAttempt < delay) {
         updatedQueue.push(item);
         continue;
@@ -348,6 +434,7 @@ export const retryFailedSyncs = async (): Promise<void> => {
     console.error('Failed to process sync queue:', error);
   } finally {
     _retryInProgress = false;
+    broadcastSyncState('sync-finished');
   }
 };
 
@@ -487,6 +574,15 @@ export const autoRetryFailedQueue = async (): Promise<void> => {
  */
 export const startSyncWorker = (): void => {
   if (!isSupabaseAvailable()) return;
+
+  // IMMEDIATE SYNC: Process queued items right away on startup.
+  // Previously only ran on a 5-minute timer, so field workers restarting
+  // the app waited up to 5 minutes for pending items to sync.
+  if (navigator.onLine) {
+    retryFailedSyncs();
+    // Delay failed queue retry by 2s to let active queue process first
+    setTimeout(() => autoRetryFailedQueue(), 2000);
+  }
 
   // Retry active queue every 5 minutes
   setInterval(() => {
