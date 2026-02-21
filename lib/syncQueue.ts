@@ -382,14 +382,46 @@ export const retryFailedSyncs = async (): Promise<void> => {
         continue;
       }
 
-      // Attempt sync
+      // Attempt sync — capture error for classification
       let success = false;
-      if (item.type === 'job') {
-        success = await syncJobToSupabase(item.data);
+      let syncError: unknown = null;
+      try {
+        if (item.type === 'job') {
+          success = await syncJobToSupabase(item.data);
+        }
+      } catch (err) {
+        syncError = err;
+        success = false;
       }
 
       if (!success) {
-        // Increment retry count
+        // CHECK: Is this a permanent error? (401, 403, 404, RLS, JWT expired)
+        // Permanent errors will never succeed on retry — escalate immediately
+        // instead of wasting up to 7 retry cycles.
+        if (syncError && isPermanentError(syncError)) {
+          console.error(`🚫 Permanent error for ${item.type} ${item.id} — skipping retries:`, syncError);
+
+          appendToFailedSyncQueue({
+            ...item,
+            failedAt: new Date().toISOString(),
+            reason: `Permanent error: ${syncError instanceof Error ? syncError.message : String(syncError)}`
+          });
+
+          const failedJobId = item.id;
+          showPersistentNotification({
+            type: 'error',
+            title: 'Sync Failed',
+            message: `Job ${failedJobId} cannot sync: ${syncError instanceof Error ? syncError.message : 'permanent error'}. Please contact support.`,
+            persistent: true,
+            actionLabel: 'View Job',
+            onAction: () => {
+              window.location.hash = `#/app/jobs/${failedJobId}`;
+            }
+          });
+          continue; // Skip retry — go to next queue item
+        }
+
+        // Transient error — increment retry count
         item.retryCount++;
         item.lastAttempt = now;
 

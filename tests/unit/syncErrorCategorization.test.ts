@@ -49,6 +49,43 @@ describe('Sync Error Categorization', () => {
   });
 });
 
+describe('isPermanentError wired into retry loop', () => {
+  const syncQueueContent = readFile('lib/syncQueue.ts');
+
+  it('should call isPermanentError in retryFailedSyncs', () => {
+    // isPermanentError must be USED in the retry logic, not just defined.
+    // The retry loop should check errors against isPermanentError to decide
+    // whether to retry or escalate immediately.
+    const retrySection = syncQueueContent.slice(
+      syncQueueContent.indexOf('retryFailedSyncs'),
+      syncQueueContent.indexOf('addToSyncQueue')
+    );
+    expect(retrySection).toContain('isPermanentError');
+  });
+
+  it('should escalate permanent errors immediately without retry', () => {
+    // When isPermanentError returns true, the item should go straight to
+    // the failed sync queue (appendToFailedSyncQueue) without incrementing retryCount
+    const retrySection = syncQueueContent.slice(
+      syncQueueContent.indexOf('retryFailedSyncs'),
+      syncQueueContent.indexOf('addToSyncQueue')
+    );
+    expect(retrySection).toContain('appendToFailedSyncQueue');
+    expect(retrySection).toContain('Permanent error');
+  });
+
+  it('should capture sync errors for classification', () => {
+    // syncJobToSupabase must throw or propagate errors so the retry loop
+    // can classify them. A simple boolean return loses error info.
+    const retrySection = syncQueueContent.slice(
+      syncQueueContent.indexOf('retryFailedSyncs'),
+      syncQueueContent.indexOf('addToSyncQueue')
+    );
+    expect(retrySection).toContain('catch');
+    expect(retrySection).toContain('syncError');
+  });
+});
+
 describe('isPermanentError - runtime behavior', () => {
   it('should classify 401 auth errors as permanent', () => {
     expect(isPermanentError(new Error('Request failed with status 401'))).toBe(true);
