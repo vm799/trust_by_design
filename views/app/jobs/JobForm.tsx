@@ -57,7 +57,7 @@ const JobForm: React.FC = () => {
   } = useData();
 
   // Get workspace ID for draft isolation (FIX 2.2)
-  const { session } = useAuth();
+  const { session, userEmail } = useAuth();
   const workspaceId = session?.user?.user_metadata?.workspace_id || 'default';
 
   // Memoized job derivation for edit mode
@@ -313,19 +313,19 @@ const JobForm: React.FC = () => {
         // Generate magic link if technician assigned
         let magicUrl: string | undefined;
         let magicToken: string | undefined;
-        if (selectedTech && session?.user?.email) {
+        if (selectedTech && userEmail) {
           try {
-            const result = await generateMagicLink(newJob.id, session.user.email);
+            const result = await generateMagicLink(newJob.id, userEmail);
             if (result.success && result.data?.url) {
               magicUrl = result.data.url;
               magicToken = result.data.token;
             } else {
-              const local = storeMagicLinkLocal(newJob.id, session.user.email, workspaceId);
+              const local = storeMagicLinkLocal(newJob.id, userEmail, workspaceId);
               magicUrl = local.url;
               magicToken = local.token;
             }
           } catch {
-            const local = storeMagicLinkLocal(newJob.id, session?.user?.email || '', workspaceId);
+            const local = storeMagicLinkLocal(newJob.id, userEmail, workspaceId);
             magicUrl = local.url;
             magicToken = local.token;
           }

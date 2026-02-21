@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /rest/
+
+Sitemap: https://jobproof.pro/sitemap.xml

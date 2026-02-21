@@ -4,7 +4,7 @@
   "description": "Tamper-proof evidence that gets you paid. GPS-stamped photos, digital signatures, sealed job reports.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
+  "background_color": "#ffffff",
   "theme_color": "#2563EB",
   "orientation": "portrait",
   "scope": "/",
