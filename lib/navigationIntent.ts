@@ -81,12 +81,12 @@ export function captureNavigationIntentFromUrl(): NavigationIntent | null {
   let jobId: string | undefined;
   let action: NavigationIntentAction | undefined;
 
-  // Job-related paths
-  if (path.includes('/jobs/') || path.includes('/run/') || path.includes('/go/')) {
+  // Job-related paths: /admin/jobs/:id, /tech/job/:id, /run/:id, /go/:code
+  if (path.includes('/jobs/') || path.includes('/job/') || path.includes('/run/') || path.includes('/go/')) {
     type = 'JOB_LINK';
 
-    // Extract job ID from various path patterns
-    const jobMatch = path.match(/\/(?:jobs|run|go)\/([^/?]+)/);
+    // Extract job ID from various path patterns (singular 'job' for tech portal, plural 'jobs' for admin)
+    const jobMatch = path.match(/\/(?:jobs|job|run|go)\/([^/?]+)/);
     if (jobMatch) {
       jobId = decodeURIComponent(jobMatch[1]);
     }
@@ -96,7 +96,7 @@ export function captureNavigationIntentFromUrl(): NavigationIntent | null {
       action = 'EDIT';
     } else if (path.includes('/complete') || params.get('complete') === 'true') {
       action = 'COMPLETE';
-    } else if (path.includes('/upload') || params.get('upload') === 'true') {
+    } else if (path.includes('/capture') || path.includes('/upload') || params.get('upload') === 'true') {
       action = 'UPLOAD';
     } else {
       action = 'VIEW';

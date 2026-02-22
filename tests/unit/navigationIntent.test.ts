@@ -355,6 +355,29 @@ describe('navigationIntent', () => {
       expect(intent?.jobId).toBe('JOB-789');
     });
 
+    it('captures tech portal job link intent', () => {
+      mockLocation.hash = '#/tech/job/JOB-456';
+
+      const intent = captureNavigationIntentFromUrl();
+
+      expect(intent).not.toBeNull();
+      expect(intent?.type).toBe('JOB_LINK');
+      expect(intent?.jobId).toBe('JOB-456');
+      expect(intent?.action).toBe('VIEW');
+    });
+
+    it('captures tech evidence capture link with UPLOAD action', () => {
+      mockLocation.hash = '#/tech/job/JOB-789/capture';
+
+      const intent = captureNavigationIntentFromUrl();
+
+      expect(intent).not.toBeNull();
+      expect(intent?.type).toBe('JOB_LINK');
+      expect(intent?.jobId).toBe('JOB-789');
+      expect(intent?.action).toBe('UPLOAD');
+      expect(intent?.path).toBe('/tech/job/JOB-789/capture');
+    });
+
     it('captures QR code intent', () => {
       mockLocation.hash = '#/qr/JOB-ABC';
 

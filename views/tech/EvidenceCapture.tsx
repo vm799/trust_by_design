@@ -249,10 +249,16 @@ const EvidenceCapture: React.FC = () => {
     setLastPhotoFile(photo);
 
     try {
+      const photoId = `photo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      // CRITICAL FIX: Store photo Base64 in IndexedDB media table with a reference key
+      // The sync queue checks isIndexedDBRef to know it needs to upload from IndexedDB
+      // Without this, photos NEVER sync to Supabase (isIndexedDBRef was undefined)
+      const mediaKey = `media_${photoId}`;
+
       const newPhoto = {
-        id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-        url: photo.dataUrl, // In production, this would be uploaded to storage
-        localPath: photo.dataUrl,
+        id: photoId,
+        url: mediaKey, // IndexedDB key reference — NOT raw Base64
+        localPath: mediaKey,
         type: photo.type,
         timestamp: photo.timestamp,
         lat: photo.location?.lat,
@@ -262,27 +268,36 @@ const EvidenceCapture: React.FC = () => {
         w3w_verified: photo.w3wVerified,
         verified: false,
         syncStatus: SYNC_STATUS.PENDING,
+        isIndexedDBRef: true, // CRITICAL: Tells sync queue to retrieve from IndexedDB
       };
 
       const updatedPhotos = [...(job.photos || []), newPhoto];
       const updatedJob: Job = { ...job, photos: updatedPhotos };
 
       // Sprint 1 Task 1.5: Atomic draft cleanup using Dexie transaction
-      // CRITICAL: Job update and draft deletion must be atomic
+      // CRITICAL: Job update, photo storage, and draft deletion must be atomic
       // If app crashes between these operations, we either:
       // - Lose the photo (if job update fails after draft delete)
       // - Have orphaned draft (if draft delete fails after job update)
-      // Using a transaction ensures both succeed or both fail
+      // Using a transaction ensures all succeed or all fail
       const database = await getDatabase();
       await database.transaction('rw', database.jobs, database.media, async () => {
-        // 1. Commit job update to local DB
+        // 1. Store photo Base64 in media table (sync queue retrieves from here)
+        await database.media.put({
+          id: mediaKey,
+          jobId: job.id,
+          data: photo.dataUrl,
+          createdAt: Date.now()
+        });
+
+        // 2. Commit job update to local DB
         await database.jobs.put({
           ...updatedJob,
           syncStatus: SYNC_STATUS.PENDING,
           lastUpdated: Date.now()
         });
 
-        // 2. Delete draft atomically (if job put fails, this won't run)
+        // 3. Delete draft atomically (if job put fails, this won't run)
         await database.media.delete(draftKey);
       });
 
@@ -513,12 +528,15 @@ const EvidenceCapture: React.FC = () => {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="bg-white dark:bg-slate-950 px-4 py-4 pb-safe flex gap-3">
+          {/* Spacer to prevent content from hiding behind fixed action bar */}
+          <div className="h-24" />
+
+          {/* Actions - FIXED bottom for thumb access */}
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 px-4 py-4 pb-safe flex gap-3">
             <button
               onClick={retakePhoto}
               disabled={photoSaveStatus === 'saving'}
-              className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50 min-h-[56px]"
             >
               <span className="material-symbols-outlined">refresh</span>
               Retake
@@ -526,7 +544,7 @@ const EvidenceCapture: React.FC = () => {
             <button
               onClick={() => savePhoto()}
               disabled={photoSaveStatus === 'saving'}
-              className="flex-1 py-4 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-4 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50 min-h-[56px]"
             >
               {photoSaveStatus === 'saving' ? (
                 <span className="material-symbols-outlined animate-spin">progress_activity</span>
@@ -617,8 +635,11 @@ const EvidenceCapture: React.FC = () => {
             </div>
           </div>
 
-          {/* Capture Button */}
-          <div className="bg-white dark:bg-slate-950 px-4 py-6 pb-safe flex flex-col items-center gap-2">
+          {/* Spacer to prevent content from hiding behind fixed capture bar */}
+          <div className="h-32" />
+
+          {/* Capture Button - FIXED bottom for thumb access */}
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 px-4 py-4 pb-safe flex flex-col items-center gap-2">
             <button
               onClick={capturePhoto}
               aria-label="Capture photo"
@@ -626,7 +647,7 @@ const EvidenceCapture: React.FC = () => {
             >
               <span className="material-symbols-outlined text-4xl text-primary">photo_camera</span>
             </button>
-            <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+            <p className="text-[10px] text-slate-600 dark:text-slate-400 uppercase tracking-wider">
               Tap to capture {photoType}
             </p>
           </div>
