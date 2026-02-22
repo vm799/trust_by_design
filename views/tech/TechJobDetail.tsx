@@ -12,7 +12,7 @@
  * Phase G: Technician Portal
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, ActionButton, EmptyState, LoadingSkeleton, ErrorState } from '../../components/ui';
@@ -22,6 +22,7 @@ import { Job, Photo } from '../../types';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
 import { hapticConfirm, hapticTap } from '../../lib/haptics';
+import { getMediaLocal } from '../../lib/offline/db';
 
 const formatDateUTC = (dateString: string): string => {
   const date = new Date(dateString);
@@ -117,6 +118,40 @@ const TechJobDetail: React.FC = () => {
       currentWorkflowStep: getWorkflowStep(job, complete),
     };
   }, [job]);
+
+  // Load photo data from IndexedDB for photos stored as references
+  // Photos captured via EvidenceCapture have isIndexedDBRef=true and url=media key
+  // Without this, <img src="media_photo_123"> shows broken images
+  const [photoDataUrls, setPhotoDataUrls] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    const loadPhotosFromIndexedDB = async () => {
+      const loadedUrls = new Map<string, string>();
+      for (const photo of photos) {
+        if (photo.isIndexedDBRef) {
+          try {
+            const data = await getMediaLocal(photo.url);
+            if (data) loadedUrls.set(photo.id, data);
+          } catch {
+            // Non-critical: photo will show placeholder
+          }
+        }
+      }
+      if (loadedUrls.size > 0) {
+        setPhotoDataUrls(loadedUrls);
+      }
+    };
+    if (photos.length > 0) {
+      loadPhotosFromIndexedDB();
+    }
+  }, [photos]);
+
+  // Helper: resolve photo display URL (IndexedDB data or cloud URL)
+  const getPhotoSrc = useCallback((photo: Photo): string => {
+    if (photo.isIndexedDBRef) {
+      return photoDataUrls.get(photo.id) || '';
+    }
+    return photo.url || photo.localPath || '';
+  }, [photoDataUrls]);
 
   const handleStartJob = useCallback(async () => {
     if (!job) return;
@@ -397,7 +432,7 @@ const TechJobDetail: React.FC = () => {
                   {beforePhotos.map((photo) => (
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-blue-500/20">
                       <img
-                        src={photo.url || photo.localPath}
+                        src={getPhotoSrc(photo)}
                         alt={`Before - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
@@ -425,7 +460,7 @@ const TechJobDetail: React.FC = () => {
                   {duringPhotos.map((photo) => (
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-amber-500/20">
                       <img
-                        src={photo.url || photo.localPath}
+                        src={getPhotoSrc(photo)}
                         alt={`During - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
@@ -453,7 +488,7 @@ const TechJobDetail: React.FC = () => {
                   {afterPhotos.map((photo) => (
                     <div key={photo.id} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden border border-emerald-500/20">
                       <img
-                        src={photo.url || photo.localPath}
+                        src={getPhotoSrc(photo)}
                         alt={`After - ${job.title}`}
                         className="w-full h-full object-cover"
                       />
