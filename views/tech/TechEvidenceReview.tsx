@@ -29,6 +29,7 @@ import { OfflineIndicator } from '../../components/OfflineIndicator';
 import { fadeInUp, stepSlide, stepSlideTransition, fadeOverlay, tapShrink } from '../../lib/animations';
 import { invokeSealing } from '../../lib/supabase';
 import { celebrateSuccess, hapticFeedback, showToast } from '../../lib/microInteractions';
+import { queueAction } from '../../lib/offline/db';
 
 const SATISFACTION_STATEMENT =
   "I confirm I am satisfied with the completed work and approve this evidence for submission";
@@ -220,6 +221,14 @@ const TechEvidenceReview: React.FC = () => {
     } catch (error) {
       setSealingStatus('error');
       setSealingError(error instanceof Error ? error.message : 'Failed to seal evidence');
+      // CRITICAL: Queue SEAL_JOB for retry when back online.
+      // Without this, if the tech submits offline and closes the app,
+      // the seal attempt is lost forever — job sits at 'Submitted' indefinitely.
+      try {
+        await queueAction('SEAL_JOB', { jobId: sealJobId });
+      } catch {
+        // Dexie queue itself failed — non-critical, sync pipeline has its own retry
+      }
     }
   }, [job, contextUpdateJob]);
 
