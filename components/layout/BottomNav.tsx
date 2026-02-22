@@ -4,7 +4,7 @@
  * 5-item bottom bar with center FAB for quick job creation.
  * Optimized for thumb-zone ergonomics on field worker devices.
  *
- * Layout: [Dashboard] [Jobs] [+FAB] [Clients] [Techs]
+ * Layout: [Dashboard] [Jobs] [+FAB] [Capture] [Techs]
  *
  * REMEDIATION ITEM 6: Wrapped in React.memo to prevent unnecessary re-renders
  */
@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
   { to: '/admin', icon: 'dashboard', label: 'Dashboard' },
   { to: '/admin/jobs', icon: 'work', label: 'Jobs' },
   // Center FAB slot is rendered separately
-  { to: '/admin/clients', icon: 'group', label: 'Clients' },
+  { to: '/tech', icon: 'photo_camera', label: 'Capture' },
   { to: '/admin/technicians', icon: 'engineering', label: 'Techs' },
 ];
 
