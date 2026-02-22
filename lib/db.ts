@@ -178,33 +178,22 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
   try {
 
     const { data, error } = await supabase
-      .from('jobs')
+      .from('bunker_jobs')
       .insert({
+        id: crypto.randomUUID(),
         workspace_id: workspaceId,
         title: jobData.title,
-        client_name: jobData.client,
+        client: jobData.client,
         client_id: jobData.clientId,
         technician_name: jobData.technician,
-        technician_id: jobData.techId,
+        assigned_technician_id: jobData.techId || null,
         status: jobData.status || 'Pending',
-        scheduled_date: jobData.date,
         address: jobData.address,
-        lat: jobData.lat,
-        lng: jobData.lng,
         w3w: jobData.w3w,
         notes: jobData.notes,
-        work_summary: jobData.workSummary,
-        safety_checklist: jobData.safetyChecklist || [],
-        site_hazards: jobData.siteHazards || [],
-        template_id: jobData.templateId,
-        price: jobData.price,
-        sync_status: jobData.syncStatus || 'synced',
-        last_updated: jobData.lastUpdated || Date.now(),
+        completed_at: jobData.completedAt,
+        last_updated: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        // Magic link token for cross-browser technician access
-        magic_link_token: jobData.magicLinkToken || null,
-        magic_link_url: jobData.magicLinkUrl || null
       })
       .select()
       .single();
@@ -216,34 +205,28 @@ export const createJob = async (jobData: Partial<Job>, workspaceId: string): Pro
     const job: Job = {
       id: data.id,
       title: data.title,
-      client: data.client_name,
+      client: data.client || '',
       clientId: data.client_id,
-      technician: data.technician_name,
-      techId: data.technician_id,
+      technician: data.technician_name || '',
+      techId: data.assigned_technician_id,
       status: data.status,
-      date: data.scheduled_date,
+      date: data.created_at?.split('T')[0],
       address: data.address,
-      lat: data.lat,
-      lng: data.lng,
       w3w: data.w3w,
       notes: data.notes,
-      workSummary: data.work_summary,
       photos: [],
-      signature: null,
-      safetyChecklist: data.safety_checklist || [],
-      siteHazards: data.site_hazards || [],
-      templateId: data.template_id,
-      syncStatus: data.sync_status || 'synced',
-      lastUpdated: data.last_updated || Date.now(),
-      price: data.price,
+      signature: data.signature_data || data.signature_url,
+      signerName: data.signer_name,
+      safetyChecklist: [],
+      siteHazards: [],
+      completedAt: data.completed_at,
+      syncStatus: 'synced' as const,
+      lastUpdated: data.last_updated ? new Date(data.last_updated).getTime() : Date.now(),
       workspaceId: data.workspace_id,
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
       isSealed: !!data.sealed_at,
-      // Magic link token for cross-browser access
-      magicLinkToken: data.magic_link_token,
-      magicLinkUrl: data.magic_link_url
     };
 
     // Invalidate cache for jobs list
@@ -397,7 +380,7 @@ const _getJobImpl = async (jobId: string, workspaceId: string): Promise<DbResult
 
   try {
     const { data, error } = await supabase
-      .from('jobs')
+      .from('bunker_jobs')
       .select('*')
       .eq('id', jobId)
       .eq('workspace_id', workspaceId)
@@ -409,38 +392,39 @@ const _getJobImpl = async (jobId: string, workspaceId: string): Promise<DbResult
 
     const job: Job = {
       id: data.id,
-      title: data.title,
-      client: data.client_name,
+      title: data.title || 'Untitled Job',
+      client: data.client || data.client_name || '',
       clientId: data.client_id,
-      technician: data.technician_name,
-      techId: data.technician_id,
-      status: data.status,
-      date: data.scheduled_date,
+      technician: data.technician_name || '',
+      techId: data.assigned_technician_id || data.technician_id,
+      technicianId: data.assigned_technician_id || data.technician_id,
+      status: data.status || 'Pending',
+      date: data.scheduled_date || data.created_at?.split('T')[0],
       address: data.address,
-      lat: data.lat,
-      lng: data.lng,
+      lat: data.lat || data.before_photo_lat || data.after_photo_lat,
+      lng: data.lng || data.before_photo_lng || data.after_photo_lng,
       w3w: data.w3w,
       notes: data.notes,
-      workSummary: data.work_summary,
-      photos: data.photos || [],
-      signature: data.signature_url,
+      photos: data.before_photo_data || data.after_photo_data ? [
+        ...(data.before_photo_data ? [{ id: `${data.id}_before`, url: data.before_photo_data, type: 'before' as const, timestamp: data.created_at, verified: true, syncStatus: 'synced' as const }] : []),
+        ...(data.after_photo_data ? [{ id: `${data.id}_after`, url: data.after_photo_data, type: 'after' as const, timestamp: data.completed_at || data.created_at, verified: true, syncStatus: 'synced' as const }] : [])
+      ] : [],
+      signature: data.signature_data || data.signature_url,
       signerName: data.signer_name,
-      signerRole: data.signer_role,
-      safetyChecklist: data.safety_checklist || [],
-      siteHazards: data.site_hazards || [],
+      safetyChecklist: [],
+      siteHazards: [],
       completedAt: data.completed_at,
-      templateId: data.template_id,
-      syncStatus: data.sync_status || 'synced',
-      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
-      price: data.price,
-      workspaceId: data.workspace_id,
+      syncStatus: 'synced' as const,
+      lastUpdated: data.last_updated ? new Date(data.last_updated).getTime() : Date.now(),
+      workspaceId: data.workspace_id || workspaceId,
+      source: 'bunker' as const,
+      managerEmail: data.manager_email,
+      clientEmail: data.client_email,
+      techEmail: data.technician_email,
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
       isSealed: !!data.sealed_at,
-      // Magic link token for cross-browser access
-      magicLinkToken: data.magic_link_token,
-      magicLinkUrl: data.magic_link_url
     };
 
     return { success: true, data: job };
@@ -493,7 +477,7 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
 
   try {
     const { data: existingJob, error: fetchError } = await supabase
-      .from('jobs')
+      .from('bunker_jobs')
       .select('sealed_at')
       .eq('id', jobId)
       .single();
@@ -506,40 +490,26 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
       return { success: false, error: 'Cannot update a sealed job' };
     }
 
+    // Map to bunker_jobs column names
     const updateData: any = {
-      updated_at: new Date().toISOString()
+      last_updated: new Date().toISOString()
     };
 
     if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.client !== undefined) updateData.client_name = updates.client;
+    if (updates.client !== undefined) updateData.client = updates.client;
     if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
     if (updates.technician !== undefined) updateData.technician_name = updates.technician;
-    if (updates.techId !== undefined) updateData.technician_id = updates.techId;
+    if (updates.techId !== undefined) updateData.assigned_technician_id = updates.techId;
     if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.date !== undefined) updateData.scheduled_date = updates.date;
     if (updates.address !== undefined) updateData.address = updates.address;
-    if (updates.lat !== undefined) updateData.lat = updates.lat;
-    if (updates.lng !== undefined) updateData.lng = updates.lng;
     if (updates.w3w !== undefined) updateData.w3w = updates.w3w;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
-    if (updates.workSummary !== undefined) updateData.work_summary = updates.workSummary;
-    if (updates.photos !== undefined) updateData.photos = updates.photos;
-    if (updates.signature !== undefined) updateData.signature_url = updates.signature;
+    if (updates.signature !== undefined) updateData.signature_data = updates.signature;
     if (updates.signerName !== undefined) updateData.signer_name = updates.signerName;
-    if (updates.signerRole !== undefined) updateData.signer_role = updates.signerRole;
-    if (updates.safetyChecklist !== undefined) updateData.safety_checklist = updates.safetyChecklist;
-    if (updates.siteHazards !== undefined) updateData.site_hazards = updates.siteHazards;
     if (updates.completedAt !== undefined) updateData.completed_at = updates.completedAt;
-    if (updates.templateId !== undefined) updateData.template_id = updates.templateId;
-    if (updates.price !== undefined) updateData.price = updates.price;
-    if (updates.syncStatus !== undefined) updateData.sync_status = updates.syncStatus;
-    if (updates.lastUpdated !== undefined) updateData.last_updated = updates.lastUpdated;
-    // Magic link token for cross-browser technician access
-    if (updates.magicLinkToken !== undefined) updateData.magic_link_token = updates.magicLinkToken;
-    if (updates.magicLinkUrl !== undefined) updateData.magic_link_url = updates.magicLinkUrl;
 
     const { data, error } = await supabase
-      .from('jobs')
+      .from('bunker_jobs')
       .update(updateData)
       .eq('id', jobId)
       .select()
@@ -551,38 +521,35 @@ export const updateJob = async (jobId: string, updates: Partial<Job>): Promise<D
 
     const job: Job = {
       id: data.id,
-      title: data.title,
-      client: data.client_name,
+      title: data.title || 'Untitled Job',
+      client: data.client || '',
       clientId: data.client_id,
-      technician: data.technician_name,
-      techId: data.technician_id,
-      status: data.status,
-      date: data.scheduled_date,
+      technician: data.technician_name || '',
+      techId: data.assigned_technician_id,
+      status: data.status || 'Pending',
+      date: data.created_at?.split('T')[0],
       address: data.address,
-      lat: data.lat,
-      lng: data.lng,
       w3w: data.w3w,
       notes: data.notes,
-      workSummary: data.work_summary,
-      photos: data.photos || [],
-      signature: data.signature_url,
+      photos: data.before_photo_data || data.after_photo_data ? [
+        ...(data.before_photo_data ? [{ id: `${data.id}_before`, url: data.before_photo_data, type: 'before' as const, timestamp: data.created_at, verified: true, syncStatus: 'synced' as const }] : []),
+        ...(data.after_photo_data ? [{ id: `${data.id}_after`, url: data.after_photo_data, type: 'after' as const, timestamp: data.completed_at || data.created_at, verified: true, syncStatus: 'synced' as const }] : [])
+      ] : [],
+      signature: data.signature_data || data.signature_url,
       signerName: data.signer_name,
-      signerRole: data.signer_role,
-      safetyChecklist: data.safety_checklist || [],
-      siteHazards: data.site_hazards || [],
+      safetyChecklist: [],
+      siteHazards: [],
       completedAt: data.completed_at,
-      templateId: data.template_id,
-      syncStatus: data.sync_status || 'synced',
-      lastUpdated: data.last_updated || new Date(data.updated_at).getTime(),
-      price: data.price,
+      syncStatus: 'synced' as const,
+      lastUpdated: data.last_updated ? new Date(data.last_updated).getTime() : Date.now(),
       workspaceId: data.workspace_id,
       sealedAt: data.sealed_at,
       sealedBy: data.sealed_by,
       evidenceHash: data.evidence_hash,
       isSealed: !!data.sealed_at,
-      // Magic link token for cross-browser access
-      magicLinkToken: data.magic_link_token,
-      magicLinkUrl: data.magic_link_url
+      managerEmail: data.manager_email,
+      clientEmail: data.client_email,
+      techEmail: data.technician_email,
     };
 
     // Invalidate cache for jobs list and individual job
