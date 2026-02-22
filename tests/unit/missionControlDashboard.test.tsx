@@ -236,12 +236,11 @@ describe('ManagerFocusDashboard (Mission Control)', () => {
       expect(onSiteButton?.textContent).toContain('1');
     });
 
-    it('should show "All Clear" when no issues and no dispatched jobs', () => {
+    it('should show "No Blockers" when no issues and no dispatched jobs', () => {
       mockTechnicians = [createTechnician()];
       mockJobs = [createJob({ syncStatus: 'synced', status: 'Pending', lastUpdated: Date.now(), techId: '', technicianId: undefined })];
       renderDashboard();
-      const allClearElements = screen.getAllByText('All Clear');
-      expect(allClearElements.length).toBeGreaterThan(0);
+      expect(screen.getByText('No Blockers')).toBeDefined();
     });
   });
 
