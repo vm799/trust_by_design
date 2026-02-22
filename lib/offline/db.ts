@@ -535,6 +535,16 @@ export async function getAllJobsLocal(workspaceId: string) {
         .sortBy('lastUpdated'); // Sort by recent
 }
 
+/**
+ * Delete a job from local IndexedDB storage.
+ * Used by DataContext when deleting offline — removes local copy before
+ * queueing DELETE_JOB for server sync on reconnection.
+ */
+export async function deleteJobLocal(id: string): Promise<void> {
+    const database = await getDatabase();
+    await database.jobs.delete(id);
+}
+
 // P0 FIX: Custom error for quota exceeded - allows callers to surface meaningful message
 export class StorageQuotaExceededError extends Error {
     constructor(message: string = 'Device storage is full. Please free up space.') {

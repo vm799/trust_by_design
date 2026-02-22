@@ -632,31 +632,49 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     // Store original job before removal (for rollback on failure)
     const originalJob = jobs.find(j => j.id === id);
 
+    // Guard: sealed/invoiced jobs cannot be deleted (check locally first)
+    if (originalJob?.sealedAt) {
+      const msg = 'This job has been sealed and cannot be deleted.';
+      setError(msg);
+      throw new Error(msg);
+    }
+    if (originalJob?.invoiceId) {
+      const msg = 'This job has an invoice. Please delete the invoice first.';
+      setError(msg);
+      throw new Error(msg);
+    }
+
     // Optimistic update: Remove from local state immediately
     setJobs(prev => prev.filter(j => j.id !== id));
 
-    // Persist to backend
+    // Persist to backend (online) or queue for sync (offline)
     try {
-      const dbModule = await getDbModule();
-      const result = await dbModule.deleteJob(id);
+      if (navigator.onLine) {
+        const dbModule = await getDbModule();
+        const result = await dbModule.deleteJob(id);
 
-      if (!result.success) {
-        const errorMessage = result.error || 'Failed to delete job';
-        // Restore to state if delete failed (prevent duplicates)
-        if (originalJob) {
-          setJobs(prev => prev.some(j => j.id === id) ? prev : [...prev, originalJob]);
+        if (!result.success) {
+          // Online but server rejected — queue for later sync
+          const offlineDb = await getOfflineDbModule();
+          await offlineDb.deleteJobLocal(id);
+          await offlineDb.queueAction('DELETE_JOB', { id });
         }
-        setError(errorMessage);
-        throw new Error(errorMessage);
+      } else {
+        // Offline — remove from local Dexie and queue DELETE_JOB for sync
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.deleteJobLocal(id);
+        await offlineDb.queueAction('DELETE_JOB', { id });
       }
-    } catch (err) {
-      // Restore to state if network/unexpected error occurred (prevent duplicates)
-      if (originalJob) {
-        setJobs(prev => prev.some(j => j.id === id) ? prev : [...prev, originalJob]);
+    } catch {
+      // Network error or unexpected failure — queue offline
+      try {
+        const offlineDb = await getOfflineDbModule();
+        await offlineDb.deleteJobLocal(id);
+        await offlineDb.queueAction('DELETE_JOB', { id });
+      } catch {
+        // Last resort: data is removed from React state, will be saved via debounced localStorage
+        // On next sync, the server version may reappear — but user intent was to delete
       }
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete job';
-      setError(errorMessage);
-      throw err instanceof Error ? err : new Error(errorMessage);
     }
   }, [jobs]);
 

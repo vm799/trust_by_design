@@ -2,10 +2,9 @@
  * ManagerFocusDashboard - Mission Control Center
  *
  * UX Contract: FOCUS / QUEUE / BACKGROUND (strict)
- * - ACTION TILES: Search, Assign, All Jobs — top-loaded immediately after header
+ * - JOB FILTER BAR: Color-coded pills (Pending, Active, Awaiting, Closed) + compact status
+ * - ACTION TILES: Search, Assign, All Jobs — top-loaded after filter bar
  * - PROOF GAP BAR: "Are we defensible?" at a glance (~10%)
- * - JOB STATUS PILLS: Color-coded filter pills (Pending, Active, Awaiting, Closed)
- * - TECHNICIAN PULSE: Dynamic "X On-Site" — reactive, not hard-coded
  * - ATTENTION QUEUE: Only exceptions appear (idle, stuck, sync failed) (~30%)
  * - TECHNICIAN ROWS: Shows counts, not job lists (~40%)
  *
@@ -578,24 +577,16 @@ const ManagerFocusDashboard: React.FC = () => {
     const dispatchedJobsList = jobs.filter(j =>
       j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
     );
-    const dispatchedJobs = dispatchedJobsList.length;
 
-    // Check which dispatched links have been opened (reads localStorage directly)
-    let linksOpened = 0;
+    // Count dispatched links awaiting response
     let linksAwaiting = 0;
     for (const job of dispatchedJobsList) {
       const links = getMagicLinksForJob(job.id);
       const anyOpened = links.some(l => l.first_accessed_at);
-      if (anyOpened) linksOpened++;
-      else linksAwaiting++;
+      if (!anyOpened) linksAwaiting++;
     }
 
-    // Needs link: jobs with a technician assigned but no link generated yet
-    const needsLink = jobs.filter(j =>
-      (j.technicianId || j.techId) && !j.magicLinkUrl && ['Pending', 'Draft'].includes(j.status)
-    ).length;
-
-    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs, dispatchedJobs, linksOpened, linksAwaiting, needsLink };
+    return { onSiteTechs, failedSyncs, overdueJobs, hasIssues, completedJobs, activeJobs, pendingJobs, linksAwaiting };
   }, [technicians, jobs, now]);
 
   // On-site technicians with job details for pulse modal
@@ -668,51 +659,6 @@ const ManagerFocusDashboard: React.FC = () => {
             className="hidden sm:inline-flex"
           />
           <h1 className="text-lg font-bold text-slate-900 dark:text-white">Mission Control</h1>
-          {/* Desktop status chips */}
-          <div className="hidden sm:flex items-center gap-2 text-xs">
-            <button
-              onClick={() => setIsTechPulseOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors min-h-[32px]"
-            >
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold">{metrics.onSiteTechs}</span> on-site
-            </button>
-            {metrics.linksAwaiting > 0 && (
-              <Link
-                to={`${ROUTES.JOBS}?filter=dispatched`}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors min-h-[32px]"
-              >
-                <span className="material-symbols-outlined text-xs">schedule_send</span>
-                <span className="font-bold">{metrics.linksAwaiting}</span> awaiting
-              </Link>
-            )}
-            {metrics.linksOpened > 0 && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400">
-                <span className="material-symbols-outlined text-xs">mark_email_read</span>
-                <span className="font-bold">{metrics.linksOpened}</span> link{metrics.linksOpened !== 1 ? 's' : ''} opened
-              </span>
-            )}
-            {metrics.needsLink > 0 && (
-              <Link
-                to={`${ROUTES.JOBS}?filter=needs_link`}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-500/15 text-slate-400 hover:bg-slate-500/25 transition-colors min-h-[32px]"
-              >
-                <span className="material-symbols-outlined text-xs">link_off</span>
-                <span className="font-bold">{metrics.needsLink}</span> need{metrics.needsLink !== 1 ? '' : 's'} link
-              </Link>
-            )}
-            {metrics.hasIssues ? (
-              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400">
-                <span className="material-symbols-outlined text-xs">warning</span>
-                <span className="font-bold">{metrics.failedSyncs + metrics.overdueJobs}</span> issue{metrics.failedSyncs + metrics.overdueJobs !== 1 ? 's' : ''}
-              </span>
-            ) : metrics.linksAwaiting === 0 && metrics.needsLink === 0 && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400/80">
-                <span className="material-symbols-outlined text-xs">check_circle</span>
-                All Clear
-              </span>
-            )}
-          </div>
         </div>
         <ActionButton variant="primary" icon="add" to={ROUTES.JOB_CREATE}>
           New Job
@@ -726,60 +672,33 @@ const ManagerFocusDashboard: React.FC = () => {
           animate="visible"
           className="space-y-6"
         >
-          {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
+          {/* JOB FILTER BAR — Primary filter + compact status */}
           <motion.section variants={fadeInUp}>
-            <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-4 gap-3">
-              <button
-                onClick={() => setIsSearchModalOpen(true)}
-                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Search jobs (Ctrl+K)"
-              >
-                <span className="material-symbols-outlined text-lg text-slate-400">search</span>
-                <span className="text-xs">Search</span>
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedJobForAssign(null);
-                  setIsAssignModalOpen(true);
-                }}
-                className="min-h-[56px] px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Assign technician (Ctrl+A)"
-              >
-                <span className="material-symbols-outlined text-lg">person_add</span>
-                <span className="text-xs">Assign</span>
-              </button>
-              <Link
-                to={ROUTES.JOBS}
-                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="View all jobs"
-              >
-                <span className="material-symbols-outlined text-lg text-slate-400">list_alt</span>
-                <span className="text-xs">All Jobs</span>
-              </Link>
-              <Link
-                to={ROUTES.JOB_CREATE}
-                className="min-h-[56px] px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary sm:hidden"
-                aria-label="Create new job"
-              >
-                <span className="material-symbols-outlined text-lg">add_circle</span>
-                <span className="text-xs">New Job</span>
-              </Link>
-            </div>
-          </motion.section>
-
-          {/* PROOF GAP BAR - "Are we defensible?" */}
-          <motion.section variants={fadeInUp}>
-            <ProofGapBar
-              jobs={jobs}
-              onClick={() => navigate(`${ROUTES.JOBS}?filter=needs_proof`)}
-            />
-          </motion.section>
-
-          {/* JOB STATUS PILLS - Color-coded filter system */}
-          <motion.section variants={fadeInUp}>
-            <div className="border-b border-slate-200 dark:border-white/15 pb-4 mb-6">
-              <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Job Status</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide">Jobs</h2>
+              <div className="flex items-center gap-3 text-xs">
+                <button
+                  onClick={() => setIsTechPulseOpen(true)}
+                  className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors min-h-[44px] px-1"
+                >
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-semibold">{metrics.onSiteTechs}</span> on-site
+                </button>
+                {metrics.hasIssues && (
+                  <span className="flex items-center gap-1.5 text-red-400">
+                    <span className="material-symbols-outlined text-xs">warning</span>
+                    <span className="font-semibold">{metrics.failedSyncs + metrics.overdueJobs}</span> issue{metrics.failedSyncs + metrics.overdueJobs !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {!metrics.hasIssues && metrics.linksAwaiting > 0 && (
+                  <Link
+                    to={`${ROUTES.JOBS}?filter=dispatched`}
+                    className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    <span className="font-semibold">{metrics.linksAwaiting}</span> dispatched
+                  </Link>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {JOB_PILLS.map(pill => {
@@ -858,38 +777,57 @@ const ManagerFocusDashboard: React.FC = () => {
             </AnimatePresence>
           </motion.section>
 
-          {/* MOBILE TECHNICIAN PULSE — Visible only on small screens */}
-          <motion.section variants={fadeInUp} className="sm:hidden">
-            <div className={`grid gap-2 ${metrics.linksAwaiting > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {/* TOP-LOADED ACTION TILES — Search, Assign, All Jobs */}
+          <motion.section variants={fadeInUp}>
+            <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wide mb-3">Quick Actions</h2>
+            <div className="grid grid-cols-4 gap-3">
               <button
-                onClick={() => setIsTechPulseOpen(true)}
-                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]"
+                onClick={() => setIsSearchModalOpen(true)}
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Search jobs (Ctrl+K)"
               >
-                <span className="text-lg font-bold text-emerald-400">{metrics.onSiteTechs}</span>
-                <span className="text-xs text-emerald-400/80">On-Site</span>
+                <span className="material-symbols-outlined text-lg text-slate-400">search</span>
+                <span className="text-xs">Search</span>
               </button>
-              {metrics.linksAwaiting > 0 && (
-                <Link
-                  to={`${ROUTES.JOBS}?filter=dispatched`}
-                  className="flex flex-col items-center gap-1 p-3 rounded-xl bg-amber-500/10 border-2 border-amber-500/20 min-h-[56px]"
-                >
-                  <span className="text-lg font-bold text-amber-400">{metrics.linksAwaiting}</span>
-                  <span className="text-xs text-amber-400/80">Awaiting</span>
-                </Link>
-              )}
-              {metrics.hasIssues ? (
-                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-red-500/10 border-2 border-red-500/20 min-h-[56px]">
-                  <span className="text-lg font-bold text-red-400">{metrics.failedSyncs + metrics.overdueJobs}</span>
-                  <span className="text-xs text-red-400/80">Issues</span>
-                </div>
-              ) : metrics.linksAwaiting === 0 && metrics.needsLink === 0 && (
-                <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/20 min-h-[56px]">
-                  <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
-                  <span className="text-xs text-emerald-400/80">All Clear</span>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  setSelectedJobForAssign(null);
+                  setIsAssignModalOpen(true);
+                }}
+                className="min-h-[56px] px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Assign technician (Ctrl+A)"
+              >
+                <span className="material-symbols-outlined text-lg">person_add</span>
+                <span className="text-xs">Assign</span>
+              </button>
+              <Link
+                to={ROUTES.JOBS}
+                className="min-h-[56px] px-3 py-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl border-2 border-slate-600 hover:border-slate-600 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="View all jobs"
+              >
+                <span className="material-symbols-outlined text-lg text-slate-400">list_alt</span>
+                <span className="text-xs">All Jobs</span>
+              </Link>
+              <Link
+                to={ROUTES.JOB_CREATE}
+                className="min-h-[56px] px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-semibold rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary sm:hidden"
+                aria-label="Create new job"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                <span className="text-xs">New Job</span>
+              </Link>
             </div>
           </motion.section>
+
+          {/* PROOF GAP BAR - "Are we defensible?" */}
+          <motion.section variants={fadeInUp}>
+            <ProofGapBar
+              jobs={jobs}
+              onClick={() => navigate(`${ROUTES.JOBS}?filter=needs_proof`)}
+            />
+          </motion.section>
+
+
 
           {/* ATTENTION QUEUE - Critical exceptions only — hidden when no issues */}
           {attentionItems.length > 0 && (

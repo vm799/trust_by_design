@@ -258,6 +258,7 @@ const MobileJobCard = React.memo(({
   const lifecycle = getJobLifecycle(job);
 
   const isDeletable = !job.sealedAt && !job.isSealed && !job.invoiceId;
+  const isPausable = ['In Progress', 'Pending'].includes(job.status) && !job.sealedAt;
 
   const {
     elementRef,
@@ -266,26 +267,17 @@ const MobileJobCard = React.memo(({
     isEnabled,
   } = useSwipeAction({
     rightActions: [{ label: 'View', icon: 'visibility', color: 'bg-primary', onAction: () => onNavigate(job.id) }],
-    leftActions: isDeletable ? [{ label: 'Delete', icon: 'delete', color: 'bg-red-500', onAction: () => onAction('delete', job) }] : [],
+    leftActions: [],
     threshold: 80,
   });
 
   return (
     <div ref={elementRef} className="relative overflow-hidden rounded-2xl">
       {/* Swipe-behind actions */}
-      {isEnabled && offsetX !== 0 && (
-        <>
-          {offsetX > 0 && (
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 bg-primary rounded-l-2xl" style={{ width: Math.abs(offsetX) }}>
-              <span className="material-symbols-outlined text-white">visibility</span>
-            </div>
-          )}
-          {offsetX < 0 && isDeletable && (
-            <div className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 bg-red-500 rounded-r-2xl" style={{ width: Math.abs(offsetX) }}>
-              <span className="material-symbols-outlined text-white">delete</span>
-            </div>
-          )}
-        </>
+      {isEnabled && offsetX > 0 && (
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 bg-primary rounded-l-2xl" style={{ width: Math.abs(offsetX) }}>
+          <span className="material-symbols-outlined text-white">visibility</span>
+        </div>
       )}
       {/* Card content - slides with swipe */}
       <div
@@ -314,6 +306,35 @@ const MobileJobCard = React.memo(({
                 {lifecycle.label}
               </span>
               <SyncDot status={job.syncStatus} />
+
+              {/* Inline action icons — edit, pause, delete */}
+              <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAction('edit', job); }}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                  aria-label="Edit job"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                {isPausable && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAction('pause', job); }}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                    aria-label={job.status === 'Paused' ? 'Resume job' : 'Pause job'}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">{job.status === 'Paused' ? 'play_arrow' : 'pause'}</span>
+                  </button>
+                )}
+                {isDeletable && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAction('delete', job); }}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                    aria-label="Delete job"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
               {job.client}
@@ -415,8 +436,16 @@ const JobsList: React.FC<JobsListProps> = ({ jobs, user }) => {
       case 'start':
         navigate(`/admin/report/${job.id}`);
         break;
+      case 'pause' as string:
+        // Toggle pause status directly
+        if (job.status === 'Paused') {
+          contextUpdateJob({ ...job, status: 'In Progress' });
+        } else {
+          contextUpdateJob({ ...job, status: 'Paused' });
+        }
+        break;
     }
-  }, [navigate]);
+  }, [navigate, contextUpdateJob]);
 
   const handleDelete = useCallback(async () => {
     if (!actionJob) return;
