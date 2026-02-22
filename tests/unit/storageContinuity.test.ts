@@ -195,8 +195,8 @@ describe('Storage Continuity - Offline sync handlers', () => {
     expect(syncContent).toMatch(/processUpdateTechnician/);
   });
 
-  it('processCreateJob should upsert to jobs table', () => {
-    expect(syncContent).toMatch(/\.from\('jobs'\)\s*\n?\s*\.upsert\(/);
+  it('processCreateJob should upsert to bunker_jobs table', () => {
+    expect(syncContent).toMatch(/\.from\('bunker_jobs'\)\s*\n?\s*\.upsert\(/);
   });
 
   it('processCreateClient should upsert to clients table', () => {

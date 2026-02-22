@@ -539,21 +539,24 @@ async function processUpdateJob(job: Partial<LocalJob>) {
     const supabase = getSupabase();
     if (!supabase || !job.id) return false;
 
-    // Transform to snake_case for Supabase
+    // Map to bunker_jobs column names
     const updateData: any = {
-        updated_at: new Date().toISOString()
+        last_updated: new Date().toISOString()
     };
     if (job.status) updateData.status = job.status;
     if (job.notes) updateData.notes = job.notes;
-    if (job.safetyChecklist) updateData.safety_checklist = job.safetyChecklist;
-    if (job.photos) updateData.photos = job.photos; // Metadata update
     if (job.w3w) updateData.w3w = job.w3w;
-    if (job.lat) updateData.lat = job.lat;
-    if (job.lng) updateData.lng = job.lng;
-    // ... map other fields
+    if (job.title) updateData.title = job.title;
+    if (job.client) updateData.client = job.client;
+    if (job.clientId) updateData.client_id = job.clientId;
+    if (job.technician) updateData.technician_name = job.technician;
+    if (job.techId || job.technicianId) updateData.assigned_technician_id = job.techId || job.technicianId;
+    if (job.address) updateData.address = job.address;
+    if (job.signerName) updateData.signer_name = job.signerName;
+    if (job.completedAt) updateData.completed_at = job.completedAt;
 
     const { error } = await supabase
-        .from('jobs')
+        .from('bunker_jobs')
         .update(updateData)
         .eq('id', job.id);
 
@@ -568,22 +571,22 @@ async function processCreateJob(job: any) {
     if (!supabase || !job.id) return false;
 
     const { error } = await supabase
-        .from('jobs')
+        .from('bunker_jobs')
         .upsert({
             id: job.id,
             title: job.title || '',
-            description: job.description || '',
-            status: job.status || 'Draft',
+            client: job.client || '',
             client_id: job.clientId || null,
-            technician_id: job.technicianId || job.techId || null,
+            assigned_technician_id: job.technicianId || job.techId || null,
+            technician_name: job.technician || '',
             workspace_id: job.workspaceId || job.workspace_id || null,
-            location: job.location || null,
-            scheduled_date: job.scheduledDate || null,
-            photos: job.photos || [],
+            status: job.status || 'Draft',
+            address: job.address || null,
+            w3w: job.w3w || null,
             notes: job.notes || null,
-            safety_checklist: job.safetyChecklist || [],
+            completed_at: job.completedAt || null,
             created_at: job.createdAt || new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
         }, { onConflict: 'id' });
 
     if (error) {
