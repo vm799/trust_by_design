@@ -279,29 +279,27 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       signatureUrl = publicUrl;
     }
 
-    // 3. Upsert job to database
+    // 3. Upsert job to bunker_jobs (primary table — getJobs reads from here)
     // Sprint 2 Task 2.6: Use normalizedJob for consistent technician IDs
     const { error: jobError } = await supabase
-      .from('jobs')
+      .from('bunker_jobs')
       .upsert({
         id: normalizedJob.id,
         title: normalizedJob.title,
         client: normalizedJob.client,
+        client_id: normalizedJob.clientId,
         address: normalizedJob.address,
         notes: normalizedJob.notes,
         status: normalizedJob.status,
-        lat: normalizedJob.lat,
-        lng: normalizedJob.lng,
         w3w: normalizedJob.w3w,
-        assignee: normalizedJob.technician,
-        technician_id: normalizedJob.technicianId || normalizedJob.techId, // Normalized technician ID
+        technician_name: normalizedJob.technician,
+        assigned_technician_id: normalizedJob.technicianId || normalizedJob.techId,
         signer_name: normalizedJob.signerName,
-        signer_role: normalizedJob.signerRole,
-        signature_url: signatureUrl,
-        created_at: normalizedJob.date,
+        signature_data: signatureUrl,
+        workspace_id: normalizedJob.workspaceId,
         completed_at: normalizedJob.completedAt,
-        last_updated: normalizedJob.lastUpdated,
-        sync_status: SYNC_STATUS.SYNCED
+        last_updated: normalizedJob.lastUpdated || new Date().toISOString(),
+        created_at: normalizedJob.date || new Date().toISOString(),
       });
 
     if (jobError) throw jobError;
