@@ -320,7 +320,7 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
       }));
 
       const { error: photoError } = await supabase
-        .from('photos')
+        .from('bunker_photos')
         .upsert(photoRecords);
 
       // P0 FIX: Never return success if photo records failed to sync

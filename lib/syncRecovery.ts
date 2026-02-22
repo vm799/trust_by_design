@@ -497,7 +497,7 @@ export async function checkSyncHealth(): Promise<{
       const supabase = getSupabase();
       if (supabase) {
         // Simple health check query
-        const { error } = await supabase.from('jobs').select('id').limit(1);
+        const { error } = await supabase.from('bunker_jobs').select('id').limit(1);
         supabaseReachable = !error;
       }
     } catch {

@@ -305,7 +305,7 @@ async function syncJobToCloud(job: RunJob): Promise<boolean> {
             title: job.title || `Bunker Job ${job.id}`,
             description: job.notes || '',
             notes: job.notes || '',
-            status: job.completedAt ? 'Complete' : 'In Progress',
+            status: job.completedAt ? 'Complete' : (job.beforePhoto ? 'In Progress' : 'Pending'),
             photos: [],
             created_at: new Date(job.lastUpdated).toISOString(),
             updated_at: new Date().toISOString(),

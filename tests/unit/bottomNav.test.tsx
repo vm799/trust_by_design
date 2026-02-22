@@ -2,7 +2,7 @@
  * BottomNav Component Tests
  *
  * Tests the mobile sticky bottom navigation:
- * - 5 nav items: Dashboard, Jobs, +Add (FAB), Clients, Technicians
+ * - 5 nav items: Dashboard, Jobs, +Add (FAB), Capture, Technicians
  * - Center FAB button for quick job creation
  * - Active state detection based on route
  * - Touch targets meet 44px minimum (WCAG)
@@ -28,7 +28,7 @@ describe('BottomNav Component', () => {
       renderWithRouter('/admin');
       expect(screen.getByText('Dashboard')).toBeTruthy();
       expect(screen.getByText('Jobs')).toBeTruthy();
-      expect(screen.getByText('Clients')).toBeTruthy();
+      expect(screen.getByText('Capture')).toBeTruthy();
       expect(screen.getByText('Techs')).toBeTruthy();
     });
 
@@ -56,10 +56,10 @@ describe('BottomNav Component', () => {
       expect(fab.getAttribute('href')).toBe('/admin/create');
     });
 
-    it('should link Clients to /admin/clients', () => {
+    it('should link Capture to /tech', () => {
       renderWithRouter('/admin');
-      const link = screen.getByText('Clients').closest('a');
-      expect(link?.getAttribute('href')).toBe('/admin/clients');
+      const link = screen.getByText('Capture').closest('a');
+      expect(link?.getAttribute('href')).toBe('/tech');
     });
 
     it('should link Techs to /admin/technicians', () => {
@@ -82,9 +82,9 @@ describe('BottomNav Component', () => {
       expect(link?.className).toContain('text-primary');
     });
 
-    it('should highlight Clients when on /admin/clients', () => {
-      renderWithRouter('/admin/clients');
-      const link = screen.getByText('Clients').closest('a');
+    it('should highlight Capture when on /tech', () => {
+      renderWithRouter('/tech');
+      const link = screen.getByText('Capture').closest('a');
       expect(link?.className).toContain('text-primary');
     });
 
