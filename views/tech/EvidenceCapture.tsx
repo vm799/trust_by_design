@@ -11,7 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../lib/DataContext';
 import { Job } from '../../types';
 import { SYNC_STATUS } from '../../lib/constants';
-import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError } from '../../lib/offline/db';
+import { saveMediaLocal, getMediaLocal, getDatabase, StorageQuotaExceededError, queueAction } from '../../lib/offline/db';
 import OfflineIndicator from '../../components/OfflineIndicator';
 import { showToast, playCameraShutter } from '../../lib/microInteractions';
 import { compressImage } from '../../lib/imageCompression';
@@ -301,7 +301,11 @@ const EvidenceCapture: React.FC = () => {
         await database.media.delete(draftKey);
       });
 
-      // 3. Update context (reflects the committed DB state)
+      // 3. Queue UPLOAD_PHOTO action so sync worker uploads to Supabase Storage
+      // Without this, processUpdateJob only syncs metadata — photos stay in IndexedDB forever
+      await queueAction('UPLOAD_PHOTO', { id: mediaKey, jobId: job.id });
+
+      // 4. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
       // FIX 2.3: Show photo saved confirmation (green checkmark, auto-dismiss after 2s)

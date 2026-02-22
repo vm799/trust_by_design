@@ -41,6 +41,19 @@ describe('EvidenceCapture Photo Sync', () => {
     // Media put must happen inside the transaction
     expect(evidenceCaptureSource).toMatch(/transaction.*\n[\s\S]*?media\.put[\s\S]*?jobs\.put[\s\S]*?media\.delete/);
   });
+
+  it('queues UPLOAD_PHOTO action so sync worker can upload to Supabase', () => {
+    // CRITICAL: Without this, processUpdateJob only syncs metadata.
+    // processUploadPhoto is the ONLY function that uploads from IndexedDB to Storage.
+    // It MUST be queued as a Dexie queue action.
+    expect(evidenceCaptureSource).toContain("queueAction('UPLOAD_PHOTO'");
+    expect(evidenceCaptureSource).toContain('id: mediaKey, jobId: job.id');
+  });
+
+  it('imports queueAction from offline/db', () => {
+    // queueAction must be imported to create the UPLOAD_PHOTO queue entry
+    expect(evidenceCaptureSource).toMatch(/import.*queueAction.*from.*offline\/db/);
+  });
 });
 
 describe('EvidenceCapture Camera Button Positioning', () => {
