@@ -611,16 +611,17 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
       return { success: false, error: 'Invalid job ID' };
     }
 
-    // Fetch job first to validate sealed/invoiced status and get workspace_id for cache invalidation
+    // Fetch job first to validate sealed status and get workspace_id for cache invalidation
+    // Note: bunker_jobs does not have invoice_id column
     const { data: jobData } = await supabase
       .from('bunker_jobs')
-      .select('workspace_id, sealed_at, invoice_id')
+      .select('workspace_id, sealed_at')
       .eq('id', jobId)
       .single();
 
-    // Also check jobs table if not found in bunker_jobs
+    // Also check jobs table if not found in bunker_jobs (for invoice_id check)
     let sealedAt = jobData?.sealed_at;
-    let invoiceId = jobData?.invoice_id;
+    let invoiceId: string | null = null;
     let workspaceId = jobData?.workspace_id;
 
     if (!jobData) {
