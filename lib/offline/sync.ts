@@ -716,13 +716,20 @@ async function processDeleteJob(payload: { id: string }): Promise<boolean> {
     const supabase = getSupabase();
     if (!supabase || !payload.id) return false;
 
-    const { error } = await supabase
+    // Delete from both tables — job may exist in either or both
+    const { error: bunkerError } = await supabase
+        .from('bunker_jobs')
+        .delete()
+        .eq('id', payload.id);
+
+    const { error: jobsError } = await supabase
         .from('jobs')
         .delete()
         .eq('id', payload.id);
 
-    if (error) {
-        console.error('[Sync] DELETE_JOB failed:', error.message);
+    // Fail only if BOTH tables returned errors
+    if (bunkerError && jobsError) {
+        console.error('[Sync] DELETE_JOB failed:', bunkerError.message || jobsError.message);
         return false;
     }
     return true;
