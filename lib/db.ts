@@ -683,28 +683,28 @@ export const deleteJob = async (jobId: string): Promise<DbResult<void>> => {
       };
     }
 
-    const { error } = await supabase
+    // Delete from both tables — job may exist in either or both
+    // bunker_jobs is the primary table, jobs is the legacy table
+    const { error: bunkerError } = await supabase
+      .from('bunker_jobs')
+      .delete()
+      .eq('id', jobId);
+
+    const { error: jobsError } = await supabase
       .from('jobs')
       .delete()
       .eq('id', jobId);
 
-    if (error) {
-      // PostgreSQL type error (e.g., invalid UUID format)
-      if (error.message?.includes('invalid input syntax')) {
+    // Fail only if BOTH tables returned errors (job wasn't in either)
+    if (bunkerError && jobsError) {
+      const msg = bunkerError.message || jobsError.message;
+      if (msg?.includes('invalid input syntax')) {
         return {
           success: false,
           error: 'Could not delete: invalid record ID. Please refresh and try again.'
         };
       }
-      return { success: false, error: error.message };
-    }
-
-    // Also try to delete from bunker_jobs table (jobs may come from either table)
-    // DataContext merges both tables, so we need to clean up both
-    try {
-      await supabase.from('bunker_jobs').delete().eq('id', jobId);
-    } catch {
-      // Non-critical: bunker_jobs deletion is best-effort
+      return { success: false, error: msg };
     }
 
     // Invalidate cache if we have workspace_id
