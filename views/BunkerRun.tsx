@@ -633,14 +633,47 @@ export default function BunkerRun() {
       const cacheAge = Date.now() - cached.lastUpdated;
       const isStale = cacheAge > CACHE_TTL_MS;
 
-      // If cache is fresh OR we're offline, use cached data
-      if (!isStale || !isOnline) {
+      // If offline, use cached data (no way to verify)
+      if (!isOnline) {
         setJob(cached);
         storeJobDetailsForSync(cached);
         return;
       }
 
-      // Cache is stale and we're online - show cached data immediately but refresh in background
+      // Online: verify job still exists server-side before using cache.
+      // This prevents ghost records from resurrecting deleted jobs.
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        try {
+          const checkResponse = await fetch(
+            `${SUPABASE_URL}/rest/v1/bunker_jobs?id=eq.${id}&select=id`,
+            {
+              headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+              }
+            }
+          );
+          if (checkResponse.ok) {
+            const rows = await checkResponse.json();
+            if (!rows || rows.length === 0) {
+              // Job was deleted server-side — clean the ghost and abort
+              await runDb.jobs.delete(id);
+              setJob(null);
+              return;
+            }
+          }
+        } catch {
+          // Network error — fall through to use cached data
+        }
+      }
+
+      // Cache is fresh, use it; if stale, show it but continue to step 2 for refresh
+      if (!isStale) {
+        setJob(cached);
+        storeJobDetailsForSync(cached);
+        return;
+      }
+
       setJob(cached);
       storeJobDetailsForSync(cached);
       // Continue to step 2 to refresh from Supabase
@@ -689,6 +722,11 @@ export default function BunkerRun() {
               setIsJobFinished(true);
             }
             return;
+          } else if (cached) {
+            // Server returned empty — job was deleted. Clean ghost.
+            await runDb.jobs.delete(id);
+            setJob(null);
+            return;
           }
         }
       } catch (error) {
@@ -696,7 +734,8 @@ export default function BunkerRun() {
       }
     }
 
-    // 3. Create new job from URL (fallback)
+    // 3. Create new job from URL (fallback — only if no cache existed)
+    // If we had a cached job but server says deleted, we already returned above.
     // Use handshake data for manager/client emails
     const newJob: RunJob = {
       id,

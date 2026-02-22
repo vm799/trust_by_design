@@ -647,6 +647,24 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
     // Optimistic update: Remove from local state immediately
     setJobs(prev => prev.filter(j => j.id !== id));
 
+    // Clean ALL Dexie databases — BunkerRunDB and BunkerProofDB are separate
+    // IndexedDB stores used by /run/:id and /bunker views. Without this cleanup,
+    // deleted jobs resurrect when those routes are visited (ghost records).
+    try {
+      const Dexie = (await import('dexie')).default;
+      const bunkerRunDb = new Dexie('BunkerRunDB');
+      bunkerRunDb.version(1).stores({ jobs: 'id, syncStatus, lastUpdated' });
+      await bunkerRunDb.table('jobs').delete(id);
+      bunkerRunDb.close();
+
+      const bunkerProofDb = new Dexie('BunkerProofDB');
+      bunkerProofDb.version(1).stores({ jobs: 'id, syncStatus, lastUpdated' });
+      await bunkerProofDb.table('jobs').delete(id);
+      bunkerProofDb.close();
+    } catch {
+      // Non-blocking: bunker DB cleanup is best-effort
+    }
+
     // Persist to backend (online) or queue for sync (offline)
     try {
       if (navigator.onLine) {
