@@ -432,7 +432,18 @@ const AppContent: React.FC = () => {
   // effect only fires AFTER the render. Without this check, routes briefly render with
   // user=null, which can crash components that expect a profile.
   const profileNotReadyForUser = isAuthenticated && !!sessionUserId && profileLoadedRef.current !== sessionUserId;
-  if (authLoading || profileLoading || profileNotReadyForUser) {
+
+  // SAFETY TIMEOUT: Prevent infinite spinner on refresh if auth/profile load hangs
+  // After 8 seconds, force-clear loading state so user isn't stuck on blank page
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setLoadingTimedOut(true), 8000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const isStillLoading = !loadingTimedOut && (authLoading || profileLoading || profileNotReadyForUser);
+
+  if (isStillLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center transition-colors">
         <div className="text-center space-y-4">
@@ -695,25 +706,36 @@ const AppContent: React.FC = () => {
         } />
 
         {/* Tech Portal Routes - Modern technician flow (Phase G) */}
+        {/* CRITICAL FIX: Auth guard prevents crash→fallback→landing page chain */}
+        {/* Navigation intent is captured BEFORE auth check (App.tsx line 125) */}
+        {/* so after auth, resumeIntentAndGetPath() returns user to original URL */}
         <Route path="/tech" element={
-          <RouteErrorBoundary sectionName="Tech Portal" fallbackRoute="/home">
-            <TechPortal />
-          </RouteErrorBoundary>
+          isAuthenticated ? (
+            <RouteErrorBoundary sectionName="Tech Portal" fallbackRoute="/home">
+              <TechPortal />
+            </RouteErrorBoundary>
+          ) : <Navigate to="/auth" replace />
         } />
         <Route path="/tech/job/:jobId" element={
-          <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/tech">
-            <TechJobDetail />
-          </RouteErrorBoundary>
+          isAuthenticated ? (
+            <RouteErrorBoundary sectionName="Job Detail" fallbackRoute="/tech">
+              <TechJobDetail />
+            </RouteErrorBoundary>
+          ) : <Navigate to="/auth" replace />
         } />
         <Route path="/tech/job/:jobId/capture" element={
-          <RouteErrorBoundary sectionName="Evidence Capture" fallbackRoute="/tech">
-            <EvidenceCapture />
-          </RouteErrorBoundary>
+          isAuthenticated ? (
+            <RouteErrorBoundary sectionName="Evidence Capture" fallbackRoute="/tech">
+              <EvidenceCapture />
+            </RouteErrorBoundary>
+          ) : <Navigate to="/auth" replace />
         } />
         <Route path="/tech/job/:jobId/review" element={
-          <RouteErrorBoundary sectionName="Evidence Review" fallbackRoute="/tech">
-            <TechEvidenceReview />
-          </RouteErrorBoundary>
+          isAuthenticated ? (
+            <RouteErrorBoundary sectionName="Evidence Review" fallbackRoute="/tech">
+              <TechEvidenceReview />
+            </RouteErrorBoundary>
+          ) : <Navigate to="/auth" replace />
         } />
 
         {/* Phase 15: Field Proof System - Public magic link access */}
