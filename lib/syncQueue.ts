@@ -304,19 +304,16 @@ export const syncJobToSupabase = async (job: Job): Promise<boolean> => {
 
     if (jobError) throw jobError;
 
-    // 4. Batch upsert photos to database (OPTIMIZED: single query instead of N queries)
+    // 4. Batch upsert photos to bunker_photos (correct schema)
     if (uploadedPhotos.length > 0) {
       const photoRecords = uploadedPhotos.map(photo => ({
         id: photo.id,
         job_id: job.id,
-        url: photo.url,
+        storage_url: photo.url,
         type: photo.type,
         timestamp: photo.timestamp,
-        verified: photo.verified,
         lat: photo.lat,
         lng: photo.lng,
-        w3w: photo.w3w,
-        sync_status: SYNC_STATUS.SYNCED
       }));
 
       const { error: photoError } = await supabase
