@@ -155,12 +155,12 @@ async function _pullJobsImpl(workspaceId: string) {
 
         // Build query — incremental pulls only fetch changed records
         let query = supabase
-            .from('jobs')
+            .from('bunker_jobs')
             .select('*')
             .eq('workspace_id', workspaceId);
 
         if (!isFullPull) {
-            query = query.gt('updated_at', lastSyncAt);
+            query = query.gt('last_updated', lastSyncAt);
         }
 
         const { data, error } = await query;
@@ -173,27 +173,22 @@ async function _pullJobsImpl(workspaceId: string) {
         if (data) {
             const serverJobs: LocalJob[] = data.map(row => ({
                 id: row.id,
-                title: row.title,
-                status: row.status,
-                client: row.client_name,
+                title: row.title || 'Untitled Job',
+                status: row.status || 'Pending',
+                client: row.client || '',
                 clientId: row.client_id,
-                technician: row.technician_name,
-                techId: row.technician_id,
-                date: row.scheduled_date,
+                technician: row.technician_name || '',
+                techId: row.assigned_technician_id,
+                date: row.created_at?.split('T')[0],
                 address: row.address,
-                lat: row.lat,
-                lng: row.lng,
                 w3w: row.w3w,
                 notes: row.notes,
-                workSummary: row.work_summary,
-                photos: row.photos || [],
-                signature: row.signature_url,
-                safetyChecklist: row.safety_checklist || [],
-                siteHazards: row.site_hazards || [],
-                templateId: row.template_id,
-                price: row.price,
+                photos: [],
+                signature: row.signature_data || row.signature_url,
+                safetyChecklist: [],
+                siteHazards: [],
                 syncStatus: 'synced' as const,
-                lastUpdated: new Date(row.updated_at).getTime(),
+                lastUpdated: row.last_updated ? new Date(row.last_updated).getTime() : Date.now(),
                 workspaceId: row.workspace_id,
                 sealedAt: row.sealed_at,
                 isSealed: !!row.sealed_at,
@@ -891,12 +886,11 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
             });
 
 
-            // Also update in Supabase
+            // Also update in Supabase (bunker_jobs is the primary table)
             const { error: updateError } = await supabase
-                .from('jobs')
+                .from('bunker_jobs')
                 .update({
-                    photos: updatedPhotos,
-                    updated_at: new Date().toISOString()
+                    last_updated: new Date().toISOString()
                 })
                 .eq('id', payload.jobId);
 
