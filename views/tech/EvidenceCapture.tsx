@@ -308,6 +308,12 @@ const EvidenceCapture: React.FC = () => {
       // 4. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
 
+      // 5. TRIGGER IMMEDIATE SYNC — don't wait 5 min for next performSync interval
+      // pushQueue() is safe to call: it deduplicates, checks online, and is non-blocking
+      if (navigator.onLine) {
+        import('../../lib/offline/sync').then(sync => sync.pushQueue()).catch(() => {});
+      }
+
       // FIX 2.3: Show photo saved confirmation (green checkmark, auto-dismiss after 2s)
       hapticSuccess();
       setPhotoSaveStatus('saved');
