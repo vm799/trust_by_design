@@ -5,6 +5,7 @@ import { Photo } from '../../types';
 import { requestCache, generateCacheKey } from '../performanceUtils';
 import { sealEvidence } from '../sealing';
 import { showPersistentNotification } from '../utils/syncUtils';
+import { convertToW3W } from '../services/what3words';
 
 // ============================================================================
 // INCREMENTAL SYNC: lastSyncAt tracking per workspace
@@ -902,6 +903,32 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
 
         // Clean up IndexedDB media record
         await database.media.delete(payload.id);
+
+        // W3W AUTO-RESOLVE: If photo has GPS coords but missing W3W, resolve now
+        // This fixes offline captures where W3W API was unreachable at capture time
+        const freshJob = await database.jobs.get(payload.jobId);
+        if (freshJob?.photos) {
+            const photosNeedingW3W = freshJob.photos.filter(
+                (p: Photo) => (p.lat && p.lng) && !p.w3w
+            );
+            if (photosNeedingW3W.length > 0) {
+                const w3wUpdates: Photo[] = [...freshJob.photos];
+                for (const photo of photosNeedingW3W) {
+                    try {
+                        const result = await convertToW3W(photo.lat!, photo.lng!);
+                        if (result?.words) {
+                            const idx = w3wUpdates.findIndex((p: Photo) => p.id === photo.id);
+                            if (idx !== -1) {
+                                w3wUpdates[idx] = { ...w3wUpdates[idx], w3w: result.words, w3w_verified: true };
+                            }
+                        }
+                    } catch {
+                        // W3W API still unavailable — will retry on next sync cycle
+                    }
+                }
+                await database.jobs.update(payload.jobId, { photos: w3wUpdates });
+            }
+        }
 
         // AUTO-SEAL: Check if all photos are synced and job should be sealed
         const updatedJob = await database.jobs.get(payload.jobId);

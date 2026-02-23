@@ -9,6 +9,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safe Area padding — requires viewport-fit=cover in <meta viewport> */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 :root {
   /* Base CSS Variables - Dark mode is now the only standard mode */
   /* Light mode removed due to poor contrast for field work */

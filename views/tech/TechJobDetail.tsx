@@ -98,14 +98,29 @@ const TechJobDetail: React.FC = () => {
   );
 
   // Memoize derived photo data
-  const { photos, beforePhotos, duringPhotos, afterPhotos, isActive, canComplete, isSealed, isSubmitted, currentWorkflowStep } = useMemo(() => {
-    if (!job) return { photos: [] as Photo[], beforePhotos: [] as Photo[], duringPhotos: [] as Photo[], afterPhotos: [] as Photo[], isActive: false, canComplete: false, isSealed: false, isSubmitted: false, currentWorkflowStep: 0 };
+  const { photos, beforePhotos, duringPhotos, afterPhotos, isActive, canComplete, isSealed, isSubmitted, currentWorkflowStep, syncStatus } = useMemo(() => {
+    if (!job) return { photos: [] as Photo[], beforePhotos: [] as Photo[], duringPhotos: [] as Photo[], afterPhotos: [] as Photo[], isActive: false, canComplete: false, isSealed: false, isSubmitted: false, currentWorkflowStep: 0, syncStatus: 'idle' as const };
     const p = job.photos || [];
     const before = p.filter(ph => ph.type?.toLowerCase() === 'before');
     const during = p.filter(ph => ph.type?.toLowerCase() === 'during');
     const after = p.filter(ph => ph.type?.toLowerCase() === 'after');
     const active = job.status === 'In Progress';
     const complete = before.length >= 1 && after.length >= 1;
+    const sealed = !!job.sealedAt;
+    const submitted = job.status === 'Submitted' || job.status === 'Complete';
+
+    // Compute sync/seal status for user visibility
+    const pendingPhotos = p.filter(ph => ph.isIndexedDBRef || ph.syncStatus === 'pending');
+    const allSynced = p.length > 0 && pendingPhotos.length === 0;
+    let status: 'idle' | 'syncing' | 'sealing' | 'sealed' | 'sync_failed' = 'idle';
+    if (sealed) {
+      status = 'sealed';
+    } else if (submitted && allSynced) {
+      status = 'sealing';
+    } else if (pendingPhotos.length > 0) {
+      status = 'syncing';
+    }
+
     return {
       photos: p,
       beforePhotos: before,
@@ -113,9 +128,10 @@ const TechJobDetail: React.FC = () => {
       afterPhotos: after,
       isActive: active,
       canComplete: complete,
-      isSealed: !!job.sealedAt,
-      isSubmitted: job.status === 'Submitted' || job.status === 'Complete',
+      isSealed: sealed,
+      isSubmitted: submitted,
       currentWorkflowStep: getWorkflowStep(job, complete),
+      syncStatus: status,
     };
   }, [job]);
 
@@ -324,6 +340,36 @@ const TechJobDetail: React.FC = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Sync/Seal Status Banner — Makes invisible pipeline VISIBLE */}
+          {syncStatus === 'syncing' && (
+            <motion.div variants={fadeInUp}>
+              <div className="p-4 rounded-2xl flex items-center gap-4 bg-blue-500/10 border border-blue-500/20">
+                <div className="size-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-blue-400 animate-spin">sync</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-blue-400 text-sm">Syncing Photos</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {photos.filter(p => p.isIndexedDBRef || p.syncStatus === 'pending').length} photo(s) uploading to cloud
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {syncStatus === 'sealing' && (
+            <motion.div variants={fadeInUp}>
+              <div className="p-4 rounded-2xl flex items-center gap-4 bg-amber-500/10 border border-amber-500/20">
+                <div className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-amber-400 animate-pulse">lock_clock</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-amber-400 text-sm">Sealing Evidence</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">All photos synced — cryptographic seal in progress</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Error Banner with Retry */}
           {actionError && (

@@ -203,9 +203,19 @@ const AppContent: React.FC = () => {
       performSync();
     }, 300000); // 5 minutes
 
-    // Online Listener with throttle
-    const handleOnline = () => {
-      performSync();
+    // Online Listener — BYPASSES throttle. Going offline→online MUST always
+    // push the queue immediately. A tech exiting a bunker after 2 minutes should
+    // NOT wait 3 more minutes for the throttle interval to pass.
+    const handleOnline = async () => {
+      if (user?.workspace?.id) {
+        lastSyncTime = Date.now(); // Reset throttle so interval doesn't double-fire
+        const sync = await getOfflineSync();
+        sync.pushQueue();        // Push queued photos/jobs IMMEDIATELY
+        sync.pullJobs(user.workspace.id);
+        sync.pullClients(user.workspace.id);
+        sync.pullTechnicians(user.workspace.id);
+        sync.retryOrphanPhotos();
+      }
     };
     window.addEventListener('online', handleOnline);
 

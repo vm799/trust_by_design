@@ -61,6 +61,8 @@ const EvidenceCapture: React.FC = () => {
   const [w3wVerified, setW3wVerified] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isAcquiringGPS, setIsAcquiringGPS] = useState(true);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsRetryCount, setGpsRetryCount] = useState(0);
 
   // Track online/offline status
   useEffect(() => {
@@ -168,28 +170,44 @@ const EvidenceCapture: React.FC = () => {
     };
   }, []);
 
-  // Get location with accuracy
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      setIsAcquiringGPS(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          });
-          setIsAcquiringGPS(false);
-        },
-        () => {
-          setIsAcquiringGPS(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
-    } else {
+  // Get location with accuracy — LOUD failure if GPS unavailable
+  const attemptGPS = useCallback(() => {
+    if (!('geolocation' in navigator)) {
       setIsAcquiringGPS(false);
+      setGpsError('This device does not support GPS location.');
+      return;
     }
+    setIsAcquiringGPS(true);
+    setGpsError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+        setIsAcquiringGPS(false);
+        setGpsError(null);
+        setGpsRetryCount(0);
+      },
+      (err) => {
+        setIsAcquiringGPS(false);
+        setGpsRetryCount(prev => prev + 1);
+        if (err.code === 1) {
+          setGpsError('GPS permission denied. Enable Location in device Settings.');
+        } else if (err.code === 2) {
+          setGpsError('GPS signal unavailable. Move to an open area if possible.');
+        } else {
+          setGpsError('GPS timed out. Tap Retry GPS or continue without location.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
   }, []);
+
+  useEffect(() => {
+    attemptGPS();
+  }, [attemptGPS]);
 
   const capturePhoto = async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -307,6 +325,12 @@ const EvidenceCapture: React.FC = () => {
 
       // 4. Update context (reflects the committed DB state)
       contextUpdateJob(updatedJob);
+
+      // 5. TRIGGER IMMEDIATE SYNC — don't wait 5 min for next performSync interval
+      // pushQueue() is safe to call: it deduplicates, checks online, and is non-blocking
+      if (navigator.onLine) {
+        import('../../lib/offline/sync').then(sync => sync.pushQueue()).catch(() => {});
+      }
 
       // FIX 2.3: Show photo saved confirmation (green checkmark, auto-dismiss after 2s)
       hapticSuccess();
@@ -450,6 +474,24 @@ const EvidenceCapture: React.FC = () => {
       {/* Offline status indicator */}
       <OfflineIndicator />
 
+      {/* GPS FAILURE WARNING — Must be LOUD, not silent */}
+      {gpsError && !location && (
+        <div className="bg-red-600 px-4 py-3 flex items-center gap-3 z-50">
+          <span className="material-symbols-outlined text-white text-xl">location_off</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm">No GPS Location</p>
+            <p className="text-red-100 text-xs truncate">{gpsError}</p>
+          </div>
+          <button
+            onClick={attemptGPS}
+            className="flex-shrink-0 px-3 py-2 bg-white/20 rounded-lg text-white text-xs font-bold min-h-[44px] flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-sm">refresh</span>
+            Retry{gpsRetryCount > 0 ? ` (${gpsRetryCount})` : ''}
+          </button>
+        </div>
+      )}
+
       {/* FIX 2.3: Photo saved confirmation UI */}
       <PhotoSavedConfirmation
         show={photoSaveStatus !== null}
@@ -468,6 +510,29 @@ const EvidenceCapture: React.FC = () => {
       {capturedPhoto ? (
         /* Photo Preview */
         <div className="flex-1 flex flex-col">
+          {/* GPS WARNING on preview — photo will be saved WITHOUT location */}
+          {!capturedPhoto.location && gpsError && (
+            <div className="bg-amber-500 px-4 py-3 flex items-center gap-3">
+              <span className="material-symbols-outlined text-amber-900">warning</span>
+              <div className="flex-1">
+                <p className="text-amber-900 font-bold text-sm">No GPS on This Photo</p>
+                <p className="text-amber-800 text-xs">Photo will save without location proof</p>
+              </div>
+              <button
+                onClick={() => {
+                  attemptGPS();
+                  if (location && capturedPhoto) {
+                    const updated = { ...capturedPhoto, location };
+                    setCapturedPhoto(updated);
+                    persistDraft(updated);
+                  }
+                }}
+                className="flex-shrink-0 px-3 py-2 bg-amber-700 rounded-lg text-white text-xs font-bold min-h-[44px]"
+              >
+                Retry GPS
+              </button>
+            </div>
+          )}
           {/* P0-3 FIX: Storage full warning - device needs space */}
           {storageFullWarning && (
             <div className="bg-red-500 px-4 py-3 flex items-center gap-3">
