@@ -351,19 +351,20 @@ function mergeJobData(local: LocalJob, server: LocalJob): LocalJob {
     // Start with server data
     const merged = { ...server };
 
-    // Preserve local photos that haven't synced yet
+    // CRITICAL: Preserve ALL local photos. The bunker_jobs table does NOT store
+    // the photos[] metadata array — pullJobs always maps photos: []. Photo data
+    // lives in Supabase Storage (files) and photo metadata (URLs, GPS, W3W, type,
+    // syncStatus) only lives in local IndexedDB. Dropping synced photos here
+    // would lose all photo references even though the files exist in Storage.
     if (local.photos && local.photos.length > 0) {
-        const localUnsyncedPhotos = local.photos.filter(
+        merged.photos = local.photos;
+
+        // If any photos are still pending upload, mark job as pending too
+        const hasPendingPhotos = local.photos.some(
             (p: Photo) => p.syncStatus === 'pending' || p.isIndexedDBRef
         );
-
-        if (localUnsyncedPhotos.length > 0) {
-            // Combine server photos with local unsynced photos
-            const serverPhotoIds = new Set((server.photos || []).map((p: Photo) => p.id));
-            const photosToAdd = localUnsyncedPhotos.filter((p: Photo) => !serverPhotoIds.has(p.id));
-
-            merged.photos = [...(server.photos || []), ...photosToAdd];
-            merged.syncStatus = 'pending'; // Mark as needing sync due to merged photos
+        if (hasPendingPhotos) {
+            merged.syncStatus = 'pending';
         }
     }
 
@@ -374,6 +375,16 @@ function mergeJobData(local: LocalJob, server: LocalJob): LocalJob {
         merged.signerName = local.signerName;
         merged.signerRole = local.signerRole;
         merged.syncStatus = 'pending';
+    }
+
+    // Preserve local client confirmation data (not stored in bunker_jobs)
+    if (local.clientConfirmation && !server.clientConfirmation) {
+        merged.clientConfirmation = local.clientConfirmation;
+    }
+
+    // Preserve local completion notes (not stored in bunker_jobs)
+    if (local.completionNotes && !server.completionNotes) {
+        merged.completionNotes = local.completionNotes;
     }
 
     return merged;
@@ -549,12 +560,24 @@ async function processUpdateJob(job: Partial<LocalJob>) {
     if (job.techId || job.technicianId) updateData.assigned_technician_id = job.techId || job.technicianId;
     if (job.address) updateData.address = job.address;
     if (job.signerName) updateData.signer_name = job.signerName;
+    if (job.signature) updateData.signature_data = job.signature;
     if (job.completedAt) updateData.completed_at = job.completedAt;
 
     const { error } = await supabase
         .from('bunker_jobs')
         .update(updateData)
         .eq('id', job.id);
+
+    // CRITICAL: Clear local syncStatus after successful push. Without this,
+    // pullJobs conflict resolution sees syncStatus:'pending' forever and
+    // always preserves the stale local version (Rule 2). Job appears stuck.
+    if (!error) {
+        const database = await getDatabase();
+        await database.jobs.update(job.id, {
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now()
+        });
+    }
 
     return !error;
 }
@@ -589,6 +612,18 @@ async function processCreateJob(job: any) {
         console.error('[Sync] CREATE_JOB failed:', error.message);
         return false;
     }
+
+    // CRITICAL: Clear local syncStatus after successful push. Without this,
+    // pullJobs conflict resolution sees syncStatus:'pending' forever and
+    // always preserves the stale local version (Rule 2). Job appears stuck.
+    if (job.id) {
+        const database = await getDatabase();
+        await database.jobs.update(job.id, {
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now()
+        });
+    }
+
     return true;
 }
 
