@@ -315,13 +315,41 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
           }
           return serverJobs;
         });
+
+        // CLAUDE.md mandate: Persist server data to Dexie for offline access
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const localJobs = serverJobs.map(j => ({
+            ...j,
+            workspaceId: wsId,
+            syncStatus: 'synced' as const,
+            lastUpdated: Date.now()
+          }));
+          await offlineDb.saveJobsBatch(localJobs);
+        } catch (dexieErr) {
+          console.warn('[DataContext] Failed to persist jobs to Dexie:', dexieErr);
+        }
       } else {
-        console.warn('[DataContext] Supabase jobs failed, using localStorage');
+        console.warn('[DataContext] Supabase jobs failed, trying Dexie then localStorage');
         // WORKSPACE_ISOLATED_STORAGE: Use workspace-scoped key when enabled
         const jobsKey = getWorkspaceStorageKey(STORAGE_KEYS.jobs, wsId);
-        const saved = localStorage.getItem(jobsKey);
-        // Sprint 2 Task 2.6: Normalize technician IDs on load
-        if (saved) setJobs(normalizeJobs(safeJsonParse<Job[]>(saved, [])));
+        // Try Dexie first (sync engine writes all jobs here), then localStorage
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const dexieJobs = await offlineDb.getAllJobsLocal(wsId);
+          if (dexieJobs.length > 0) {
+            // Sprint 2 Task 2.6: Normalize technician IDs on load
+            setJobs(normalizeJobs(dexieJobs as Job[]));
+          } else {
+            const saved = localStorage.getItem(jobsKey);
+            if (saved) setJobs(normalizeJobs(safeJsonParse<Job[]>(saved, [])));
+          }
+        } catch (dexieErr) {
+          console.warn('[DataContext] Dexie jobs fallback failed:', dexieErr);
+          const saved = localStorage.getItem(jobsKey);
+          // Sprint 2 Task 2.6: Normalize technician IDs on load
+          if (saved) setJobs(normalizeJobs(safeJsonParse<Job[]>(saved, [])));
+        }
       }
 
       if (clientsResult.success && clientsResult.data) {

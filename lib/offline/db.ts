@@ -521,6 +521,11 @@ export async function saveJobLocal(job: LocalJob) {
     return await database.jobs.put(job);
 }
 
+export async function saveJobsBatch(jobs: LocalJob[]): Promise<void> {
+    const database = await getDatabase();
+    await database.jobs.bulkPut(jobs);
+}
+
 export async function getJobLocal(id: string) {
     const database = await getDatabase();
     return await database.jobs.get(id);
