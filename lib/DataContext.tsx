@@ -297,9 +297,36 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
       if (jobsResult.success && jobsResult.data) {
         // Sprint 2 Task 2.6: Normalize technician IDs on load
         const serverJobs = normalizeJobs(jobsResult.data);
-        // FIX: Merge local-only jobs (created before workspaceId was available)
-        // Uses setState callback to access current state without stale closure
-        const serverJobIds = new Set(serverJobs.map(j => j.id));
+
+        // CRITICAL MERGE: Supabase owns job metadata (title, status, notes).
+        // Dexie owns photo metadata (photos[], signature, clientConfirmation).
+        // bunker_jobs has NO photos column — server always returns photos: [].
+        // We MUST merge Dexie photos into server jobs, or page refresh kills photos.
+        let mergedJobs = serverJobs;
+        try {
+          const offlineDb = await getOfflineDbModule();
+          const dexieJobs = await offlineDb.getAllJobsLocal(wsId);
+          if (dexieJobs.length > 0) {
+            const dexieJobMap = new Map(dexieJobs.map(dj => [dj.id, dj]));
+            mergedJobs = serverJobs.map(sj => {
+              const dj = dexieJobMap.get(sj.id);
+              if (!dj) return sj;
+              // Server wins for metadata, Dexie wins for client-only fields
+              return {
+                ...sj,
+                photos: (dj.photos && dj.photos.length > 0) ? dj.photos : sj.photos,
+                signature: dj.signature || sj.signature,
+                clientConfirmation: dj.clientConfirmation || sj.clientConfirmation,
+                completionNotes: dj.completionNotes || sj.completionNotes,
+              };
+            });
+          }
+        } catch {
+          // Dexie unavailable — use server jobs as-is
+        }
+
+        // Merge local-only jobs (created before workspaceId was available)
+        const serverJobIds = new Set(mergedJobs.map(j => j.id));
         setJobs(prev => {
           const localOnly = prev.filter(j => !serverJobIds.has(j.id));
           if (localOnly.length > 0) {
@@ -311,15 +338,16 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
                 offlineDb.queueAction('CREATE_JOB', jobWithWs).catch(() => {});
               }
             }).catch(() => {});
-            return [...serverJobs, ...localOnly];
+            return [...mergedJobs, ...localOnly];
           }
-          return serverJobs;
+          return mergedJobs;
         });
 
-        // CLAUDE.md mandate: Persist server data to Dexie for offline access
+        // Persist merged jobs to Dexie for offline access.
+        // CRITICAL: We persist mergedJobs (with photos intact), NOT serverJobs.
         try {
           const offlineDb = await getOfflineDbModule();
-          const localJobs = serverJobs.map(j => ({
+          const localJobs = mergedJobs.map(j => ({
             ...j,
             workspaceId: wsId,
             syncStatus: 'synced' as const,

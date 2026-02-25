@@ -523,7 +523,30 @@ export async function saveJobLocal(job: LocalJob) {
 
 export async function saveJobsBatch(jobs: LocalJob[]): Promise<void> {
     const database = await getDatabase();
-    await database.jobs.bulkPut(jobs);
+    // CRITICAL: Preserve existing photo metadata in Dexie.
+    // bunker_jobs has NO photos column, so incoming jobs from Supabase
+    // always have photos: []. A blind bulkPut would destroy all photo
+    // metadata that only lives locally (URLs, GPS, W3W, syncStatus).
+    // Read existing records and merge photos before writing.
+    const existingJobs = await database.jobs.bulkGet(jobs.map(j => j.id));
+    const existingMap = new Map(
+        existingJobs.filter(Boolean).map(ej => [ej!.id, ej!])
+    );
+    const mergedJobs = jobs.map(job => {
+        const existing = existingMap.get(job.id);
+        if (!existing) return job;
+        // Preserve Dexie-only fields when incoming data doesn't have them
+        return {
+            ...job,
+            photos: (job.photos && job.photos.length > 0) ? job.photos
+                  : (existing.photos && existing.photos.length > 0) ? existing.photos
+                  : [],
+            signature: job.signature || existing.signature,
+            clientConfirmation: job.clientConfirmation || existing.clientConfirmation,
+            completionNotes: job.completionNotes || existing.completionNotes,
+        };
+    });
+    await database.jobs.bulkPut(mergedJobs);
 }
 
 export async function getJobLocal(id: string) {
