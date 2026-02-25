@@ -6,7 +6,10 @@ import { Job, SyncStatus } from '../../types';
 // v4: Added orphanPhotos table for failed sync recovery (Sprint 1 Task 1.3)
 // v5: Added archivedAt index for Fix 3.1 (auto-archive sealed jobs >180 days)
 // v6: Added syncConflicts table for Fix 3.3 (sync conflict detection & UI)
-const DB_SCHEMA_VERSION = 6;
+// v7: Fix 50 — migrate boolean synced values to numbers in queue table
+//     IndexedDB cannot index booleans. Old records with synced:false are invisible
+//     to .where('synced').equals(0). This upgrade converts them in-place.
+const DB_SCHEMA_VERSION = 7;
 const DB_NAME = 'JobProofOfflineDB';
 
 export interface LocalJob extends Job {
@@ -159,6 +162,29 @@ export class JobProofDatabase extends Dexie {
             technicians: 'id, workspaceId, name',
             orphanPhotos: 'id, jobId, orphanedAt',
             syncConflicts: '++id, jobId, detectedAt'
+        });
+        // Version 7: Fix 50 — Migrate boolean synced values to numbers.
+        // IndexedDB CANNOT index booleans. Records written before Fix 49 have
+        // synced:false (boolean) which is invisible to .where('synced').equals(0).
+        // This upgrade converts ALL existing queue records in-place so the
+        // sync processor can finally find and process them.
+        this.version(7).stores({
+            jobs: 'id, syncStatus, workspaceId, status, archivedAt, isArchived',
+            queue: '++id, type, synced, createdAt',
+            media: 'id, jobId',
+            formDrafts: 'formType, savedAt',
+            clients: 'id, workspaceId, name',
+            technicians: 'id, workspaceId, name',
+            orphanPhotos: 'id, jobId, orphanedAt',
+            syncConflicts: '++id, jobId, detectedAt'
+        }).upgrade(tx => {
+            // Convert boolean synced values to numbers in ALL queue records.
+            // false → 0, true → 1. Records with correct number values are untouched.
+            return tx.table('queue').toCollection().modify(record => {
+                if (typeof record.synced === 'boolean') {
+                    record.synced = record.synced ? 1 : 0;
+                }
+            });
         });
 
         // Handle version change from other tabs

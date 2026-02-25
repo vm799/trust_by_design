@@ -127,6 +127,8 @@ PAGE REFRESH:
 | 47 | DataContext.tsx + db.ts | Jobs had no Dexie fallback when Supabase unreachable |
 | 48 | DataContext.tsx + db.ts | **loadFromSupabase overwrote Dexie photos with server's empty photos:[]** |
 | 49 | db.ts + sync.ts + QuickCreateJob.tsx | **QUEUE NEVER PROCESSED: `synced: false` (boolean) not indexable by IndexedDB. Query `.equals(0)` always returned 0 results. Nothing ever synced from the Dexie queue.** |
+| 50 | db.ts | **NO MIGRATION for Fix 49: existing queue items in user browsers still had `synced: false` (boolean). Fix 49 only fixed NEW records. Added Dexie v7 `.upgrade()` to convert `false→0` / `true→1` in-place.** |
+| 51 | sync.ts | **pullJobs sealed branch dropped photos: when server returned sealed job, `serverJob` (photos:[]) was pushed directly to Dexie, wiping all photo metadata. Now merges local photos before writing.** |
 
 ---
 

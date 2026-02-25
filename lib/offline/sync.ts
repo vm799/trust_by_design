@@ -214,9 +214,13 @@ async function _pullJobsImpl(workspaceId: string) {
                 const localIsNewer = localJob.lastUpdated > serverJob.lastUpdated;
                 const serverIsSealed = serverJob.isSealed || serverJob.sealedAt;
 
-                // RULE 1: Sealed jobs ALWAYS win (immutable evidence)
+                // RULE 1: Sealed jobs ALWAYS win for metadata (immutable evidence)
+                // BUT we MUST preserve local photo metadata. bunker_jobs has NO photos
+                // column, so serverJob.photos is always []. Without this merge, sealing
+                // a job wipes all photo URLs, GPS data, and W3W from local IndexedDB.
                 if (serverIsSealed) {
-                    jobsToUpdate.push(serverJob);
+                    const mergedSealedJob = mergeJobData(localJob, serverJob);
+                    jobsToUpdate.push(mergedSealedJob);
                     if (localHasPendingChanges && localIsNewer) {
                         conflicts.push({
                             jobId: serverJob.id,
@@ -224,7 +228,7 @@ async function _pullJobsImpl(workspaceId: string) {
                             localTimestamp: localJob.lastUpdated,
                             serverTimestamp: serverJob.lastUpdated
                         });
-                        console.warn(`[Sync] Conflict: Job ${serverJob.id} was sealed on server. Local changes discarded.`);
+                        console.warn(`[Sync] Conflict: Job ${serverJob.id} was sealed on server. Local metadata changes discarded (photos preserved).`);
                     }
                     continue;
                 }
