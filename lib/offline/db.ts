@@ -21,7 +21,7 @@ export interface OfflineAction {
         | 'CREATE_TECHNICIAN' | 'UPDATE_TECHNICIAN' | 'DELETE_TECHNICIAN';
     payload: any;
     createdAt: number;
-    synced: boolean;
+    synced: number; // 0 = unsynced, 1 = synced. MUST be number, NOT boolean — IndexedDB cannot index booleans
     retryCount: number;
 }
 
@@ -619,7 +619,7 @@ export async function queueAction(type: OfflineAction['type'], payload: any) {
         type,
         payload,
         createdAt: Date.now(),
-        synced: false,
+        synced: 0,
         retryCount: 0
     });
 }

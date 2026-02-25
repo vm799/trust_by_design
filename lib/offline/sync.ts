@@ -467,7 +467,7 @@ async function _pushQueueImpl() {
             }
 
             if (success) {
-                await database.queue.update(action.id!, { synced: true });
+                await database.queue.update(action.id!, { synced: 1 });
                 await database.queue.delete(action.id!);
             } else {
                 const newRetryCount = (action.retryCount || 0) + 1;
