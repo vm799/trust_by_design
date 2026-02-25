@@ -20,6 +20,22 @@ Photo metadata ONLY lives in Dexie. Any write to Dexie jobs table MUST preserve 
 
 ## Hard Rules
 
+### 0. NEVER use booleans in Dexie indexed fields
+
+IndexedDB CANNOT index booleans. `false`/`true` are silently dropped from
+the index. Use `0`/`1` (numbers) instead. This applies to ANY field listed
+in a Dexie `.stores()` index definition.
+
+```typescript
+// WRONG — boolean is not an indexable type, query always returns 0 results
+await database.queue.add({ synced: false });
+await database.queue.where('synced').equals(0).toArray(); // EMPTY!
+
+// RIGHT — number is indexable
+await database.queue.add({ synced: 0 });
+await database.queue.where('synced').equals(0).toArray(); // WORKS!
+```
+
 ### 1. NEVER bulkPut/put jobs without merging photos first
 
 ```typescript
@@ -110,6 +126,7 @@ PAGE REFRESH:
 | 46c | sync.ts | `mergeJobData` dropped synced photos (only kept pending ones) |
 | 47 | DataContext.tsx + db.ts | Jobs had no Dexie fallback when Supabase unreachable |
 | 48 | DataContext.tsx + db.ts | **loadFromSupabase overwrote Dexie photos with server's empty photos:[]** |
+| 49 | db.ts + sync.ts + QuickCreateJob.tsx | **QUEUE NEVER PROCESSED: `synced: false` (boolean) not indexable by IndexedDB. Query `.equals(0)` always returned 0 results. Nothing ever synced from the Dexie queue.** |
 
 ---
 

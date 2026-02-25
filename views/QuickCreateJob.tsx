@@ -30,7 +30,7 @@ interface PendingBunkerJob {
   payload: Record<string, unknown>;
   bunkerLink: string;
   createdAt: number;
-  synced: boolean;
+  synced: number;
 }
 
 class QuickCreateDB extends Dexie {
@@ -97,7 +97,7 @@ export default function QuickCreateJob() {
         for (const job of pending) {
           try {
             await syncToSupabase(job.payload);
-            await qcDb.pending.update(job.id, { synced: true });
+            await qcDb.pending.update(job.id, { synced: 1 });
           } catch { /* will retry next time online */ }
         }
       } catch { /* non-critical */ }
@@ -198,7 +198,7 @@ export default function QuickCreateJob() {
             payload,
             bunkerLink,
             createdAt: Date.now(),
-            synced: false,
+            synced: 0,
           });
           syncStatus = 'pending';
         }
@@ -209,7 +209,7 @@ export default function QuickCreateJob() {
           payload,
           bunkerLink,
           createdAt: Date.now(),
-          synced: false,
+          synced: 0,
         });
         syncStatus = 'pending';
       }
