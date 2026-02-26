@@ -3,18 +3,20 @@
 
 ---
 
-## Data Ownership Model (NEVER VIOLATE)
+## Data Ownership Model (Updated Fix 53)
 
 ```
-SUPABASE (bunker_jobs table)    → Job metadata: title, status, notes, technician, dates, address
-DEXIE (IndexedDB jobs table)    → Client-only fields: photos[], signature, clientConfirmation, completionNotes
+SUPABASE (bunker_jobs table)    → Job metadata + photos JSONB (source of truth)
+SUPABASE (bunker_jobs.photos)   → Photo metadata array: URLs, GPS, W3W, type, syncStatus
 SUPABASE STORAGE (job-photos)   → Photo files (binary blobs)
+DEXIE (IndexedDB jobs table)    → Local cache of server data (survives offline)
 DEXIE (IndexedDB media table)   → Photo base64 data (temporary, deleted after upload)
 DEXIE (IndexedDB queue table)   → Offline action queue (UPLOAD_PHOTO, UPDATE_JOB, SEAL_JOB, etc.)
 ```
 
-**bunker_jobs has NO photos column.** Server always returns `photos: []`.
-Photo metadata ONLY lives in Dexie. Any write to Dexie jobs table MUST preserve existing photos.
+**Fix 53: bunker_jobs NOW has a photos JSONB column.** processUploadPhoto writes
+photo metadata (URLs, GPS, W3W) to Supabase after each upload. pullJobs reads
+photos from server. Photos survive page refresh, browser clear, device switch.
 
 ---
 
@@ -78,6 +80,30 @@ When `invokeSealing()` fails (offline, network error), a `SEAL_JOB` action
 must be queued in Dexie. Without this, if the tech closes the app, the
 seal attempt is lost forever and the job sits at 'Submitted' indefinitely.
 
+### 6. Push MUST complete before Pull (Fix 52)
+
+`handleOnline` and `performSync` must `await pushQueue()` before calling
+`pullJobs()`. Without this, processUploadPhoto writes new Storage URLs to
+Dexie during push, but pullJobs reads stale Dexie data and overwrites via
+bulkPut — reverting photos to deleted IndexedDB refs.
+
+```typescript
+// WRONG — race condition
+sync.pushQueue();         // NOT awaited
+sync.pullJobs(wsId);      // reads stale data, overwrites new URLs
+
+// RIGHT — push first, then pull
+await sync.pushQueue();   // photos upload, Dexie updated
+sync.pullJobs(wsId);      // reads correct Dexie data
+```
+
+### 7. Photo metadata MUST persist to Supabase (Fix 53)
+
+processUploadPhoto must write the photos[] array to bunker_jobs.photos JSONB
+after each upload. Without this, server has no record of photo URLs/GPS/W3W
+and every pull returns photos:[]. The merge logic is a safety net, not the
+primary mechanism.
+
 ---
 
 ## The Sync Lifecycle (reference)
@@ -129,6 +155,8 @@ PAGE REFRESH:
 | 49 | db.ts + sync.ts + QuickCreateJob.tsx | **QUEUE NEVER PROCESSED: `synced: false` (boolean) not indexable by IndexedDB. Query `.equals(0)` always returned 0 results. Nothing ever synced from the Dexie queue.** |
 | 50 | db.ts | **NO MIGRATION for Fix 49: existing queue items in user browsers still had `synced: false` (boolean). Fix 49 only fixed NEW records. Added Dexie v7 `.upgrade()` to convert `false→0` / `true→1` in-place.** |
 | 51 | sync.ts | **pullJobs sealed branch dropped photos: when server returned sealed job, `serverJob` (photos:[]) was pushed directly to Dexie, wiping all photo metadata. Now merges local photos before writing.** |
+| 52 | App.tsx | **RACE CONDITION: `pushQueue()` and `pullJobs()` fired concurrently. pullJobs could read stale Dexie data, then overwrite processUploadPhoto's new URLs via bulkPut. Push MUST complete before pull.** |
+| 53 | sync.ts + migration | **ARCHITECTURAL ROOT CAUSE: Photo metadata lived ONLY in IndexedDB. Server had NO record. Every pull returned photos:[]. 7+ merge fixes needed to work around this. Now bunker_jobs has photos JSONB column. processUploadPhoto persists metadata to Supabase. pullJobs reads it from server.** |
 
 ---
 

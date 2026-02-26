@@ -184,7 +184,10 @@ async function _pullJobsImpl(workspaceId: string) {
                 address: row.address,
                 w3w: row.w3w,
                 notes: row.notes,
-                photos: [],
+                // Fix 53: Read photos from server JSONB column instead of hardcoding [].
+                // Falls back to [] if column doesn't exist yet (pre-migration).
+                // mergeJobData still preserves local photos as safety net.
+                photos: Array.isArray(row.photos) ? row.photos : [],
                 signature: row.signature_data || row.signature_url,
                 safetyChecklist: [],
                 siteHazards: [],
@@ -566,6 +569,16 @@ async function processUpdateJob(job: Partial<LocalJob>) {
     if (job.signerName) updateData.signer_name = job.signerName;
     if (job.signature) updateData.signature_data = job.signature;
     if (job.completedAt) updateData.completed_at = job.completedAt;
+    if (job.completionNotes) updateData.completion_notes = job.completionNotes;
+    // Fix 53: Persist photos array to Supabase JSONB column
+    if (job.photos && job.photos.length > 0) {
+        updateData.photos = job.photos.map((p: Photo) => ({
+            id: p.id, url: p.url, type: p.type, timestamp: p.timestamp,
+            lat: p.lat, lng: p.lng, w3w: p.w3w, w3w_verified: p.w3w_verified,
+            syncStatus: p.syncStatus, verified: p.verified,
+            gps_accuracy: p.gps_accuracy, photo_hash: p.photo_hash,
+        }));
+    }
 
     const { error } = await supabase
         .from('bunker_jobs')
@@ -593,24 +606,35 @@ async function processCreateJob(job: any) {
     const supabase = getSupabase();
     if (!supabase || !job.id) return false;
 
+    // Fix 53: Include photos JSONB when creating jobs
+    const createData: any = {
+        id: job.id,
+        title: job.title || '',
+        client: job.client || '',
+        client_id: job.clientId || null,
+        assigned_technician_id: job.technicianId || job.techId || null,
+        technician_name: job.technician || '',
+        workspace_id: job.workspaceId || job.workspace_id || null,
+        status: job.status || 'Draft',
+        address: job.address || null,
+        w3w: job.w3w || null,
+        notes: job.notes || null,
+        completed_at: job.completedAt || null,
+        created_at: job.createdAt || new Date().toISOString(),
+        last_updated: new Date().toISOString(),
+    };
+    if (job.photos && job.photos.length > 0) {
+        createData.photos = job.photos.map((p: Photo) => ({
+            id: p.id, url: p.url, type: p.type, timestamp: p.timestamp,
+            lat: p.lat, lng: p.lng, w3w: p.w3w, w3w_verified: p.w3w_verified,
+            syncStatus: p.syncStatus, verified: p.verified,
+            gps_accuracy: p.gps_accuracy, photo_hash: p.photo_hash,
+        }));
+    }
+
     const { error } = await supabase
         .from('bunker_jobs')
-        .upsert({
-            id: job.id,
-            title: job.title || '',
-            client: job.client || '',
-            client_id: job.clientId || null,
-            assigned_technician_id: job.technicianId || job.techId || null,
-            technician_name: job.technician || '',
-            workspace_id: job.workspaceId || job.workspace_id || null,
-            status: job.status || 'Draft',
-            address: job.address || null,
-            w3w: job.w3w || null,
-            notes: job.notes || null,
-            completed_at: job.completedAt || null,
-            created_at: job.createdAt || new Date().toISOString(),
-            last_updated: new Date().toISOString(),
-        }, { onConflict: 'id' });
+        .upsert(createData, { onConflict: 'id' });
 
     if (error) {
         console.error('[Sync] CREATE_JOB failed:', error.message);
@@ -926,17 +950,37 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
             });
 
 
-            // Also update in Supabase (bunker_jobs is the primary table)
+            // CRITICAL FIX 53: Persist photo metadata to Supabase.
+            // Without this, server has NO record of photo URLs/GPS/W3W.
+            // Every pull returned photos:[] requiring 7+ merge fixes.
+            // Now server is the source of truth for photo metadata.
+            const serverPhotos = updatedPhotos.map((p: Photo) => ({
+                id: p.id,
+                url: p.url,
+                type: p.type,
+                timestamp: p.timestamp,
+                lat: p.lat,
+                lng: p.lng,
+                w3w: p.w3w,
+                w3w_verified: p.w3w_verified,
+                syncStatus: p.syncStatus,
+                verified: p.verified,
+                gps_accuracy: p.gps_accuracy,
+                photo_hash: p.photo_hash,
+            }));
+
             const { error: updateError } = await supabase
                 .from('bunker_jobs')
                 .update({
+                    photos: serverPhotos,
                     last_updated: new Date().toISOString()
                 })
                 .eq('id', payload.jobId);
 
             if (updateError) {
-                console.warn(`[Sync] Failed to update job in Supabase:`, updateError);
-                // Not critical - photo is uploaded and IndexedDB is updated
+                console.warn(`[Sync] Failed to persist photos to Supabase:`, updateError);
+                // Non-fatal: photos are in Storage + IndexedDB. Server JSONB
+                // is a recovery mechanism, not the only copy.
             }
         }
 
@@ -966,6 +1010,18 @@ async function processUploadPhoto(payload: { id: string; jobId: string; dataUrl?
                     }
                 }
                 await database.jobs.update(payload.jobId, { photos: w3wUpdates });
+
+                // Persist W3W-resolved photos to Supabase too
+                const w3wServerPhotos = w3wUpdates.map((p: Photo) => ({
+                    id: p.id, url: p.url, type: p.type, timestamp: p.timestamp,
+                    lat: p.lat, lng: p.lng, w3w: p.w3w, w3w_verified: p.w3w_verified,
+                    syncStatus: p.syncStatus, verified: p.verified,
+                    gps_accuracy: p.gps_accuracy, photo_hash: p.photo_hash,
+                }));
+                await supabase.from('bunker_jobs').update({
+                    photos: w3wServerPhotos,
+                    last_updated: new Date().toISOString()
+                }).eq('id', payload.jobId);
             }
         }
 

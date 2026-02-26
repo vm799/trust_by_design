@@ -43,9 +43,10 @@ describe('Sync operations target correct bunker tables', () => {
   describe('lib/offline/sync.ts processUploadPhoto', () => {
     const content = readFile('lib/offline/sync.ts');
 
-    // Extract processUploadPhoto area
-    const fnStart = content.indexOf('Also update in Supabase');
-    const fnSlice = content.slice(fnStart, fnStart + 200);
+    // Extract processUploadPhoto area — Fix 53 persists full photos JSONB
+    const fnStart = content.indexOf('async function processUploadPhoto');
+    const fnEnd = content.indexOf('// Clean up IndexedDB media record');
+    const fnSlice = content.slice(fnStart, fnEnd);
 
     it('should update bunker_jobs (not jobs)', () => {
       expect(fnSlice).toContain("from('bunker_jobs')");
