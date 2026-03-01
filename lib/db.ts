@@ -309,7 +309,12 @@ const _getJobsImpl = async (workspaceId: string): Promise<DbResult<Job[]>> => {
       w3w: row.w3w,
       notes: row.notes,
       workSummary: row.work_summary,
-      photos: row.before_photo_data || row.after_photo_data ? [
+      // Fix 53: Read photos from JSONB column first (source of truth).
+      // Falls back to legacy before_photo_data/after_photo_data columns for
+      // jobs created before the migration. Falls back to [] if neither exists.
+      photos: Array.isArray(row.photos) && row.photos.length > 0
+        ? row.photos
+        : row.before_photo_data || row.after_photo_data ? [
         ...(row.before_photo_data ? [{ id: `${row.id}_before`, url: row.before_photo_data, type: 'before' as const, timestamp: row.created_at, verified: true, syncStatus: 'synced' as const }] : []),
         ...(row.after_photo_data ? [{ id: `${row.id}_after`, url: row.after_photo_data, type: 'after' as const, timestamp: row.completed_at || row.created_at, verified: true, syncStatus: 'synced' as const }] : [])
       ] : [],

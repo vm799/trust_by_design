@@ -298,10 +298,10 @@ export function DataProvider({ children, workspaceId: propWorkspaceId }: DataPro
         // Sprint 2 Task 2.6: Normalize technician IDs on load
         const serverJobs = normalizeJobs(jobsResult.data);
 
-        // CRITICAL MERGE: Supabase owns job metadata (title, status, notes).
-        // Dexie owns photo metadata (photos[], signature, clientConfirmation).
-        // bunker_jobs has NO photos column — server always returns photos: [].
-        // We MUST merge Dexie photos into server jobs, or page refresh kills photos.
+        // Fix 53: bunker_jobs now has photos JSONB column (source of truth).
+        // Dexie merge below is a safety net for photos not yet persisted to server
+        // (e.g., captured offline but not yet uploaded). Once uploaded,
+        // processUploadPhoto writes to both Dexie and bunker_jobs.photos.
         let mergedJobs = serverJobs;
         try {
           const offlineDb = await getOfflineDbModule();
