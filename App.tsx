@@ -174,11 +174,16 @@ const AppContent: React.FC = () => {
         lastSyncTime = now;
         // Lazy load sync module only when needed
         const sync = await getOfflineSync();
-        sync.pushQueue();
+        // CRITICAL: Push MUST complete before pull starts.
+        // processUploadPhoto writes photo URLs to Dexie. If pullJobs runs
+        // concurrently, it reads stale Dexie data and overwrites the new URLs
+        // via bulkPut — reverting photos to deleted IndexedDB refs.
+        await sync.pushQueue();
+        await sync.retryOrphanPhotos();
+        // Pull can run concurrently (jobs/clients/techs don't race each other)
         sync.pullJobs(user.workspace.id);
         sync.pullClients(user.workspace.id);
         sync.pullTechnicians(user.workspace.id);
-        sync.retryOrphanPhotos();
       }
     };
 
@@ -210,11 +215,15 @@ const AppContent: React.FC = () => {
       if (user?.workspace?.id) {
         lastSyncTime = Date.now(); // Reset throttle so interval doesn't double-fire
         const sync = await getOfflineSync();
-        sync.pushQueue();        // Push queued photos/jobs IMMEDIATELY
+        // CRITICAL: Push MUST complete before pull. Photos upload during push,
+        // writing Storage URLs to Dexie. If pull runs concurrently, it reads
+        // stale Dexie (old IndexedDB refs), then overwrites the new URLs via
+        // bulkPut — photos revert to deleted media refs and are lost.
+        await sync.pushQueue();
+        await sync.retryOrphanPhotos();
         sync.pullJobs(user.workspace.id);
         sync.pullClients(user.workspace.id);
         sync.pullTechnicians(user.workspace.id);
-        sync.retryOrphanPhotos();
       }
     };
     window.addEventListener('online', handleOnline);
