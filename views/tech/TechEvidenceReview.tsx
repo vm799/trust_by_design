@@ -253,13 +253,32 @@ const TechEvidenceReview: React.FC = () => {
           timestamp,
           confirmed: true,
         },
+        // CRITICAL: Also set job.signature so processUpdateJob syncs it to
+        // bunker_jobs.signature_data. Without this, the seal Edge Function
+        // reads NULL from signature_data and builds an empty signature field.
+        signature,
+        signerName: job.signerName || 'Client',
+        signatureTimestamp: timestamp,
         completionNotes: completionNotes || undefined,
         status: 'Submitted',
       };
 
       contextUpdateJob(updatedJob);
 
-      await autoSealJob(job.id);
+      // Queue seal — if photos haven't synced yet, processSealJob in the
+      // sync queue will retry until all photos have syncStatus: 'synced'.
+      // This is more reliable than calling invokeSealing directly, which
+      // races against the UPDATE_JOB queue item reaching the server.
+      if (navigator.onLine) {
+        // Online: attempt immediate seal (Edge Function reads server state)
+        // Small delay to let the UPDATE_JOB queue item push first
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await autoSealJob(job.id);
+      } else {
+        // Offline: queue seal for when connection returns
+        await queueAction('SEAL_JOB', { jobId: job.id });
+        showToast('Evidence saved. Will seal when back online.', 'info');
+      }
 
       navigate(`/tech/job/${job.id}`);
     } catch (error) {

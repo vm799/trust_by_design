@@ -189,6 +189,10 @@ async function _pullJobsImpl(workspaceId: string) {
                 // mergeJobData still preserves local photos as safety net.
                 photos: Array.isArray(row.photos) ? row.photos : [],
                 signature: row.signature_data || row.signature_url,
+                signerName: row.signer_name,
+                signatureTimestamp: row.signature_timestamp,
+                clientConfirmation: row.client_confirmation || undefined,
+                completionNotes: row.completion_notes || undefined,
                 safetyChecklist: [],
                 siteHazards: [],
                 syncStatus: 'synced' as const,
@@ -196,7 +200,8 @@ async function _pullJobsImpl(workspaceId: string) {
                 workspaceId: row.workspace_id,
                 sealedAt: row.sealed_at,
                 isSealed: !!row.sealed_at,
-                evidenceHash: row.evidence_hash
+                evidenceHash: row.evidence_hash,
+                sealedBy: row.sealed_by,
             }));
 
             // CONFLICT RESOLUTION: Compare local vs server for each job
@@ -358,13 +363,22 @@ function mergeJobData(local: LocalJob, server: LocalJob): LocalJob {
     // Start with server data
     const merged = { ...server };
 
-    // CRITICAL: Preserve ALL local photos. The bunker_jobs table does NOT store
-    // the photos[] metadata array — pullJobs always maps photos: []. Photo data
-    // lives in Supabase Storage (files) and photo metadata (URLs, GPS, W3W, type,
-    // syncStatus) only lives in local IndexedDB. Dropping synced photos here
-    // would lose all photo references even though the files exist in Storage.
+    // Photo merge strategy:
+    // 1. If server has photos (from JSONB column), use them as base
+    // 2. Merge in any local-only photos (pending upload, not yet on server)
+    // 3. If server has NO photos, keep all local photos
     if (local.photos && local.photos.length > 0) {
-        merged.photos = local.photos;
+        if (server.photos && server.photos.length > 0) {
+            // Merge: server photos + local-only pending photos
+            const serverPhotoIds = new Set(server.photos.map((p: Photo) => p.id));
+            const localOnlyPhotos = local.photos.filter(
+                (p: Photo) => !serverPhotoIds.has(p.id)
+            );
+            merged.photos = [...server.photos, ...localOnlyPhotos];
+        } else {
+            // Server has no photos — keep all local
+            merged.photos = local.photos;
+        }
 
         // If any photos are still pending upload, mark job as pending too
         const hasPendingPhotos = local.photos.some(
@@ -384,12 +398,12 @@ function mergeJobData(local: LocalJob, server: LocalJob): LocalJob {
         merged.syncStatus = 'pending';
     }
 
-    // Preserve local client confirmation data (not stored in bunker_jobs)
+    // Preserve local client confirmation if server doesn't have it yet
     if (local.clientConfirmation && !server.clientConfirmation) {
         merged.clientConfirmation = local.clientConfirmation;
     }
 
-    // Preserve local completion notes (not stored in bunker_jobs)
+    // Preserve local completion notes if server doesn't have them yet
     if (local.completionNotes && !server.completionNotes) {
         merged.completionNotes = local.completionNotes;
     }
@@ -570,6 +584,8 @@ async function processUpdateJob(job: Partial<LocalJob>) {
     if (job.signature) updateData.signature_data = job.signature;
     if (job.completedAt) updateData.completed_at = job.completedAt;
     if (job.completionNotes) updateData.completion_notes = job.completionNotes;
+    if (job.signatureTimestamp) updateData.signature_timestamp = job.signatureTimestamp;
+    if (job.clientConfirmation) updateData.client_confirmation = job.clientConfirmation;
     // Fix 53: Persist photos array to Supabase JSONB column
     if (job.photos && job.photos.length > 0) {
         updateData.photos = job.photos.map((p: Photo) => ({

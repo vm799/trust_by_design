@@ -193,33 +193,52 @@ serve(async (req) => {
     }
 
     // 7. Build evidence bundle (canonical JSON)
-    // Build photo entries based on job source
+    // Read photos from the JSONB column (source of truth since Fix 53).
+    // Falls back to legacy before_photo_data/after_photo_data columns
+    // for jobs created before the photos JSONB migration.
     let photos: EvidenceBundle['photos'] = []
 
     if (jobSource === 'bunker_jobs') {
-      // Bunker jobs store photos inline as base64 columns
-      if (job.before_photo_data) {
-        photos.push({
-          id: `${jobId}_before`,
-          url: 'inline:before',
-          timestamp: job.before_photo_timestamp || job.completed_at || new Date().toISOString(),
-          lat: job.before_photo_lat ? Number(job.before_photo_lat) : undefined,
-          lng: job.before_photo_lng ? Number(job.before_photo_lng) : undefined,
-          type: 'before',
-        })
-      }
-      if (job.after_photo_data) {
-        photos.push({
-          id: `${jobId}_after`,
-          url: 'inline:after',
-          timestamp: job.after_photo_timestamp || job.completed_at || new Date().toISOString(),
-          lat: job.after_photo_lat ? Number(job.after_photo_lat) : undefined,
-          lng: job.after_photo_lng ? Number(job.after_photo_lng) : undefined,
-          type: 'after',
-        })
+      // Primary: Read from photos JSONB column (written by processUploadPhoto)
+      if (Array.isArray(job.photos) && job.photos.length > 0) {
+        photos = job.photos.map((p: any) => ({
+          id: p.id || `${jobId}_${p.type || 'photo'}`,
+          url: p.url || '',
+          timestamp: p.timestamp || job.completed_at || new Date().toISOString(),
+          lat: p.lat != null ? Number(p.lat) : undefined,
+          lng: p.lng != null ? Number(p.lng) : undefined,
+          type: p.type || 'before',
+        }))
+      } else {
+        // Fallback: Legacy columns for pre-migration jobs
+        if (job.before_photo_data || job.before_photo_url) {
+          photos.push({
+            id: `${jobId}_before`,
+            url: job.before_photo_url || 'inline:before',
+            timestamp: job.before_photo_timestamp || job.completed_at || new Date().toISOString(),
+            lat: job.before_photo_lat ? Number(job.before_photo_lat) : undefined,
+            lng: job.before_photo_lng ? Number(job.before_photo_lng) : undefined,
+            type: 'before',
+          })
+        }
+        if (job.after_photo_data || job.after_photo_url) {
+          photos.push({
+            id: `${jobId}_after`,
+            url: job.after_photo_url || 'inline:after',
+            timestamp: job.after_photo_timestamp || job.completed_at || new Date().toISOString(),
+            lat: job.after_photo_lat ? Number(job.after_photo_lat) : undefined,
+            lng: job.after_photo_lng ? Number(job.after_photo_lng) : undefined,
+            type: 'after',
+          })
+        }
       }
     } else {
       photos = job.photos || []
+    }
+
+    // Validate: sealing with zero photos is likely a data flow bug
+    if (photos.length === 0) {
+      console.warn(`[SealEvidence] Job ${jobId} has NO photos — evidence bundle will be empty`)
     }
 
     const evidenceBundle: EvidenceBundle = {
@@ -241,7 +260,7 @@ serve(async (req) => {
       photos,
       signature: {
         url: jobSource === 'bunker_jobs'
-          ? (job.signature_data ? 'inline:signature' : null)
+          ? (job.signature_url || (job.signature_data ? 'inline:signature' : null))
           : (job.signature_url || null),
         signerName: job.signer_name,
         signerRole: job.signer_role,
@@ -367,7 +386,22 @@ serve(async (req) => {
         )
       }
     }
-    // bunker_jobs sealed_at/evidence_hash update is handled by generate-report Step 5
+    if (jobSource === 'bunker_jobs') {
+      const { error: bunkerUpdateError } = await supabaseServiceClient
+        .from('bunker_jobs')
+        .update({
+          sealed_at: sealedAt,
+          evidence_hash: evidenceHash,
+          status: 'Submitted',
+          last_updated: sealedAt,
+        })
+        .eq('id', jobId)
+
+      if (bunkerUpdateError) {
+        console.error('Failed to update bunker_jobs seal status:', bunkerUpdateError)
+        // Non-fatal: seal record exists in evidence_seals table
+      }
+    }
 
     // 12. Magic link tokens are automatically invalidated by database trigger
 
